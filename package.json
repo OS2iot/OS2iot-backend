@@ -7,6 +7,10 @@
   "scripts": {
     "start": "node server.js"
   },
+  "repository": {
+     "type": "git",
+     "url": "https://github.com/OS2iot/restapi"
+   },
   "dependencies": {
     "express": "^4.16.1"
   },
