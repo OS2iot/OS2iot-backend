@@ -1,7 +1,8 @@
 # restapi
-
-docker build -t <username>/restapi
-docker run -p 49160:8080 <username>/restapi
+git clone https://github.com/OS2iot/restapi
+cd restapi
+docker build -t restapi .
+docker run -p 49160:8080 restapi
 
 
 ## test
