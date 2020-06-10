@@ -1,0 +1,10 @@
+version: "1.1"
+
+services:
+  result:
+    build: ./restapi
+    command: nodemon --watch -e js, server.js
+    volumes:
+      - ./restapi:/app
+    ports:
+      - "49160:8080"
