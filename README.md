@@ -2,7 +2,7 @@
 git clone https://github.com/OS2iot/restapi
 cd restapi
 docker build -t restapi .
-docker run -p 49160:8080 restapi
+docker run --name os2iot-api -d -p 49160:8080 restapi
 
 
 ## test
