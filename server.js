@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/',(req, res) => {
-  res.send(' POST World');
+  res.send('POST World');
 });
 
 app.put('/', (req, res) => {

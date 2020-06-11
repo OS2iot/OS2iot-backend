@@ -12,8 +12,10 @@ docker run --name os2iot-api -d -p 49160:8080 os2iot-api
 ```
 
 ```bash
-docker-compose build os2iot-api
+docker-compose build rest-service
 docker-compose up --remove-orphans
+
+docker-compose up --build --remove-orphans
 ```
 
 ### Test
