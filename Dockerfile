@@ -1,5 +1,5 @@
-FROM node:10
-WORKDIR ~/Documents/OS2iot/restapi
+FROM node:12
+WORKDIR ~/Documents/OS2iot/repo/os2iot-api 
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
