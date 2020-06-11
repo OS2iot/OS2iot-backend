@@ -1,10 +1,9 @@
 version: "3.3"
 
 services:
-  result:
-    build: ./restapi
-    command: nodemon --watch -e js, server.js
-    volumes:
-      - ./restapi:/app
+  rest-service:
+    build: ./
+    command: nodemon nodemon --inspect ./server.js  -L
+
     ports:
       - "49160:8080"
