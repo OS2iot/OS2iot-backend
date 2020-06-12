@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  rest-service:
+  os2iot-api:
     build: ./
     command:  nodemon server.js -L
     ports:
