@@ -6,7 +6,7 @@ WORKDIR ~/Documents/OS2iot/repo/os2iot-api
 COPY package*.json ./
 
 
-RUN npm install -g nodemon
+RUN npm install -g nodemon eslint
 
 RUN npm install
 # If you are building your code for production

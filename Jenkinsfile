@@ -1,11 +1,11 @@
 pipeline {
-    agent { dockerfile true }
-    stages {
-        stage('Test') {
-            steps {
-                sh 'node --version'
-                sh 'echo "Hello World"'
-            }
-        }
+  agent { dockerfile true }
+  stages {
+    stage('Test') {
+      steps {
+        sh 'node --version'
+        sh 'eslint *.js'
+      }
     }
+  }
 }
