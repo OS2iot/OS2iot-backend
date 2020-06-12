@@ -1,14 +1,14 @@
-# restapi
+# Os2iot-backend
 
 ### Build image
 ```bash
-git clone https://github.com/OS2iot/restapi
-cd restapi
-docker build -t restapi .
+git clone https://github.com/OS2iot/Os2iot-backend
+cd Os2iot-backend
+docker build -t Os2iot-backend .
 ```
 ### Start container
 ```bash
-docker run --name os2iot-api -d -p 49160:8080 restapi
+docker run --name os2iot-api -d -p 49160:8080 Os2iot-backend
 ```
 
 ```bash

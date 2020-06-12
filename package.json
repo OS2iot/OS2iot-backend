@@ -9,7 +9,7 @@
   },
   "repository": {
      "type": "git",
-     "url": "https://github.com/OS2iot/restapi"
+     "url": "https://github.com/OS2iot/Os2iot-backend"
    },
   "dependencies": {
     "express": "^4.16.1"
