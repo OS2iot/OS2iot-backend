@@ -8,10 +8,11 @@
     "start": "node server.js"
   },
   "repository": {
-     "type": "git",
-     "url": "https://github.com/OS2iot/Os2iot-backend"
-   },
+    "type": "git",
+    "url": "https://github.com/OS2iot/Os2iot-backend"
+  },
   "dependencies": {
+    "eslint": "^7.2.0",
     "express": "^4.16.1"
   },
   "devDependencies": {
