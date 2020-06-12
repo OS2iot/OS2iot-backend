@@ -3,12 +3,12 @@
 ### Build image
 ```bash
 git clone https://github.com/OS2iot/restapi
-cd os2iot-api
-docker build -t os2iot-api .
+cd restapi
+docker build -t restapi .
 ```
 ### Start container
 ```bash
-docker run --name os2iot-api -d -p 49160:8080 os2iot-api
+docker run --name os2iot-api -d -p 49160:8080 restapi
 ```
 
 ```bash
