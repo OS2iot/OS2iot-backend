@@ -24,4 +24,4 @@ module.exports = {
       "migrationsDir": "src/migration",
       "subscribersDir": "src/subscriber"
    }
-}
+};

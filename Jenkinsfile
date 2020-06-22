@@ -1,10 +1,11 @@
 pipeline {
   agent { dockerfile true }
   stages {
-    stage('Test') {
+    stage('Run eslint') {
       steps {
-        sh 'node --version'
-        sh 'eslint **/*.js'
+        sh 'npm install -g eslint '
+        sh 'npm install'
+        sh 'npm run lint'
       }
     }
   }

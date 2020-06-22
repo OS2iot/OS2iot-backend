@@ -6,7 +6,7 @@ import Logger from '../../loaders/logger';
 
 const route = Router();
 
-export default (app: Router) => {
+export default (app: Router): void => {
   app.use('/users', route);
 
   route.get('/me', middlewares.isAuth, (req: Request, res: Response) => {
@@ -14,12 +14,13 @@ export default (app: Router) => {
   });
 
   route.get('/:userId', (req: Request, res: Response) => {
-    let userId = Number(req.params['userId'])
-    let service = new UserService()
+    const userId = Number(req.params['userId'])
+    const service = new UserService()
     service.fetchUserById(userId).then(result => {
       Logger.info(result.toString())
       return res.json({ user: result}).status(200);
     }).catch(err => {
+      Logger.error(err)
       return res.status(404).json({ error: `No user found for id: ${req.params['userId']}`})
     })
   });

@@ -1,11 +1,11 @@
-import { Application } from 'express';
+import { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import routes from '../api';
 import config from '../config';
 import ErrorWithStatus from '../types/errorWithStatus'
 
-export default ({ app }: { app: Application }) => {
+export default ({ app }: { app: Application }): void => {
     /**
      * Health Check endpoints
      * 
@@ -45,13 +45,13 @@ export default ({ app }: { app: Application }) => {
     });
 
     /// error handlers
-    app.use((err: any, req: any, res: any, next: any) => {
+    app.use((err: ErrorWithStatus, req: Request, res: Response, next: any) => {
         /**
          * Handle 401 thrown by express-jwt library
          */
         if (err.name === 'UnauthorizedError') {
             return res
-                .status(err.status)
+                .status(Number(err.status))
                 .send({ message: err.message })
                 .end();
         }
