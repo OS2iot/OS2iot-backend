@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es6",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": "src",
+    "paths": {
+      "*": [
+        "node_modules/*"
+      ],
+      "types": [
+        "types/*"
+      ]
+    },
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
