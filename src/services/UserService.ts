@@ -4,7 +4,7 @@ import { getManager } from "typeorm";
 
 export default class UserService {
 
-    public async fetchUserById(id: number) {
+    public async fetchUserById(id: number):Promise<User> {
         // TODO: Should this be instantiated for the class and not every time it's used?
         const repository = getManager().getRepository(User);
 

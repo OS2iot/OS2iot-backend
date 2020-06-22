@@ -12,13 +12,12 @@ async function startServer() {
    * Well, at least in node 10 without babel and at the time of writing
    * So we are using good old require.
    **/
-  await require('./loaders').default({ expressApp: app });
+  await require('./loaders').default({ expressApp: app }); // eslint-disable-line @typescript-eslint/no-var-requires
 
   app.listen(config.port, err  => {
     if (err) {
       Logger.error(err);
       process.exit(1);
-      return;
     }
     Logger.info(`
       ################################################
