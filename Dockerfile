@@ -5,9 +5,7 @@ WORKDIR /tmp/os2iot/backend
 # where available (npm@5+)
 COPY package*.json ./
 
-
-RUN npm install -g nodemon eslint ts-node
-
+RUN npm install -g nodemon ts-node eslint
 RUN npm install
 # If you are building your code for production
 # RUN npm ci --only=production
