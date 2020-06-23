@@ -5,6 +5,8 @@ import cors from 'cors';
 import routes from '../api';
 import config from '../config';
 import Logger from '../loaders/logger';
+import swagger from './swagger';
+
 
 export default ({ app }: { app: Application }): void => {
     /**
@@ -37,6 +39,7 @@ export default ({ app }: { app: Application }): void => {
     app.use(bodyParser.json());
     // Load API routes
     app.use(config.api.prefix, routes());
+    app.use(config.api.prefix + config.api.docsprefix, swagger())
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
