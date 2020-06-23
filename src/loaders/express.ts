@@ -1,9 +1,10 @@
-import { Application, Request, Response } from 'express';
+import { Application, Request, Response, NextFunction } from 'express';
+import { HttpError, NotFound, InternalServerError } from "http-errors";
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import routes from '../api';
 import config from '../config';
-import ErrorWithStatus from '../types/errorWithStatus'
+import Logger from '../loaders/logger';
 
 export default ({ app }: { app: Application }): void => {
     /**
@@ -37,15 +38,14 @@ export default ({ app }: { app: Application }): void => {
     // Load API routes
     app.use(config.api.prefix, routes());
 
-    /// catch 404 and forward to error handler
+    // catch 404 and forward to error handler
     app.use((req, res, next) => {
-        const err = new Error('Not Found') as ErrorWithStatus;
-        err.status = '404';
-        next(err);
+        const err = new NotFound('Not Found');
+        return next(err);
     });
 
-    /// error handlers
-    app.use((err: ErrorWithStatus, req: Request, res: Response, next: any) => {
+    // error handlers
+    app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
         /**
          * Handle 401 thrown by express-jwt library
          */
@@ -57,12 +57,18 @@ export default ({ app }: { app: Application }): void => {
         }
         return next(err);
     });
-    app.use((err: any, req: any, res: any, next: any) => {
-        res.status(err.status || 500);
-        res.json({
-            errors: {
-                message: err.message,
-            },
-        });
+
+    // 500 Server Error
+    app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+        Logger.error(err)
+        if (!(err instanceof HttpError)) {
+            err = new InternalServerError();
+        }
+
+        if (err instanceof HttpError) {
+            res.status(err.statusCode);
+            res.json({ error: err });
+        }
+        return next();
     });
 };
