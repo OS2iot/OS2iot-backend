@@ -10,5 +10,10 @@ pipeline {
         sh 'npm run lint'
       }
     }
+    stage('Run Jest') {
+      steps {
+        sh 'npm run test'
+      }
+    }
   }
 }
