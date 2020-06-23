@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import middlewares from '../middlewares';
-import UserService from '../../services/UserService'
 import Logger from '../../loaders/logger';
+import { getCustomRepository } from 'typeorm';
+import { UserRepository } from '../../repositoies/UserRepository';
 
 
 const route = Router();
@@ -15,13 +16,24 @@ export default (app: Router): void => {
 
   route.get('/:userId', (req: Request, res: Response) => {
     const userId = Number(req.params['userId'])
-    const service = new UserService()
-    service.fetchUserById(userId).then(result => {
+
+    const userRepository = getCustomRepository(UserRepository);
+
+    userRepository.findById(userId).then(result => {
       Logger.info(result.toString())
-      return res.json({ user: result}).status(200);
+      return res.json({ user: result }).status(200);
     }).catch(err => {
       Logger.error(err)
-      return res.status(404).json({ error: `No user found for id: ${req.params['userId']}`})
+      return res.status(404).json({ error: `No user found for id: ${req.params['userId']}` })
     })
   });
-};
+
+  route.get('/', (req: Request, res: Response) => {
+    const userRepository = getCustomRepository(UserRepository);
+    userRepository.findAll().then(result => {
+      return res.json({users: result}).status(200);
+    }).catch(err => {
+      throw err
+    })
+  });
+}
