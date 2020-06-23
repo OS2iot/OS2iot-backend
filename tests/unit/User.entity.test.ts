@@ -8,6 +8,6 @@ test("toString on user", () => {
     user.lastName = "Testersen";
     user.age = 42;
     expect(user.toString()).toBe(
-        "User: id: 1 - firstName: Test - lastName: Testersen - age: 42"
+        "Obviously not User: id: 1 - firstName: Test - lastName: Testersen - age: 42"
     );
 });
