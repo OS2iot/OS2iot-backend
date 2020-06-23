@@ -10,5 +10,15 @@ pipeline {
         sh 'npm run lint'
       }
     }
+    stage('Run Jest') {
+      steps {
+        sh 'npm run test'
+      }
+      post {
+        always {
+          step([$class: 'CoberturaPublisher', coberturaReportFile: 'output/coverage/jest/cobertura-coverage.xml'])
+        }
+      }
+    }
   }
 }
