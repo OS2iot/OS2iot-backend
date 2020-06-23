@@ -5,9 +5,15 @@
 Before starting, create a file called `.env`, this can be copied from `.env.example`.
 
 ### Install dependencies
+Global dependencies:
 ```
 npm install -g nodemon eslint ts-node
 ```
+Projekct dependencies:
+```
+npm install
+```
+
 
 Use `nodemon` to start the code and automatically reload on changes. `nodemon` is configured by `nodemon.json`.
 ```
