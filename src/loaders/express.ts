@@ -6,6 +6,8 @@ import routes from "../api";
 import config from "../config";
 import Logger from "../loaders/logger";
 import swagger from "./swagger";
+import { errors } from "celebrate";
+import express from "express"
 
 export default ({ app }: { app: Application }): void => {
     /**
@@ -29,13 +31,9 @@ export default ({ app }: { app: Application }): void => {
     // Enable Cross Origin Resource Sharing to all origins by default
     app.use(cors());
 
-    // Some sauce that always add since 2014
-    // "Lets you use HTTP verbs such as PUT or DELETE in places where the client doesn't support it."
-    // Maybe not needed anymore ?
-    // app.use(require('method-override')());
-
     // Middleware that transforms the raw string of req.body into json
-    app.use(bodyParser.json());
+    app.use(express.json());
+
     // Load API routes
     app.use(config.api.prefix, routes());
     app.use(config.api.prefix + config.api.docsprefix, swagger());
@@ -46,7 +44,10 @@ export default ({ app }: { app: Application }): void => {
         return next(err);
     });
 
-    // error handlers
+    // Handle validation errors (from Joi / Celebrate)
+    app.use(errors());
+
+    // error handlers for http errors
     app.use(
         (err: HttpError, req: Request, res: Response, next: NextFunction) => {
             /**
@@ -58,6 +59,13 @@ export default ({ app }: { app: Application }): void => {
                     .send({ message: err.message })
                     .end();
             }
+            if (err.name === "BadRequestError") {
+                return res
+                    .status(err.statusCode)
+                    .send({ message: err.message })
+                    .end();
+            }
+            Logger.warn(err);
             return next(err);
         }
     );
@@ -73,6 +81,7 @@ export default ({ app }: { app: Application }): void => {
             res.status(err.statusCode);
             res.json({ error: err });
         }
+
         return next();
     });
 };

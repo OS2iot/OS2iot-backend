@@ -2,11 +2,11 @@ import { Router } from "express";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import Logger from "./logger";
+import user from "../api/routes/user";
 
 // guaranteed to get dependencies
 export default (): Router => {
     const app = Router();
-    const apis: any[] = [];
 
     const options = {
         swaggerDefinition: {
@@ -25,6 +25,10 @@ export default (): Router => {
                     email: "ijom@aarhus.dk",
                 },
             },
+            host: "localhost:3000",
+            basePath: "/v1",
+            produces: ["application/json"],
+            // schemes: ["http", "https"],
             servers: [
                 {
                     url: "http://localhost:3000/api/v1",
@@ -37,7 +41,8 @@ export default (): Router => {
                 },
             ],
         },
-        apis: apis,
+        apis: ["./src/**/*.ts"],
+        // basedir: __dirname, //app absolute path
     };
 
     const specs = swaggerJsdoc(options);

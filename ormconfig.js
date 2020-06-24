@@ -11,8 +11,8 @@ module.exports = {
     password: "toi2so",
     database: "os2iot",
     synchronize: true,
-    logging: false,
-    entities: [path.join(__dirname, "/../**/*.entity{.ts,.js}")],
+    logging: true,
+    entities: [path.join(__dirname, "/../**/*.entity.ts")],
     migrations: ["src/migration/**/*.ts"],
     subscribers: ["src/subscriber/**/*.ts"],
     cli: {

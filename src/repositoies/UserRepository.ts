@@ -1,4 +1,4 @@
-import { EntityRepository, Repository } from "typeorm";
+import { EntityRepository, Repository, DeepPartial, Entity } from "typeorm";
 import { User } from "../entity/User.entity";
 
 @EntityRepository(User)
@@ -11,5 +11,10 @@ export class UserRepository extends Repository<User> {
     // This doesn't need to be here, we could just call .find() from the controller.
     findAll(): Promise<User[]> {
         return this.find();
+    }
+
+    createAndSave(body: DeepPartial<typeof Entity>): Promise<User> {
+        const newUser: User = this.create(body);
+        return this.save(newUser);
     }
 }

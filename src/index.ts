@@ -21,7 +21,8 @@ async function startServer() {
         }
         Logger.info(`
       ################################################
-      🛡️  Server listening on port: ${config.port} 🛡️ 
+      🛡️  Server listening on port: ${config.port}   🛡️ 
+      📚  Docs: http://localhost:3000/api/v1/docs/   📚
       ################################################
     `);
     });
