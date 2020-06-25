@@ -2,7 +2,6 @@ import { Router } from "express";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import Logger from "./logger";
-import user from "../api/routes/user";
 
 // guaranteed to get dependencies
 export default (): Router => {

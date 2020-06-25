@@ -1,13 +1,7 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    BeforeInsert,
-    BeforeUpdate,
-} from "typeorm";
-import { validateOrReject, IsDefined } from "class-validator";
+import { Entity, Column } from "typeorm";
+import { DbBaseEntity } from "./base.entity";
 
-@Entity('user')
+@Entity("user")
 /**
  * @swagger
  * definitions:
@@ -21,14 +15,11 @@ import { validateOrReject, IsDefined } from "class-validator";
  *       lastName:
  *         type: string
  */
-export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class User extends DbBaseEntity {
     @Column()
     firstName: string;
 
-    @Column({ nullable: true })
+    @Column()
     lastName: string;
 
     @Column({ nullable: true })

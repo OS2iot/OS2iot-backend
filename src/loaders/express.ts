@@ -1,13 +1,12 @@
 import { Application, Request, Response, NextFunction } from "express";
 import { HttpError, NotFound, InternalServerError } from "http-errors";
-import bodyParser from "body-parser";
 import cors from "cors";
 import routes from "../api";
 import config from "../config";
 import Logger from "../loaders/logger";
 import swagger from "./swagger";
 import { errors } from "celebrate";
-import express from "express"
+import express from "express";
 
 export default ({ app }: { app: Application }): void => {
     /**

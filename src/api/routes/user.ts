@@ -1,9 +1,8 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import Logger from "../../loaders/logger";
 import { getCustomRepository } from "typeorm";
 import { UserRepository } from "../../repositoies/UserRepository";
-import { BadRequest } from "http-errors";
-import { celebrate, Joi, errors, Segments } from "celebrate";
+import { celebrate, Joi, Segments } from "celebrate";
 
 const route = Router();
 
