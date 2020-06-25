@@ -28,4 +28,12 @@ async function startServer() {
     });
 }
 
+/**
+ * Avoid crashing if an unhandled promise rejection occurs, instead log it.
+ */
+process.on("unhandledRejection", (error, promise) => {
+    Logger.error("We forgot to handle a promise rejection here: ", promise);
+    Logger.error(" - The error was: ", error);
+});
+
 startServer();
