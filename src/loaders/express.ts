@@ -39,7 +39,7 @@ export default ({ app }: { app: Application }): void => {
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
-        const err = new NotFound("Not Found");
+        const err = new NotFound("Not Found. Req url was: '" + req.url + "'");
         return next(err);
     });
 
