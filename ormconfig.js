@@ -5,7 +5,7 @@ var path = require("path");
  */
 module.exports = {
     type: "postgres",
-    host: "127.0.0.1",
+    host: "host.docker.internal",
     port: 5432,
     username: "os2iot",
     password: "toi2so",
