@@ -1,5 +1,5 @@
 import { Entity, Column } from "typeorm";
-import { DbBaseEntity } from "./base.entity";
+import { DbBaseEntity } from "./Base.entity";
 
 @Entity("user")
 /**
