@@ -1,20 +1,38 @@
-# Os2iot-backend
+# OS2IoT-backend
 
 ## Development mode (without docker)
 
-Before starting, create a file called `.env`, this can be copied from `.env.example`.
+## Installation
 
-### Install dependencies
-Global dependencies:
-```
-npm install -g nodemon eslint ts-node
-```
-Projekct dependencies:
-```
-npm install
+```bash
+$ npm install
 ```
 
+## Running the app
 
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Test
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
 Use `nodemon` to start the code and automatically reload on changes. `nodemon` is configured by `nodemon.json`.
 ```
 nodemon

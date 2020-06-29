@@ -1,17 +1,36 @@
-FROM node:12
-WORKDIR /tmp/os2iot/backend
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
+# from: https://github.com/Saluki/nestjs-template
+FROM node:12-alpine as builder
 
-RUN npm install -g nodemon ts-node eslint
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
+ENV NODE_ENV build
 
-# Bundle app source
-COPY . .
+USER node
 
-EXPOSE 3000
-CMD [ "nodemon" ]
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
+
+WORKDIR /home/node
+
+COPY --chown=node:node package*.json ./
+
+RUN npm ci
+
+COPY --chown=node:node . .
+
+RUN npm run build
+
+
+# ---
+
+FROM node:12-alpine
+
+ENV NODE_ENV production
+
+USER node
+WORKDIR /home/node
+
+COPY --from=builder /home/node/package*.json /home/node/
+COPY --from=builder /home/node/dist/ /home/node/dist/
+
+RUN npm ci
+
+CMD ["npm", "run", "start:prod"]
