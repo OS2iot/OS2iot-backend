@@ -13,10 +13,10 @@ export abstract class DbBaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn()
     updatedAt: Date;
 
     // TODO: Introduce createdBy and updatedBy after user access control system
