@@ -1,4 +1,4 @@
-import { User } from "../entity/User.entity";
+import { User } from "../entity/user.entity";
 import {
     getConnection,
     createConnection,
