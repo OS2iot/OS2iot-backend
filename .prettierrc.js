@@ -5,5 +5,5 @@ module.exports = {
     singleQuote: false,
     useTabs: false,
     bracketSpacing: true,
-    arrowParens: "always",
+    arrowParens: "avoid",
 };

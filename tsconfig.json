@@ -12,6 +12,7 @@
     "baseUrl": "./",
     "incremental": true,
     "noImplicitAny": true,
+    "plugins": ["@nestjs/swagger/plugin"]
   },
   "exclude": ["node_modules", "dist"]
 }

@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
-import { Logger } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
     const NEST_PORT = 3000;
@@ -10,6 +10,8 @@ async function bootstrap() {
     const SWAGGER_PREFIX = CURRENT_VERSION_PREFIX + "/docs";
 
     const app = await NestFactory.create(AppModule);
+    app.setGlobalPrefix(CURRENT_VERSION_PREFIX);
+    app.useGlobalPipes(new ValidationPipe());
 
     const options = new DocumentBuilder()
         .setTitle("OS2IoT - Backend")
@@ -19,8 +21,6 @@ async function bootstrap() {
         .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup(SWAGGER_PREFIX, app, document);
-
-    app.setGlobalPrefix(CURRENT_VERSION_PREFIX);
 
     await app.listen(NEST_PORT);
     const url = await app.getUrl();
