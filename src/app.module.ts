@@ -7,6 +7,9 @@ import { Connection } from "typeorm";
 import { UsersController } from "./users/users.controller";
 import { UsersService } from "./users/users.service";
 import { UsersModule } from "./users/users.module";
+import { ApplicationModule } from "./application/application.module";
+import { ApplicationController } from "./application/application.controller";
+import { ApplicationService } from "./application/application.service";
 
 @Module({
     imports: [
@@ -16,7 +19,7 @@ import { UsersModule } from "./users/users.module";
             port: 5433,
             username: "os2iot",
             password: "toi2so",
-            database: "os2iot-nest",
+            database: "os2iot",
             synchronize: true,
             logging: true,
             autoLoadEntities: true,
@@ -25,9 +28,10 @@ import { UsersModule } from "./users/users.module";
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        ApplicationModule,
     ],
-    controllers: [AppController, UsersController],
-    providers: [AppService, UsersService],
+    controllers: [AppController, UsersController, ApplicationController],
+    providers: [AppService, UsersService, ApplicationService],
 })
 export class AppModule {
     constructor(private connection: Connection) {}
