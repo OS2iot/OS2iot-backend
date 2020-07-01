@@ -15,10 +15,16 @@ describe("AppController (e2e)", () => {
         await app.init();
     });
 
-    it("/ (GET)", () => {
+    afterEach(async () => {
+        // Ensure clean shutdown
+        await app.close();
+    });
+
+    it("/ (GET)", (done) => {
         return request(app.getHttpServer())
             .get("/")
             .expect(200)
-            .expect("OS2IoT backend - See /api/v1/docs for Swagger");
+            .expect("OS2IoT backend - See /api/v1/docs for Swagger")
+            .end(done);
     });
 });

@@ -11,6 +11,7 @@ export class Application extends DbBaseEntity {
     description: string;
 
     @OneToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
         iotdevice => iotdevice.application
     )
