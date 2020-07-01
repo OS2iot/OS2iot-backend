@@ -12,11 +12,11 @@ pipeline {
     }
     stage('Run Jest') {
       steps {
-        sh 'npm run test'
+        sh 'npm run test:cov'
       }
       post {
         always {
-          step([$class: 'CoberturaPublisher', coberturaReportFile: 'output/coverage/jest/cobertura-coverage.xml'])
+          step([$class: 'CoberturaPublisher', coberturaReportFile: 'coverage/cobertura-coverage.xml'])
         }
       }
     }
