@@ -152,3 +152,4 @@ dist
 
 # jest coverage
 output
+coverage-e2e

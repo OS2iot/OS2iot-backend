@@ -17,6 +17,7 @@ import {
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
+    ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { ApplicationService } from "./application.service";
 import { CreateApplicationDto } from "./dto/create-application.dto";
@@ -24,7 +25,6 @@ import { ListAllEntities } from "./dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "./dto/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "./dto/update-application.dto";
-import { DeleteResult } from "typeorm";
 import { DeleteApplicationResponseDto } from "./dto/delete-application-response.dto";
 
 @ApiTags("application")
@@ -51,7 +51,7 @@ export class ApplicationController {
 
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })
-    @ApiBadRequestResponse()
+    @ApiNotFoundResponse()
     async findOne(@Param("id") id: number): Promise<Application> {
         try {
             return await this.applicationService.findOne(id);

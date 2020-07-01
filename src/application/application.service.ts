@@ -39,11 +39,13 @@ export class ApplicationService {
         createApplicationDto: CreateApplicationDto
     ): Promise<Application> {
         const application = new Application();
-        application.name = createApplicationDto.name;
-        application.description = createApplicationDto.description;
-        application.iotDevices = [];
 
-        return this.applicationRepository.save(application);
+        const mappedApplication = this.mapApplicationDtoToApplication(
+            createApplicationDto,
+            application
+        );
+
+        return this.applicationRepository.save(mappedApplication);
     }
 
     async update(
@@ -54,13 +56,28 @@ export class ApplicationService {
             id
         );
 
-        existingApplication.name = updateApplicationDto.name;
-        existingApplication.description = updateApplicationDto.description;
+        const mappedApplication = this.mapApplicationDtoToApplication(
+            updateApplicationDto,
+            existingApplication
+        );
 
-        return this.applicationRepository.save(existingApplication);
+        return this.applicationRepository.save(mappedApplication);
     }
 
     async delete(id: number): Promise<DeleteResult> {
         return this.applicationRepository.delete(id);
+    }
+
+    private mapApplicationDtoToApplication(
+        applicationDto: CreateApplicationDto | UpdateApplicationDto,
+        application: Application
+    ): Application {
+        application.name = applicationDto.name;
+        application.description = applicationDto.description;
+        if (application.iotDevices === undefined || application.iotDevices === null) {
+            application.iotDevices = [];
+        }
+
+        return application;
     }
 }

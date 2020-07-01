@@ -16,7 +16,7 @@ export class UsersService {
     }
 
     async createMany(users: User[]): Promise<void> {
-        await this.connection.transaction(async (manager) => {
+        await this.connection.transaction(async manager => {
             await manager.save(users[0]);
             await manager.save(users[1]);
         });

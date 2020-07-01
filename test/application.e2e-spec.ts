@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, Body } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "../src/application/application.module";
@@ -40,7 +40,7 @@ describe("ApplicationController (e2e)", () => {
         await app.close();
     });
 
-    afterEach(async () => {
+    beforeEach(async () => {
         // Clear data after each test
         await getConnection()
             .createQueryBuilder()
@@ -61,14 +61,15 @@ describe("ApplicationController (e2e)", () => {
             });
     });
 
-    it("(GET) /application/ - with elements already existing", () => {
-        repository.save([
+    it("(GET) /application/ - with elements already existing", async () => {
+        await repository.save([
             { name: "Test", description: "Tester" },
             { name: "Application2", description: "A description" },
         ]);
 
         return request(app.getHttpServer())
             .get("/application/")
+            .send()
             .expect(200)
 
             .expect("Content-Type", /json/)
@@ -76,8 +77,51 @@ describe("ApplicationController (e2e)", () => {
                 expect(response.body.count).toBe(2);
                 expect(response.body.data).toMatchObject([
                     { name: "Test", description: "Tester" },
-                    { name: "Application2", description: "A description" },
+                    {
+                        name: "Application2",
+                        description: "A description",
+                    },
                 ]);
+            });
+    });
+
+    it("(GET) /application/:id - Get one element by id", async () => {
+        const application = await repository.save([
+            { name: "Test", description: "Tester" },
+        ]);
+
+        const id = application[0].id;
+
+        return request(app.getHttpServer())
+            .get(`/application/${id}`)
+            .expect(200)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "Test",
+                    description: "Tester",
+                });
+            });
+    });
+
+    it("(GET) /application/:id - Get one element by id - not found", async () => {
+        const application = await repository.save([
+            { name: "Test", description: "Tester" },
+        ]);
+
+        // should not exist
+        const id = application[0].id + 1;
+
+        return request(app.getHttpServer())
+            .get(`/application/${id}`)
+            .expect(404)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: `No element found by id: ${id}`,
+                });
             });
     });
 
@@ -93,10 +137,81 @@ describe("ApplicationController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     name: "Post Test",
                     description: "Post Tester",
+                    iotDevices: [] as any[],
                 });
             });
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(1);
+    });
+
+    it("(DELETE) /application/ - Delete application", async () => {
+        const application = await repository.save([
+            { name: "Test", description: "Tester" },
+        ]);
+        const id = application[0].id;
+
+        await request(app.getHttpServer())
+            .delete(`/application/${id}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    affected: 1,
+                });
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(0);
+    });
+
+    it("(DELETE) /application/ - Delete application - Not existing", async () => {
+        const application = await repository.save([
+            { name: "Test", description: "Tester" },
+        ]);
+        const id = application[0].id + 1; // Doesn't exist
+
+        await request(app.getHttpServer())
+            .delete(`/application/${id}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    affected: 0,
+                });
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(1);
+    });
+
+    it("(PUT) /application/ - Change application", async () => {
+        const application = await repository.save([
+            { name: "Test", description: "Tester" },
+        ]);
+        const id = application[0].id;
+
+        const putTest = { name: "PUT Test", description: "PUT Tester" };
+
+        await request(app.getHttpServer())
+            .put(`/application/${id}`)
+            .send(putTest)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    id: id,
+                    name: "PUT Test",
+                    description: "PUT Tester",
+                });
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(1);
+        expect(applicationInDatabase[0]).toMatchObject({
+            id: id,
+            name: "PUT Test",
+            description: "PUT Tester",
+        });
     });
 });
