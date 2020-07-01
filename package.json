@@ -71,6 +71,10 @@
             "^.+\\.(t|j)s$": "ts-jest"
         },
         "coverageDirectory": "../coverage",
+        "coverageReporters": [
+            "text",
+            "cobertura"
+        ],
         "testEnvironment": "node"
     }
 }
