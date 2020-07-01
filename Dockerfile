@@ -1,18 +1,19 @@
 # from: https://github.com/Saluki/nestjs-template
-FROM node:12-alpine as builder
+FROM node:12 as builder
 
 ENV NODE_ENV build
 
+RUN npm install -g nest eslint jest
+
 USER node
 
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
-ENV PATH=$PATH:/home/node/.npm-global/bin
+# ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+# ENV PATH=$PATH:/home/node/.npm-global/bin
 
-WORKDIR /home/node
+RUN mkdir -p /tmp/os2iot/backend
+WORKDIR /tmp/os2iot/backend
 
 COPY --chown=node:node package*.json ./
-
-RUN npm install -g ts-node eslint nest
 
 RUN npm ci
 
@@ -20,19 +21,4 @@ COPY --chown=node:node . .
 
 RUN npm run build
 
-
-# ---
-
-FROM node:12-alpine
-
-ENV NODE_ENV production
-
-USER node
-WORKDIR /home/node
-
-COPY --from=builder /home/node/package*.json /home/node/
-COPY --from=builder /home/node/dist/ /home/node/dist/
-
-RUN npm ci
-
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start:dev"]
