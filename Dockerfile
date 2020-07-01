@@ -12,7 +12,7 @@ WORKDIR /home/node
 
 COPY --chown=node:node package*.json ./
 
-RUN npm install -g eslint
+RUN npm install -g ts-node eslint nest
 
 RUN npm ci
 
