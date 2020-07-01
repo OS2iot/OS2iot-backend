@@ -18,7 +18,8 @@
             "@device-data-controller/*": ["src/device-data-controller/*"],
             "@dto/*": ["src/entities/dto/*"],
             "@entities/*": ["src/entities/*"],
-            "@modules/*": ["src/modules/*"]
+            "@modules/*": ["src/modules/*"],
+            "@loaders/*": ["src/loaders/*"]
         }
     },
     "exclude": ["node_modules", "dist"]

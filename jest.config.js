@@ -9,6 +9,7 @@ module.exports = {
         "^@dto/(.*)": "<rootDir>//src/entities/dto/$1",
         "^@entities/(.*)": "<rootDir>//src/entities/$1",
         "^@modules/(.*)": "<rootDir>//src/modules/$1",
+        "^@loaders/(.*)": "<rootDir>//src/loaders/$1",
     },
     moduleFileExtensions: ["js", "json", "ts"],
     rootDir: "./",
