@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Application } from "../../entity/applikation.entity";
+import { Application } from "@entities/applikation.entity";
 
 export class ListAllApplicationsReponseDto {
     @ApiProperty({ type: () => [Application] })
