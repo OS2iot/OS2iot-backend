@@ -1,6 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import { AppModule } from "./app.module";
+import { AppModule } from "./modules/app.module";
 import { Logger, ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
@@ -24,7 +24,7 @@ async function bootstrap() {
 
     await app.listen(NEST_PORT);
     const url = await app.getUrl();
-    await Logger.log(`Swagger on: ${url}${SWAGGER_PREFIX}`);
-    await Logger.log(`Application started on: ${url}${CURRENT_VERSION_PREFIX}`);
+    Logger.log(`Swagger on: ${url}${SWAGGER_PREFIX}`);
+    Logger.log(`Application started on: ${url}${CURRENT_VERSION_PREFIX}`);
 }
 bootstrap();

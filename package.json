@@ -18,7 +18,7 @@
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-        "test:e2e": "jest --config ./jest-e2e.json --runInBand --detectOpenHandles"
+        "test:e2e": "jest --config ./jest-e2e.js --detectOpenHandles"
     },
     "dependencies": {
         "@nestjs/common": "^7.0.0",
@@ -29,12 +29,14 @@
         "@nestjs/typeorm": "^7.1.0",
         "class-transformer": "^0.2.3",
         "class-validator": "^0.12.2",
+        "njwt": "^1.0.0",
         "pg": "^8.2.1",
         "reflect-metadata": "^0.1.13",
         "rimraf": "^3.0.2",
         "rxjs": "^6.5.4",
         "swagger-ui-express": "^4.1.4",
-        "typeorm": "^0.2.25"
+        "typeorm": "^0.2.25",
+        "uuid": "^8.2.0"
     },
     "devDependencies": {
         "@nestjs/cli": "^7.0.0",
@@ -50,6 +52,7 @@
         "eslint-config-prettier": "^6.10.0",
         "eslint-plugin-import": "^2.20.1",
         "jest": "26.0.1",
+        "jest-module-name-mapper": "^0.1.5",
         "prettier": "^1.19.1",
         "sqlite3": "^4.2.0",
         "supertest": "^4.0.2",
@@ -58,23 +61,5 @@
         "ts-node": "^8.6.2",
         "tsconfig-paths": "^3.9.0",
         "typescript": "^3.7.4"
-    },
-    "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "ts"
-        ],
-        "rootDir": "src",
-        "testRegex": ".spec.ts$",
-        "transform": {
-            "^.+\\.(t|j)s$": "ts-jest"
-        },
-        "coverageDirectory": "../coverage",
-        "coverageReporters": [
-            "text",
-            "cobertura"
-        ],
-        "testEnvironment": "node"
     }
 }

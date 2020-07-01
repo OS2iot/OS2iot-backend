@@ -1,4 +1,4 @@
-import { IoTDevice } from "./iotdevice.entity";
+import { IoTDevice } from "./iot-device.entity";
 import { Column, ChildEntity } from "typeorm";
 
 @ChildEntity()

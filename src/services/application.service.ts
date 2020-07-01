@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Application } from "../entity/applikation.entity";
+import { Application } from "@entities/applikation.entity";
 import { Repository, DeleteResult } from "typeorm";
-import { CreateApplicationDto } from "./dto/create-application.dto";
-import { ListAllEntities } from "./dto/list-all-entities.dto";
-import { ListAllApplicationsReponseDto } from "./dto/list-all-applications-response.dto";
-import { UpdateApplicationDto } from "./dto/update-application.dto";
+import { CreateApplicationDto } from "@dto/create-application.dto";
+import { ListAllEntities } from "@dto/list-all-entities.dto";
+import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
+import { UpdateApplicationDto } from "@dto/update-application.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -74,7 +74,10 @@ export class ApplicationService {
     ): Application {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
-        if (application.iotDevices === undefined || application.iotDevices === null) {
+        if (
+            application.iotDevices === undefined ||
+            application.iotDevices === null
+        ) {
             application.iotDevices = [];
         }
 

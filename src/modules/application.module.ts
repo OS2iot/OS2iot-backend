@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Application } from "../entity/applikation.entity";
-import { ApplicationController } from "./application.controller";
-import { ApplicationService } from "./application.service";
-import { IoTDevice } from "../entity/iotdevice.entity";
+import { Application } from "@entities/applikation.entity";
+import { ApplicationController } from "@admin-controller/application.controller";
+import { ApplicationService } from "@services/application.service";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 @Module({
     imports: [TypeOrmModule.forFeature([Application, IoTDevice])],

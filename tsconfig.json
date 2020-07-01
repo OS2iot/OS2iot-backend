@@ -11,7 +11,15 @@
         "outDir": "./dist",
         "baseUrl": "./",
         "incremental": true,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "paths": {
+            "@services/*": ["src/services/*"],
+            "@admin-controller/*": ["src/admin-controller/*"],
+            "@device-data-controller/*": ["src/device-data-controller/*"],
+            "@dto/*": ["src/entities/dto/*"],
+            "@entities/*": ["src/entities/*"],
+            "@modules/*": ["src/modules/*"]
+        }
     },
     "exclude": ["node_modules", "dist"]
 }

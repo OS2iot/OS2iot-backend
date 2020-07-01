@@ -11,7 +11,6 @@ import {
     Delete,
     BadRequestException,
 } from "@nestjs/common";
-import { Application } from "../entity/applikation.entity";
 import {
     ApiProduces,
     ApiTags,
@@ -19,13 +18,14 @@ import {
     ApiBadRequestResponse,
     ApiNotFoundResponse,
 } from "@nestjs/swagger";
-import { ApplicationService } from "./application.service";
-import { CreateApplicationDto } from "./dto/create-application.dto";
-import { ListAllEntities } from "./dto/list-all-entities.dto";
-import { ListAllApplicationsReponseDto } from "./dto/list-all-applications-response.dto";
+import { Application } from "@entities/applikation.entity";
+import { ApplicationService } from "@services/application.service";
+import { CreateApplicationDto } from "@dto/create-application.dto";
+import { ListAllEntities } from "@dto/list-all-entities.dto";
+import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
-import { UpdateApplicationDto } from "./dto/update-application.dto";
-import { DeleteApplicationResponseDto } from "./dto/delete-application-response.dto";
+import { UpdateApplicationDto } from "@dto/update-application.dto";
+import { DeleteApplicationResponseDto } from "@dto/delete-application-response.dto";
 
 @ApiTags("application")
 @Controller("application")

@@ -1,15 +1,12 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { AppController } from "@admin-controller/app.controller";
+import { AppService } from "@services/app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Connection } from "typeorm";
-import { UsersController } from "./users/users.controller";
-import { UsersService } from "./users/users.service";
-import { UsersModule } from "./users/users.module";
-import { ApplicationModule } from "./application/application.module";
-import { ApplicationController } from "./application/application.controller";
-import { ApplicationService } from "./application/application.service";
+import { ApplicationModule } from "./application.module";
+import { ApplicationController } from "@admin-controller/application.controller";
+import { ApplicationService } from "@services/application.service";
 
 @Module({
     imports: [
@@ -24,14 +21,13 @@ import { ApplicationService } from "./application/application.service";
             logging: true,
             autoLoadEntities: true,
         }),
-        UsersModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),
         ApplicationModule,
     ],
-    controllers: [AppController, UsersController, ApplicationController],
-    providers: [AppService, UsersService, ApplicationService],
+    controllers: [AppController, ApplicationController],
+    providers: [AppService, ApplicationService],
 })
 export class AppModule {
     constructor(private connection: Connection) {}

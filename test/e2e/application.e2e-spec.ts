@@ -2,9 +2,9 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ApplicationModule } from "../src/application/application.module";
+import { ApplicationModule } from "@modules/application.module";
 import { Repository, getConnection } from "typeorm";
-import { Application } from "../src/entity/applikation.entity";
+import { Application } from "@entities/applikation.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
