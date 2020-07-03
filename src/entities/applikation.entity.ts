@@ -1,6 +1,6 @@
 import { Entity, Column, OneToMany } from "typeorm";
-import { DbBaseEntity } from "./base.entity";
-import { IoTDevice } from "./iot-device.entity";
+import { DbBaseEntity } from "@entities/base.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 @Entity("application")
 export class Application extends DbBaseEntity {

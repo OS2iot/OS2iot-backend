@@ -25,9 +25,9 @@ import { ListAllEntities } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
-import { DeleteApplicationResponseDto } from "@dto/delete-application-response.dto";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
-@ApiTags("application")
+@ApiTags("Application")
 @Controller("application")
 export class ApplicationController {
     constructor(private applicationService: ApplicationService) {}
@@ -94,10 +94,10 @@ export class ApplicationController {
     @ApiBadRequestResponse()
     async delete(
         @Param("id") id: number
-    ): Promise<DeleteApplicationResponseDto> {
+    ): Promise<DeleteResponseDto> {
         try {
             const result = await this.applicationService.delete(id);
-            return new DeleteApplicationResponseDto(result.affected);
+            return new DeleteResponseDto(result.affected);
         } catch (err) {
             throw new BadRequestException(err);
         }

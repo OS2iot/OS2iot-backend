@@ -4,9 +4,12 @@ import { AppController } from "@admin-controller/app.controller";
 import { AppService } from "@services/app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Connection } from "typeorm";
-import { ApplicationModule } from "./application.module";
+import { ApplicationModule } from "@modules/application.module";
 import { ApplicationController } from "@admin-controller/application.controller";
 import { ApplicationService } from "@services/application.service";
+import { IoTDeviceController } from "@admin-controller/iot-device.controller";
+import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceModule } from "@modules/iot-device.module";
 
 @Module({
     imports: [
@@ -25,9 +28,10 @@ import { ApplicationService } from "@services/application.service";
             isGlobal: true,
         }),
         ApplicationModule,
+        IoTDeviceModule,
     ],
-    controllers: [AppController, ApplicationController],
-    providers: [AppService, ApplicationService],
+    controllers: [AppController, ApplicationController, IoTDeviceController],
+    providers: [AppService, ApplicationService, IoTDeviceService],
 })
 export class AppModule {
     constructor(private connection: Connection) {}
