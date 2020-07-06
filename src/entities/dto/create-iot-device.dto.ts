@@ -1,5 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MinLength, MaxLength, Min, Max, IsOptional } from "class-validator";
+import {
+    IsString,
+    MinLength,
+    MaxLength,
+    Min,
+    Max,
+    IsOptional,
+} from "class-validator";
 import { IoTDeviceType } from "@enum/device-type.enum";
 
 export class CreateIoTDeviceDto {

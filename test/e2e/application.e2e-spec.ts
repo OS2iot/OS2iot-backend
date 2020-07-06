@@ -1,10 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
-import { Repository, getConnection } from "typeorm";
+import { Repository } from "typeorm";
 import { Application } from "@entities/applikation.entity";
+import { clearDatabase } from "./test-helpers";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -22,7 +23,7 @@ describe("ApplicationController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: true,
+                    logging: false,
                     autoLoadEntities: true,
                 }),
             ],
@@ -41,14 +42,14 @@ describe("ApplicationController (e2e)", () => {
     });
 
     beforeEach(async () => {
-        // Clear data after each test
-        await getConnection()
-            .createQueryBuilder()
-            .delete()
-            .from(Application)
-            .execute();
+        // Clear data before each test
+        await clearDatabase();
     });
 
+    afterEach(async () => {
+        // Clear data after each test
+        await clearDatabase();
+    });
     it("(GET) /application/ - empty", () => {
         return request(app.getHttpServer())
             .get("/application/")
@@ -74,6 +75,7 @@ describe("ApplicationController (e2e)", () => {
 
             .expect("Content-Type", /json/)
             .then(response => {
+                Logger.log(response.body);
                 expect(response.body.count).toBe(2);
                 expect(response.body.data).toMatchObject([
                     { name: "Test", description: "Tester" },
@@ -147,7 +149,7 @@ describe("ApplicationController (e2e)", () => {
 
     it("(DELETE) /application/ - Delete application", async () => {
         const application = await repository.save([
-            { name: "Test", description: "Tester" },
+            { name: "test sletning", description: "test sletning description" },
         ]);
         const id = application[0].id;
 

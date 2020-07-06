@@ -2,11 +2,12 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Repository, getConnection } from "typeorm";
+import { Repository, getConnection, getManager } from "typeorm";
 import { Application } from "@entities/applikation.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-import { GenericHTTPDevice } from "../../src/entities/generic-http-device.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { clearDatabase } from "./test-helpers";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -45,32 +46,23 @@ describe("IoTDeviceController (e2e)", () => {
     });
 
     beforeEach(async () => {
-        // Clear data after each test
-        await getConnection()
-            .createQueryBuilder()
-            .delete()
-            .from(Application)
-            .execute();
-
-        await getConnection()
-            .createQueryBuilder()
-            .delete()
-            .from(IoTDevice)
-            .execute();
+        await clearDatabase();
     });
 
-    it("(GET) /iot-device/:id - none", () => {
+    afterEach(async () => {
+        await clearDatabase();
+    });
+
+    it("(GET) /iot-device/:id - none", async () => {
         const id = 1;
-        return request(app.getHttpServer())
+        const response = await request(app.getHttpServer())
             .get("/iot-device/" + id)
             .expect(404)
 
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    message: `No element found by id: ${id}`,
-                });
-            });
+            .expect("Content-Type", /json/);
+        await expect(response.body).toMatchObject({
+            message: `No element found by id: ${id}`,
+        });
     });
 
     it("(GET) /iot-device/:id - one", async () => {
@@ -82,23 +74,162 @@ describe("IoTDeviceController (e2e)", () => {
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
         device.application = applications[0];
+        device.apiKey = "asdf";
 
-        const iotDevice = await repository.save([device]);
+        const manager = getManager();
+        const iotDevice = await manager.save(device);
 
-        const iotDeviceId = iotDevice[0].id;
-        return request(app.getHttpServer())
+        const iotDeviceId = iotDevice.id;
+        return await request(app.getHttpServer())
             .get("/iot-device/" + iotDeviceId)
             .expect(200)
 
             .expect("Content-Type", /json/)
             .then(response => {
+                // console.log(response.body);
                 expect(response.body).toMatchObject({
-                    name: "IoT device",
-                    type: "GENERIC_HTTP",
+                    name: "HTTP device",
                     application: {
                         id: appId,
                     },
                 });
             });
+    });
+
+    it("(POST) /iot-device/", async () => {
+        const applications = await applicationRepository.save([
+            { name: "Test", description: "Tester", iotDevices: [] },
+        ]);
+        const appId = applications[0].id;
+        const testIoTDevice = {
+            name: "created",
+            type: "GENERIC_HTTP",
+            applicationId: appId,
+            comment: "string",
+        };
+        return await request(app.getHttpServer())
+            .post("/iot-device/")
+            .send(testIoTDevice)
+            .expect(201)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "created",
+                    type: "GENERIC_HTTP",
+                    application: {
+                        id: appId,
+                    },
+                    comment: "string",
+                    location: null,
+                    commentOnLocation: null,
+                });
+            });
+    });
+
+    it("(PUT) /iot-device/:id", async () => {
+        const applications = await applicationRepository.save([
+            { name: "Test", description: "Tester", iotDevices: [] },
+        ]);
+        const appId = applications[0].id;
+
+        const device = new GenericHTTPDevice();
+        device.name = "HTTP device";
+        device.application = applications[0];
+        // @Hack: to call beforeInsert (private)
+        (device as any).beforeInsert();
+
+        const manager = getManager();
+        const savedIoTDevice = await manager.save(device);
+
+        const iotDeviceId = savedIoTDevice.id;
+        const oldUuid = savedIoTDevice.apiKey;
+
+        const changedIoTDeviceJson = {
+            name: "changed",
+            type: "GENERIC_HTTP",
+            applicationId: appId,
+            comment: "new comment",
+        };
+
+        return await request(app.getHttpServer())
+            .put("/iot-device/" + iotDeviceId)
+            .send(changedIoTDeviceJson)
+            .expect(200)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "changed",
+                    type: "GENERIC_HTTP",
+                    application: {
+                        id: appId,
+                    },
+                    comment: "new comment",
+                    location: null,
+                    commentOnLocation: null,
+                    apiKey: oldUuid, // Check that the apiKey is preserved.
+                });
+            });
+    });
+
+    it("(DELETE) /iot-device/:id", async () => {
+        const applications = await applicationRepository.save([
+            { name: "Test", description: "Tester", iotDevices: [] },
+        ]);
+
+        const device = new GenericHTTPDevice();
+        device.name = "HTTP device";
+        device.application = applications[0];
+        // @Hack: to call beforeInsert (private)
+        (device as any).beforeInsert();
+
+        const manager = getManager();
+        const savedIoTDevice = await manager.save(device);
+
+        const iotDeviceId = savedIoTDevice.id;
+
+        await request(app.getHttpServer())
+            .delete("/iot-device/" + iotDeviceId)
+            .expect(200)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({ affected: 1 });
+            });
+
+        const [res, count] = await repository.findAndCount();
+        expect(res.length).toBe(0);
+        expect(count).toBe(0);
+    });
+
+    it("(DELETE) /iot-device/:id - doesn't exist", async () => {
+        const applications = await applicationRepository.save([
+            { name: "Test", description: "Tester", iotDevices: [] },
+        ]);
+
+        const device = new GenericHTTPDevice();
+        device.name = "HTTP device";
+        device.application = applications[0];
+        // @Hack: to call beforeInsert (private)
+        (device as any).beforeInsert();
+
+        const manager = getManager();
+        const savedIoTDevice = await manager.save(device);
+
+        const iotDeviceId = savedIoTDevice.id + 1; // Should not exist
+
+        await request(app.getHttpServer())
+            .delete("/iot-device/" + iotDeviceId)
+            .expect(200)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({ affected: 0 });
+            });
+
+        const [res, count] = await repository.findAndCount();
+        expect(res.length).toBe(1);
+        expect(count).toBe(1);
     });
 });

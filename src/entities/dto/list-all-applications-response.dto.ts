@@ -1,4 +1,6 @@
 import { Application } from "@entities/applikation.entity";
 import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-reponse.dto";
 
-export class ListAllApplicationsReponseDto extends ListAllEntitiesResponseDto<Application> {}
+export class ListAllApplicationsReponseDto extends ListAllEntitiesResponseDto<
+    Application
+> {}

@@ -13,7 +13,8 @@ export class Application extends DbBaseEntity {
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
-        iotdevice => iotdevice.application
+        iotdevice => iotdevice.application,
+        { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
 

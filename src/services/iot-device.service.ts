@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DeleteResult } from "typeorm";
+import { Repository, DeleteResult, getManager } from "typeorm";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { iotDeviceTypeMap } from "@enum/device-type.enum";
+import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
@@ -48,7 +48,9 @@ export class IoTDeviceService {
             iotDevice
         );
 
-        return this.iotDeviceRepository.save(mappedIoTDevice);
+        // Use the generic manager since we cannot use a general repository.
+        const entityManager = getManager();
+        return entityManager.save(mappedIoTDevice);
     }
 
     async update(
@@ -66,7 +68,6 @@ export class IoTDeviceService {
 
         const res = this.iotDeviceRepository.save(mappedIoTDevice);
 
-        Logger.log(res);
         return res;
     }
 
@@ -94,8 +95,6 @@ export class IoTDeviceService {
             iotDevice.application = null;
         }
 
-        Logger.log(createIoTDeviceDto.longitude != null);
-        Logger.log(createIoTDeviceDto.latitude != null);
         if (
             createIoTDeviceDto.longitude != null &&
             createIoTDeviceDto.latitude != null

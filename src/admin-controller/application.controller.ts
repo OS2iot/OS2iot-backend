@@ -92,9 +92,7 @@ export class ApplicationController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing Application" })
     @ApiBadRequestResponse()
-    async delete(
-        @Param("id") id: number
-    ): Promise<DeleteResponseDto> {
+    async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
         try {
             const result = await this.applicationService.delete(id);
             return new DeleteResponseDto(result.affected);

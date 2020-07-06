@@ -3,9 +3,12 @@ import { DbBaseEntity } from "@entities/base.entity";
 import { Application } from "@entities/applikation.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Entity("iot_device")
-@TableInheritance({ column: { type: "varchar", name: "type" } })
+@TableInheritance({
+    column: { type: "enum", name: "type", enum: IoTDeviceType },
+})
 export abstract class IoTDevice extends DbBaseEntity {
     @Column()
     name: string;
@@ -13,7 +16,8 @@ export abstract class IoTDevice extends DbBaseEntity {
     @ManyToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => Application,
-        application => application.iotDevices
+        application => application.iotDevices,
+        { onDelete: "CASCADE" }
     )
     application: Application;
 
@@ -32,6 +36,11 @@ export abstract class IoTDevice extends DbBaseEntity {
     @Column({ nullable: true })
     @Length(0, 1024)
     comment?: string;
+
+    @Column("enum", {
+        enum: IoTDeviceType,
+    })
+    type: IoTDeviceType;
 
     toString(): string {
         return `IoTDevices: id: ${this.id} - name: ${this.name}`;
