@@ -1,6 +1,6 @@
 import { Entity, Column, OneToMany } from "typeorm";
-import { DbBaseEntity } from "./base.entity";
-import { IoTDevice } from "./iot-device.entity";
+import { DbBaseEntity } from "@entities/base.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 @Entity("application")
 export class Application extends DbBaseEntity {
@@ -13,7 +13,8 @@ export class Application extends DbBaseEntity {
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
-        iotdevice => iotdevice.application
+        iotdevice => iotdevice.application,
+        { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
 

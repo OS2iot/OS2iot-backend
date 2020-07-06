@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "@modules/app.module";
-import { setupSwagger } from './swagger';
+import { setupSwagger } from "./swagger";
 
 export async function setupNestJs(config: {
     NEST_PORT: number;

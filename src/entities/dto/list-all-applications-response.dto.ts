@@ -1,9 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
 import { Application } from "@entities/applikation.entity";
+import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-reponse.dto";
 
-export class ListAllApplicationsReponseDto {
-    @ApiProperty({ type: () => [Application] })
-    data: Application[];
-    @ApiProperty()
-    count: number;
-}
+export class ListAllApplicationsReponseDto extends ListAllEntitiesResponseDto<
+    Application
+> {}
