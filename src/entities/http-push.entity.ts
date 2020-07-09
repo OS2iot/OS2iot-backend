@@ -5,13 +5,13 @@ import {
 } from "typeorm";
 
 @Entity("httpPush")
-export class HttpPush {
+export class HttpPush  {
 
     @PrimaryColumn()
     targetUrl: string;
 
     @Column()
-    timeout: string;
+    timeout: number;
 
     @Column()
     authorizationHeader : string;

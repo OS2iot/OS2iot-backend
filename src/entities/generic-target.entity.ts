@@ -5,13 +5,13 @@ import {
 } from "typeorm";
 
 @Entity("genericTarget")
-export class GenericTarget {
+export class GenericTarget  {
 
     @PrimaryColumn()
     targetName: string;
 
     @Column("simple-array")
-    applicationId: string;
+    applicationId: number;
 
     @Column("simple-array")
     devices: string;

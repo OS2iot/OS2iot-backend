@@ -12,7 +12,7 @@ export class CreateGenericTargetDto {
     @IsOptional()
     @IsString()
     @MaxLength(1024,{each:true})
-    applicationId: string;
+    applicationId: number;
 
     @ApiProperty({ required: true })
     @IsOptional()
