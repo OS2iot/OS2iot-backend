@@ -10,10 +10,10 @@ export class GenericTarget {
     @PrimaryColumn()
     targetName: string;
 
-    @Column()
+    @Column("simple-array")
     applicationId: string;
 
-    @Column()
+    @Column("simple-array")
     devices: string;
 
     toString(): string {
