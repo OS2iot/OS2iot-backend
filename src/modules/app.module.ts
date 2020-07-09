@@ -10,9 +10,9 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-import { EndpointModule } from "@modules/endpoint.module";
-import { EndpointService } from "@services/endpoint.service";
-import { EndpointController } from "@admin-controller/endpoint.controller";
+import { GenericTargetModule } from "@modules/generic-target.module";
+import { GenericTargetService } from "@services/generic-target.service";
+import { GenericTargetController } from "@admin-controller/generic-target.controller";
 
 
 @Module({
@@ -33,10 +33,10 @@ import { EndpointController } from "@admin-controller/endpoint.controller";
         }),
         ApplicationModule,
         IoTDeviceModule,
-        EndpointModule,
+        GenericTargetModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController, EndpointController],
-    providers: [AppService, ApplicationService, IoTDeviceService, EndpointService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, GenericTargetController],
+    providers: [AppService, ApplicationService, IoTDeviceService, GenericTargetService],
 })
 export class AppModule {
     constructor(private connection: Connection) { }

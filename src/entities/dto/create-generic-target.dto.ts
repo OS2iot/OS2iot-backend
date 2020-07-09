@@ -1,22 +1,22 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
 
-export class CreateEndpointDto {
+export class CreateGenericTargetDto {
     @ApiProperty({ required: true })
     @IsString()
     @MinLength(1)
     @MaxLength(50)
-    apiKey: string;
+    targetName: string;
 
     @ApiProperty({ required: true })
     @IsOptional()
     @IsString()
     @MaxLength(1024,{each:true})
-    endpointUrl: string;
+    applicationId: string;
 
     @ApiProperty({ required: true })
     @IsOptional()
     @IsString()
-    @MaxLength(1024)
-    targetType: string;
+    @MaxLength(1024,{each:true})
+    devices: string;
 }
