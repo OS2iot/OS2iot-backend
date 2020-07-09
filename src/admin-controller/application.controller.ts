@@ -95,6 +95,7 @@ export class ApplicationController {
     async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
         try {
             const result = await this.applicationService.delete(id);
+
             if(result.affected===0) {
                 throw new  NotFoundException("Id does not exist");
                 return;
