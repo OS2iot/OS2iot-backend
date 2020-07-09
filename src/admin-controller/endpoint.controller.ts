@@ -30,6 +30,17 @@ export class EndpointController {
     constructor(private endpointService: EndpointService) {}
 
 
+    @Get(":apiKey")
+    @ApiOperation({ summary: "Find endpoints by apiKey" })
+    @ApiNotFoundResponse()
+    async find(@Param("apiKey") apiKey: string): Promise<Endpoint> {
+        try {
+            return await this.endpointService.findOne(apiKey);
+        } catch (err) {
+            throw new NotFoundException(`No element found by id: ${apiKey}`);
+        }
+    }
+
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Endpoint" })
@@ -39,38 +50,37 @@ export class EndpointController {
     ): Promise<Endpoint> {
         const endpoint = this.endpointService.create(
             (CreateEndpointDto) as any
-         
         );
         return createEndpointDto;
     }
 
-    /*
-    @Put(":id")
+    
+    @Put(":apiKey")
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing Endpoint" })
     @ApiBadRequestResponse()
     async update(
-        @Param("id") id: number,
+        @Param("apiKey") apiKey: string,
         @Body() updateEndpointDto: UpdateEndpointDto
     ): Promise<Endpoint> {
         const endpoint = await this.endpointService.update(
-            id,
+            apiKey,
             updateEndpointDto
         );
 
         return endpoint;
     }
     
-    @Delete(":id")
+    @Delete(":apiKey")
     @ApiOperation({ summary: "Delete an existing Endpoint" })
     @ApiBadRequestResponse()
-    async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
+    async delete(@Param("apiKey") apiKey: string): Promise<DeleteResponseDto> {
         try {
-            const result = await this.endpointService.delete(id);
+            const result = await this.endpointService.delete(apiKey);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             throw new BadRequestException(err);
         }
     }
-    */
+    
 }

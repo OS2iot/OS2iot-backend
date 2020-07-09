@@ -12,6 +12,11 @@ export class EndpointService {
         private endpointRepository: Repository<Endpoint>
     ) {}
 
+    async findOne(apiKey: string): Promise<Endpoint> {
+        return await this.endpointRepository.findOneOrFail(apiKey, {
+            relations: ["application"],
+        });
+    }
     
     async create(
         createEndpointDto: CreateEndpointDto
@@ -27,11 +32,11 @@ export class EndpointService {
     }
 
     async update(
-        id: number,
+        apiKey: string,
         updateEndpointDto: UpdateEndpointDto
     ): Promise<Endpoint> {
         const existingEndpoint = await this.endpointRepository.findOneOrFail(
-            id
+            apiKey
         );
 
         const mappedEndpoint = this.mapEndpointDtoToEndpoint(
@@ -42,8 +47,8 @@ export class EndpointService {
         return this.endpointRepository.save(mappedEndpoint);
     }
 
-    async delete(id: number): Promise<DeleteResult> {
-        return this.endpointRepository.delete(id);
+    async delete(apiKey: string): Promise<DeleteResult> {
+        return this.endpointRepository.delete(apiKey);
     }
 
     private mapEndpointDtoToEndpoint
@@ -56,9 +61,10 @@ export class EndpointService {
         endpoint.endpointUrl = endpointDto.endpointUrl;
         endpoint.apiKey = endpointDto.apiKey;
         if (
-            endpoint.apiKey === undefined ||
-            endpoint.apiKey === null
+            endpoint.apiKey !== undefined ||
+            endpoint.apiKey !== null 
         ) {
+            endpoint.apiKey
             endpoint.endpointUrl.push("asdsa");
         }
 
