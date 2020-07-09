@@ -97,7 +97,7 @@ export class ApplicationController {
             const result = await this.applicationService.delete(id);
 
             if(result.affected===0) {
-                throw new  NotFoundException("Id does not exist");
+                throw new  NotFoundException("MESSAGE.ID-DOES-NOT-EXIST");
                 return;
             }
             return new DeleteResponseDto(result.affected);
