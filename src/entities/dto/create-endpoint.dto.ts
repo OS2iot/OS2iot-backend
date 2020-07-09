@@ -11,6 +11,12 @@ export class CreateEndpointDto {
     @ApiProperty({ required: true })
     @IsOptional()
     @IsString()
+    @MaxLength(1024,{each:true})
+    endpointUrl: string;
+
+    @ApiProperty({ required: true })
+    @IsOptional()
+    @IsString()
     @MaxLength(1024)
-    endpointUrl: [string];
+    targetType: string;
 }

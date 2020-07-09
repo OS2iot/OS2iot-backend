@@ -37,7 +37,7 @@ export class EndpointController {
         try {
             return await this.endpointService.findOne(apiKey);
         } catch (err) {
-            throw new NotFoundException(`No element found by id: ${apiKey}`);
+            throw new NotFoundException(`No element found by apiKey: ${apiKey}`);
         }
     }
 
@@ -45,12 +45,8 @@ export class EndpointController {
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Endpoint" })
     @ApiBadRequestResponse()
-    async create(
-        @Body() createEndpointDto: CreateEndpointDto
-    ): Promise<Endpoint> {
-        const endpoint = this.endpointService.create(
-            (CreateEndpointDto) as any
-        );
+    async create(@Body() createEndpointDto: CreateEndpointDto): Promise<Endpoint> {
+        const endpoint = this.endpointService.create( createEndpointDto );
         return createEndpointDto;
     }
 

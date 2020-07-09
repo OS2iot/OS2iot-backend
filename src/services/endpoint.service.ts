@@ -60,12 +60,14 @@ export class EndpointService {
     ): Endpoint {
         endpoint.endpointUrl = endpointDto.endpointUrl;
         endpoint.apiKey = endpointDto.apiKey;
+        endpoint.targetType = endpointDto.targetType;
+
         if (
             endpoint.apiKey !== undefined ||
-            endpoint.apiKey !== null 
+            endpoint.apiKey !== null ||
+            endpoint.targetType !== null 
         ) {
-            endpoint.apiKey
-            endpoint.endpointUrl.push("asdsa");
+           
         }
 
         return endpoint;

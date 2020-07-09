@@ -6,13 +6,17 @@ import {
 
 @Entity("endpoint")
 export class Endpoint {
-    @Column("simple-array")
-    endpointUrl: string[];
 
     @PrimaryColumn()
     apiKey: string;
 
+    @Column()
+    targetType: string;
+
+    @Column("simple-array")
+    endpointUrl: string;
+
     toString(): string {
-        return `endpointUrl: ${this.endpointUrl} - apikey: ${this.apiKey}`;
+        return `endpointUrl: ${this.endpointUrl} - type:${this.targetType} apikey: ${this.apiKey}`;
     }
 }
