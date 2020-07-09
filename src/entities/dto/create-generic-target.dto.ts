@@ -10,8 +10,6 @@ export class CreateGenericTargetDto {
 
     @ApiProperty({ required: true })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024,{each:true})
     applicationId: number;
 
     @ApiProperty({ required: true })

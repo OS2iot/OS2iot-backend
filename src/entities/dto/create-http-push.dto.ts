@@ -10,8 +10,6 @@ export class CreateHttpPushDto {
 
     @ApiProperty({ required: true })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     timeout: number;
 
     @ApiProperty({ required: true })
