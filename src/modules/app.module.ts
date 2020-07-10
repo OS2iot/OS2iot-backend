@@ -10,9 +10,10 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-import { GenericTargetModule } from "@modules/generic-target.module";
-import { GenericTargetService } from "@services/generic-target.service";
-import { GenericTargetController } from "@admin-controller/generic-target.controller";
+
+import { DataTargetModule } from "@modules/data-target.module";
+import { DataTargetService } from "@services/data-target.service";
+import { DataTargetController } from "@admin-controller/data-target.controller";
 
 
 import { HttpPushModule } from "@modules/http-push.module";
@@ -38,11 +39,11 @@ import { HttpPushController } from "@admin-controller/http-push.controller";
         }),
         ApplicationModule,
         IoTDeviceModule,
-        GenericTargetModule,
+        DataTargetModule,
         HttpPushModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController, GenericTargetController,HttpPushController],
-    providers: [AppService, ApplicationService, IoTDeviceService, GenericTargetService,HttpPushService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, DataTargetController,HttpPushController],
+    providers: [AppService, ApplicationService, IoTDeviceService, DataTargetService,HttpPushService],
 })
 export class AppModule {
     constructor(private connection: Connection) { }

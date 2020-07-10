@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
 
-export class CreateGenericTargetDto {
+export class CreateDataTargetDto {
     @ApiProperty({ required: true })
     @IsString()
     @MinLength(1)

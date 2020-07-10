@@ -19,6 +19,7 @@ export class ApplicationService {
     ): Promise<ListAllApplicationsReponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where: {},
+                     
             take: query.offset,
             skip: query.offset,
         });

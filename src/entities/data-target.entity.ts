@@ -4,8 +4,8 @@ import {
     PrimaryColumn,
 } from "typeorm";
 
-@Entity("genericTarget")
-export class GenericTarget  {
+@Entity("dataTarget")
+export class DataTarget  {
 
     @PrimaryColumn()
     targetName: string;
