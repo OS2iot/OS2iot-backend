@@ -18,6 +18,9 @@ export class HttpPush  extends DbBaseEntity {
     @Column()
     authorizationHeader : string;
 
+    @Column()
+    dataTargetId: number;
+
     @OneToOne(
         type => DataTarget,
         dataTarget => dataTarget.httpPush,

@@ -11,6 +11,9 @@ export class CreateHttpPushDto {
     @ApiProperty({ required: true })
     timeout: number;
 
+    @ApiProperty({ required: true })
+    dataTargetId: number;
+
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
