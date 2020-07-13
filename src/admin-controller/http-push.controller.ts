@@ -20,9 +20,9 @@ import {
 } from "@nestjs/swagger";
 import { HttpPushService } from "@services/http-push.service";
 import { HttpPush } from "@entities/http-push.entity";
-import { CreateHttpPushDto } from "@dto/create-http-push.dto";
-import { UpdateHttpPushDto } from "@dto/update-http-push.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
+import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
+import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 
 @ApiTags("HttpPush")
 @Controller("httpPush")

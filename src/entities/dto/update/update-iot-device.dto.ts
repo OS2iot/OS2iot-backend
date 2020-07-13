@@ -1,3 +1,3 @@
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { CreateIoTDeviceDto } from "@dto/create/create-iot-device.dto";
 
 export class UpdateIoTDeviceDto extends CreateIoTDeviceDto {}

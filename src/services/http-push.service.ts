@@ -2,8 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { HttpPush } from "@entities/http-push.entity";
 import { Repository, DeleteResult } from "typeorm";
-import { CreateHttpPushDto } from "@dto/create-http-push.dto";
-import { UpdateHttpPushDto } from "@dto/update-http-push.dto";
+import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
+import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
 
 @Injectable()
 export class HttpPushService {

@@ -2,10 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { Repository, DeleteResult } from "typeorm";
-import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
-import { ListAllEntities } from "@dto/list-all-entities.dto";
-import { ListAllDatatargetsDto } from "@dto/list-all-data-targets.dto";
+import { CreateDataTargetDto } from "@dto/create/create-data-target.dto";
+import { UpdateDataTargetDto } from "@dto/update/update-data-target.dto";
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllDatatargetsDto } from "@dto/list/list-all-data-targets.dto";
 
 @Injectable()
 export class DataTargetService {

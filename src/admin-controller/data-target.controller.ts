@@ -21,11 +21,11 @@ import {
 } from "@nestjs/swagger";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
-import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import {ListAllDatatargetsDto} from "@dto/list-all-data-targets.dto"
-import { ListAllEntities } from "@dto/list-all-entities.dto";
+import { CreateDataTargetDto } from "@dto/create/create-data-target.dto";
+import { UpdateDataTargetDto } from "@dto/update/update-data-target.dto";
+import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
+import {ListAllDatatargetsDto} from "@dto/list/list-all-data-targets.dto"
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 @ApiTags("DataTarget")
 @Controller("dataTarget")
 export class DataTargetController {

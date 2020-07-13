@@ -1,3 +1,3 @@
-import { CreateHttpPushDto } from "@dto/create-http-push.dto";
+import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
 
 export class UpdateHttpPushDto extends CreateHttpPushDto { }
