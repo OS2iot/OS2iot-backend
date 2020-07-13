@@ -47,7 +47,7 @@ export class HttpPushController {
     @ApiBadRequestResponse()
     async create(@Body() createHttpPushDto: CreateHttpPushDto): Promise<HttpPush> {
         const httpPush = this.httpPushService.create( createHttpPushDto );
-        return createHttpPushDto;
+        return httpPush;
     }
 
     
