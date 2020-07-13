@@ -3,11 +3,12 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { Application } from "@entities/applikation.entity";
+
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([DataTarget]),
-    ],
+    imports: [TypeOrmModule.forFeature([DataTarget,Application, IoTDevice]),],
     exports: [TypeOrmModule],
     controllers: [DataTargetController],
     providers: [DataTargetService],

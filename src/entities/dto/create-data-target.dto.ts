@@ -8,13 +8,13 @@ export class CreateDataTargetDto {
     @MaxLength(50)
     targetName: string;
 
-    @ApiProperty({ required: true })
+    @ApiProperty({ required: false })
     @IsOptional()
     applicationId: number;
 
-    @ApiProperty({ required: true })
+    @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    @MaxLength(1024,{each:true})
+    @MaxLength(1024)
     devices: string;
 }

@@ -17,18 +17,37 @@ import {
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiResponse
 } from "@nestjs/swagger";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-
+import {ListAllDatatargetsDto} from "@dto/list-all-data-targets.dto"
+import { ListAllEntities } from "@dto/list-all-entities.dto";
 @ApiTags("DataTarget")
 @Controller("dataTarget")
 export class DataTargetController {
     constructor(private dataTargetService: DataTargetService) {}
 
+
+    @Get()
+    @ApiProduces("application/json")
+    @ApiOperation({ summary: "Find all Datatargets (paginated)" })
+    @ApiResponse({
+        status: 200,
+        description: "Success",
+        type: ListAllDatatargetsDto,
+    })
+    async findAll(
+        @Query() query?: ListAllEntities
+    ): Promise<ListAllDatatargetsDto> {
+        const dataTarget = this.dataTargetService.findAndCountWithPagination(
+            query
+        );
+        return dataTarget;
+    }
 
     @Get(":id")
     @ApiOperation({ summary: "Find dataTargets by id" })
@@ -47,7 +66,7 @@ export class DataTargetController {
     @ApiBadRequestResponse()
     async create(@Body() createDataTargetDto: CreateDataTargetDto): Promise<DataTarget> {
         const dataTarget = this.dataTargetService.create( createDataTargetDto );
-        return createDataTargetDto;
+        return dataTarget;
     }
 
     
