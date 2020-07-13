@@ -64,12 +64,8 @@ export class ApplicationController {
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Application" })
     @ApiBadRequestResponse()
-    async create(
-        @Body() createApplicationDto: CreateApplicationDto
-    ): Promise<Application> {
-        const application = this.applicationService.create(
-            createApplicationDto
-        );
+    async create(@Body() createApplicationDto: CreateApplicationDto): Promise<Application> {
+        const application = this.applicationService.create(createApplicationDto);
         return application;
     }
 
