@@ -9,7 +9,7 @@ import {
 @Entity("httpPush")
 export class HttpPush  extends DbBaseEntity {
 
-    @PrimaryColumn()
+    @Column()
     targetUrl: string;
 
     @Column()

@@ -20,12 +20,15 @@ export class DataTargetService {
         });
     }
     
+    async findOneWithoutRelations(id: number): Promise<DataTarget> {
+        return await this.dataTargetRepository.findOneOrFail(id);
+    }
+
     async findAndCountWithPagination(
         query?: ListAllEntities
     ): Promise<ListAllDatatargetsDto> {
         const [result, total] = await this.dataTargetRepository.findAndCount({
             where: {},
-                     
             take: query.offset,
             skip: query.offset,
         });
@@ -35,7 +38,6 @@ export class DataTargetService {
             count: total,
         };
     }
-
     async create(
         createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {

@@ -11,7 +11,7 @@ import { HttpPush } from "./http-push.entity";
 @Entity("dataTarget")
 export class DataTarget extends DbBaseEntity {
 
-    @PrimaryColumn()
+    @Column()
     targetName: string;
 
     @Column("simple-array")
@@ -47,6 +47,6 @@ export class DataTarget extends DbBaseEntity {
 
 
     toString(): string {
-        return `targetName: ${this.targetName} - applicationId:${this.applicationId} devices: ${this.devices}`;
+        return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId} devices: ${this.devices}`;
     }
 }
