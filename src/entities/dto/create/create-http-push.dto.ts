@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
+import { IsString, MinLength, MaxLength, IsOptional, IsNumber } from "class-validator";
 
 export class CreateHttpPushDto {
     @ApiProperty({ required: true })
@@ -10,10 +10,11 @@ export class CreateHttpPushDto {
 
     @ApiProperty({ required: true })
     timeout: number;
-
-    @ApiProperty({ required: true })
+/*
+    @ApiProperty({ required: false })
+    @IsNumber()
     dataTargetId: number;
-
+*/
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()

@@ -12,9 +12,13 @@ export class HttpPushService {
         private httpPushRepository: Repository<HttpPush>
     ) {}
 
-    async findOne(id: string): Promise<HttpPush> {
+
+    async findOneWithoutRelations(id: number): Promise<HttpPush> {
+        return await this.httpPushRepository.findOneOrFail(id);
+    }
+
+    async findOne(id: number): Promise<HttpPush> {
         return await this.httpPushRepository.findOneOrFail(id, {
-            relations: ["application"],
         });
     }
     

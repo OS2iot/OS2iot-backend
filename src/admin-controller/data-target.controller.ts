@@ -50,9 +50,9 @@ export class DataTargetController {
     }
 
     @Get(":id")
-    @ApiOperation({ summary: "Find dataTargets by id" })
+    @ApiOperation({ summary: "Find one Application by id" })
     @ApiNotFoundResponse()
-    async find(@Param("id") id: string): Promise<DataTarget> {
+    async findOne(@Param("id") id: number): Promise<DataTarget> {
         try {
             return await this.dataTargetService.findOne(id);
         } catch (err) {

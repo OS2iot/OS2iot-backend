@@ -14,14 +14,13 @@ export class DataTargetService {
         private dataTargetRepository: Repository<DataTarget>
     ) {}
 
-    async findOne(id: string): Promise<DataTarget> {
-        return await this.dataTargetRepository.findOneOrFail(id, {
-            relations: ["application"],
-        });
-    }
-    
     async findOneWithoutRelations(id: number): Promise<DataTarget> {
         return await this.dataTargetRepository.findOneOrFail(id);
+    }
+
+    async findOne(id: number): Promise<DataTarget> {
+        return await this.dataTargetRepository.findOneOrFail(id, {
+        });
     }
 
     async findAndCountWithPagination(

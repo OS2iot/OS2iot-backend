@@ -18,16 +18,16 @@ export class HttpPush  extends DbBaseEntity {
     @Column()
     authorizationHeader : string;
 
+ /*
     @Column()
     dataTargetId: number;
-
+*/
     @OneToOne(
         type => DataTarget,
         dataTarget => dataTarget.httpPush,
         { onDelete: "CASCADE" }
     )
     dataTarget: DataTarget[];
-
 
     toString(): string {
         return `targetUrl: ${this.targetUrl} - timeout:${this.timeout} authorizationHeader: ${this.authorizationHeader}`;

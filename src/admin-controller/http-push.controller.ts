@@ -29,11 +29,10 @@ import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 export class HttpPushController {
     constructor(private httpPushService: HttpPushService) {}
 
-
     @Get(":id")
-    @ApiOperation({ summary: "Find httpPushs by id" })
+    @ApiOperation({ summary: "Find one Application by id" })
     @ApiNotFoundResponse()
-    async find(@Param("id") id: string): Promise<HttpPush> {
+    async findOne(@Param("id") id: number): Promise<HttpPush> {
         try {
             return await this.httpPushService.findOne(id);
         } catch (err) {
