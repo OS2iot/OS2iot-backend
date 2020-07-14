@@ -25,7 +25,6 @@ export class HttpPush  extends DbBaseEntity {
     @OneToOne(
         type => DataTarget,
         dataTarget => dataTarget.httpPush,
-        { onDelete: "CASCADE" }
     )
     dataTarget: DataTarget[];
 

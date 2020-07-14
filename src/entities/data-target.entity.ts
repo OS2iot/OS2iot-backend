@@ -19,12 +19,14 @@ export class DataTarget extends DbBaseEntity {
 
     @Column("simple-array")
     devices: string;
-    
+
+    @Column("simple-array")
+    httpPushId: number;
+
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => Application,
         application => application.iotDevices,
-        { onDelete: "CASCADE" }
     )
     application: Application;
     
@@ -32,7 +34,6 @@ export class DataTarget extends DbBaseEntity {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
         iotdevice => iotdevice.application,
-        { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
 
@@ -40,7 +41,6 @@ export class DataTarget extends DbBaseEntity {
     @OneToOne(
         type => HttpPush,
         httpPush => httpPush.dataTarget,
-        { onDelete: "CASCADE" }
     )
     httpPush: HttpPush[];
 
