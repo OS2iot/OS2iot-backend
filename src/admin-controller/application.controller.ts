@@ -20,12 +20,12 @@ import {
 } from "@nestjs/swagger";
 import { Application } from "@entities/applikation.entity";
 import { ApplicationService } from "@services/application.service";
-import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllEntities } from "@dto/list-all-entities.dto";
-import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
+import { CreateApplicationDto } from "@dto/create/create-application.dto";
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllApplicationsReponseDto } from "@dto/list/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
-import { UpdateApplicationDto } from "@dto/update-application.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { UpdateApplicationDto } from "@dto/update/update-application.dto";
+import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 
 @ApiTags("Application")
 @Controller("application")
@@ -64,12 +64,8 @@ export class ApplicationController {
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Application" })
     @ApiBadRequestResponse()
-    async create(
-        @Body() createApplicationDto: CreateApplicationDto
-    ): Promise<Application> {
-        const application = this.applicationService.create(
-            createApplicationDto
-        );
+    async create(@Body() createApplicationDto: CreateApplicationDto): Promise<Application> {
+        const application = this.applicationService.create(createApplicationDto);
         return application;
     }
 

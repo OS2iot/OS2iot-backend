@@ -2,10 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { CreateIoTDeviceDto } from "@dto/create/create-iot-device.dto";
 import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
+import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { Point } from "geojson";
 
 @Injectable()

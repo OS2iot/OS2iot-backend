@@ -11,6 +11,16 @@ import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 
+import { DataTargetModule } from "@modules/data-target.module";
+import { DataTargetService } from "@services/data-target.service";
+import { DataTargetController } from "@admin-controller/data-target.controller";
+
+
+import { HttpPushModule } from "@modules/http-push.module";
+import { HttpPushService } from "@services/http-push.service";
+import { HttpPushController } from "@admin-controller/http-push.controller";
+
+
 @Module({
     imports: [
         TypeOrmModule.forRoot({
@@ -29,10 +39,12 @@ import { IoTDeviceModule } from "@modules/iot-device.module";
         }),
         ApplicationModule,
         IoTDeviceModule,
+        HttpPushModule,
+        DataTargetModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController],
-    providers: [AppService, ApplicationService, IoTDeviceService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushController,DataTargetController],
+    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushService,DataTargetService],
 })
 export class AppModule {
-    constructor(private connection: Connection) {}
+    constructor(private connection: Connection) { }
 }

@@ -17,10 +17,10 @@ import {
     ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { IoTDeviceService } from "@services/iot-device.service";
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { CreateIoTDeviceDto } from "@dto/create/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
+import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")

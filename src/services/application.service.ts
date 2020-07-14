@@ -2,10 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/applikation.entity";
 import { Repository, DeleteResult } from "typeorm";
-import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllEntities } from "@dto/list-all-entities.dto";
-import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
-import { UpdateApplicationDto } from "@dto/update-application.dto";
+import { CreateApplicationDto } from "@dto/create/create-application.dto";
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllApplicationsReponseDto } from "@dto/list/list-all-applications-response.dto";
+import { UpdateApplicationDto } from "@dto/update/update-application.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -19,6 +19,7 @@ export class ApplicationService {
     ): Promise<ListAllApplicationsReponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where: {},
+                     
             take: query.offset,
             skip: query.offset,
         });

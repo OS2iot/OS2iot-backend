@@ -1,9 +1,11 @@
-import { Column, ManyToOne, Entity, TableInheritance } from "typeorm";
+import { Column, ManyToOne,OneToMany, Entity, TableInheritance } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { Application } from "@entities/applikation.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { DataTarget } from "./data-target.entity";
+
 
 @Entity("iot_device")
 @TableInheritance({
@@ -20,6 +22,15 @@ export abstract class IoTDevice extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     application: Application;
+
+
+    @OneToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => DataTarget,
+        dataTarget => dataTarget.iotDevices,
+        { onDelete: "CASCADE" }
+    )
+    dataTarget: DataTarget;
 
     @Column({
         type: "geometry",
