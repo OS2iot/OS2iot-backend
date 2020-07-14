@@ -79,8 +79,9 @@ export class DataTargetService {
     ): DataTarget {
         dataTarget.targetName = dataTargetDto.targetName;
         dataTarget.applicationId = dataTargetDto.applicationId;
-        dataTarget.devices = dataTargetDto.devices;
+        dataTarget.httpPushId = dataTargetDto.httpPushId;
 
+        dataTarget.devices = dataTargetDto.devices;
 
 
         return dataTarget;
