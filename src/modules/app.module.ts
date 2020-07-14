@@ -39,11 +39,11 @@ import { HttpPushController } from "@admin-controller/http-push.controller";
         }),
         ApplicationModule,
         IoTDeviceModule,
-        DataTargetModule,
         HttpPushModule,
+        DataTargetModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController, DataTargetController,HttpPushController],
-    providers: [AppService, ApplicationService, IoTDeviceService, DataTargetService,HttpPushService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushController,DataTargetController],
+    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushService,DataTargetService],
 })
 export class AppModule {
     constructor(private connection: Connection) { }
