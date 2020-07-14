@@ -6,6 +6,6 @@ export class ListAllEntities {
     @ApiProperty({ type: Number, required: false })
     offset? = 0;
     @ApiProperty({ type: String, required: false })
-    sort? = "acd";
+    sort? = "DESC";
 
 }
