@@ -9,23 +9,44 @@ import {
     Put,
     Delete,
     BadRequestException,
+    Query,
 } from "@nestjs/common";
 import {
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiProduces,
+    ApiResponse,
 } from "@nestjs/swagger";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { CreateIoTDeviceDto } from "@dto/create/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
-
+import {ListAllIoTDevicesReponseDto} from "@dto/list/list-all-iot-devices-response.dto"
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 @ApiTags("IoT Device")
 @Controller("iot-device")
 export class IoTDeviceController {
     constructor(private iotDeviceService: IoTDeviceService) {}
+
+    @Get()
+    @ApiProduces("application/json")
+    @ApiOperation({ summary: "Find all devices (paginated)" })
+    @ApiResponse({
+        status: 200,
+        description: "Success",
+        type: ListAllIoTDevicesReponseDto,
+    })
+    async findAll(
+        @Query() query?: ListAllEntities
+    ): Promise<ListAllIoTDevicesReponseDto> {
+        const applications = this.iotDeviceService.findAndCountWithPagination(
+            query
+        );
+        return applications;
+    }
 
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })

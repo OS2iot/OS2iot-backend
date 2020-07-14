@@ -7,7 +7,8 @@ import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { Point } from "geojson";
-
+import { ListAllIoTDevicesReponseDto } from "@dto/list/list-all-iot-devices-response.dto";
+import {ListAllIoTDevicesDto} from "@dto/list/list-all-iot-device.dto";
 @Injectable()
 export class IoTDeviceService {
     constructor(
@@ -16,7 +17,7 @@ export class IoTDeviceService {
         private applicationService: ApplicationService
     ) {}
 
-    /*
+    
     async findAndCountWithPagination(
         query?: ListAllIoTDevicesDto
     ): Promise<ListAllIoTDevicesReponseDto> {
@@ -31,7 +32,7 @@ export class IoTDeviceService {
             count: total,
         };
     }
-    */
+    
 
     async findOne(id: number): Promise<IoTDevice> {
         return await this.iotDeviceRepository.findOneOrFail(id, {

@@ -4,7 +4,8 @@ import { HttpPush } from "@entities/http-push.entity";
 import { Repository, DeleteResult } from "typeorm";
 import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
 import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
-
+import {ListAllHttpPushReponseDto} from "@dto/list/list-all-http-push-targets.dto"
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 @Injectable()
 export class HttpPushService {
     constructor(
@@ -13,6 +14,21 @@ export class HttpPushService {
     ) {}
 
 
+
+    async findAndCountWithPagination(
+        query?: ListAllEntities
+    ): Promise<ListAllHttpPushReponseDto> {
+        const [result, total] = await this.httpPushRepository.findAndCount({
+            where: {},
+            take: query.limit,
+            skip: query.offset,
+            
+        });
+        return {
+            data: result,
+            count: total,
+        };
+    }
     async findOneWithoutRelations(id: number): Promise<HttpPush> {
         return await this.httpPushRepository.findOneOrFail(id);
     }

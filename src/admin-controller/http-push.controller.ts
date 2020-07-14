@@ -17,20 +17,39 @@ import {
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiResponse,
 } from "@nestjs/swagger";
 import { HttpPushService } from "@services/http-push.service";
 import { HttpPush } from "@entities/http-push.entity";
 import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
 import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
+import { ListAllHttpPushReponseDto } from "@dto/list/list-all-http-push-targets.dto";
+import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 
 @ApiTags("HttpPush")
 @Controller("httpPush")
 export class HttpPushController {
     constructor(private httpPushService: HttpPushService) {}
+    @Get()
+    @ApiProduces("application/json")
+    @ApiOperation({ summary: "Find all HttpPush (paginated)" })
+    @ApiResponse({
+        status: 200,
+        description: "Success",
+        type: ListAllHttpPushReponseDto,
+    })
+    async findAll(
+        @Query() query?: ListAllEntities
+    ): Promise<ListAllHttpPushReponseDto> {
+        const applications = this.httpPushService.findAndCountWithPagination(
+            query
+        );
+        return applications;
+    }
 
     @Get(":id")
-    @ApiOperation({ summary: "Find one Application by id" })
+    @ApiOperation({ summary: "Find one HttpPush by id" })
     @ApiNotFoundResponse()
     async findOne(@Param("id") id: number): Promise<HttpPush> {
         try {
