@@ -21,7 +21,7 @@ export class DataTarget extends DbBaseEntity {
     devices: string;
 
     @Column("simple-array")
-    httpPushTargetId: number;
+    TargetId: number;
 
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -30,21 +30,12 @@ export class DataTarget extends DbBaseEntity {
     )
     application: Application;
     
-    @ManyToOne(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => IoTDevice,
-        iotdevice => iotdevice.application,
-    )
-    iotDevices: IoTDevice[];
-
     
     @OneToOne(
         type => HttpPushTarget,
         httpPushTarget => httpPushTarget.dataTarget,
     )
     httpPushTarget: HttpPushTarget[];
-
-
 
     toString(): string {
         return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId} devices: ${this.devices}`;

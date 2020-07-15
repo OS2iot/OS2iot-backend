@@ -24,13 +24,6 @@ export abstract class IoTDevice extends DbBaseEntity {
     application: Application;
 
 
-    @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => DataTarget,
-        dataTarget => dataTarget.iotDevices,
-        { onDelete: "CASCADE" }
-    )
-    dataTarget: DataTarget;
 
     @Column({
         type: "geometry",

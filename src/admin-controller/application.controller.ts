@@ -21,7 +21,7 @@ import {
 import { Application } from "@entities/applikation.entity";
 import { ApplicationService } from "@services/application.service";
 import { CreateApplicationDto } from "@dto/create/create-application.dto";
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllApplicationsDto } from "@dto/list/list-all-applications.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "@dto/update/update-application.dto";
@@ -41,7 +41,7 @@ export class ApplicationController {
         type: ListAllApplicationsReponseDto,
     })
     async findAll(
-        @Query() query?: ListAllEntities
+        @Query() query?: ListAllApplicationsDto
     ): Promise<ListAllApplicationsReponseDto> {
         const applications = this.applicationService.findAndCountWithPagination(
             query

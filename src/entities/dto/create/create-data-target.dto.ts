@@ -14,11 +14,6 @@ export class CreateDataTargetDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    httpPushTargetId: number;
+    TargetId: number;
 
-    @ApiProperty({ required: false })
-    @IsOptional()
-    @IsString()
-    @MaxLength(1024)
-    devices: string;
 }
