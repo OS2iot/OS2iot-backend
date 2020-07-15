@@ -8,7 +8,7 @@ import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { Point } from "geojson";
 import { ListAllIoTDevicesReponseDto } from "@dto/list/list-all-iot-devices-response.dto";
-import { ListAllIoTDevicesDto } from "@dto/list/list-all-iot-device.dto";
+import { ListAllIoTDevicesDto} from "@dto/list/list-all-iot-device.dto";
 @Injectable()
 export class IoTDeviceService {
     constructor(
@@ -17,14 +17,15 @@ export class IoTDeviceService {
         private applicationService: ApplicationService
     ) {}
 
-    
+    //TODO copy this method to other classes
     async findAndCountWithPagination(
         query?: ListAllIoTDevicesDto
     ): Promise<ListAllIoTDevicesReponseDto> {
         const [result, total] =  await getConnection()
         .createQueryBuilder()
         .select("IoTDevice")
-        .from(IoTDevice, "IoTDevice").orderBy({id:"DESC"})
+        .from(IoTDevice, "IoTDevice").limit(query.limit).offset(query.offset)
+        .orderBy(query.orderOn, "ASC")
         .getManyAndCount();
 
         return {

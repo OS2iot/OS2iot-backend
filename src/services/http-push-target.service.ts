@@ -19,8 +19,9 @@ export class HttpPushTargetService {
     ): Promise<ListAllHttpPushTargetResponseDto> {
         const [result, total] =  await getConnection()
         .createQueryBuilder()
-        .select("HttpPushTarget")
-        .from(HttpPushTarget, "HttpPushTarget").orderBy({id:"DESC"})
+        .select("httpPush")
+        .from(HttpPushTarget, "httpPush").limit(query.limit).offset(query.offset)
+        .orderBy(query.orderOn, "ASC")
         .getManyAndCount();
 
         return {

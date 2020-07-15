@@ -26,28 +26,30 @@ import { UpdateHttpPushTargetDto } from "@dto/update/update-http-push-target.dto
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import { ListAllHttpPushTargetResponseDto } from "@dto/list/list-all-http-push-target-response.dto";
 import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllHttpPushTargetDto } from "@dto/list/list-all-http-push-target.dto";
 
 @ApiTags("HttpPushTarget")
 @Controller("httpPushTarget")
 export class HttpPushTargetController {
     constructor(private httpPushTargetService: HttpPushTargetService) {}
-    @Get()
-    @ApiProduces("application/json")
-    @ApiOperation({ summary: "Find all HttpPushTarget (paginated)" })
-    @ApiResponse({
-        status: 200,
-        description: "Success",
-        type: ListAllHttpPushTargetResponseDto,
-    })
-    async findAll(
-        @Query() query?: ListAllEntities
-    ): Promise<ListAllHttpPushTargetResponseDto> {
-        const applications = this.httpPushTargetService.findAndCountWithPagination(
-            query
-        );
-        return applications;
+     //TODO
+     @Get()
+     @ApiProduces("application/json")
+     @ApiOperation({ summary: "Find all devices (paginated)" })
+     @ApiResponse({
+         status: 200,
+         description: "Success",
+         type: ListAllHttpPushTargetResponseDto,
+     })
+     async findAll(
+         @Query() query?: ListAllHttpPushTargetDto
+     ): Promise<ListAllHttpPushTargetResponseDto> {
+         const ioTDevice = this.httpPushTargetService.findAndCountWithPagination(
+             query
+         );
+         return ioTDevice;
     }
-
+    
     @Get(":id")
     @ApiOperation({ summary: "Find one HttpPushTarget by id" })
     @ApiNotFoundResponse()

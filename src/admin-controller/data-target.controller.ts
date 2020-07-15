@@ -25,29 +25,29 @@ import { CreateDataTargetDto } from "@dto/create/create-data-target.dto";
 import { UpdateDataTargetDto } from "@dto/update/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import {ListAllDataTargetReponseDto} from "@dto/list/list-all-data-targets-response.dto"
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllDataTargetsDto } from "@dto/list/list-all-data-targets.dto";
 @ApiTags("DataTarget")
 @Controller("dataTarget")
 export class DataTargetController {
     constructor(private dataTargetService: DataTargetService) {}
 
-
-    @Get()
-    @ApiProduces("application/json")
-    @ApiOperation({ summary: "Find all Datatargets (paginated)" })
-    @ApiResponse({
-        status: 200,
-        description: "Success",
-        type: ListAllDataTargetReponseDto,
-    })
-    async findAll(
-        @Query() query?: ListAllEntities
-    ): Promise<ListAllDataTargetReponseDto> {
-        const dataTarget = this.dataTargetService.findAndCountWithPagination(
-            query
-        );
-        return dataTarget;
-    }
+  //TODO
+  @Get()
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "Find all devices (paginated)" })
+  @ApiResponse({
+      status: 200,
+      description: "Success",
+      type: ListAllDataTargetReponseDto,
+  })
+  async findAll(
+      @Query() query?: ListAllDataTargetsDto
+  ): Promise<ListAllDataTargetReponseDto> {
+      const ioTDevice = this.dataTargetService.findAndCountWithPagination(
+          query
+      );
+      return ioTDevice;
+  }
 
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })

@@ -32,22 +32,23 @@ import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 export class ApplicationController {
     constructor(private applicationService: ApplicationService) {}
 
-    @Get()
-    @ApiProduces("application/json")
-    @ApiOperation({ summary: "Find all Applications (paginated)" })
-    @ApiResponse({
-        status: 200,
-        description: "Success",
-        type: ListAllApplicationsReponseDto,
-    })
-    async findAll(
-        @Query() query?: ListAllApplicationsDto
-    ): Promise<ListAllApplicationsReponseDto> {
-        const applications = this.applicationService.findAndCountWithPagination(
-            query
-        );
-        return applications;
-    }
+   //TODO
+   @Get()
+   @ApiProduces("application/json")
+   @ApiOperation({ summary: "Find all devices (paginated)" })
+   @ApiResponse({
+       status: 200,
+       description: "Success",
+       type: ListAllApplicationsReponseDto,
+   })
+   async findAll(
+       @Query() query?: ListAllApplicationsDto
+   ): Promise<ListAllApplicationsReponseDto> {
+       const ioTDevice = this.applicationService.findAndCountWithPagination(
+           query
+       );
+       return ioTDevice;
+   }
 
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })

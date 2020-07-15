@@ -26,11 +26,13 @@ import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import {ListAllIoTDevicesReponseDto} from "@dto/list/list-all-iot-devices-response.dto"
 import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import { ListAllDataTargetsDto } from "@dto/list/list-all-data-targets.dto";
 @ApiTags("IoT Device")
 @Controller("iot-device")
 export class IoTDeviceController {
     constructor(private iotDeviceService: IoTDeviceService) {}
 
+    //TODO
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all devices (paginated)" })
@@ -40,12 +42,12 @@ export class IoTDeviceController {
         type: ListAllIoTDevicesReponseDto,
     })
     async findAll(
-        @Query() query?: ListAllEntities
+        @Query() query?: ListAllDataTargetsDto
     ): Promise<ListAllIoTDevicesReponseDto> {
-        const applications = this.iotDeviceService.findAndCountWithPagination(
+        const ioTDevice = this.iotDeviceService.findAndCountWithPagination(
             query
         );
-        return applications;
+        return ioTDevice;
     }
 
     @Get(":id")
@@ -64,8 +66,8 @@ export class IoTDeviceController {
     @ApiOperation({ summary: "Create a new IoTDevice" })
     @ApiBadRequestResponse()
     async create(@Body() createDto: CreateIoTDeviceDto): Promise<IoTDevice> {
-        const application = this.iotDeviceService.create(createDto);
-        return application;
+        const ioTDevice = this.iotDeviceService.create(createDto);
+        return ioTDevice;
     }
 
     @Put(":id")
@@ -76,9 +78,9 @@ export class IoTDeviceController {
         @Param("id") id: number,
         @Body() updateDto: UpdateIoTDeviceDto
     ): Promise<IoTDevice> {
-        const application = await this.iotDeviceService.update(id, updateDto);
+        const ioTDevice = await this.iotDeviceService.update(id, updateDto);
 
-        return application;
+        return ioTDevice;
     }
 
     @Delete(":id")

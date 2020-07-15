@@ -20,17 +20,18 @@ export class ApplicationService {
     async findAndCountWithPagination(
         query?: ListAllApplicationsDto
     ): Promise<ListAllApplicationsReponseDto> {
-        const [result, total] = await getConnection()
+        const [result, total] =  await getConnection()
         .createQueryBuilder()
-        .select("application")
-        .from(Application, "application").orderBy({id:"DESC"})
+        .select("Application")
+        .from(Application, "Application").limit(query.limit).offset(query.offset)
+        .orderBy(query.orderOn, "ASC")
         .getManyAndCount();
+
         return {
             data: result,
             count: total,
         };
     }
-   
 
     async findOneWithoutRelations(id: number): Promise<Application> {
         return await this.applicationRepository.findOneOrFail(id);
