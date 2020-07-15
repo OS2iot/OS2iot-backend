@@ -4,8 +4,8 @@ import { DataTarget } from "@entities/data-target.entity";
 import { Repository, DeleteResult } from "typeorm";
 import { CreateDataTargetDto } from "@dto/create/create-data-target.dto";
 import { UpdateDataTargetDto } from "@dto/update/update-data-target.dto";
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
-import { ListAllDatatargetsDto } from "@dto/list/list-all-data-targets.dto";
+import {ListAllDataTargets} from "@dto/list/list-all-data-targets.dto"
+import {ListAllDataTargetReponseDto} from "@dto/list/list-all-data-targets-response.dto"
 
 @Injectable()
 export class DataTargetService {
@@ -23,8 +23,8 @@ export class DataTargetService {
         });
     }
     async findAndCountWithPagination(
-        query?: ListAllEntities
-    ): Promise<ListAllDatatargetsDto> {
+        query?: ListAllDataTargets
+    ): Promise<ListAllDataTargetReponseDto> {
         const [result, total] = await this.dataTargetRepository.findAndCount({
             where: {},
             take: query.limit,

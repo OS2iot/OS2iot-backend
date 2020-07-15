@@ -8,7 +8,7 @@ import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { Point } from "geojson";
 import { ListAllIoTDevicesReponseDto } from "@dto/list/list-all-iot-devices-response.dto";
-import {ListAllIoTDevicesDto} from "@dto/list/list-all-iot-device.dto";
+import { ListAllIoTDevicesDto } from "@dto/list/list-all-iot-device.dto";
 @Injectable()
 export class IoTDeviceService {
     constructor(

@@ -1,7 +1,3 @@
-import { DataTarget } from "@entities/data-target.entity";
+import { ListAllEntities } from "./list-all-entities.dto";
 
-import { ListAllEntitiesResponseDto } from "@dto/list/list-all-entities-reponse.dto";
-
-export class ListAllDatatargetsDto extends ListAllEntitiesResponseDto<
-DataTarget
-> {}
+export class ListAllDataTargets extends ListAllEntities{}

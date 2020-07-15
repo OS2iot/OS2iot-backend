@@ -24,7 +24,7 @@ import { DataTarget } from "@entities/data-target.entity";
 import { CreateDataTargetDto } from "@dto/create/create-data-target.dto";
 import { UpdateDataTargetDto } from "@dto/update/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
-import {ListAllDatatargetsDto} from "@dto/list/list-all-data-targets.dto"
+import {ListAllDataTargetReponseDto} from "@dto/list/list-all-data-targets-response.dto"
 import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 @ApiTags("DataTarget")
 @Controller("dataTarget")
@@ -38,11 +38,11 @@ export class DataTargetController {
     @ApiResponse({
         status: 200,
         description: "Success",
-        type: ListAllDatatargetsDto,
+        type: ListAllDataTargetReponseDto,
     })
     async findAll(
         @Query() query?: ListAllEntities
-    ): Promise<ListAllDatatargetsDto> {
+    ): Promise<ListAllDataTargetReponseDto> {
         const dataTarget = this.dataTargetService.findAndCountWithPagination(
             query
         );
