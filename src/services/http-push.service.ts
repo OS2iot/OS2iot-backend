@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { HttpPush } from "@entities/http-push.entity";
-import { Repository, DeleteResult } from "typeorm";
+import { Repository, DeleteResult, getConnection } from "typeorm";
 import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
 import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
-import {ListAllHttpPushReponseDto} from "@dto/list/list-all-http-push-targets.dto"
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
+import {ListAllHttpPushDto} from "@dto/list/list-all-http-push.dto"
+import {ListAllHttpPushResponseDto} from "@dto/list/list-all-http-push-response.dto"
 @Injectable()
 export class HttpPushService {
     constructor(
@@ -13,17 +13,16 @@ export class HttpPushService {
         private httpPushRepository: Repository<HttpPush>
     ) {}
 
-
-
+    
     async findAndCountWithPagination(
-        query?: ListAllEntities
-    ): Promise<ListAllHttpPushReponseDto> {
-        const [result, total] = await this.httpPushRepository.findAndCount({
-            where: {},
-            take: query.limit,
-            skip: query.offset,
-            
-        });
+        query?: ListAllHttpPushDto
+    ): Promise<ListAllHttpPushResponseDto> {
+        const [result, total] =  await getConnection()
+        .createQueryBuilder()
+        .select("HttpPush")
+        .from(HttpPush, "HttpPush").orderBy({id:"DESC"})
+        .getManyAndCount();
+
         return {
             data: result,
             count: total,

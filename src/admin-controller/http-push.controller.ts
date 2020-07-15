@@ -24,7 +24,7 @@ import { HttpPush } from "@entities/http-push.entity";
 import { CreateHttpPushDto } from "@dto/create/create-http-push.dto";
 import { UpdateHttpPushDto } from "@dto/update/update-http-push.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
-import { ListAllHttpPushReponseDto } from "@dto/list/list-all-http-push-targets.dto";
+import { ListAllHttpPushResponseDto } from "@dto/list/list-all-http-push-response.dto";
 import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 
 @ApiTags("HttpPush")
@@ -37,11 +37,11 @@ export class HttpPushController {
     @ApiResponse({
         status: 200,
         description: "Success",
-        type: ListAllHttpPushReponseDto,
+        type: ListAllHttpPushResponseDto,
     })
     async findAll(
         @Query() query?: ListAllEntities
-    ): Promise<ListAllHttpPushReponseDto> {
+    ): Promise<ListAllHttpPushResponseDto> {
         const applications = this.httpPushService.findAndCountWithPagination(
             query
         );
