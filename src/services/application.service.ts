@@ -1,11 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/applikation.entity";
-import { Repository, DeleteResult } from "typeorm";
+import { Repository, DeleteResult, getConnection } from "typeorm";
 import { CreateApplicationDto } from "@dto/create/create-application.dto";
 import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update/update-application.dto";
+import { User } from "@entities/user.entity";
 
 @Injectable()
 export class ApplicationService {
@@ -14,32 +15,37 @@ export class ApplicationService {
         private applicationRepository: Repository<Application>
     ) {}
 
+    
+           
     async findAndCountWithPagination(
         query?: ListAllEntities
     ): Promise<ListAllApplicationsReponseDto> {
-        const [result, total] = await this.applicationRepository.findAndCount({
-            where: {},
-            take: query.limit,
-            skip: query.offset,
-            
-        });
-
+        const [result, total] = await getConnection()
+        .createQueryBuilder()
+        .select("application")
+        .from(Application, "application").orderBy({id:"DESC"})
+        .getManyAndCount();
         return {
             data: result,
             count: total,
         };
     }
+   
 
     async findOneWithoutRelations(id: number): Promise<Application> {
         return await this.applicationRepository.findOneOrFail(id);
     }
 
-    async findOne(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id, {
-            relations: ["iotDevices"],
-        });
-    }
 
+    //TODO re-write Getters into this syntax 
+    async findOne(id: number): Promise<Application> {
+        return await getConnection()
+        .createQueryBuilder()
+        .select("application")
+        .from(Application, "application")
+        .where("application.id = :id", { id: id })
+        .getOne();
+    }
     async create(
         createApplicationDto: CreateApplicationDto
     ): Promise<Application> {

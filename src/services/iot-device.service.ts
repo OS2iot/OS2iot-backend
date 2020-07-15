@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DeleteResult, getManager } from "typeorm";
+import { Repository, DeleteResult, getManager, getConnection } from "typeorm";
 import { CreateIoTDeviceDto } from "@dto/create/create-iot-device.dto";
 import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
@@ -21,11 +21,11 @@ export class IoTDeviceService {
     async findAndCountWithPagination(
         query?: ListAllIoTDevicesDto
     ): Promise<ListAllIoTDevicesReponseDto> {
-        const [result, total] = await this.iotDeviceRepository.findAndCount({
-            where: {},
-            take: query.offset,
-            skip: query.offset,
-        });
+        const [result, total] =  await getConnection()
+        .createQueryBuilder()
+        .select("IoTDevice")
+        .from(IoTDevice, "IoTDevice").orderBy({id:"DESC"})
+        .getManyAndCount();
 
         return {
             data: result,
