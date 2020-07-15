@@ -6,8 +6,8 @@ import {
     PrimaryColumn,
 } from "typeorm";
 
-@Entity("httpPush")
-export class HttpPush  extends DbBaseEntity {
+@Entity("httpPushTarget")
+export class HttpPushTarget  extends DbBaseEntity {
 
     @Column()
     targetUrl: string;
@@ -24,7 +24,7 @@ export class HttpPush  extends DbBaseEntity {
 */
     @OneToOne(
         type => DataTarget,
-        dataTarget => dataTarget.httpPush,
+        dataTarget => dataTarget.httpPushTarget,
     )
     dataTarget: DataTarget[];
 

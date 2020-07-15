@@ -1,4 +1,4 @@
-export class DeleteHttpPushTargetResponseDto {
+export class DeleteHttpPushTargetTargetResponseDto {
     constructor(affected: number) {
         this.affected = affected;
     }

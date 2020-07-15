@@ -5,7 +5,7 @@ import {
 } from "typeorm";
 import { IoTDevice } from "./iot-device.entity";
 import { Application } from "./applikation.entity";
-import { HttpPush } from "./http-push.entity";
+import { HttpPushTarget } from "./http-push-target.entity";
 
 
 @Entity("dataTarget")
@@ -21,7 +21,7 @@ export class DataTarget extends DbBaseEntity {
     devices: string;
 
     @Column("simple-array")
-    httpPushId: number;
+    httpPushTargetId: number;
 
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,10 +39,10 @@ export class DataTarget extends DbBaseEntity {
 
     
     @OneToOne(
-        type => HttpPush,
-        httpPush => httpPush.dataTarget,
+        type => HttpPushTarget,
+        httpPushTarget => httpPushTarget.dataTarget,
     )
-    httpPush: HttpPush[];
+    httpPushTarget: HttpPushTarget[];
 
 
 

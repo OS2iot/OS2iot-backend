@@ -14,7 +14,7 @@ export class CreateDataTargetDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    httpPushId: number;
+    httpPushTargetId: number;
 
     @ApiProperty({ required: false })
     @IsOptional()

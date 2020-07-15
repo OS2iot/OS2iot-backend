@@ -16,9 +16,9 @@ import { DataTargetService } from "@services/data-target.service";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 
 
-import { HttpPushModule } from "@modules/http-push.module";
-import { HttpPushService } from "@services/http-push.service";
-import { HttpPushController } from "@admin-controller/http-push.controller";
+import { HttpPushTargetModule } from "@modules/http-push-target.module";
+import { HttpPushTargetService } from "@services/http-push-target.service";
+import { HttpPushTargetController } from "@admin-controller/http-push-target.controller";
 
 
 @Module({
@@ -39,11 +39,11 @@ import { HttpPushController } from "@admin-controller/http-push.controller";
         }),
         ApplicationModule,
         IoTDeviceModule,
-        HttpPushModule,
+        HttpPushTargetModule,
         DataTargetModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushController,DataTargetController],
-    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushService,DataTargetService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushTargetController,DataTargetController],
+    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushTargetService,DataTargetService],
 })
 export class AppModule {
     constructor(private connection: Connection) { }

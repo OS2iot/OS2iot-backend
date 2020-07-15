@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, MinLength, MaxLength, IsOptional, IsNumber } from "class-validator";
 
-export class CreateHttpPushDto {
+export class CreateHttpPushTargetDto {
     @ApiProperty({ required: true })
     @IsString()
     @MinLength(1)
