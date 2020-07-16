@@ -14,30 +14,13 @@ export class DataTarget extends DbBaseEntity {
     @Column()
     targetName: string;
 
-    @Column("simple-array")
+    @Column()
     applicationId: number;
 
-    @Column("simple-array")
-    devices: string;
-
-    @Column("simple-array")
+    @Column()
     TargetId: number;
-
-    @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Application,
-        application => application.iotDevices,
-    )
-    application: Application;
-    
-    
-    @OneToOne(
-        type => HttpPushTarget,
-        httpPushTarget => httpPushTarget.dataTarget,
-    )
-    httpPushTarget: HttpPushTarget[];
-
+ 
     toString(): string {
-        return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId} devices: ${this.devices}`;
+        return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId} `;
     }
 }

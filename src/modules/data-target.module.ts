@@ -8,7 +8,7 @@ import { Application } from "@entities/applikation.entity";
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([DataTarget,Application, IoTDevice]),],
+    imports: [TypeOrmModule.forFeature([DataTarget]),],
     exports: [TypeOrmModule],
     controllers: [DataTargetController],
     providers: [DataTargetService],

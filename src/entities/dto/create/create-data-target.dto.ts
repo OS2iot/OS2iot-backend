@@ -4,8 +4,6 @@ import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
     @IsString()
-    @MinLength(1)
-    @MaxLength(50)
     targetName: string;
 
     @ApiProperty({ required: false })
@@ -15,5 +13,4 @@ export class CreateDataTargetDto {
     @ApiProperty({ required: false })
     @IsOptional()
     TargetId: number;
-
 }

@@ -1,7 +1,7 @@
 import { Entity, Column, OneToMany, ManyToOne } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { DataTarget } from "@entities/data-target.entity";
+import { HttpPushTarget } from "@entities/http-push-target.entity";
 
 @Entity("application")
 export class Application extends DbBaseEntity {
@@ -14,20 +14,20 @@ export class Application extends DbBaseEntity {
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
-        iotdevice => iotdevice.application,
+        iotdevice => iotdevice,
         { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
 
-    @ManyToOne(
+    @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => DataTarget,
-        dataTarget => dataTarget.application,
+        type => HttpPushTarget,
+        httpPushTarget => httpPushTarget,
         { onDelete: "CASCADE" }
     )
-    dataTarget: DataTarget[];
+    httpPushTarget: HttpPushTarget[];
 
     toString(): string {
-        return `Application: id: ${this.id} - name: ${this.name}`;
+        return `httpPushTarget: id: ${this.id} - name: ${this.name}`;
     }
 }

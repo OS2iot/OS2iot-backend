@@ -25,7 +25,6 @@ import { CreateHttpPushTargetDto } from "@dto/create/create-http-push-target.dto
 import { UpdateHttpPushTargetDto } from "@dto/update/update-http-push-target.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import { ListAllHttpPushTargetResponseDto } from "@dto/list/list-all-http-push-target-response.dto";
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 import { ListAllHttpPushTargetDto } from "@dto/list/list-all-http-push-target.dto";
 
 @ApiTags("HttpPushTarget")
@@ -35,7 +34,7 @@ export class HttpPushTargetController {
      //TODO
      @Get()
      @ApiProduces("application/json")
-     @ApiOperation({ summary: "Find all devices (paginated)" })
+     @ApiOperation({ summary: "Find all HttpPushTarget (paginated)" })
      @ApiResponse({
          status: 200,
          description: "Success",
@@ -44,10 +43,10 @@ export class HttpPushTargetController {
      async findAll(
          @Query() query?: ListAllHttpPushTargetDto
      ): Promise<ListAllHttpPushTargetResponseDto> {
-         const ioTDevice = this.httpPushTargetService.findAndCountWithPagination(
+         const httpPushTargetService = this.httpPushTargetService.findAndCountWithPagination(
              query
          );
-         return ioTDevice;
+         return httpPushTargetService;
     }
     
     @Get(":id")

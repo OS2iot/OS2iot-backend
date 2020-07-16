@@ -71,19 +71,16 @@ export class HttpPushTargetService {
         return this.httpPushTargetRepository.delete(id);
     }
 
-    private mapHttpPushTargetDtoToHttpPushTarget
-
-
-    (
+    private mapHttpPushTargetDtoToHttpPushTarget(
         httpPushTargetDto: CreateHttpPushTargetDto | UpdateHttpPushTargetDto,
         httpPushTarget: HttpPushTarget
     ): HttpPushTarget {
         httpPushTarget.targetUrl = httpPushTargetDto.targetUrl;
         httpPushTarget.timeout = httpPushTargetDto.timeout;
         httpPushTarget.authorizationHeader = httpPushTargetDto.authorizationHeader;
-
-
-
+        httpPushTarget.targetName = httpPushTargetDto.targetName;
+        httpPushTarget.applicationId = httpPushTargetDto.applicationId;
+        httpPushTarget.TargetId = httpPushTargetDto.TargetId;
         return httpPushTarget;
     }
 }

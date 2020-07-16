@@ -7,7 +7,7 @@ import {
 } from "typeorm";
 
 @Entity("httpPushTarget")
-export class HttpPushTarget  extends DbBaseEntity {
+export class HttpPushTarget  extends DataTarget {
 
     @Column()
     targetUrl: string;
@@ -17,16 +17,6 @@ export class HttpPushTarget  extends DbBaseEntity {
 
     @Column()
     authorizationHeader : string;
-
- /*
-    @Column()
-    dataTargetId: number;
-*/
-    @OneToOne(
-        type => DataTarget,
-        dataTarget => dataTarget.httpPushTarget,
-    )
-    dataTarget: DataTarget[];
 
     toString(): string {
         return `targetUrl: ${this.targetUrl} - timeout:${this.timeout} authorizationHeader: ${this.authorizationHeader}`;

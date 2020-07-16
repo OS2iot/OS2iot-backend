@@ -73,8 +73,6 @@ export class DataTargetService {
     }
 
     private mapDataTargetDtoToDataTarget
-
-
     (
         dataTargetDto: CreateDataTargetDto | UpdateDataTargetDto,
         dataTarget: DataTarget
