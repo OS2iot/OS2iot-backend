@@ -20,20 +20,13 @@ export class DataTarget extends DbBaseEntity {
     @Column("simple-array")
     TargetId: number;
 
+    
     @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Application,
-        application => application.iotDevices,
-    )
-    application: Application;
-    
-    
-    @OneToOne(
         type => HttpPushTarget,
-        httpPushTarget => httpPushTarget.dataTarget,
+        httpPushTarget => httpPushTarget,
     )
     httpPushTarget: HttpPushTarget[];
-
+    
     toString(): string {
         return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId}`;
     }

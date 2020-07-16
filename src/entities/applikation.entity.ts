@@ -11,18 +11,18 @@ export class Application extends DbBaseEntity {
     @Column()
     description: string;
 
-    @OneToMany(
+    @ManyToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
-        iotdevice => iotdevice.application,
+        iotdevice => iotdevice,
         { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
 
-    @ManyToOne(
+    @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => DataTarget,
-        dataTarget => dataTarget.application,
+        dataTarget => dataTarget,
         { onDelete: "CASCADE" }
     )
     dataTarget: DataTarget[];

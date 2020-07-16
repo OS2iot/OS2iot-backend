@@ -73,7 +73,6 @@ export class HttpPushTargetService {
 
     private mapHttpPushTargetDtoToHttpPushTarget
 
-
     (
         httpPushTargetDto: CreateHttpPushTargetDto | UpdateHttpPushTargetDto,
         httpPushTarget: HttpPushTarget

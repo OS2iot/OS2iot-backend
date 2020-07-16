@@ -89,13 +89,7 @@ export class IoTDeviceService {
     ): Promise<T> {
         iotDevice.name = createIoTDeviceDto.name;
 
-        if (createIoTDeviceDto.applicationId != null) {
-            iotDevice.application = await this.applicationService.findOneWithoutRelations(
-                createIoTDeviceDto.applicationId
-            );
-        } else {
-            iotDevice.application = null;
-        }
+      
 
         if (
             createIoTDeviceDto.longitude != null &&

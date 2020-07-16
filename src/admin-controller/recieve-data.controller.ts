@@ -7,10 +7,9 @@ import {
     NotFoundException,
     Param,
 } from "@nestjs/common";
-import * as http from 'http';
+import * as http from 'https';
 import * as querystring from 'querystring';
 import {
-    ApiProduces,
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
@@ -28,7 +27,8 @@ export class RecieveDataController {
     iotDeviceService: IoTDeviceService;
     constructor(private recieveDataService: RecieveDataService) {}
  
-  
+    //TODO - Check if API key is valid - does it exist in the db
+   
     @Get(":apiKey")
     @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
     @ApiNotFoundResponse()
@@ -38,14 +38,18 @@ export class RecieveDataController {
         } catch (err) {
             throw new NotFoundException(`No element found by apiKey: ${apiKey}`);
         }
-    }
-    
+  }
+    //TODO - Check if API key is valid - does it exist in the db
+    //TODO - Find the application the device belongs too
+    //TODO - Find datatarget for the application
+    //TODO - find the meta data for the dataTarget
+    //TODO - store last datapoint in DB
+    //TODO - Definer succes/fail besked
+   
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new RecieveData" })
-    @ApiBadRequestResponse()
-      
-    
+    @ApiBadRequestResponse()     
     async create(@Body() createRecieveDataDto: CreateRecieveDataDto): Promise<Object> {
 
         if (createRecieveDataDto.apiKey === null) { 

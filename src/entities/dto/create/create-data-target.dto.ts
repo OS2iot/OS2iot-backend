@@ -16,4 +16,11 @@ export class CreateDataTargetDto {
     @IsOptional()
     TargetId: number;
 
+    @ApiProperty({ required: true })
+    @IsString()
+    @MinLength(1)
+    @MaxLength(50)
+    targetType: string;
+
+
 }

@@ -21,4 +21,5 @@ export class RecieveDataService {
         return this.recieveDataRepository.save(recieveData);
     }
     */
+    
 }
