@@ -3,6 +3,9 @@ import {
     Post,
     Header,
     Body,
+    Get,
+    NotFoundException,
+    Param,
 } from "@nestjs/common";
 import * as http from 'http';
 import * as querystring from 'querystring';
@@ -11,24 +14,40 @@ import {
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
+    ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { RecieveDataService } from "@services/recieve-data.service";
-import { RecieveData } from "@entities/recieve-data.entity";
 import { CreateRecieveDataDto } from "@dto/create/create-recieve-data.dto";
-import { response } from "express";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { IoTDeviceService } from "@services/iot-device.service";
 
 
 @ApiTags("RecieveData")
 @Controller("recieveData")
 export class RecieveDataController {
+    iotDeviceService: IoTDeviceService;
     constructor(private recieveDataService: RecieveDataService) {}
  
+  
+    @Get(":apiKey")
+    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
+    @ApiNotFoundResponse()
+    async findOne(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
+        try {
+            return await this.iotDeviceService.findOne(apiKey);
+        } catch (err) {
+            throw new NotFoundException(`No element found by apiKey: ${apiKey}`);
+        }
+    }
+    
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new RecieveData" })
     @ApiBadRequestResponse()
+      
+    
     async create(@Body() createRecieveDataDto: CreateRecieveDataDto): Promise<Object> {
-        //const recieveData = this.recieveDataService.create( createRecieveDataDto );
+
         if (createRecieveDataDto.apiKey === null) { 
             return;
         }
@@ -39,14 +58,15 @@ export class RecieveDataController {
           
         const options = {
               //TODO fix address to take argument / get data from DB assosiated with application data  target
-            hostname: 'www.google.com',
+            hostname: 'localhost',
             port: 80,
-          //  path: '/upload',
+            path: '/upload',
             method: 'POST',
             timeout: 3000, // Set timeout based on dataTarget
             headers: {
               'Content-Type': 'application/json',
-              'Content-Length': Buffer.byteLength(postData)
+              'Content-Length': Buffer.byteLength(postData),
+              'Authorization': createRecieveDataDto.apiKey
             },
           };
           
