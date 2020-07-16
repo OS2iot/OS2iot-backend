@@ -25,7 +25,6 @@ import { CreateHttpPushTargetDto } from "@dto/create/create-http-push-target.dto
 import { UpdateHttpPushTargetDto } from "@dto/update/update-http-push-target.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import { ListAllHttpPushTargetResponseDto } from "@dto/list/list-all-http-push-target-response.dto";
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 import { ListAllHttpPushTargetDto } from "@dto/list/list-all-http-push-target.dto";
 
 @ApiTags("HttpPushTarget")

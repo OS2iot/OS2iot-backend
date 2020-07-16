@@ -18,9 +18,6 @@ export class DataTarget extends DbBaseEntity {
     applicationId: number;
 
     @Column("simple-array")
-    devices: string;
-
-    @Column("simple-array")
     TargetId: number;
 
     @OneToMany(
@@ -38,6 +35,6 @@ export class DataTarget extends DbBaseEntity {
     httpPushTarget: HttpPushTarget[];
 
     toString(): string {
-        return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId} devices: ${this.devices}`;
+        return `id: ${this.id} - targetName: ${this.targetName} - applicationId:${this.applicationId}`;
     }
 }

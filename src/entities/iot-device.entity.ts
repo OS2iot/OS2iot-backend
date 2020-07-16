@@ -4,7 +4,6 @@ import { Application } from "@entities/applikation.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { DataTarget } from "./data-target.entity";
 
 
 @Entity("iot_device")
@@ -14,7 +13,8 @@ import { DataTarget } from "./data-target.entity";
 export abstract class IoTDevice extends DbBaseEntity {
     @Column()
     name: string;
-
+    
+ 
     @ManyToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => Application,

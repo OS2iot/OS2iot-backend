@@ -17,7 +17,7 @@ export class IoTDeviceService {
         private applicationService: ApplicationService
     ) {}
 
-    //TODO copy this method to other classes
+    //TODO Fix orderBy to work on parameter
     async findAndCountWithPagination(
         query?: ListAllIoTDevicesDto
     ): Promise<ListAllIoTDevicesReponseDto> {
@@ -26,6 +26,7 @@ export class IoTDeviceService {
         .select("IoTDevice")
         .from(IoTDevice, "IoTDevice").limit(query.limit).offset(query.offset)
         .orderBy(query.orderOn, "ASC")
+        //.orderBy(query.orderOn, query.sort)
         .getManyAndCount();
 
         return {
@@ -35,8 +36,8 @@ export class IoTDeviceService {
     }
     
 
-    async findOne(id: number): Promise<IoTDevice> {
-        return await this.iotDeviceRepository.findOneOrFail(id, {
+    async findOne(apiKey: string): Promise<IoTDevice> {
+        return await this.iotDeviceRepository.findOneOrFail(apiKey, {
             relations: ["application"],
         });
     }
@@ -44,7 +45,6 @@ export class IoTDeviceService {
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
         const childType = iotDeviceTypeMap[createIoTDeviceDto.type];
         const iotDevice = this.createIoTDeviceByDto(childType);
-
         const mappedIoTDevice = await this.mapIoTDeviceDtoToIoTDevice(
             createIoTDeviceDto,
             iotDevice
