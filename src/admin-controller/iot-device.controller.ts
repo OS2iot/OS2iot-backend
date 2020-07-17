@@ -25,7 +25,6 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete/delete-application-response.dto";
 import {ListAllIoTDevicesReponseDto} from "@dto/list/list-all-iot-devices-response.dto"
-import { ListAllEntities } from "@dto/list/list-all-entities.dto";
 import { ListAllDataTargetsDto } from "@dto/list/list-all-data-targets.dto";
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -50,14 +49,14 @@ export class IoTDeviceController {
         return ioTDevice;
     }
 
-    @Get(":id")
-    @ApiOperation({ summary: "Find one IoT-Device by id" })
+    @Get(":apiKey")
+    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
     @ApiNotFoundResponse()
-    async findOne(@Param("id") id: number): Promise<IoTDevice> {
+    async findOne(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
         try {
-            return await this.iotDeviceService.findOne(id);
+            return await this.iotDeviceService.findOne(apiKey);
         } catch (err) {
-            throw new NotFoundException(`No element found by id: ${id}`);
+            throw new NotFoundException(`No element found by apiKey: ${apiKey}`);
         }
     }
 

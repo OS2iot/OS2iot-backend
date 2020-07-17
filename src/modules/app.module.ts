@@ -20,6 +20,10 @@ import { HttpPushTargetModule } from "@modules/http-push-target.module";
 import { HttpPushTargetService } from "@services/http-push-target.service";
 import { HttpPushTargetController } from "@admin-controller/http-push-target.controller";
 
+import { RecieveDataModule } from "@modules/recieve-data.module";
+import { RecieveDataController } from "@admin-controller/recieve-data.controller";
+import { RecieveDataService } from "@services/recieve-data.service";
+
 
 @Module({
     imports: [
@@ -41,9 +45,10 @@ import { HttpPushTargetController } from "@admin-controller/http-push-target.con
         IoTDeviceModule,
         HttpPushTargetModule,
         DataTargetModule,
+        RecieveDataModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushTargetController,DataTargetController],
-    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushTargetService,DataTargetService],
+    controllers: [AppController, ApplicationController, IoTDeviceController, HttpPushTargetController,DataTargetController,RecieveDataController],
+    providers: [AppService, ApplicationService, IoTDeviceService, HttpPushTargetService,DataTargetService,RecieveDataService],
 })
 export class AppModule {
     constructor(private connection: Connection) { }

@@ -4,7 +4,6 @@ import { Application } from "@entities/applikation.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { DataTarget } from "./data-target.entity";
 
 
 @Entity("iot_device")

@@ -77,9 +77,18 @@ export class DataTargetService {
         dataTargetDto: CreateDataTargetDto | UpdateDataTargetDto,
         dataTarget: DataTarget
     ): DataTarget {
+
         dataTarget.targetName = dataTargetDto.targetName;
         dataTarget.applicationId = dataTargetDto.applicationId;
         dataTarget.TargetId = dataTargetDto.TargetId;
+
+        if (
+            dataTarget.httpPushTarget === undefined ||
+            dataTarget.httpPushTarget === null
+        ) {
+            //TODO Set httpPushTarget list here
+            dataTarget.httpPushTarget = [];
+        }
 
         return dataTarget;
     }

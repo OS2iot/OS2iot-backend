@@ -6,7 +6,6 @@ import { CreateApplicationDto } from "@dto/create/create-application.dto";
 import { ListAllApplicationsDto } from "@dto/list/list-all-applications.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update/update-application.dto";
-import { User } from "@entities/user.entity";
 
 @Injectable()
 export class ApplicationService {
@@ -80,6 +79,8 @@ export class ApplicationService {
         return this.applicationRepository.delete(id);
     }
 
+
+    //Working on mapping data into the datatarget list and the IoTDeviceList on the application objects
     private mapApplicationDtoToApplication(
         applicationDto: CreateApplicationDto | UpdateApplicationDto,
         application: Application
@@ -90,7 +91,16 @@ export class ApplicationService {
             application.iotDevices === undefined ||
             application.iotDevices === null
         ) {
+            //TODO Set iotDevice list here
             application.iotDevices = [];
+        }
+
+        if (
+            application.dataTarget === undefined ||
+            application.dataTarget === null
+        ) {
+             //TODO Set dataTarget list here
+            application.dataTarget = [];
         }
 
         return application;

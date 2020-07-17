@@ -44,10 +44,10 @@ export class ApplicationController {
    async findAll(
        @Query() query?: ListAllApplicationsDto
    ): Promise<ListAllApplicationsReponseDto> {
-       const ioTDevice = this.applicationService.findAndCountWithPagination(
+       const application = this.applicationService.findAndCountWithPagination(
            query
        );
-       return ioTDevice;
+       return application;
    }
 
     @Get(":id")
