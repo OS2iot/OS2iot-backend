@@ -39,6 +39,16 @@ export class IoTDeviceService {
         });
     }
 
+    async findOneByApiKey(apiKey: string): Promise<IoTDevice> {
+        try {
+            return await this.iotDeviceRepository.findOneOrFail(apiKey, {
+                relations: ["application"],
+            });
+        } catch (e) {
+            console.error("Not found", e);
+        }
+    }
+
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
         const childType = iotDeviceTypeMap[createIoTDeviceDto.type];
         const iotDevice = this.createIoTDeviceByDto(childType);
