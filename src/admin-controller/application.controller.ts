@@ -9,7 +9,6 @@ import {
     Param,
     NotFoundException,
     Delete,
-    BadRequestException,
 } from "@nestjs/common";
 import {
     ApiProduces,
