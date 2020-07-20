@@ -26,6 +26,7 @@ import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-respon
 import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @ApiTags("Application")
 @Controller("application")
@@ -96,9 +97,8 @@ export class ApplicationController {
         try {
             const result = await this.applicationService.delete(id);
 
-            if(result.affected===0) {
-                throw new  NotFoundException("MESSAGE.ID-DOES-NOT-EXIST");
-                return;
+            if (result.affected === 0) {
+                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
             return new DeleteResponseDto(result.affected);
         } catch (err) {
