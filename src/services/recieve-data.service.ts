@@ -6,18 +6,16 @@ import { CreateRecieveDataDto } from "@dto/create-recieve-data.dto";
 
 @Injectable()
 export class RecieveDataService {
-    constructor() //  @InjectRepository(RecieveData)
-    // private recieveDataRepository: Repository<RecieveData>
+    constructor(
+        @InjectRepository(RecieveData)
+        private recieveDataRepository: Repository<RecieveData>
+    ) {}
 
-    {}
-
-    /*
     async create(
         createRecieveDataDto: CreateRecieveDataDto
     ): Promise<RecieveData> {
         const recieveData = new RecieveData();
-      
+
         return this.recieveDataRepository.save(recieveData);
     }
-    */
 }
