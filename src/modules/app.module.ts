@@ -14,6 +14,9 @@ import { DataTargetModule } from "@modules/data-target.module";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
+import { RecieveDataModule } from "./recieve-data.module";
+import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
+import { RecieveDataService } from "@services/recieve-data.service";
 
 @Module({
     imports: [
@@ -33,7 +36,7 @@ import { DataTargetSenderModule } from "@modules/data-target-sender.module";
             synchronize: true,
             logging: true,
             autoLoadEntities: true,
-            retryAttempts: 0
+            retryAttempts: 0,
         }),
         ConfigModule.forRoot({
             isGlobal: true,
@@ -42,18 +45,21 @@ import { DataTargetSenderModule } from "@modules/data-target-sender.module";
         IoTDeviceModule,
         DataTargetModule,
         DataTargetSenderModule,
+        RecieveDataModule,
     ],
     controllers: [
         AppController,
         ApplicationController,
         IoTDeviceController,
         DataTargetController,
+        RecieveDataController,
     ],
     providers: [
         AppService,
         ApplicationService,
         IoTDeviceService,
         DataTargetService,
+        RecieveDataService,
     ],
 })
 export class AppModule {
