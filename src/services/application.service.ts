@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/applikation.entity";
 import { Repository, DeleteResult } from "typeorm";
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllEntities } from "@dto/list-all-entities.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 
@@ -15,12 +15,13 @@ export class ApplicationService {
     ) {}
 
     async findAndCountWithPagination(
-        query?: ListAllEntities
+        query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where: {},
             take: query.limit,
             skip: query.offset,
+            order: { id: query.sort }, // TODO: Generic sorting possible?
         });
 
         return {

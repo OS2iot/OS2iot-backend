@@ -1,3 +1,3 @@
-import { ListAllEntities } from "@dto/list-all-entities.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
-export class ListAllIoTDevicesDto extends ListAllEntities {}
+export class ListAllIoTDevicesDto extends ListAllEntitiesDto {}

@@ -17,8 +17,4 @@ export class Application extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
-
-    toString(): string {
-        return `Application: id: ${this.id} - name: ${this.name}`;
-    }
 }
