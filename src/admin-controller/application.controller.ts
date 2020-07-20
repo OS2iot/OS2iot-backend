@@ -17,7 +17,7 @@ import {
     ApiBadRequestResponse,
     ApiNotFoundResponse,
 } from "@nestjs/swagger";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";

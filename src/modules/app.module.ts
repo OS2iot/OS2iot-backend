@@ -10,6 +10,9 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
+import { DataTargetModule } from "./data-target.module";
+import { DataTargetController } from "../admin-controller/data-target.controller";
+import { DataTargetService } from "../services/data-target.service";
 
 @Module({
     imports: [
@@ -29,9 +32,20 @@ import { IoTDeviceModule } from "@modules/iot-device.module";
         }),
         ApplicationModule,
         IoTDeviceModule,
+        DataTargetModule,
     ],
-    controllers: [AppController, ApplicationController, IoTDeviceController],
-    providers: [AppService, ApplicationService, IoTDeviceService],
+    controllers: [
+        AppController,
+        ApplicationController,
+        IoTDeviceController,
+        DataTargetController,
+    ],
+    providers: [
+        AppService,
+        ApplicationService,
+        IoTDeviceService,
+        DataTargetService,
+    ],
 })
 export class AppModule {
     constructor(private connection: Connection) {}

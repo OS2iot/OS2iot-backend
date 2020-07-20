@@ -7,6 +7,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
+import { Application } from "@entities/application.entity";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -66,13 +67,18 @@ describe("IoTDeviceController (e2e)", () => {
 
     it("(GET) /iot-device/:id - one", async () => {
         const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const appId = applications[0].id;
 
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
-        device.application = applications[0];
+        device.application = (applications[0] as unknown) as Application;
         device.apiKey = "asdf";
 
         const manager = getManager();
@@ -97,7 +103,12 @@ describe("IoTDeviceController (e2e)", () => {
 
     it("(POST) /iot-device/", async () => {
         const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const appId = applications[0].id;
         const testIoTDevice = {
@@ -128,7 +139,12 @@ describe("IoTDeviceController (e2e)", () => {
 
     it("(PUT) /iot-device/:id", async () => {
         const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const appId = applications[0].id;
 
@@ -174,7 +190,12 @@ describe("IoTDeviceController (e2e)", () => {
 
     it("(DELETE) /iot-device/:id", async () => {
         const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         const device = new GenericHTTPDevice();
@@ -204,7 +225,12 @@ describe("IoTDeviceController (e2e)", () => {
 
     it("(DELETE) /iot-device/:id - doesn't exist", async () => {
         const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         const device = new GenericHTTPDevice();
