@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ApplicationService } from "@services/application.service";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { getRepositoryToken } from "@nestjs/typeorm";
 
 describe("ApplicationService", () => {
