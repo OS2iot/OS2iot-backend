@@ -87,6 +87,33 @@ describe("ApplicationController (e2e)", () => {
             });
     });
 
+    it("(GET) /application/ - with pagination", async () => {
+        await repository.save([
+            { name: "Test", description: "Tester" },
+            { name: "Application2", description: "A description" },
+            { name: "Application3", description: "A third description" },
+        ]);
+
+        return request(app.getHttpServer())
+            .get("/application?limit=1&offset=1")
+            .send()
+            .expect(200)
+
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Expect that the count it 3 since there is 3 objects saved in the database
+                expect(response.body.count).toBe(3);
+                // Expect that only one was returned
+                expect(response.body.data).toHaveLength(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        name: "Application2",
+                        description: "A description",
+                    },
+                ]);
+            });
+    });
+
     it("(GET) /application/:id - Get one element by id", async () => {
         const application = await repository.save([
             { name: "Test", description: "Tester" },
@@ -175,11 +202,11 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete(`/application/${id}`)
-            .expect(200)
+            .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    affected: 0,
+                    status: 404,
                 });
             });
 
