@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RecieveData } from "@entities/recieve-data.entity";
 import { Repository } from "typeorm";
@@ -12,10 +12,13 @@ export class RecieveDataService {
     ) {}
 
     async create(
-        createRecieveDataDto: CreateRecieveDataDto
+        myData: JSON
     ): Promise<RecieveData> {
         const recieveData = new RecieveData();
-
-        return this.recieveDataRepository.save(recieveData);
+            //TODO: inser Logger returning Enum;
+        Logger.warn(myData.toString)
+        return ;//this.recieveDataRepository.save(recieveData);
     }
 }
+
+

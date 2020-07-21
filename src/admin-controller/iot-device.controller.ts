@@ -28,6 +28,25 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 export class IoTDeviceController {
     constructor(private iotDeviceService: IoTDeviceService) {}
 
+    @Post()
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Create a new IoTDevice" })
+    @ApiBadRequestResponse()
+    async create(@Body() createDto: CreateIoTDeviceDto): Promise<IoTDevice> {
+        const application = this.iotDeviceService.create(createDto);
+        return application;
+    }
+
+    @Get(":apiKey")
+    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
+    @ApiNotFoundResponse()
+    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
+        try {
+            return await this.iotDeviceService.findOneByApiKey(apiKey);
+        } catch (err) {
+            throw new NotFoundException(`No element found by id: ${apiKey}`);
+        }
+    }
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })
     @ApiNotFoundResponse()
@@ -37,15 +56,6 @@ export class IoTDeviceController {
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
-    }
-
-    @Post()
-    @Header("Cache-Control", "none")
-    @ApiOperation({ summary: "Create a new IoTDevice" })
-    @ApiBadRequestResponse()
-    async create(@Body() createDto: CreateIoTDeviceDto): Promise<IoTDevice> {
-        const application = this.iotDeviceService.create(createDto);
-        return application;
     }
 
     @Put(":id")
