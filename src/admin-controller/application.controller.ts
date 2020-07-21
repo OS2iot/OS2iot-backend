@@ -43,7 +43,7 @@ export class ApplicationController {
     async findAll(
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
-        const applications = this.applicationService.findAndCountWithPagination(
+        const applications = await this.applicationService.findAndCountWithPagination(
             query
         );
         return applications;

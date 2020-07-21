@@ -64,8 +64,18 @@ describe("ApplicationController (e2e)", () => {
 
     it("(GET) /application/ - with elements already existing", async () => {
         await repository.save([
-            { name: "Test", description: "Tester" },
-            { name: "Application2", description: "A description" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+            {
+                name: "Application2",
+                description: "A description",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         return request(app.getHttpServer())
@@ -89,9 +99,24 @@ describe("ApplicationController (e2e)", () => {
 
     it("(GET) /application/ - with pagination", async () => {
         await repository.save([
-            { name: "Test", description: "Tester" },
-            { name: "Application2", description: "A description" },
-            { name: "Application3", description: "A third description" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+            {
+                name: "Application2",
+                description: "A description",
+                iotDevices: [],
+                dataTargets: [],
+            },
+            {
+                name: "Application3",
+                description: "A third description",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         return request(app.getHttpServer())
@@ -116,7 +141,12 @@ describe("ApplicationController (e2e)", () => {
 
     it("(GET) /application/:id - Get one element by id", async () => {
         const application = await repository.save([
-            { name: "Test", description: "Tester" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         const id = application[0].id;
@@ -136,7 +166,12 @@ describe("ApplicationController (e2e)", () => {
 
     it("(GET) /application/:id - Get one element by id - not found", async () => {
         const application = await repository.save([
-            { name: "Test", description: "Tester" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
 
         // should not exist
@@ -155,7 +190,12 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(POST) /application/ - Create application", async () => {
-        const testAppOne = { name: "Post Test", description: "Post Tester" };
+        const testAppOne = {
+            name: "Post Test",
+            description: "Post Tester",
+            iotDevices: [] as any,
+            dataTargets: [] as any,
+        };
 
         await request(app.getHttpServer())
             .post("/application/")
@@ -176,7 +216,12 @@ describe("ApplicationController (e2e)", () => {
 
     it("(DELETE) /application/ - Delete application", async () => {
         const application = await repository.save([
-            { name: "test sletning", description: "test sletning description" },
+            {
+                name: "test sletning",
+                description: "test sletning description",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const id = application[0].id;
 
@@ -196,7 +241,12 @@ describe("ApplicationController (e2e)", () => {
 
     it("(DELETE) /application/ - Delete application - Not existing", async () => {
         const application = await repository.save([
-            { name: "Test", description: "Tester" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const id = application[0].id + 1; // Doesn't exist
 
@@ -216,7 +266,12 @@ describe("ApplicationController (e2e)", () => {
 
     it("(PUT) /application/ - Change application", async () => {
         const application = await repository.save([
-            { name: "Test", description: "Tester" },
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
         const id = application[0].id;
 

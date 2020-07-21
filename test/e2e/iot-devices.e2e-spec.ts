@@ -7,7 +7,6 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
-import { Application } from "@entities/application.entity";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -78,7 +77,7 @@ describe("IoTDeviceController (e2e)", () => {
 
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
-        device.application = (applications[0] as unknown) as Application;
+        device.application = applications[0];
         device.apiKey = "asdf";
 
         const manager = getManager();
