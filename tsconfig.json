@@ -16,6 +16,7 @@
             "@services/*": ["src/services/*"],
             "@admin-controller/*": ["src/admin-controller/*"],
             "@device-data-controller/*": ["src/device-data-controller/*"],
+            "@interfaces/*": ["src/entities/interfaces/*"],
             "@dto/*": ["src/entities/dto/*"],
             "@enum/*": ["src/entities/enum/*"],
             "@entities/*": ["src/entities/*"],
