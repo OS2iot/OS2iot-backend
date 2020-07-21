@@ -12,12 +12,11 @@ export class RecieveDataService {
     ) {}
 
     async create(
-        myData: JSON
     ): Promise<RecieveData> {
         const recieveData = new RecieveData();
             //TODO: inser Logger returning Enum;
-        Logger.warn(myData.toString)
-        return ;//this.recieveDataRepository.save(recieveData);
+        Logger.warn(recieveData.toString)
+        return recieveData;//this.recieveDataRepository.save(recieveData);
     }
 }
 

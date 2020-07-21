@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, ForbiddenException } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -45,7 +45,7 @@ export class IoTDeviceService {
                 relations: ["application"],
             });
         } catch (e) {
-            Logger.error("Not found", e);
+            //throw new ForbiddenException();
         }
     }
 

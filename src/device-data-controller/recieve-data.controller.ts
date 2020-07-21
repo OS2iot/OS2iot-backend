@@ -6,6 +6,9 @@ import {
     Get,
     NotFoundException,
     Param,
+    HttpException,
+    HttpStatus,
+    Logger,
 } from "@nestjs/common";
 import * as http from "https";
 import * as querystring from "querystring";
@@ -31,19 +34,17 @@ export class RecieveDataController {
     @ApiBadRequestResponse()
     async create(
         @Param("apiKey") apiKey: string,
-        @Body() myData: JSON
+        @Body() recievedData: CreateRecieveDataDto
     ): Promise<JSON> {
-        // if (apiKey !== null) console.log(apiKey);
 
-        try {
-            var device = this.iotDeviceService.findOneByApiKey(apiKey);
-            if ((await device).toString.length <= 0) console.log("apiKey");
+        const device = await this.iotDeviceService.findOneByApiKey(apiKey);
 
-            //console.log(data);
-        } catch (e) {
-            console.error(e);
-        }
-
-        return myData;
+        if (device == null) {
+            Logger.log("403 Forbidden - devices does not exists");
+            return null
+        };
+        Logger.log(typeof(recievedData.data)    )
+         
+        return recievedData.data; //TODO: 204 No Content - når data er videresendt
     }
 }

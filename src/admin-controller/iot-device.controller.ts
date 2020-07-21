@@ -9,6 +9,8 @@ import {
     Put,
     Delete,
     BadRequestException,
+    HttpException,
+    HttpStatus,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -42,9 +44,12 @@ export class IoTDeviceController {
     @ApiNotFoundResponse()
     async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
         try {
-            return await this.iotDeviceService.findOneByApiKey(apiKey);
+            const key = await this.iotDeviceService.findOneByApiKey(apiKey);
+            return key;
         } catch (err) {
-            throw new NotFoundException(`No element found by id: ${apiKey}`);
+
+       
+    
         }
     }
     @Get(":id")
