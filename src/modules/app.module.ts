@@ -10,9 +10,10 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-import { DataTargetModule } from "./data-target.module";
-import { DataTargetController } from "../admin-controller/data-target.controller";
-import { DataTargetService } from "../services/data-target.service";
+import { DataTargetModule } from "@modules/data-target.module";
+import { DataTargetController } from "@admin-controller/data-target.controller";
+import { DataTargetService } from "@services/data-target.service";
+import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { DataTargetService } from "../services/data-target.service";
         ApplicationModule,
         IoTDeviceModule,
         DataTargetModule,
+        DataTargetSenderModule,
     ],
     controllers: [
         AppController,
