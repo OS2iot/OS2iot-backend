@@ -11,11 +11,6 @@ export class GenericHTTPDevice extends IoTDevice {
         comment: "Used for GenericHTTPDevice",
     })
     apiKey: string;
-    device: {
-        name: string;
-        description: string;
-        iotDevices: any[];
-    } & IoTDevice;
 
     @BeforeInsert()
     private beforeInsert() {
