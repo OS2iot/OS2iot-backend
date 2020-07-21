@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
@@ -85,7 +85,6 @@ describe("ApplicationController (e2e)", () => {
 
             .expect("Content-Type", /json/)
             .then(response => {
-                Logger.log(response.body);
                 expect(response.body.count).toBe(2);
                 expect(response.body.data).toMatchObject([
                     { name: "Test", description: "Tester" },
@@ -184,7 +183,7 @@ describe("ApplicationController (e2e)", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: `No element found by id: ${id}`,
+                    message: `MESSAGE.ID-DOES-NOT-EXIST`,
                 });
             });
     });

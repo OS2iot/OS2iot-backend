@@ -6,10 +6,18 @@ import { DataTargetService } from "@services/data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
 import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([HttpPushDataTarget, DataTarget, Application]),
+        TypeOrmModule.forFeature([
+            HttpPushDataTarget,
+            DataTarget,
+            Application,
+            GenericHTTPDevice,
+            IoTDevice,
+        ]),
     ],
     exports: [TypeOrmModule],
     controllers: [DataTargetController],

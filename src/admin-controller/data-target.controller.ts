@@ -8,6 +8,7 @@ import {
     Header,
     Delete,
     BadRequestException,
+    NotFoundException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 import { DataTargetService } from "@services/data-target.service";
@@ -16,6 +17,7 @@ import { CreateDataTargetDto } from "@entities/dto/create-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -25,7 +27,17 @@ export class DataTargetController {
     @Get()
     @ApiOperation({ summary: "Find all DataTargets" })
     async findAll(): Promise<ListAllDataTargetsReponseDto> {
-        return this.dataTargetService.findAll();
+        return await this.dataTargetService.findAll();
+    }
+
+    @Get(":id")
+    @ApiOperation({ summary: "Find DataTarget by id" })
+    async findOne(@Param("id") id: number): Promise<DataTarget> {
+        try {
+            return await this.dataTargetService.findOne(id);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
     }
 
     @Post()

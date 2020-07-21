@@ -56,7 +56,7 @@ export class ApplicationController {
         try {
             return await this.applicationService.findOne(id);
         } catch (err) {
-            throw new NotFoundException(`No element found by id: ${id}`);
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 

@@ -20,14 +20,20 @@ export class DataTargetService {
 
     async findAll(): Promise<ListAllDataTargetsReponseDto> {
         // TODO: Pagination
-        const [result, total] = await this.dataTargetRepository.findAndCount(
-            {}
-        );
+        const [result, total] = await this.dataTargetRepository.findAndCount({
+            relations: ["application"],
+        });
 
         return {
             data: result,
             count: total,
         };
+    }
+
+    async findOne(id: number): Promise<DataTarget> {
+        return await this.dataTargetRepository.findOneOrFail(id, {
+            relations: ["application"],
+        });
     }
 
     async create(
