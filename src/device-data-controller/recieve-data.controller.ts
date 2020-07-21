@@ -20,17 +20,10 @@ import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 @ApiTags("RecieveData")
 @Controller("recieveData")
 export class RecieveDataController {
-    iotDeviceService: IoTDeviceService;
-    constructor(private recieveDataService: RecieveDataService) {}
-
-    //TODO - Check if API key is valid - does it exist in the db
-
-    //TODO - Check if API key is valid - does it exist in the db
-    //TODO - Find the application the device belongs too
-    //TODO - Find datatarget for the application
-    //TODO - find the meta data for the dataTarget
-    //TODO - store last datapoint in DB
-    //TODO - Definer succes/fail besked
+    constructor(
+        private iotDeviceService: IoTDeviceService,
+        private recieveDataService: RecieveDataService
+    ) {}
 
     @Post()
     @Header("Cache-Control", "none")
@@ -38,19 +31,19 @@ export class RecieveDataController {
     @ApiBadRequestResponse()
     async create(
         @Param("apiKey") apiKey: string,
-        @Body() createRecieveDataDto: CreateRecieveDataDto
-    ): Promise<RecieveData> {
+        @Body() myData: JSON
+    ): Promise<JSON> {
         // if (apiKey !== null) console.log(apiKey);
-        var data;
-        var exists = await this.iotDeviceService.findOneByApiKey(apiKey);
-        if (exists === null) {
-            console.log(apiKey);
-            console.log(data);
-        } else {
-            data = this.recieveDataService.create(createRecieveDataDto);
-            console.log(data);
+
+        try {
+            var device = this.iotDeviceService.findOneByApiKey(apiKey);
+            if ((await device).toString.length <= 0) console.log("apiKey");
+
+            //console.log(data);
+        } catch (e) {
+            console.error(e);
         }
 
-        return data;
+        return myData;
     }
 }

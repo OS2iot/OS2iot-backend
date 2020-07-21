@@ -1,13 +1,17 @@
-import { Module, HttpModule } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { RecieveData } from "@entities/recieve-data.entity";
 import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
 import { RecieveDataService } from "@services/recieve-data.service";
+import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { ApplicationService } from "@services/application.service";
+import { Application } from "@entities/applikation.entity";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([RecieveData]), HttpModule],
+    imports: [TypeOrmModule.forFeature([RecieveData, IoTDevice, Application])],
     exports: [TypeOrmModule],
     controllers: [RecieveDataController],
-    providers: [RecieveDataService],
+    providers: [RecieveDataService, IoTDeviceService, ApplicationService],
 })
 export class RecieveDataModule {}
