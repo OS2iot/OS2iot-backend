@@ -6,6 +6,7 @@ module.exports = {
             "<rootDir>//src/device-data-controller/$1",
         "^@dto/(.*)": "<rootDir>//src/entities/dto/$1",
         "^@enum/(.*)": "<rootDir>//src/entities/enum/$1",
+        "^@interfaces/(.*)": "<rootDir>//src/entities/interfaces/$1",
         "^@entities/(.*)": "<rootDir>//src/entities/$1",
         "^@modules/(.*)": "<rootDir>//src/modules/$1",
         "^@loaders/(.*)": "<rootDir>//src/loaders/$1",
