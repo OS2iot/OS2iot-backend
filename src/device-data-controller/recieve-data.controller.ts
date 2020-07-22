@@ -14,7 +14,6 @@ import * as http from "https";
 import * as querystring from "querystring";
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 import { RecieveDataService } from "@services/recieve-data.service";
-import { CreateRecieveDataDto } from "@dto/create-recieve-data.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { RecieveData } from "@entities/recieve-data.entity";
