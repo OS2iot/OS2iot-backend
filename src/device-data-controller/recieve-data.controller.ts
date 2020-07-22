@@ -27,6 +27,7 @@ export class RecieveDataController {
         private iotDeviceService: IoTDeviceService,
         private recieveDataService: RecieveDataService
     ) {}
+    constructor(private iotDeviceService: IoTDeviceService) {}
 
     @Post()
     @Header("Cache-Control", "none")
@@ -36,6 +37,9 @@ export class RecieveDataController {
         @Param("apiKey") apiKey: string,
         @Body() recievedData: CreateRecieveDataDto
     ): Promise<JSON> {
+    async create(@Param("apiKey") apiKey: string): Promise<string> {
+        try {
+            const device = await this.iotDeviceService.findOneByApiKey(apiKey);
 
         const device = await this.iotDeviceService.findOneByApiKey(apiKey);
 

@@ -39,11 +39,12 @@ export class IoTDeviceService {
         });
     }
 
-    async findOneByApiKey(apiKey: string): Promise<IoTDevice> {
+    async findOneByApiKey(apiKey: string): Promise<boolean> {
         try {
-            return await this.iotDeviceRepository.findOneOrFail(apiKey, {
-                relations: ["application"],
-            });
+            const device = await this.iotDeviceRepository.findOneOrFail(
+                apiKey,
+                { relations: ["application"] }
+            );
         } catch (e) {
             //throw new ForbiddenException();
         }

@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsJSON } from "class-validator";
+import { IsNotEmpty, IsJSON, MinLength, MaxLength } from "class-validator";
 
 export class CreateRecieveDataDto {
     @ApiProperty()
