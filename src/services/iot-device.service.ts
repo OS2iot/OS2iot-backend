@@ -45,8 +45,11 @@ export class IoTDeviceService {
                 apiKey,
                 { relations: ["application"] }
             );
+
+            if (device.toString.length < 1) return false;
+            if (device.toString.length > 1) return true;
         } catch (e) {
-            //throw new ForbiddenException();
+            return false;
         }
     }
 

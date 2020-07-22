@@ -11,13 +11,10 @@ export class RecieveDataService {
         private recieveDataRepository: Repository<RecieveData>
     ) {}
 
-    async create(
-    ): Promise<RecieveData> {
+    async create(): Promise<RecieveData> {
         const recieveData = new RecieveData();
-            //TODO: inser Logger returning Enum;
-        Logger.warn(recieveData.toString)
-        return recieveData;//this.recieveDataRepository.save(recieveData);
+        //TODO: inser Logger returning Enum;
+        Logger.log(recieveData.toString);
+        return this.recieveDataRepository.save(recieveData);
     }
 }
-
-

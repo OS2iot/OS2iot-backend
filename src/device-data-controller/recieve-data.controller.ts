@@ -27,7 +27,6 @@ export class RecieveDataController {
         private iotDeviceService: IoTDeviceService,
         private recieveDataService: RecieveDataService
     ) {}
-    constructor(private iotDeviceService: IoTDeviceService) {}
 
     @Post()
     @Header("Cache-Control", "none")
@@ -35,20 +34,22 @@ export class RecieveDataController {
     @ApiBadRequestResponse()
     async create(
         @Param("apiKey") apiKey: string,
-        @Body() recievedData: CreateRecieveDataDto
-    ): Promise<JSON> {
-    async create(@Param("apiKey") apiKey: string): Promise<string> {
+        @Body() jsonBody: string
+    ): Promise<string> {
         try {
             const device = await this.iotDeviceService.findOneByApiKey(apiKey);
 
-        const device = await this.iotDeviceService.findOneByApiKey(apiKey);
+            try {
+                JSON.parse(jsonBody);
+            } catch (e) {
+                return "406 Not Acceptable";
+            }
 
-        if (device == null) {
-            Logger.log("403 Forbidden - devices does not exists");
-            return null
-        };
-        Logger.log(typeof(recievedData.data)    )
-         
-        return recievedData.data; //TODO: 204 No Content - når data er videresendt
+            if (!device) return "403 Forbidden";
+            //TODO: 204 No Content - når recievedData er videresendt
+            if (device) return " 204 No Content";
+        } catch (e) {
+            throw e;
+        }
     }
 }
