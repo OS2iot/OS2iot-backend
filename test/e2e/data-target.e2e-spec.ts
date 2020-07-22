@@ -8,6 +8,8 @@ import { clearDatabase } from "./test-helpers";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetModule } from "../../src/modules/data-target.module";
 import { HttpPushDataTarget } from "../../src/entities/http-push-data-target.entity";
+import { CreateDataTargetDto } from "../../src/entities/dto/create-data-target.dto";
+import { DataTargetType } from "@enum/data-target-type.enum";
 
 describe("DataTargetController (e2e)", () => {
     let app: INestApplication;
@@ -146,7 +148,6 @@ describe("DataTargetController (e2e)", () => {
 
     it("(GET) /data-target/:id - not found", async () => {
         const applications = await createApplications();
-        const appId = applications[0].id;
         const dataTarget = await createDataTarget(applications);
         const wrongDataTargetId = dataTarget.id + 1;
 
@@ -157,6 +158,141 @@ describe("DataTargetController (e2e)", () => {
             .then(response => {
                 expect(response.body).toMatchObject({
                     error: "Not Found",
+                });
+            });
+    });
+
+    it("(POST) /data-target/ - create new data target", async () => {
+        const applications = await createApplications();
+        const applicationId = applications[0].id;
+        const dataTargetBody: CreateDataTargetDto = {
+            name: "et navn",
+            applicationId: applicationId,
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+            authorizationHeader: null,
+        };
+
+        await request(app.getHttpServer())
+            .post(`/data-target/`)
+            .send(dataTargetBody)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "et navn",
+                    application: {
+                        id: applicationId,
+                    },
+                    type: "HTTP_PUSH",
+                    url: "http://example.com/test-endepunkt",
+                });
+            });
+
+        const dataTargetsInDb = await repository.find();
+        expect(dataTargetsInDb).toHaveLength(1);
+        expect(dataTargetsInDb[0]).toMatchObject({
+            name: "et navn",
+        });
+    });
+
+    it("(POST) /data-target/ - application missing from request", async () => {
+        const dataTargetBody = {
+            name: "et navn",
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+        };
+
+        return await request(app.getHttpServer())
+            .post(`/data-target/`)
+            .send(dataTargetBody)
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: `MESSAGE.ID-MISSING-FROM-REQUEST`,
+                });
+            });
+    });
+
+    it("(POST) /data-target/ - application not found", async () => {
+        const dataTargetBody = {
+            name: "et navn",
+            applicationId: 1,
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+        };
+
+        return await request(app.getHttpServer())
+            .post(`/data-target/`)
+            .send(dataTargetBody)
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: `MESSAGE.ID-DOES-NOT-EXIST`,
+                });
+            });
+    });
+
+    it("(PUT) /data-target/:id - change existing", async () => {
+        const applications = await createApplications();
+        const applicationId = applications[0].id;
+
+        const dataTarget = await createDataTarget(applications);
+        const dataTargetId = dataTarget.id;
+        const dataTargetBody: CreateDataTargetDto = {
+            name: "et navn",
+            applicationId: applicationId,
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+            authorizationHeader: null,
+        };
+
+        return await request(app.getHttpServer())
+            .put(`/data-target/${dataTargetId}`)
+            .send(dataTargetBody)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "et navn",
+                });
+            });
+    });
+
+    it("(DELETE) /data-target/:id - not found", async () => {
+        const applications = await createApplications();
+        const dataTarget = await createDataTarget(applications);
+        const wrongDataTargetId = dataTarget.id + 1;
+
+        return await request(app.getHttpServer())
+            .delete(`/data-target/${wrongDataTargetId}`)
+            .expect(404)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    status: 404,
+                });
+            });
+    });
+
+    it("(DELETE) /data-target/:id - deleted", async () => {
+        const applications = await createApplications();
+        const dataTarget = await createDataTarget(applications);
+        const wrongDataTargetId = dataTarget.id;
+
+        return await request(app.getHttpServer())
+            .delete(`/data-target/${wrongDataTargetId}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    affected: 1,
                 });
             });
     });
