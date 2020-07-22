@@ -46,10 +46,10 @@ export class IoTDeviceService {
                 { relations: ["application"] }
             );
 
-            if (device.toString.length < 1) return false;
-            if (device.toString.length > 1) return true;
+            if (device.name.length < 1) return false;
+            if (device.name.length > 2) return true;
         } catch (e) {
-            return false;
+            //return false;
         }
     }
 
