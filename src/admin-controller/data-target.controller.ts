@@ -7,17 +7,18 @@ import {
     Param,
     Header,
     Delete,
-    BadRequestException,
     NotFoundException,
+    Query,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
-import { DataTargetService } from "@services/data-target.service";
 import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
 import { CreateDataTargetDto } from "@entities/dto/create-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { DataTargetService } from "@services/data-target.service";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -26,8 +27,12 @@ export class DataTargetController {
 
     @Get()
     @ApiOperation({ summary: "Find all DataTargets" })
-    async findAll(): Promise<ListAllDataTargetsReponseDto> {
-        return await this.dataTargetService.findAll();
+    async findAll(
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllDataTargetsReponseDto> {
+        return await this.dataTargetService.findAndCountAllWithPagination(
+            query
+        );
     }
 
     @Get(":id")
@@ -68,9 +73,13 @@ export class DataTargetController {
     async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
         try {
             const result = await this.dataTargetService.delete(id);
+
+            if (result.affected === 0) {
+                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            }
             return new DeleteResponseDto(result.affected);
         } catch (err) {
-            throw new BadRequestException(err);
+            throw new NotFoundException(err);
         }
     }
 }

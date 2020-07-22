@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { Repository, getManager, DeleteResult } from "typeorm";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { Repository, getManager, DeleteResult, getConnection } from "typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
@@ -9,6 +9,8 @@ import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class DataTargetService {
@@ -18,11 +20,17 @@ export class DataTargetService {
         private applicationService: ApplicationService
     ) {}
 
-    async findAll(): Promise<ListAllDataTargetsReponseDto> {
-        // TODO: Pagination
-        const [result, total] = await this.dataTargetRepository.findAndCount({
-            relations: ["application"],
-        });
+    async findAndCountAllWithPagination(
+        query?: ListAllEntitiesDto
+    ): Promise<ListAllDataTargetsReponseDto> {
+        const [result, total] = await getConnection()
+            .getRepository(DataTarget)
+            .createQueryBuilder("datatarget")
+            .innerJoinAndSelect("datatarget.application", "application")
+            .limit(query.limit)
+            .offset(query.offset)
+            .orderBy(query.orderOn, "ASC")
+            .getManyAndCount();
 
         return {
             data: result,
@@ -79,9 +87,19 @@ export class DataTargetService {
         dataTarget.name = dataTargetDto.name;
         if (dataTargetDto.applicationId != null) {
             // TODO: What if it doesn't exist?
-            dataTarget.application = await this.applicationService.findOneWithoutRelations(
-                dataTargetDto.applicationId
-            );
+            try {
+                dataTarget.application = await this.applicationService.findOneWithoutRelations(
+                    dataTargetDto.applicationId
+                );
+            } catch (err) {
+                Logger.error(
+                    `Could not find application with id: ${dataTargetDto.applicationId}`
+                );
+
+                throw new BadRequestException(ErrorCodes.IdDoesNotExists);
+            }
+        } else {
+            throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
         if (dataTargetDto.type === DataTargetType.HttpPush) {
