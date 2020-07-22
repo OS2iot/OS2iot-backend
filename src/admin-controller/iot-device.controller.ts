@@ -38,19 +38,6 @@ export class IoTDeviceController {
         return application;
     }
 
-    @Get(":apiKey")
-    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
-    @ApiNotFoundResponse()
-    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
-        try {
-            const key = await this.iotDeviceService.findOneByApiKey(apiKey);
-            return key;
-        } catch (err) {
-
-       
-    
-        }
-    }
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })
     @ApiNotFoundResponse()
@@ -59,6 +46,18 @@ export class IoTDeviceController {
             return await this.iotDeviceService.findOne(id);
         } catch (err) {
             throw new NotFoundException(`No element found by id: ${id}`);
+        }
+    }
+
+    @Get("nyApiKey/:apiKey")
+    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
+    @ApiNotFoundResponse()
+    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<boolean> {
+        try {
+            const key = await this.iotDeviceService.findOneByApiKey(apiKey);
+            return true;
+        } catch (err) {
+            return false;
         }
     }
 
