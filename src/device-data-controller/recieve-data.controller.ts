@@ -25,7 +25,6 @@ import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 export class RecieveDataController {
     constructor(
         private iotDeviceService: IoTDeviceService,
-        private recieveDataService: RecieveDataService
     ) {}
 
     @Post()
@@ -37,29 +36,34 @@ export class RecieveDataController {
         @Body() jsonBody: string
     ): Promise<void> {
         try {
-            const device = await this.iotDeviceService.findOneByApiKey(apiKey);
-            Logger.log("------------ " + device + " ----------------");
+            const device = await this.iotDeviceService.findDeviceByApiKey(apiKey);
 
-            if (!device) {
-                throw new HttpException(
-                    {
+            if (device === null) {
+               const httpException =  new HttpException(
+                    {   //Når device apiKey er forkert
                         //return "403 Forbidden";
                         status: HttpStatus.FORBIDDEN,
                         error: "403 Forbidden",
+                        description: "403 Forbidden",
+
                     },
                     HttpStatus.FORBIDDEN
                 );
+                Logger.log(httpException);
+                throw httpException;
             }
-            //TODO: 204 No Content - når recievedData er videresendt
-            if (device) {
-                throw new HttpException(
+            else if (device !== null ) {  //TODO: 204 No Content - når recievedData er videresendt
+                const httpException =  new HttpException(
                     {
                         //return "204 No Content";
                         status: HttpStatus.NO_CONTENT,
                         error: "204 No Content",
+                        description:  "204 No Content",
                     },
-                    HttpStatus.FORBIDDEN
+                    HttpStatus.NO_CONTENT
                 );
+                Logger.log(httpException);
+                throw httpException;
             }
         } catch (e) {
             throw e;
