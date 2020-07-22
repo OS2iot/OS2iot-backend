@@ -9,8 +9,6 @@ import {
     Put,
     Delete,
     BadRequestException,
-    HttpException,
-    HttpStatus,
     Logger,
 } from "@nestjs/common";
 import {
