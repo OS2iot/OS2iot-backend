@@ -54,8 +54,9 @@ export class IoTDeviceController {
     @ApiNotFoundResponse()
     async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<boolean> {
         try {
-            const key = await this.iotDeviceService.findOneByApiKey(apiKey);
-            return true;
+            const exists = this.iotDeviceService.findOneByApiKey(apiKey);
+            if (exists) return true;
+            else if (!exists) return false;
         } catch (err) {
             return false;
         }

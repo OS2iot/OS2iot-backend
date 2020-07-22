@@ -35,19 +35,32 @@ export class RecieveDataController {
     async create(
         @Param("apiKey") apiKey: string,
         @Body() jsonBody: string
-    ): Promise<string> {
+    ): Promise<void> {
         try {
             const device = await this.iotDeviceService.findOneByApiKey(apiKey);
+            Logger.log("------------ " + device + " ----------------");
 
-            try {
-                JSON.parse(jsonBody);
-            } catch (e) {
-                return "406 Not Acceptable";
+            if (!device) {
+                throw new HttpException(
+                    {
+                        //return "403 Forbidden";
+                        status: HttpStatus.FORBIDDEN,
+                        error: "403 Forbidden",
+                    },
+                    HttpStatus.FORBIDDEN
+                );
             }
-
-            if (!device) return "403 Forbidden";
             //TODO: 204 No Content - når recievedData er videresendt
-            if (device) return " 204 No Content";
+            if (device) {
+                throw new HttpException(
+                    {
+                        //return "204 No Content";
+                        status: HttpStatus.NO_CONTENT,
+                        error: "204 No Content",
+                    },
+                    HttpStatus.FORBIDDEN
+                );
+            }
         } catch (e) {
             throw e;
         }
