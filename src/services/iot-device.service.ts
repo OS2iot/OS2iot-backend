@@ -7,10 +7,12 @@ import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @Injectable()
 export class IoTDeviceService {
     constructor(
+
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
         private applicationService: ApplicationService
@@ -38,18 +40,19 @@ export class IoTDeviceService {
             relations: ["application"],
         });
     }
-
-    async findOneByApiKey(apiKey: string): Promise<boolean> {
+    //TODO: Fix denne bug som gør at test fejler
+    //BUG: vi altid får det første device tilbage fra listen uanset apiKey
+    //FIX: Troel og jeg har kigget på det før, løsningen var at benytte GenericHTTPDevice istedet
+    async findDeviceByApiKey(apiKey: string): Promise<IoTDevice> {
         try {
             const device = await this.iotDeviceRepository.findOneOrFail(
                 apiKey,
                 { relations: ["application"] }
             );
-
-            if (device.name.length < 1) return false;
-            if (device.name.length > 2) return true;
+            Logger.log(device);  
+            return device;
         } catch (e) {
-            //return false;
+            return null;
         }
     }
 
