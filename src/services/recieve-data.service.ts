@@ -2,7 +2,6 @@ import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RecieveData } from "@entities/recieve-data.entity";
 import { Repository } from "typeorm";
-import { CreateRecieveDataDto } from "@dto/create-recieve-data.dto";
 import { IoTDeviceService } from "./iot-device.service";
 
 @Injectable()
