@@ -12,6 +12,8 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 @Injectable()
 export class IoTDeviceService {
     constructor(
+        @InjectRepository(GenericHTTPDevice)
+        private genericHTTPDevice: Repository<GenericHTTPDevice>,
 
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
@@ -40,19 +42,19 @@ export class IoTDeviceService {
             relations: ["application"],
         });
     }
-    //TODO: Fix denne bug som gør at test fejler
-    //BUG: vi altid får det første device tilbage fra listen uanset apiKey
-    //FIX: Troel og jeg har kigget på det før, løsningen var at benytte GenericHTTPDevice istedet
-    async findDeviceByApiKey(apiKey: string): Promise<IoTDevice> {
+
+    async findAndValidateDeviceByApiKey(apiKey: string): Promise<boolean> {
         try {
-            const device = await this.iotDeviceRepository.findOneOrFail(
-                apiKey,
-                { relations: ["application"] }
+            const device = await this.genericHTTPDevice.findOneOrFail(
+                { apiKey },
+                {
+                    relations: ["application"],
+                }
             );
-            Logger.log(device);  
-            return device;
+            // Logger.log(device);
+            return true;
         } catch (e) {
-            return null;
+            return false;
         }
     }
 

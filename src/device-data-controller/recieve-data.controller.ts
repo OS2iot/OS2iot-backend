@@ -22,9 +22,7 @@ import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 @ApiTags("RecieveData")
 @Controller("recieveData")
 export class RecieveDataController {
-    constructor(
-        private iotDeviceService: IoTDeviceService,
-    ) {}
+    constructor(private iotDeviceService: IoTDeviceService) {}
 
     @Post()
     @Header("Cache-Control", "none")
@@ -32,32 +30,39 @@ export class RecieveDataController {
     @ApiBadRequestResponse()
     async create(
         @Param("apiKey") apiKey: string,
-        @Body() jsonBody: string
+        @Body() data: string
     ): Promise<void> {
         try {
-            const device = await this.iotDeviceService.findDeviceByApiKey(apiKey);
+            const device = await this.iotDeviceService.findAndValidateDeviceByApiKey(
+                apiKey
+            );
+            Logger.log(data);
 
             if (device === null) {
-               const httpException =  new HttpException(
-                    {   //Når device apiKey er forkert
+                const httpException = new HttpException(
+                    {
+                        //Når device apiKey er forkert
                         //return "403 Forbidden";
                         status: HttpStatus.FORBIDDEN,
                         error: "403 Forbidden",
                         description: "403 Forbidden",
-
                     },
                     HttpStatus.FORBIDDEN
                 );
                 Logger.log(httpException);
+                // Logger.log(device.apiKey);
+
                 throw httpException;
-            }
-            else if (device !== null ) {  //TODO: 204 No Content - når recievedData er videresendt
-                const httpException =  new HttpException(
+            } else if (device !== null) {
+                Logger.log(device);
+
+                //TODO: 204 No Content - når recievedData er videresendt
+                const httpException = new HttpException(
                     {
                         //return "204 No Content";
                         status: HttpStatus.NO_CONTENT,
                         error: "204 No Content",
-                        description:  "204 No Content",
+                        description: "204 No Content",
                     },
                     HttpStatus.NO_CONTENT
                 );
