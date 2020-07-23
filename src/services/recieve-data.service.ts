@@ -9,31 +9,32 @@ import { IoTDeviceService } from "./iot-device.service";
 export class RecieveDataService {
     constructor(private iotDeviceService: IoTDeviceService) {}
 
-    async create(apiKey: string, data: string): Promise<JSON> {
+    async create(apiKey: string): Promise<JSON> {
         try {
-            const device = await this.iotDeviceService.findDeviceByApiKey(apiKey);
+            const device = await this.iotDeviceService.findAndValidateDeviceByApiKey(
+                apiKey
+            );
 
             if (!device) {
-                const httpException =  new HttpException(
-                    {   //Når device apiKey er forkert
+                const httpException = new HttpException(
+                    {
+                        //Når device apiKey er forkert
                         //return "403 Forbidden";
                         status: HttpStatus.FORBIDDEN,
                         error: "403 Forbidden",
                         description: "403 Forbidden",
-
                     },
                     HttpStatus.FORBIDDEN
                 );
                 Logger.log(httpException);
                 throw httpException;
-            }
-           else if (device) {
-                const httpException =  new HttpException(
+            } else if (device) {
+                const httpException = new HttpException(
                     {
                         //return "204 No Content";
                         status: HttpStatus.NO_CONTENT,
                         error: "204 No Content",
-                        description:  "204 No Content",
+                        description: "204 No Content",
                     },
                     HttpStatus.NO_CONTENT
                 );

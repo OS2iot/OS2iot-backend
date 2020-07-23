@@ -22,6 +22,7 @@ import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -51,10 +52,9 @@ export class IoTDeviceController {
     @Get("nyApiKey/:apiKey")
     @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
     @ApiNotFoundResponse()
-    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<IoTDevice> {
+    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<boolean> {
         try {
-            const d =  this.iotDeviceService.findDeviceByApiKey(apiKey);
-            Logger.log("-------- "+d);
+            return this.iotDeviceService.findAndValidateDeviceByApiKey(apiKey);
         } catch (err) {
             return null;
         }
