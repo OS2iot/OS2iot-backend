@@ -9,7 +9,6 @@ import {
     Put,
     Delete,
     BadRequestException,
-    Logger,
 } from "@nestjs/common";
 import {
     ApiTags,

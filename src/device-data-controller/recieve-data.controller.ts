@@ -3,24 +3,18 @@ import {
     Post,
     Header,
     Body,
-    Get,
-    NotFoundException,
     Param,
     HttpException,
     HttpStatus,
     Logger,
 } from "@nestjs/common";
-import * as http from "https";
-import * as querystring from "querystring";
-import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
-import { RecieveDataService } from "@services/recieve-data.service";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { IoTDeviceService } from "@services/iot-device.service";
-import { RecieveData } from "@entities/recieve-data.entity";
-import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 
-@ApiTags("RecieveData")
-@Controller("recieveData")
+import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
+
+import { IoTDeviceService } from "@services/iot-device.service";
+
+@ApiTags("Recieve Data")
+@Controller("recieve-data")
 export class RecieveDataController {
     constructor(private iotDeviceService: IoTDeviceService) {}
 
@@ -33,12 +27,26 @@ export class RecieveDataController {
         @Body() data: string
     ): Promise<void> {
         try {
-            const device = await this.iotDeviceService.findAndValidateDeviceByApiKey(
+            const deviceExists = await this.iotDeviceService.findAndValidateDeviceByApiKey(
                 apiKey
             );
-            Logger.log(data);
 
-            if (device === null) {
+            if (deviceExists) {
+                const httpException = new HttpException(
+                    {
+                        //TODO: 204 No Content - når recievedData er videresendt
+                        //return "204 No Content";
+                        status: HttpStatus.NO_CONTENT,
+                        error: "204 No Content",
+                        description: "204 No Content",
+                    },
+                    HttpStatus.NO_CONTENT
+                );
+                Logger.log(httpException);
+                throw httpException;
+            }
+
+            if (!deviceExists) {
                 const httpException = new HttpException(
                     {
                         //Når device apiKey er forkert
@@ -48,23 +56,6 @@ export class RecieveDataController {
                         description: "403 Forbidden",
                     },
                     HttpStatus.FORBIDDEN
-                );
-                Logger.log(httpException);
-                // Logger.log(device.apiKey);
-
-                throw httpException;
-            } else if (device !== null) {
-                Logger.log(device);
-
-                //TODO: 204 No Content - når recievedData er videresendt
-                const httpException = new HttpException(
-                    {
-                        //return "204 No Content";
-                        status: HttpStatus.NO_CONTENT,
-                        error: "204 No Content",
-                        description: "204 No Content",
-                    },
-                    HttpStatus.NO_CONTENT
                 );
                 Logger.log(httpException);
                 throw httpException;
