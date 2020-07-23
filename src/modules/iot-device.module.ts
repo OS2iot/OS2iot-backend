@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDevice } from "@entities/iot-device.entity";

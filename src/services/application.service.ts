@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { Repository, DeleteResult } from "typeorm";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";

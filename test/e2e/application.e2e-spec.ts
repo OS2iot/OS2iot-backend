@@ -4,7 +4,7 @@ import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
 import { Repository } from "typeorm";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { clearDatabase } from "./test-helpers";
 
 describe("ApplicationController (e2e)", () => {

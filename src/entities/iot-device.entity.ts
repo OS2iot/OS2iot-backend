@@ -1,6 +1,6 @@
 import { Column, ManyToOne, Entity, TableInheritance } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
-import { Application } from "@entities/applikation.entity";
+import { Application } from "@entities/application.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
 import { IoTDeviceType } from "@enum/device-type.enum";
