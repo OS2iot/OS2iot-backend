@@ -9,7 +9,6 @@ import {
     Put,
     Delete,
     BadRequestException,
-    Logger,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -22,7 +21,6 @@ import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
