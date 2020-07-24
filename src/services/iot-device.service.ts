@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -44,12 +44,9 @@ export class IoTDeviceService {
 
     async findAndValidateDeviceByApiKey(key: string): Promise<boolean> {
         try {
-            const device = await this.genericHTTPDeviceRepository.findOneOrFail(
-                {
-                    apiKey: key,
-                }
-            );
-
+            await this.genericHTTPDeviceRepository.findOneOrFail({
+                apiKey: key,
+            });
             return true;
         } catch (e) {
             return false;

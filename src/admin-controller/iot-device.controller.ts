@@ -47,19 +47,6 @@ export class IoTDeviceController {
         }
     }
 
-    @Get("nyApiKey/:apiKey")
-    @ApiOperation({ summary: "Find one IoT-Device by apiKey" })
-    @ApiNotFoundResponse()
-    async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<boolean> {
-        try {
-            return await this.iotDeviceService.findAndValidateDeviceByApiKey(
-                apiKey
-            );
-        } catch (err) {
-            return null;
-        }
-    }
-
     @Put(":id")
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing IoT-Device" })

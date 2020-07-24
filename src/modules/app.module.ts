@@ -12,7 +12,6 @@ import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { RecieveDataModule } from "./recieve-data.module";
 import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
-import { RecieveDataService } from "@services/recieve-data.service";
 
 @Module({
     imports: [
@@ -40,12 +39,7 @@ import { RecieveDataService } from "@services/recieve-data.service";
         IoTDeviceController,
         RecieveDataController,
     ],
-    providers: [
-        AppService,
-        ApplicationService,
-        IoTDeviceService,
-        RecieveDataService,
-    ],
+    providers: [AppService, ApplicationService, IoTDeviceService],
 })
 export class AppModule {
     constructor(private connection: Connection) {}

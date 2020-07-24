@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Application } from "@entities/application.entity";
 
 export class ListAllEntitiesDto {
     @ApiProperty({ type: Number, required: false })
