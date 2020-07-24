@@ -49,13 +49,9 @@ export class IoTDeviceService {
                     apiKey: key,
                 }
             );
-            Logger.log(device.apiKey + " #############");
-            Logger.log("Device exists " + true);
 
             return true;
         } catch (e) {
-            Logger.log("find failed with exception: " + e);
-
             return false;
         }
     }
