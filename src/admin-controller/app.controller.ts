@@ -9,4 +9,11 @@ export class AppController {
     getDefault(): string {
         return this.appService.getDefault();
     }
+
+    @Get("/heathcheck")
+    getHeathCheck(): string {
+        // This is the healthcheck for k8s
+        // TODO: Check database status?
+        return "asdf"
+    }
 }

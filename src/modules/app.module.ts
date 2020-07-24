@@ -19,14 +19,21 @@ import { DataTargetSenderModule } from "@modules/data-target-sender.module";
     imports: [
         TypeOrmModule.forRoot({
             type: "postgres",
-            host: "host.docker.internal",
-            port: 5433,
+            host:
+                process.env.DATABASE_HOSTNAME != undefined
+                    ? process.env.DATABASE_HOSTNAME
+                    : "host.docker.internal",
+            port:
+                process.env.DATABASE_PORT != undefined
+                    ? Number.parseInt(process.env.DATABASE_PORT, 10)
+                    : 5433,
             username: "os2iot",
             password: "toi2so",
             database: "os2iot",
             synchronize: true,
             logging: true,
             autoLoadEntities: true,
+            retryAttempts: 0
         }),
         ConfigModule.forRoot({
             isGlobal: true,
