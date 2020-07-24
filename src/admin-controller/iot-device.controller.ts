@@ -52,7 +52,9 @@ export class IoTDeviceController {
     @ApiNotFoundResponse()
     async findOneByApiKey(@Param("apiKey") apiKey: string): Promise<boolean> {
         try {
-            return this.iotDeviceService.findAndValidateDeviceByApiKey(apiKey);
+            return await this.iotDeviceService.findAndValidateDeviceByApiKey(
+                apiKey
+            );
         } catch (err) {
             return null;
         }
