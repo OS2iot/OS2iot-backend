@@ -7,6 +7,7 @@ import {
     HttpException,
     HttpStatus,
     Logger,
+    Query,
 } from "@nestjs/common";
 
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
@@ -23,7 +24,7 @@ export class RecieveDataController {
     @ApiOperation({ summary: "Create a new RecieveData" })
     @ApiBadRequestResponse()
     async create(
-        @Param("apiKey") apiKey: string,
+        @Query("apiKey") apiKey: string,
         @Body() data: string
     ): Promise<void> {
         try {

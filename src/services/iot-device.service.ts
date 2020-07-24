@@ -13,8 +13,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 export class IoTDeviceService {
     constructor(
         @InjectRepository(GenericHTTPDevice)
-        private genericHTTPDevice: Repository<GenericHTTPDevice>,
-
+        private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
         private applicationService: ApplicationService
@@ -43,12 +42,11 @@ export class IoTDeviceService {
         });
     }
 
-    async findAndValidateDeviceByApiKey(apiKey: string): Promise<boolean> {
+    async findAndValidateDeviceByApiKey(key: string): Promise<boolean> {
         try {
-            const device = await this.genericHTTPDevice.findOneOrFail(
-                { apiKey },
+            const device = await this.genericHTTPDeviceRepository.findOneOrFail(
                 {
-                    relations: ["application"],
+                    apiKey: key,
                 }
             );
             Logger.log(device.apiKey + " #############");
@@ -56,7 +54,7 @@ export class IoTDeviceService {
 
             return true;
         } catch (e) {
-            Logger.log("Device exists " + false);
+            Logger.log("find failed with exception: " + e);
 
             return false;
         }
