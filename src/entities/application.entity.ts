@@ -1,6 +1,7 @@
 import { Entity, Column, OneToMany } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { DataTarget } from "@entities/data-target.entity";
 
 @Entity("application")
 export class Application extends DbBaseEntity {
@@ -17,4 +18,12 @@ export class Application extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     iotDevices: IoTDevice[];
+
+    @OneToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => DataTarget,
+        datatarget => datatarget.application,
+        { onDelete: "CASCADE" }
+    )
+    dataTargets: DataTarget[];
 }

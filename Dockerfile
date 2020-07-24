@@ -22,3 +22,7 @@ COPY --chown=node:node . .
 RUN npm run build
 
 CMD ["npm", "run", "start:dev"]
+
+FROM builder as prod
+
+CMD ["npm", "run", "start:prod"]

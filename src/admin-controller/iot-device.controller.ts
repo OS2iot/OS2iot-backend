@@ -21,6 +21,8 @@ import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -43,7 +45,7 @@ export class IoTDeviceController {
         try {
             return await this.iotDeviceService.findOne(id);
         } catch (err) {
-            throw new NotFoundException(`No element found by id: ${id}`);
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 

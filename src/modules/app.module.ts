@@ -10,27 +10,42 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
+
+import { DataTargetModule } from "@modules/data-target.module";
+import { DataTargetController } from "@admin-controller/data-target.controller";
+import { DataTargetService } from "@services/data-target.service";
+import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { RecieveDataModule } from "./recieve-data.module";
 import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
+import { RecieveDataService } from "@services/recieve-data.service";
 
 @Module({
     imports: [
         TypeOrmModule.forRoot({
             type: "postgres",
-            host: "host.docker.internal",
-            port: 5433,
+            host:
+                process.env.DATABASE_HOSTNAME != undefined
+                    ? process.env.DATABASE_HOSTNAME
+                    : "host.docker.internal",
+            port:
+                process.env.DATABASE_PORT != undefined
+                    ? Number.parseInt(process.env.DATABASE_PORT, 10)
+                    : 5433,
             username: "os2iot",
             password: "toi2so",
             database: "os2iot",
             synchronize: true,
             logging: true,
             autoLoadEntities: true,
+            retryAttempts: 0,
         }),
         ConfigModule.forRoot({
             isGlobal: true,
         }),
         ApplicationModule,
         IoTDeviceModule,
+        DataTargetModule,
+        DataTargetSenderModule,
         RecieveDataModule,
     ],
     controllers: [
@@ -39,7 +54,16 @@ import { RecieveDataController } from "@device-data-controller/recieve-data.cont
         IoTDeviceController,
         RecieveDataController,
     ],
-    providers: [AppService, ApplicationService, IoTDeviceService],
+    providers: [
+        AppService,
+        ApplicationService,
+        IoTDeviceService,
+        DataTargetController,
+        RecieveDataController,
+        AppService,
+        DataTargetService,
+        RecieveDataService,
+    ],
 })
 export class AppModule {
     constructor(private connection: Connection) {}

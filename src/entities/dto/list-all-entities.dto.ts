@@ -5,7 +5,7 @@ export class ListAllEntitiesDto {
     limit? = 100;
     @ApiProperty({ type: Number, required: false })
     offset? = 0;
-    @ApiProperty({ type: String, required: false, examples: ["DESC", "ASC"] })
+    @ApiProperty({ type: String, required: false })
     sort?: "ASC" | "DESC";
     @ApiProperty({ type: String, required: false })
     orderOn?: "id" | "name" | "createdAt" | "updatedAt";
