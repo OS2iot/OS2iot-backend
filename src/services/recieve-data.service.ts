@@ -7,7 +7,7 @@ export class RecieveDataService {
 
     async create(apiKey: string): Promise<void> {
         try {
-            const deviceExists = await this.iotDeviceService.findAndValidateDeviceByApiKey(
+            const deviceExists = await this.iotDeviceService.isApiValidKey(
                 apiKey
             );
 

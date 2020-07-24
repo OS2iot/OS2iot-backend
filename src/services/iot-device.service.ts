@@ -42,15 +42,11 @@ export class IoTDeviceService {
         });
     }
 
-    async findAndValidateDeviceByApiKey(key: string): Promise<boolean> {
-        try {
-            await this.genericHTTPDeviceRepository.findOneOrFail({
-                apiKey: key,
-            });
-            return true;
-        } catch (e) {
-            return false;
-        }
+    async isApiValidKey(key: string): Promise<boolean> {
+        const count = await this.genericHTTPDeviceRepository.count({
+            apiKey: key,
+        });
+        return count > 0;
     }
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
