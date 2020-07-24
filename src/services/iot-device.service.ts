@@ -52,9 +52,12 @@ export class IoTDeviceService {
                 }
             );
             Logger.log(device.apiKey + " #############");
+            Logger.log("Device exists " + true);
 
             return true;
         } catch (e) {
+            Logger.log("Device exists " + false);
+
             return false;
         }
     }

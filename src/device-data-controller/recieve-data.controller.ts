@@ -42,7 +42,7 @@ export class RecieveDataController {
                     },
                     HttpStatus.NO_CONTENT
                 );
-                Logger.log(httpException);
+                //   Logger.log(httpException);
                 throw httpException;
             }
 
@@ -57,7 +57,7 @@ export class RecieveDataController {
                     },
                     HttpStatus.FORBIDDEN
                 );
-                Logger.log(httpException);
+                //  Logger.log(httpException);
                 throw httpException;
             }
         } catch (e) {
