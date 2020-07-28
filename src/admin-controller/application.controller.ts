@@ -9,6 +9,7 @@ import {
     Param,
     NotFoundException,
     Delete,
+    Logger,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -26,6 +27,7 @@ import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { BadRequestException } from "@nestjs/common";
 
 @ApiTags("Application")
 @Controller("application")
@@ -67,6 +69,17 @@ export class ApplicationController {
     async create(
         @Body() createApplicationDto: CreateApplicationDto
     ): Promise<Application> {
+        const isValid = await this.applicationService.isNameValidAndNotUsed(
+            createApplicationDto?.name
+        );
+
+        if (!isValid) {
+            Logger.error(
+                `Tried to create an application with name: '${createApplicationDto.name}'`
+            );
+            throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
+        }
+
         const application = this.applicationService.create(
             createApplicationDto
         );
@@ -81,6 +94,18 @@ export class ApplicationController {
         @Param("id") id: number,
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
+        const isValid = await this.applicationService.isNameValidAndNotUsed(
+            updateApplicationDto?.name,
+            id
+        );
+
+        if (!isValid) {
+            Logger.error(
+                `Tried to change an application with name: '${updateApplicationDto.name}'`
+            );
+            throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
+        }
+
         const application = await this.applicationService.update(
             id,
             updateApplicationDto

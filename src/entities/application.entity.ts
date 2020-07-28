@@ -1,9 +1,10 @@
-import { Entity, Column, OneToMany } from "typeorm";
+import { Entity, Column, OneToMany, Unique } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 
 @Entity("application")
+@Unique(["name"])
 export class Application extends DbBaseEntity {
     @Column()
     name: string;

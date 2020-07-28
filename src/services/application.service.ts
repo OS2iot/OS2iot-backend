@@ -73,6 +73,25 @@ export class ApplicationService {
         return this.applicationRepository.delete(id);
     }
 
+    async isNameValidAndNotUsed(name: string, id?: number): Promise<boolean> {
+        if (name) {
+            const applicationsWithName = await this.applicationRepository.find({
+                name: name,
+            });
+
+            if (id) {
+                // If id is given then this id is allowed to have the name already (i.e. it's being changed)
+                return applicationsWithName.every(app => {
+                    return app.id == id;
+                });
+            } else {
+                return applicationsWithName.length == 0;
+            }
+        }
+
+        return false;
+    }
+
     private mapApplicationDtoToApplication(
         applicationDto: CreateApplicationDto | UpdateApplicationDto,
         application: Application

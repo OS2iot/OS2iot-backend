@@ -213,6 +213,39 @@ describe("ApplicationController (e2e)", () => {
         expect(applicationInDatabase).toHaveLength(1);
     });
 
+    it("(POST) /application/ - Create application - fail as name is not unique", async () => {
+        const application = await repository.save([
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+        ]);
+
+        const testAppOne = {
+            name: application[0].name,
+            description: "Post Tester",
+            iotDevices: [] as any,
+            dataTargets: [] as any,
+        };
+
+        await request(app.getHttpServer())
+            .post("/application/")
+            .send(testAppOne)
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    error: "Bad Request",
+                    message: "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
+                });
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(1);
+    });
+
     it("(DELETE) /application/ - Delete application", async () => {
         const application = await repository.save([
             {
@@ -296,5 +329,78 @@ describe("ApplicationController (e2e)", () => {
             name: "PUT Test",
             description: "PUT Tester",
         });
+    });
+
+    it("(PUT) /application/ - Change application - to same name allowed", async () => {
+        const application = await repository.save([
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+        ]);
+        const id = application[0].id;
+
+        const putTest = {
+            name: application[0].name,
+            description: "PUT Tester",
+        };
+
+        await request(app.getHttpServer())
+            .put(`/application/${id}`)
+            .send(putTest)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    id: id,
+                    name: application[0].name,
+                    description: "PUT Tester",
+                });
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(1);
+        expect(applicationInDatabase[0]).toMatchObject({
+            id: id,
+            name: application[0].name,
+            description: "PUT Tester",
+        });
+    });
+
+    it("(PUT) /application/ - Change application - to same name allowed of another, not allowed", async () => {
+        const application = await repository.save([
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+            {
+                name: "Test2",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+        ]);
+        const id = application[0].id;
+
+        const putTest = {
+            name: application[1].name,
+            description: "PUT Tester",
+        };
+
+        await request(app.getHttpServer())
+            .put(`/application/${id}`)
+            .send(putTest)
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    error: "Bad Request",
+                    message: "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
+                });
+            });
     });
 });
