@@ -6,6 +6,7 @@ import {
     Query,
     HttpCode,
     ForbiddenException,
+    Logger,
 } from "@nestjs/common";
 
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
@@ -29,7 +30,9 @@ export class RecieveDataController {
         const deviceExists = await this.iotDeviceService.isApiValidKey(apiKey);
 
         if (!deviceExists) {
-            throw new ForbiddenException();
+            const e = new ForbiddenException();
+            Logger.log(e);
+            throw e;
         }
         return;
     }
