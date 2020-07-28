@@ -129,19 +129,19 @@ describe("RecieveDataController (e2e)", () => {
 
         const manager = getManager();
         const savedIoTDevice = await manager.save(device);
-
         const oldUuid = savedIoTDevice.apiKey;
+
+        const expectedObject = new Object({
+            error: "Bad Request",
+            message: "Unexpected token a in JSON at position 1",
+            statusCode: 400,
+        });
         const response = await request(app.getHttpServer())
             .post("/recieve-data/?apiKey=" + oldUuid)
             .send("invalidData")
             .expect(204)
             .then(response => {
-                expect(response.body).toMatchObject("
-                    {
-                    \"error\": \"Bad Request\",
-                    \"message\": \"Unexpected token a in JSON at position 1\",
-        \"statusCode\": 400,
-    }");
+                expect(response.body).toMatchObject(expectedObject);
             });
 
         Logger.log(response);
