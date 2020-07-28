@@ -24,7 +24,7 @@ describe("IoTDeviceController (e2e)", () => {
                     port: 5433,
                     username: "os2iot",
                     password: "toi2so",
-                    database: "os2iot-e2e",
+                    database: "os2iot",
                     synchronize: true,
                     logging: true,
                     autoLoadEntities: true,
