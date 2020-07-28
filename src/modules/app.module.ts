@@ -17,7 +17,6 @@ import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { RecieveDataModule } from "./recieve-data.module";
 import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
-import { RecieveDataService } from "@services/recieve-data.service";
 
 @Module({
     imports: [
@@ -62,7 +61,6 @@ import { RecieveDataService } from "@services/recieve-data.service";
         RecieveDataController,
         AppService,
         DataTargetService,
-        RecieveDataService,
     ],
 })
 export class AppModule {

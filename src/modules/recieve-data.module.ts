@@ -6,10 +6,16 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { ApplicationService } from "@services/application.service";
 import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { DataTarget } from "@entities/data-target.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([IoTDevice, Application, GenericHTTPDevice]),
+        TypeOrmModule.forFeature([
+            IoTDevice,
+            Application,
+            GenericHTTPDevice,
+            DataTarget,
+        ]),
     ],
     exports: [TypeOrmModule],
     controllers: [RecieveDataController],
