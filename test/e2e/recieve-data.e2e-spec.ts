@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
@@ -7,10 +7,17 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
 import { RecieveDataModule } from "@modules/recieve-data.module";
+import { Application } from "@entities/application.entity";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { DataTarget } from "@entities/data-target.entity";
+import { CreateDataTargetDto } from "@dto/create-data-target.dto";
+import { DataTargetType } from "@enum/data-target-type.enum";
+import { application } from "express";
 
 describe("RecieveDataController (e2e)", () => {
     let app: INestApplication;
-    let applicationRepository: Repository<IoTDevice>;
+    let applicationRepository: Repository<Application>;
+
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
@@ -21,7 +28,7 @@ describe("RecieveDataController (e2e)", () => {
                     port: 5433,
                     username: "os2iot",
                     password: "toi2so",
-                    database: "os2iot-e2e",
+                    database: "os2iot",
                     synchronize: true,
                     logging: true,
                     autoLoadEntities: true,
@@ -48,10 +55,25 @@ describe("RecieveDataController (e2e)", () => {
         await clearDatabase();
     });
 
-    it("(POST) /recieve-data/ Insert data with correct API key - expected 400", async () => {
-        const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
+    const createApplications = async (): Promise<Application[]> => {
+        return await applicationRepository.save([
+            {
+                name: "sample application",
+                description: "sample description",
+                iotDevices: [],
+                dataTargets: [],
+            },
+            {
+                name: "my application",
+                description: "my cool application",
+                iotDevices: [],
+                dataTargets: [],
+            },
         ]);
+    };
+
+    it("(POST) /recieve-data/ Insert data with correct API key - expected 204", async () => {
+        const applications = await createApplications();
 
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
@@ -70,16 +92,34 @@ describe("RecieveDataController (e2e)", () => {
             number: 1,
         };
 
-        return await request(app.getHttpServer())
+        Logger.log(oldUuid);
+        const response = await request(app.getHttpServer())
             .post("/recieve-data/?apiKey=" + oldUuid)
             .send(dataToSend)
             .expect(204);
+
+        Logger.log(response);
+        return response;
     });
 
     it("(POST) /recieve-data/  Insert invalid API key - expected 403- fobbidden", async () => {
-        const applications = await applicationRepository.save([
-            { name: "Test", description: "Tester", iotDevices: [] },
-        ]);
+        const dataToSend = {
+            string1: "string1",
+            string2: "string2",
+            number: 1,
+        };
+
+        const response = await request(app.getHttpServer())
+            .post("/recieve-data/?apiKey=" + "invalidKey")
+            .send(dataToSend)
+            .expect(403);
+
+        Logger.log(response);
+        return response;
+    });
+
+    it("(POST) /recieve-data/ Insert invalid json - expected 400", async () => {
+        const applications = await createApplications();
 
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
@@ -87,54 +127,24 @@ describe("RecieveDataController (e2e)", () => {
         // @Hack: to call beforeInsert (private)
         (device as any).beforeInsert();
 
-        const dataToSend = {
-            string1: "string1",
-            string2: "string2",
-            number: 1,
-        };
+        const manager = getManager();
+        const savedIoTDevice = await manager.save(device);
 
-        return await request(app.getHttpServer())
-            .post("/recieve-data/?apiKey=" + "invalidKey")
-            .send(dataToSend)
-            .expect(403);
-    });
+        const oldUuid = savedIoTDevice.apiKey;
+        const response = await request(app.getHttpServer())
+            .post("/recieve-data/?apiKey=" + oldUuid)
+            .send("invalidData")
+            .expect(204)
+            .then(response => {
+                expect(response.body).toMatchObject("
+                    {
+                    \"error\": \"Bad Request\",
+                    \"message\": \"Unexpected token a in JSON at position 1\",
+        \"statusCode\": 400,
+    }");
+            });
 
-    //TODO: Fix this test
-    test.skip("Skipping this test", () => {
-        it("(POST) /recieve-data/  Insert data with correct API key but invalid data - expected 400", async () => {
-            const applications = await applicationRepository.save([
-                { name: "Test", description: "Tester", iotDevices: [] },
-            ]);
-            const appId = applications[0].id;
-
-            const device = new GenericHTTPDevice();
-            device.name = "HTTP device";
-            device.application = applications[0];
-            // @Hack: to call beforeInsert (private)
-            //(device as any).beforeInsert();
-
-            const manager = getManager();
-            const savedIoTDevice = await manager.save(device);
-            //  Logger.log(savedIoTDevice);
-
-            const oldUuid = savedIoTDevice.apiKey;
-
-            const invalidData =
-                '{string1: "string1",string2 "string2,mber: 1};';
-
-            return await request(app.getHttpServer())
-                .post("/recieve-data/?apiKey=" + oldUuid)
-                .send(invalidData)
-                .expect(400)
-                .expect("Content-Type", /json/)
-                .then(response => {
-                    // console.log(response.body);
-                    expect(response.body).toMatchObject({
-                        statusCode: 400,
-                        message: "Unexpected token s in JSON at position 0",
-                        error: "Bad Request",
-                    });
-                });
-        });
+        Logger.log(response);
+        return response;
     });
 });
