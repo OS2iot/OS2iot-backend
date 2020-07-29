@@ -38,6 +38,7 @@ export class IoTDeviceController {
         return application;
     }
 
+
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })
     @ApiNotFoundResponse()

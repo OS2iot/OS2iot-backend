@@ -20,5 +20,6 @@ import { DataTarget } from "@entities/data-target.entity";
     exports: [TypeOrmModule],
     controllers: [RecieveDataController],
     providers: [IoTDeviceService, ApplicationService],
+
 })
 export class RecieveDataModule {}
