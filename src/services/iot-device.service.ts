@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -7,10 +7,13 @@ import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @Injectable()
 export class IoTDeviceService {
     constructor(
+        @InjectRepository(GenericHTTPDevice)
+        private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
         private applicationService: ApplicationService
@@ -37,6 +40,13 @@ export class IoTDeviceService {
         return await this.iotDeviceRepository.findOneOrFail(id, {
             relations: ["application"],
         });
+    }
+
+    async isApiValidKey(key: string): Promise<boolean> {
+        const count = await this.genericHTTPDeviceRepository.count({
+            apiKey: key,
+        });
+        return count > 0;
     }
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
