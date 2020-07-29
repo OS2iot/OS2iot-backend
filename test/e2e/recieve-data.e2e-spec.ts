@@ -71,7 +71,11 @@ describe("RecieveDataController (e2e)", () => {
             },
         ]);
     };
-
+    const dataToSend = {
+        string1: "string1",
+        string2: "string2",
+        number: 1,
+    };
     it("(POST) /recieve-data/ Insert data with correct API key - expected 204", async () => {
         const applications = await createApplications();
 
@@ -80,71 +84,22 @@ describe("RecieveDataController (e2e)", () => {
         device.application = applications[0];
         // @Hack: to call beforeInsert (private)
         (device as any).beforeInsert();
-
         const manager = getManager();
         const savedIoTDevice = await manager.save(device);
-
         const oldUuid = savedIoTDevice.apiKey;
 
-        const dataToSend = {
-            string1: "string1",
-            string2: "string2",
-            number: 1,
-        };
-
-        Logger.log(oldUuid);
         const response = await request(app.getHttpServer())
             .post("/recieve-data/?apiKey=" + oldUuid)
             .send(dataToSend)
             .expect(204);
-
-        Logger.log(response);
         return response;
     });
 
     it("(POST) /recieve-data/  Insert invalid API key - expected 403- fobbidden", async () => {
-        const dataToSend = {
-            string1: "string1",
-            string2: "string2",
-            number: 1,
-        };
-
         const response = await request(app.getHttpServer())
             .post("/recieve-data/?apiKey=" + "invalidKey")
             .send(dataToSend)
             .expect(403);
-
-        Logger.log(response);
-        return response;
-    });
-
-    it("(POST) /recieve-data/ Insert invalid json - expected 400", async () => {
-        const applications = await createApplications();
-
-        const device = new GenericHTTPDevice();
-        device.name = "HTTP device";
-        device.application = applications[0];
-        // @Hack: to call beforeInsert (private)
-        (device as any).beforeInsert();
-
-        const manager = getManager();
-        const savedIoTDevice = await manager.save(device);
-        const oldUuid = savedIoTDevice.apiKey;
-
-        const expectedObject = new Object({
-            error: "Bad Request",
-            message: "Unexpected token a in JSON at position 1",
-            statusCode: 400,
-        });
-        const response = await request(app.getHttpServer())
-            .post("/recieve-data/?apiKey=" + oldUuid)
-            .send("invalidData")
-            .expect(204)
-            .then(response => {
-                expect(response.body).toMatchObject(expectedObject);
-            });
-
-        Logger.log(response);
         return response;
     });
 });
