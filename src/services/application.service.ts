@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
 import { Repository, DeleteResult } from "typeorm";
@@ -6,12 +6,18 @@ import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
+import { KafkaPayload } from "@services/kafka/kafka.message";
+import { KafkaService } from "@services/kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { TransformedPayloadDto } from "../entities/dto/kafka/transformed-payload.dto";
 
 @Injectable()
 export class ApplicationService {
     constructor(
         @InjectRepository(Application)
-        private applicationRepository: Repository<Application>
+        private applicationRepository: Repository<Application>,
+        private readonly kafkaService: KafkaService
     ) {}
 
     async findAndCountWithPagination(
@@ -49,6 +55,45 @@ export class ApplicationService {
             createApplicationDto,
             application
         );
+
+        const message = {
+            value: "Sample message",
+        };
+        const payload: KafkaPayload = {
+            messageId: "a" + new Date().valueOf(),
+            body: message,
+            messageType: "Say.Hello",
+            topicName: KafkaTopic.RAW_REQUEST,
+        };
+        const value = await this.kafkaService.sendMessage(
+            KafkaTopic.RAW_REQUEST,
+            payload
+        );
+
+        const dto = new TransformedPayloadDto();
+        dto.iotDeviceId = 1;
+        dto.payload = JSON.parse('{"test":123}');
+
+        const payload2: KafkaPayload = {
+            messageId: "b" + new Date().valueOf(),
+            body: dto,
+            messageType: "Say.Hello",
+            topicName: KafkaTopic.TRANSFORMED_REQUEST,
+        };
+        const value2 = await this.kafkaService.sendMessage(
+            KafkaTopic.TRANSFORMED_REQUEST,
+            payload2
+        );
+
+        if (value) {
+            const metadata = value as RecordMetadata[];
+            Logger.log(`kafka status '${metadata[0].errorCode}'`);
+        }
+
+        if (value2) {
+            const metadata = value2 as RecordMetadata[];
+            Logger.log(`kafka status '${metadata[0].errorCode}'`);
+        }
 
         return this.applicationRepository.save(mappedApplication);
     }
