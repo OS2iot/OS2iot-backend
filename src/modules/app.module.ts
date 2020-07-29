@@ -10,13 +10,12 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-
 import { DataTargetModule } from "@modules/data-target.module";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
-import { ReceiveDataModule } from "./receive-data.module";
-import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
+import { ReceiveDataModule } from "@modules/receive-data.module";
+import { KafkaModule } from "@modules/kafka.module";
 
 @Module({
     imports: [
@@ -37,6 +36,11 @@ import { ReceiveDataController } from "@device-data-controller/receive-data.cont
             logging: true,
             autoLoadEntities: true,
             retryAttempts: 0,
+        }),
+        KafkaModule.register({
+            clientId: "os2iot-client",
+            brokers: ["host.docker.internal:9092"],
+            groupId: "os2iot-backend",
         }),
         ConfigModule.forRoot({
             isGlobal: true,

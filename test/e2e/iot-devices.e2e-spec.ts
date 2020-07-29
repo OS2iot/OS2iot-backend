@@ -3,11 +3,11 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
-import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
 import { Application } from "@entities/application.entity";
+import { KafkaModule } from "@modules/kafka.module";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -28,6 +28,11 @@ describe("IoTDeviceController (e2e)", () => {
                     synchronize: true,
                     logging: true,
                     autoLoadEntities: true,
+                }),
+                KafkaModule.register({
+                    clientId: "os2iot-client-e2e",
+                    brokers: ["host.docker.internal:9092"],
+                    groupId: "os2iot-backend-e2e",
                 }),
             ],
         }).compile();
