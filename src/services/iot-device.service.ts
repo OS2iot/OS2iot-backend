@@ -42,7 +42,7 @@ export class IoTDeviceService {
         });
     }
 
-    async isApiValidKey(key: string): Promise<boolean> {
+    async isApiKeyValid(key: string): Promise<boolean> {
         const count = await this.genericHTTPDeviceRepository.count({
             apiKey: key,
         });
@@ -58,7 +58,6 @@ export class IoTDeviceService {
             iotDevice
         );
 
-        // Use the generic manager since we cannot use a general repository.
         const entityManager = getManager();
         return entityManager.save(mappedIoTDevice);
     }

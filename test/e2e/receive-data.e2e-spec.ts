@@ -6,7 +6,7 @@ import { Repository, getManager } from "typeorm";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
-import { RecieveDataModule } from "@modules/recieve-data.module";
+import { ReceiveDataModule } from "@modules/receive-data.module";
 import { Application } from "@entities/application.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { DataTarget } from "@entities/data-target.entity";
@@ -14,14 +14,14 @@ import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { application } from "express";
 
-describe("RecieveDataController (e2e)", () => {
+describe("ReceiveDataController (e2e)", () => {
     let app: INestApplication;
     let applicationRepository: Repository<Application>;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
-                RecieveDataModule,
+                ReceiveDataModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -76,7 +76,7 @@ describe("RecieveDataController (e2e)", () => {
         string2: "string2",
         number: 1,
     };
-    it("(POST) /recieve-data/ Insert data with correct API key - expected 204", async () => {
+    it("(POST) /receive-data/ receive data from registered edge device (Test valid API key) - expected 204", async () => {
         const applications = await createApplications();
 
         const device = new GenericHTTPDevice();
@@ -86,20 +86,17 @@ describe("RecieveDataController (e2e)", () => {
         (device as any).beforeInsert();
         const manager = getManager();
         const savedIoTDevice = await manager.save(device);
-        const oldUuid = savedIoTDevice.apiKey;
 
-        const response = await request(app.getHttpServer())
-            .post("/recieve-data/?apiKey=" + oldUuid)
+        return await request(app.getHttpServer())
+            .post("/receive-data/?apiKey=" + savedIoTDevice.apiKey)
             .send(dataToSend)
             .expect(204);
-        return response;
     });
 
-    it("(POST) /recieve-data/  Insert invalid API key - expected 403- fobbidden", async () => {
-        const response = await request(app.getHttpServer())
-            .post("/recieve-data/?apiKey=" + "invalidKey")
+    it("(POST) /receive-data/  receive data from unregistered edge device (Test invalid API key)- expected 403- fobbidden", async () => {
+        return await request(app.getHttpServer())
+            .post("/receive-data/?apiKey=" + "invalidKey")
             .send(dataToSend)
             .expect(403);
-        return response;
     });
 });

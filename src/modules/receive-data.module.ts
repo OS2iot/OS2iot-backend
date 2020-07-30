@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { RecieveDataController } from "@device-data-controller/recieve-data.controller";
+import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ApplicationService } from "@services/application.service";
@@ -18,7 +18,7 @@ import { DataTarget } from "@entities/data-target.entity";
         ]),
     ],
     exports: [TypeOrmModule],
-    controllers: [RecieveDataController],
+    controllers: [ReceiveDataController],
     providers: [IoTDeviceService, ApplicationService],
 })
-export class RecieveDataModule {}
+export class ReceiveDataModule {}
