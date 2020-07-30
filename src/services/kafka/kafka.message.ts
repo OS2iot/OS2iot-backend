@@ -1,3 +1,5 @@
+import { KafkaBaseDto } from "@dto/kafka/kafka-base.dto";
+
 export class KafkaPayload {
     public body: any;
     public messageId: string;
@@ -7,7 +9,7 @@ export class KafkaPayload {
 
     create?(
         messageId: string,
-        body: any,
+        body: KafkaBaseDto,
         messageType: string,
         topicName: string
     ): KafkaPayload {

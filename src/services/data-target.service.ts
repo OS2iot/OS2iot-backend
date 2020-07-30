@@ -44,6 +44,14 @@ export class DataTargetService {
         });
     }
 
+    async findDataTargetsByApplicationId(
+        applicationId: number
+    ): Promise<DataTarget[]> {
+        return await this.dataTargetRepository.find({
+            application: { id: applicationId },
+        });
+    }
+
     async create(
         createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {

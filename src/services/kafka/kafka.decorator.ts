@@ -6,6 +6,7 @@ export function SubscribeTo(topic: string) {
     return (
         target: { [x: string]: any },
         propertyKey: string | number,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         descriptor: any
     ): any => {
         const originalMethod = target[propertyKey];
@@ -18,6 +19,7 @@ export function SubscribeToFixedGroup(topic: string) {
     return (
         target: { [x: string]: any },
         propertyKey: string | number,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         descriptor: any
     ): any => {
         const originalMethod = target[propertyKey];
