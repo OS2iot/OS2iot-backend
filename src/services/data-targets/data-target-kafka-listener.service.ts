@@ -58,7 +58,13 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     ) {
         dataTargets.forEach(async target => {
             if (target.type == DataTargetType.HttpPush) {
-                await this.sendToHttpPushDataTarget(target, dto);
+                try {
+                    await this.sendToHttpPushDataTarget(target, dto);
+                } catch (err) {
+                    Logger.error(
+                        `Error while sending to Http Push DataTarget: ${err}`
+                    );
+                }
             } else {
                 throw new NotImplementedException(
                     `Not implemented for: ${target.type}`
