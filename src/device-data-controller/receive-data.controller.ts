@@ -32,7 +32,10 @@ export class ReceiveDataController {
 
         if (!deviceExists) {
             const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
-            Logger.error(apiKey + " " + exception);
+            Logger.error(
+                "No device has been registered by the following API key " +
+                    apiKey
+            );
             throw exception;
         }
         return;
