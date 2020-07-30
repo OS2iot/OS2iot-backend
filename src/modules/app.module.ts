@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, HttpModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "@admin-controller/app.controller";
 import { AppService } from "@services/app.service";
@@ -16,6 +16,8 @@ import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 import { KafkaModule } from "@modules/kafka.module";
+import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
+import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 
 @Module({
     imports: [
@@ -45,9 +47,11 @@ import { KafkaModule } from "@modules/kafka.module";
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        HttpModule,
         ApplicationModule,
         IoTDeviceModule,
         DataTargetModule,
+        DataTargetKafkaModule,
         DataTargetSenderModule,
         ReceiveDataModule,
     ],
@@ -62,6 +66,7 @@ import { KafkaModule } from "@modules/kafka.module";
         ApplicationService,
         IoTDeviceService,
         DataTargetService,
+        HttpPushDataTargetService,
     ],
 })
 export class AppModule {

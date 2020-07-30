@@ -8,7 +8,7 @@ export abstract class AbstractKafkaConsumer implements OnModuleInit {
         this.registerTopic();
     }
 
-    protected addTopic(topicName: string) {
+    protected addTopic(topicName: string): void {
         SUBSCRIBER_OBJ_REF_MAP.set(topicName, this);
     }
 }

@@ -89,7 +89,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 const object = SUBSCRIBER_OBJ_REF_MAP.get(topic);
                 functionRef.forEach(async fn => {
                     // bind the subscribed functions to topic
-                    await fn.apply(object, [message.value.toString()]);
+                    const msg = JSON.parse(
+                        message.value.toString()
+                    ) as KafkaPayload;
+                    await fn.apply(object, [msg]);
                 });
             },
         });
