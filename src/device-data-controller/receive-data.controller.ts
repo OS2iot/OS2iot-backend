@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 
 import { IoTDeviceService } from "@services/iot-device.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @ApiTags("Receive Data")
 @Controller("receive-data")
@@ -30,9 +31,9 @@ export class ReceiveDataController {
         const deviceExists = await this.iotDeviceService.isApiKeyValid(apiKey);
 
         if (!deviceExists) {
-            const e = new ForbiddenException();
-            Logger.error(e);
-            throw e;
+            const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
+            Logger.error(apiKey + " " + exception);
+            throw exception;
         }
         return;
     }
