@@ -13,25 +13,25 @@ import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 
 import { IoTDeviceService } from "@services/iot-device.service";
 
-@ApiTags("Recieve Data")
-@Controller("recieve-data")
-export class RecieveDataController {
+@ApiTags("Receive Data")
+@Controller("receive-data")
+export class ReceiveDataController {
     constructor(private iotDeviceService: IoTDeviceService) {}
 
     @Post()
     @Header("Cache-Control", "none")
-    @ApiOperation({ summary: "Create a new RecieveData" })
+    @ApiOperation({ summary: "Receive generic JSON data from edge devices" })
     @ApiBadRequestResponse()
     @HttpCode(204)
-    async create(
+    async receive(
         @Query("apiKey") apiKey: string,
         @Body() data: string
     ): Promise<void> {
-        const deviceExists = await this.iotDeviceService.isApiValidKey(apiKey);
+        const deviceExists = await this.iotDeviceService.isApiKeyValid(apiKey);
 
         if (!deviceExists) {
             const e = new ForbiddenException();
-            Logger.log(e);
+            Logger.error(e);
             throw e;
         }
         return;
