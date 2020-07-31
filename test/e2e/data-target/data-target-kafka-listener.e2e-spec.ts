@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, HttpService, Logger } from "@nestjs/common";
+import { INestApplication, HttpService } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
@@ -112,7 +112,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
     it("React to TransformedRequest and send to DataTarget - All OK", async () => {
         // Arrange
         const applications = await createApplications();
-        const dataTarget = await createDataTarget(applications);
+        await createDataTarget(applications);
         const iotDevice = await createIoTDevice(applications);
 
         const dto: TransformedPayloadDto = {
@@ -131,28 +131,18 @@ describe("DataTargetKafkaListener (e2e)", () => {
         // Mock response to HTTP POST
         const mockedResult: AxiosResponse = {
             data: { success: true },
-            status: 400,
+            status: 200,
             statusText: "",
             headers: {},
             config: {},
         };
-        /*
-        const spy = jest
-            .spyOn(httpService, "post")
-            .mockImplementationOnce(() => of(mockedResult));
-        httpService.post = jest.fn(() => {
-            Logger.log("in mock");
-            return of(mockedResult);
-        });
-        */
 
-        const spy = jest
-            .spyOn(httpService, "post")
-            .mockImplementation(
-                (url: string, data: JSON, config: AxiosRequestConfig) => {
-                    return of(mockedResult);
-                }
-            );
+        jest.spyOn(httpService, "post").mockImplementation(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            (_url: string, _data: JSON, _config: AxiosRequestConfig) => {
+                return of(mockedResult);
+            }
+        );
 
         // Act
         const result = await kafkaService.sendMessage(topic, payload);
@@ -161,7 +151,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
         const resultMetadata = (result as RecordMetadata[])[0];
         expect(resultMetadata.errorCode).toBe(0);
         // Ensure that mock was called
-        // TODO: Fix this:
+        // This should work according to the documentation, but it is working (change mockedResult and logging will change)
         // expect(spy).toHaveBeenCalled();
     });
 });
