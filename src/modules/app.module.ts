@@ -10,6 +10,8 @@ import { ApplicationService } from "@services/application.service";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+
 import { DataTargetModule } from "@modules/data-target.module";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
@@ -58,6 +60,7 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         DataTargetKafkaModule,
         DataTargetSenderModule,
         ReceiveDataModule,
+        ChirpstackAdministrationModule,
     ],
     controllers: [
         AppController,
