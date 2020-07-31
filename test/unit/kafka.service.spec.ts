@@ -6,7 +6,16 @@ describe("KafkaService", () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            providers: [KafkaService],
+            providers: [
+                {
+                    provide: KafkaService,
+                    useValue: new KafkaService({
+                        clientId: "os2iot-client",
+                        brokers: ["host.docker.internal:9092"],
+                        groupId: "os2iot-backend",
+                    }),
+                },
+            ],
         }).compile();
 
         service = module.get<KafkaService>(KafkaService);
