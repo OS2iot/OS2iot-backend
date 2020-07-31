@@ -4,7 +4,13 @@ import {
     OnModuleInit,
     Logger,
 } from "@nestjs/common";
-import { Consumer, Kafka, Producer, RecordMetadata } from "kafkajs";
+import {
+    Consumer,
+    Kafka,
+    Producer,
+    RecordMetadata,
+    KafkaMessage,
+} from "kafkajs";
 import {
     SUBSCRIBER_FIXED_FN_REF_MAP,
     SUBSCRIBER_FN_REF_MAP,
@@ -22,6 +28,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     constructor(private kafkaConfig: KafkaConfig) {
         this.kafka = new Kafka({
+            ssl: false,
             clientId: this.kafkaConfig.clientId,
             brokers: this.kafkaConfig.brokers,
         });
@@ -64,7 +71,13 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     async bindAllTopicToConsumer(_topic: string): Promise<void> {
         await this.consumer.subscribe({ topic: _topic, fromBeginning: false });
         await this.consumer.run({
-            eachMessage: async ({ topic, message }) => {
+            eachMessage: async ({
+                topic,
+                message,
+            }: {
+                topic: string;
+                message: KafkaMessage;
+            }) => {
                 const functionRef = SUBSCRIBER_FN_REF_MAP.get(topic);
                 const object = SUBSCRIBER_OBJ_REF_MAP.get(topic);
                 functionRef.forEach(async fn => {
@@ -84,7 +97,13 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
             fromBeginning: false,
         });
         await this.fixedConsumer.run({
-            eachMessage: async ({ topic, message }) => {
+            eachMessage: async ({
+                topic,
+                message,
+            }: {
+                topic: string;
+                message: KafkaMessage;
+            }) => {
                 const functionRef = SUBSCRIBER_FIXED_FN_REF_MAP.get(topic);
                 const object = SUBSCRIBER_OBJ_REF_MAP.get(topic);
                 functionRef.forEach(async fn => {

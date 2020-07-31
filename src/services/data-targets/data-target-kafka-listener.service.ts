@@ -35,7 +35,16 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
 
         const dto = this.kafkaPayloadtoDto(payload);
 
-        const iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
+        let iotDevice = null;
+        try {
+            iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
+        } catch (err) {
+            Logger.error(
+                `Could not find device with id: ${dto.iotDeviceId}. [Error: ${err}]`
+            );
+            return;
+        }
+
         Logger.debug(
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
         );
@@ -49,7 +58,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                 .join(", ")}]`
         );
 
-        this.sendToDataTargets(dataTargets, dto);
+        await this.sendToDataTargets(dataTargets, dto);
     }
 
     private sendToDataTargets(
