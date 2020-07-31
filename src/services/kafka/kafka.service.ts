@@ -79,6 +79,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 message: KafkaMessage;
             }) => {
                 const functionRef = SUBSCRIBER_FN_REF_MAP.get(topic);
+                // TODO: If we want multiple subscribors to the same topic, then this line needs to change.
+                // Currently it binds to the class which was last added to the map (via. addTopic)
                 const object = SUBSCRIBER_OBJ_REF_MAP.get(topic);
                 functionRef.forEach(async fn => {
                     // bind the subscribed functions to topic
