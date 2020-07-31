@@ -12,6 +12,7 @@
         "baseUrl": "./",
         "incremental": true,
         "noImplicitAny": true,
+        "lib": ["dom", "es2017"],
         "paths": {
             "@services/*": ["src/services/*"],
             "@admin-controller/*": ["src/admin-controller/*"],

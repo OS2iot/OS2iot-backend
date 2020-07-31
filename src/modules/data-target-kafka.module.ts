@@ -12,6 +12,7 @@ import { DataTarget } from "@entities/data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import { IoTDeviceModule } from "./iot-device.module";
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         HttpModule,
         KafkaModule,
         DataTargetSenderModule,
+        IoTDeviceModule,
     ],
     providers: [
         IoTDeviceService,

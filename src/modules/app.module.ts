@@ -41,7 +41,11 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         }),
         KafkaModule.register({
             clientId: "os2iot-client",
-            brokers: ["host.docker.internal:9092"],
+            brokers: [
+                `${process.env.KAFKA_HOSTNAME ||
+                    "host.docker.internal"}:${process.env.KAFKA_PORT ||
+                    "9093"}`,
+            ],
             groupId: "os2iot-backend",
         }),
         ConfigModule.forRoot({

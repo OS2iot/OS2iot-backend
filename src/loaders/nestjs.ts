@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { INestApplication, ValidationPipe, Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "@modules/app.module";
 
@@ -12,5 +12,11 @@ export async function setupNestJs(config: {
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(new ValidationPipe());
     app.enableCors();
+
+    Logger.log(
+        `Kafka: ${process.env.KAFKA_HOSTNAME ||
+            "host.docker.internal"}:${process.env.KAFKA_PORT || "9092"}`
+    );
+
     return app;
 }
