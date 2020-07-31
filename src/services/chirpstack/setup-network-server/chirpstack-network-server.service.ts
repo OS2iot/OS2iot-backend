@@ -28,6 +28,12 @@ export class ChirpstackSetupNetworkServerService
         };
         const data: string = //TODO: skriv om til at bruge en DTO
             '{"networkServer":' + JSON.stringify(createNetworkServerDto) + "}";
+        const data: string = //TODO: skriv om til at bruge en DTO
+            '{"networkServer": { "name": "' +
+            chirpstackNetworkServerName +
+            '", "server": "' +
+            chirpstackNetworkServerName +
+            '"}}';
 
         if ((await this.getCount(endpoint)) < 1) {
             this.post(endpoint, data); //Måske er det i virkeligheden ligegyldigt om den findes i forvejen. ??

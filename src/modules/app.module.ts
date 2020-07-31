@@ -1,4 +1,4 @@
-import { Module, HttpModule } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "@admin-controller/app.controller";
 import { AppService } from "@services/app.service";
@@ -16,10 +16,7 @@ import { DataTargetModule } from "@modules/data-target.module";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
-import { ReceiveDataModule } from "@modules/receive-data.module";
-import { KafkaModule } from "@modules/kafka.module";
-import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
-import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import { ReceiveDataModule } from "./receive-data.module";
 
 @Module({
     imports: [
@@ -41,23 +38,12 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
             autoLoadEntities: true,
             retryAttempts: 0,
         }),
-        KafkaModule.register({
-            clientId: "os2iot-client",
-            brokers: [
-                `${process.env.KAFKA_HOSTNAME ||
-                    "host.docker.internal"}:${process.env.KAFKA_PORT ||
-                    "9093"}`,
-            ],
-            groupId: "os2iot-backend",
-        }),
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-        HttpModule,
         ApplicationModule,
         IoTDeviceModule,
         DataTargetModule,
-        DataTargetKafkaModule,
         DataTargetSenderModule,
         ReceiveDataModule,
         ChirpstackAdministrationModule,
@@ -73,7 +59,6 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         ApplicationService,
         IoTDeviceService,
         DataTargetService,
-        HttpPushDataTargetService,
     ],
 })
 export class AppModule {
