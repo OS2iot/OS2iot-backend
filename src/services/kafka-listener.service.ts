@@ -11,7 +11,7 @@ import { SubscribeTo } from "./kafka/kafka.decorator";
 export class KafkaListenerService extends AbstractKafkaConsumer {
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.RAW_REQUEST);
-        this.addTopic(KafkaTopic.TRANSFORMED_REQUEST);
+        // this.addTopic(KafkaTopic.TRANSFORMED_REQUEST);
     }
 
     @SubscribeTo(KafkaTopic.RAW_REQUEST)
@@ -21,10 +21,10 @@ export class KafkaListenerService extends AbstractKafkaConsumer {
         );
     }
 
-    @SubscribeTo(KafkaTopic.TRANSFORMED_REQUEST)
-    transformedRequestListener(payload: KafkaPayload): void {
-        Logger.debug(
-            `[KafkaLogger - #TRANSFORMED_REQUEST]: '${JSON.stringify(payload)}'`
-        );
-    }
+    // @SubscribeTo(KafkaTopic.TRANSFORMED_REQUEST)
+    // transformedRequestListener(payload: KafkaPayload): void {
+    //     Logger.debug(
+    //         `[KafkaLogger - #TRANSFORMED_REQUEST]: '${JSON.stringify(payload)}'`
+    //     );
+    // }
 }

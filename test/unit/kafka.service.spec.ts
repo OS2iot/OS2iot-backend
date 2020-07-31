@@ -11,7 +11,7 @@ describe("KafkaService", () => {
                     provide: KafkaService,
                     useValue: new KafkaService({
                         clientId: "os2iot-client",
-                        brokers: ["host.docker.internal:9092"],
+                        brokers: ["host.docker.internal:9093"],
                         groupId: "os2iot-backend",
                     }),
                 },

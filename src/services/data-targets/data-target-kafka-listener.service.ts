@@ -4,7 +4,6 @@ import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { plainToClass } from "class-transformer";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
@@ -33,17 +32,8 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             )}'`
         );
 
-        const dto = this.kafkaPayloadtoDto(payload);
-
-        let iotDevice = null;
-        try {
-            iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
-        } catch (err) {
-            Logger.error(
-                `Could not find device with id: ${dto.iotDeviceId}. [Error: ${err}]`
-            );
-            return;
-        }
+        const dto: TransformedPayloadDto = payload.body;
+        const iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
 
         Logger.debug(
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
@@ -58,7 +48,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                 .join(", ")}]`
         );
 
-        await this.sendToDataTargets(dataTargets, dto);
+        this.sendToDataTargets(dataTargets, dto);
     }
 
     private sendToDataTargets(
@@ -94,15 +84,5 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
 
         const status = await this.httpPushDataTargetService.send(config, data);
         Logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
-    }
-
-    private kafkaPayloadtoDto(payload: KafkaPayload): TransformedPayloadDto {
-        const decodedPayload = (plainToClass<TransformedPayloadDto, JSON>(
-            TransformedPayloadDto,
-            payload.body
-        ) as unknown) as TransformedPayloadDto;
-
-        Logger.debug(`payload: ${JSON.stringify(decodedPayload.payload)}`);
-        return decodedPayload;
     }
 }
