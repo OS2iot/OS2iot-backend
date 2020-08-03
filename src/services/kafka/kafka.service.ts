@@ -18,6 +18,10 @@ import {
 } from "./kafka.decorator";
 import { KafkaConfig, KafkaPayload } from "./kafka.message";
 
+/**
+ * Based on: https://github.com/rajeshkumarbehura/ts-nestjs-kafka /
+ *           https://dev.to/rajeshkumarbehura/kafkajs-nestjs-with-typescript-simplified-example-35ep
+ */
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
     private kafka: Kafka;
