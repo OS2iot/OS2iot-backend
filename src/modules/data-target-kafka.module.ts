@@ -13,6 +13,9 @@ import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { IoTDeviceModule } from "./iot-device.module";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
 
 @Module({
     imports: [
@@ -22,10 +25,13 @@ import { IoTDeviceModule } from "./iot-device.module";
             GenericHTTPDevice,
             DataTarget,
             HttpPushDataTarget,
+            ReceivedMessage,
+            ReceivedMessageMetadata,
         ]),
         HttpModule,
         KafkaModule,
         DataTargetSenderModule,
+        DeviceIntegrationPersistenceModule,
         IoTDeviceModule,
     ],
     providers: [
