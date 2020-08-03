@@ -3,7 +3,7 @@ import { DataTargetService } from "@services/data-target.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
-import { ApplicationService } from "../../src/services/application.service";
+import { ApplicationService } from "@services/application.service";
 
 describe("DataTargetService", () => {
     let service: DataTargetService;
