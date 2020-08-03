@@ -37,6 +37,9 @@ export abstract class IoTDevice extends DbBaseEntity {
     @Length(0, 1024)
     comment?: string;
 
+    @Column({ type: "jsonb", nullable: true })
+    metadata: JSON;
+
     @Column("enum", {
         enum: IoTDeviceType,
     })

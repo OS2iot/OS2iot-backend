@@ -49,4 +49,8 @@ export class CreateIoTDeviceDto {
     @IsOptional()
     @IsString()
     comment: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    metadata: JSON;
 }
