@@ -84,6 +84,7 @@ describe("IoTDeviceController (e2e)", () => {
         device.name = "HTTP device";
         device.application = applications[0];
         device.apiKey = "asdf";
+        device.metadata = JSON.parse('{ "a_key": "a_value" }');
 
         const manager = getManager();
         const iotDevice = await manager.save(device);
@@ -100,6 +101,9 @@ describe("IoTDeviceController (e2e)", () => {
                     name: "HTTP device",
                     application: {
                         id: appId,
+                    },
+                    metadata: {
+                        a_key: "a_value",
                     },
                 });
             });
@@ -120,6 +124,12 @@ describe("IoTDeviceController (e2e)", () => {
             type: "GENERIC_HTTP",
             applicationId: appId,
             comment: "string",
+            metadata: {
+                key1: "value1",
+                key2: 1234.567,
+                key3: true,
+                complex1: ["asdf", "b", "c", 1, true],
+            },
         };
         return await request(app.getHttpServer())
             .post("/iot-device/")
@@ -137,6 +147,12 @@ describe("IoTDeviceController (e2e)", () => {
                     comment: "string",
                     location: null,
                     commentOnLocation: null,
+                    metadata: {
+                        key1: "value1",
+                        key2: 1234.567,
+                        key3: true,
+                        complex1: ["asdf", "b", "c", 1, true],
+                    },
                 });
             });
     });
@@ -155,6 +171,7 @@ describe("IoTDeviceController (e2e)", () => {
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
         device.application = applications[0];
+        device.metadata = JSON.parse('{ "a_key": "a_value" }');
         // @Hack: to call beforeInsert (private)
         (device as any).beforeInsert();
 
@@ -169,6 +186,7 @@ describe("IoTDeviceController (e2e)", () => {
             type: "GENERIC_HTTP",
             applicationId: appId,
             comment: "new comment",
+            metadata: { b_key: "b_value" },
         };
 
         return await request(app.getHttpServer())
@@ -187,6 +205,7 @@ describe("IoTDeviceController (e2e)", () => {
                     comment: "new comment",
                     location: null,
                     commentOnLocation: null,
+                    metadata: { b_key: "b_value" },
                     apiKey: oldUuid, // Check that the apiKey is preserved.
                 });
             });

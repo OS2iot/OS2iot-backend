@@ -131,6 +131,8 @@ export class IoTDeviceService {
             iotDevice.commentOnLocation = null;
         }
 
+        iotDevice.metadata = createIoTDeviceDto.metadata;
+
         return iotDevice;
     }
 }
