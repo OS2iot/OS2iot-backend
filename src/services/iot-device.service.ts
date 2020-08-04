@@ -62,11 +62,10 @@ export class IoTDeviceService {
             .getOne();
     }
 
-    async isApiKeyValid(key: string): Promise<boolean> {
-        const count = await this.genericHTTPDeviceRepository.count({
-            apiKey: key,
-        });
-        return count > 0;
+    async findGenericHttpDeviceByApiKey(
+        key: string
+    ): Promise<GenericHTTPDevice> {
+        return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
     }
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
