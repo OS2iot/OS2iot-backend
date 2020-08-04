@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -40,6 +40,26 @@ export class IoTDeviceService {
         return await this.iotDeviceRepository.findOneOrFail(id, {
             relations: ["application"],
         });
+    }
+
+    async findOneWithApplicationAndMetadata(id: number): Promise<IoTDevice> {
+        // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
+        // Therefore we use the QueryBuilder ...
+        return await this.iotDeviceRepository
+            .createQueryBuilder("iot_device")
+            .where("iot_device.id = :id", { id: id })
+            .innerJoinAndSelect(
+                "iot_device.application",
+                "application",
+                'application.id = iot_device."applicationId"'
+            )
+            .leftJoinAndSelect(
+                "iot_device.receivedMessagesMetadata",
+                "metadata",
+                'metadata."deviceId" = iot_device.id'
+            )
+            .orderBy('metadata."sentTime"', "DESC")
+            .getOne();
     }
 
     async isApiKeyValid(key: string): Promise<boolean> {

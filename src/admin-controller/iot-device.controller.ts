@@ -9,6 +9,7 @@ import {
     Put,
     Delete,
     BadRequestException,
+    Logger,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -32,11 +33,21 @@ export class IoTDeviceController {
     @ApiOperation({ summary: "Find one IoT-Device by id" })
     @ApiNotFoundResponse()
     async findOne(@Param("id") id: number): Promise<IoTDevice> {
+        let result = undefined;
         try {
-            return await this.iotDeviceService.findOne(id);
+            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(
+                id
+            );
         } catch (err) {
+            Logger.error(
+                `Error occured during findOne: '${JSON.stringify(err)}'`
+            );
+        }
+
+        if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
+        return result;
     }
 
     @Post()
