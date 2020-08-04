@@ -8,16 +8,18 @@ import {
     ForbiddenException,
     Logger,
 } from "@nestjs/common";
-
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
-
 import { IoTDeviceService } from "@services/iot-device.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ReceiveDataService } from "@services/data-management/receive-data.service";
 
 @ApiTags("Receive Data")
 @Controller("receive-data")
 export class ReceiveDataController {
-    constructor(private iotDeviceService: IoTDeviceService) {}
+    constructor(
+        private iotDeviceService: IoTDeviceService,
+        private receiveDataService: ReceiveDataService
+    ) {}
 
     @Post()
     @Header("Cache-Control", "none")
@@ -26,11 +28,13 @@ export class ReceiveDataController {
     @HttpCode(204)
     async receive(
         @Query("apiKey") apiKey: string,
-        @Body() data: string
+        @Body() data: JSON
     ): Promise<void> {
-        const deviceExists = await this.iotDeviceService.isApiKeyValid(apiKey);
+        const iotDevice = await this.iotDeviceService.findGenericHttpDeviceByApiKey(
+            apiKey
+        );
 
-        if (!deviceExists) {
+        if (!iotDevice) {
             const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
             Logger.error(
                 "No device has been registered by the following API key " +
@@ -38,6 +42,12 @@ export class ReceiveDataController {
             );
             throw exception;
         }
+
+        // @HACK: Convert the 'data' back to a string.
+        // NestJS / BodyParser always converts the input to an object for us.
+        const dataAsString = JSON.stringify(data);
+        await this.receiveDataService.sendToKafka(iotDevice, dataAsString);
+
         return;
     }
 }
