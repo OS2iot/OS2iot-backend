@@ -61,7 +61,7 @@
         "jest": "26.0.1",
         "jest-module-name-mapper": "^0.1.5",
         "prettier": "^1.19.1",
-        "sqlite3": "^4.2.0",
+        "sqlite3": "^5.0.0",
         "supertest": "^4.0.2",
         "ts-jest": "26.1.0",
         "ts-loader": "^6.2.1",
