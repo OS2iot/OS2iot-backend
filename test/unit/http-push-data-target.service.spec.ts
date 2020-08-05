@@ -1,7 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { HttpService } from "@nestjs/common";
-import { AxiosRequestConfig } from "axios";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";

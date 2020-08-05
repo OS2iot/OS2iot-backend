@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration/generic-chirpstack-configuration.service";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/setup-network-server/chirpstack-network-server.service";
 
 describe("GenericChirpstackConfigurationService1Service", () => {
-    let genericChirpstackConfigurationService: GenericChirpstackConfigurationService;
+    let genericChirpstackConfigurationService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     const chirpstackNetworkServerName =
         "os2iot-docker_chirpstack-network-server_1:8000";
@@ -31,12 +31,14 @@ describe("GenericChirpstackConfigurationService1Service", () => {
 
     it("get network-server count", async () => {
         const count = genericChirpstackConfigurationService.getCount(endpoint);
+        Logger.warn("Test " + count);
         expect(count).toBe(1);
     });
 
     it("setup network-server ", async () => {
         genericChirpstackConfigurationService.post(endpoint, data);
         const count = genericChirpstackConfigurationService.getCount(endpoint);
+        Logger.warn("Test " + count);
         expect(count).toBe(1);
     });
 });

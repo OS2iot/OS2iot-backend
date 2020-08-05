@@ -3,7 +3,6 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
-import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
