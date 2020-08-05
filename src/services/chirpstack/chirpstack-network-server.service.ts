@@ -20,7 +20,7 @@ export class ChirpstackSetupNetworkServerService
         return await this.put("network-servers", data, id);
     }
     public async deleteNetworkServer(id: number): Promise<JSON> {
-        return await this.get("network-servers", id);
+        return await this.delete("network-servers", id);
     }
     public async getNetworkServer(
         limit?: number,

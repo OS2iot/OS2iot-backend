@@ -38,7 +38,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
             10
         );
         Logger.error(res);
-        expect(res).toBe(SendStatus.OK);
+        expect(res).toBe('{"result": [], "totalCount": "1"}');
     });
 
     it("Delete network-server ", async () => {
@@ -46,13 +46,13 @@ describe("ChirpstackSetupNetworkServerService", () => {
             1
         );
         Logger.error(res);
-        expect(res).toBe(SendStatus.OK);
+        expect(res).toBe("[Error: Request failed with status code 404]");
     });
 
     it("Post network-server ", async () => {
         const data: string = chirpstackSetupNetworkServerService.setupData();
-        const res = await JSON.stringify(
-            chirpstackSetupNetworkServerService.postNetworkServer(data)
+        const res = await chirpstackSetupNetworkServerService.postNetworkServer(
+            data
         );
         Logger.error(res);
         expect(res).toBe(SendStatus.OK);
@@ -65,8 +65,6 @@ describe("ChirpstackSetupNetworkServerService", () => {
             1
         );
         Logger.error(res);
-        expect(res).toBe(
-            JSON.parse("[Error: Request failed with status code 404]")
-        );
+        expect(res).toBe("[Error: Request failed with status code 404]");
     });
 });

@@ -97,7 +97,7 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return JSON.parse(result.statusText.toString());
+            return result.data;
         } catch (err) {
             Logger.error(`Put got error: ${err}`);
             // throw new NotFoundException(ErrorCodes.IdDoesNotExists)
@@ -123,7 +123,7 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return JSON.parse(result.data);
+            return result.data;
         } catch (err) {
             Logger.error(`get got error: ${err}`);
             return err;
@@ -167,7 +167,7 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return JSON.parse(result.data);
+            return result.data;
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
             // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
