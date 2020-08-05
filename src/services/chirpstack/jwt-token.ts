@@ -1,11 +1,12 @@
 import { Injectable } from "@nestjs/common";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import * as nJwt from "njwt";
 
 @Injectable()
 export class JwtToken {
     static setupToken(): string {
-        var nJwt = require("njwt");
-
-        var claims = {
+        const claims = {
             iss: "chirpstack-application-server", // issuer of the claim
             aud: "chirpstack-application-server", // audience for which the claim is intended
             nbf: Math.floor(new Date().valueOf() / 1000), // unix time from which the token is valid
@@ -14,8 +15,8 @@ export class JwtToken {
             username: "admin", // username the client claims to be
         };
 
-        var jwt = nJwt.create(claims, "verysecret", "HS256");
-        var token = jwt.compact();
+        const jwt = nJwt.create(claims, "verysecret", "HS256");
+        const token = jwt.compact();
         return token;
     }
 }
