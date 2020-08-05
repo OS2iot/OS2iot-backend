@@ -8,13 +8,35 @@ export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
     async onModuleInit(): Promise<void> {
+        if ((await this.getCountNetworkServer()) < 1) {
+            this.postNetworkServer(this.setupData()); //Måske er det i virkeligheden ligegyldigt om den findes i forvejen. ??
+        }
+    }
+
+    async postNetworkServer(data: string): Promise<JSON> {
+        return await this.post("network-servers", data);
+    }
+    async putNetworkServer(data: string, id: number): Promise<JSON> {
+        return await this.put("network-servers", data, id);
+    }
+    async deleteNetworkServer(id: number): Promise<JSON> {
+        return await this.get("network-servers", id);
+    }
+    async getNetworkServer(limit?: number, offset?: number): Promise<JSON> {
+        return await this.get("network-servers", limit, offset);
+    }
+    async getCountNetworkServer(): Promise<number> {
+        return await this.getCount("network-servers");
+    }
+
+    setupData(): string {
         const chirpstackNetworkServerName =
             "os2iot-docker_chirpstack-network-server_1:8000";
-        const endpoint = "network-servers";
+
         const createNetworkServerDto: CreateNetworkServerDto = {
             name: chirpstackNetworkServerName,
             server: chirpstackNetworkServerName,
-
+            /*
             caCert: "",
             gatewayDiscoveryDR: 0,
             gatewayDiscoveryEnabled: false,
@@ -25,12 +47,11 @@ export class ChirpstackSetupNetworkServerService
             routingProfileTLSKey: "",
             tlsCert: "",
             tlsKey: "",
+            */
         };
         const data: string = //TODO: skriv om til at bruge en DTO
             '{"networkServer":' + JSON.stringify(createNetworkServerDto) + "}";
 
-        if ((await this.getCount(endpoint)) < 1) {
-            this.post(endpoint, data); //Måske er det i virkeligheden ligegyldigt om den findes i forvejen. ??
-        }
+        return data;
     }
 }
