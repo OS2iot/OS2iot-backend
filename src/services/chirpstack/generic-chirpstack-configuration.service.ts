@@ -4,7 +4,7 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig } from "axios";
 
 @Injectable()
-export abstract class GenericChirpstackConfigurationService {
+export class GenericChirpstackConfigurationService {
     constructor(private httpService: HttpService) {}
 
     private readonly baseUrl = "http://localhost:8080/api/";
@@ -53,7 +53,7 @@ export abstract class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post(endpoint: string, data: string): Promise<JSON> {
+    async post(endpoint: string, data: string): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -67,14 +67,15 @@ export abstract class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return result.data; //TODO: set return;
+            return JSON.parse(result.statusText.toString());
         } catch (err) {
             Logger.error(`post got error: ${err}`);
-            return null; //TODO: set return;
+            // throw new BadRequestException(err);
+            return err;
         }
     }
 
-    async put(endpoint: string, data: string, id: number): Promise<JSON> {
+    async put(endpoint: string, data: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -89,17 +90,19 @@ export abstract class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return result.data; //TODO: set return;
+            return result.data;
         } catch (err) {
             Logger.error(`Put got error: ${err}`);
+            // throw new NotFoundException(ErrorCodes.IdDoesNotExists)
+            return err;
         }
     }
 
-    async get(
+    async getAll(
         endpoint: string,
         limit?: number,
         offset?: number
-    ): Promise<JSON> {
+    ): Promise<any> {
         const header = this.setupHeader(endpoint, limit, offset);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -116,6 +119,28 @@ export abstract class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`get got error: ${err}`);
+            return err;
+        }
+    }
+
+    async get(endpoint: string, id: number): Promise<any> {
+        const header = this.setupHeader(endpoint);
+        const axiosConfig = this.makeAxiosConfiguration(header);
+        const url = header.url + "/" + id;
+        try {
+            const result = await this.httpService
+                .get(url, axiosConfig)
+                .toPromise();
+
+            Logger.warn(
+                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
+                    result.statusText
+                }`
+            );
+            return result.data;
+        } catch (err) {
+            Logger.error(`get got error: ${err}`);
+            return err;
         }
     }
 
@@ -137,10 +162,12 @@ export abstract class GenericChirpstackConfigurationService {
             return result.data.totalCount;
         } catch (err) {
             Logger.error(`getCount got error: ${err}`);
+            // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            return err;
         }
     }
 
-    async delete(endpoint: string, id: number): Promise<JSON> {
+    async delete(endpoint: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -157,6 +184,8 @@ export abstract class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
+            // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            return err;
         }
     }
 }
