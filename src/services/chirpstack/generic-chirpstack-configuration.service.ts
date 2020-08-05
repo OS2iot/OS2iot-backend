@@ -1,5 +1,5 @@
 import { Injectable, Logger, HttpService } from "@nestjs/common";
-import { JwtToken } from "../jwt-token";
+import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig } from "axios";
 
@@ -9,7 +9,22 @@ export abstract class GenericChirpstackConfigurationService {
 
     private readonly baseUrl = "http://localhost:8080/api/";
 
-    setupHeader(endPoint: string): any {
+    setupHeader(endPoint: string, limit?: number, offset?: number): any {
+        if (limit != null && offset != null) {
+            return {
+                url:
+                    this.baseUrl +
+                    endPoint +
+                    "?limit=" +
+                    limit +
+                    "&" +
+                    offset +
+                    "=0",
+                timeout: 3000,
+                authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
+                authorizationHeader: "Bearer " + JwtToken.setupToken(),
+            };
+        }
         return {
             url: this.baseUrl + endPoint,
             timeout: 3000,
@@ -17,7 +32,6 @@ export abstract class GenericChirpstackConfigurationService {
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };
     }
-
     setupData(rawBody: string): any {
         return {
             rawBody: rawBody,
@@ -78,8 +92,12 @@ export abstract class GenericChirpstackConfigurationService {
         }
     }
 
-    async get(endpoint: string): Promise<JSON> {
-        const header = this.setupHeader(endpoint);
+    async get(
+        endpoint: string,
+        limit?: number,
+        offset?: number
+    ): Promise<JSON> {
+        const header = this.setupHeader(endpoint, limit, offset);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
         try {
