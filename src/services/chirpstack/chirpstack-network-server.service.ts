@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/create-network-server.dto";
