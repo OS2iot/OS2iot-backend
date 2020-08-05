@@ -5,6 +5,11 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/setup-
 
 describe("GenericChirpstackConfigurationService1Service", () => {
     let genericChirpstackConfigurationService: ChirpstackSetupNetworkServerService;
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration/generic-chirpstack-configuration.service";
+import { INestApplication } from "@nestjs/common";
+
+describe("GenericChirpstackConfigurationService1Service", () => {
+    let genericChirpstackConfigurationService: GenericChirpstackConfigurationService;
     let app: INestApplication;
     const chirpstackNetworkServerName =
         "os2iot-docker_chirpstack-network-server_1:8000";
