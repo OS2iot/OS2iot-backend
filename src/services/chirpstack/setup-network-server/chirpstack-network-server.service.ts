@@ -7,7 +7,6 @@ import { CreateNetworkServerDto } from "@dto/create-network-server.dto";
 export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
-
     async onModuleInit(): Promise<void> {
         const chirpstackNetworkServerName =
             "os2iot-docker_chirpstack-network-server_1:8000";
