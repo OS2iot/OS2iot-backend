@@ -27,7 +27,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
     });
 
     it("Get network-server count", async () => {
-        const count = await chirpstackSetupNetworkServerService.getCountNetworkServer();
+        const count = await chirpstackSetupNetworkServerService.getNetworkServerCount();
         Logger.error(count);
         expect(count).toBe("1");
     });

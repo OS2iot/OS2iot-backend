@@ -8,24 +8,27 @@ export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
     async onModuleInit(): Promise<void> {
-        if ((await this.getCountNetworkServer()) < 1) {
+        if ((await this.getNetworkServerCount()) < 1) {
             this.postNetworkServer(this.setupData()); //Måske er det i virkeligheden ligegyldigt om den findes i forvejen. ??
         }
     }
 
-    async postNetworkServer(data: string): Promise<JSON> {
+    public async postNetworkServer(data: string): Promise<JSON> {
         return await this.post("network-servers", data);
     }
-    async putNetworkServer(data: string, id: number): Promise<JSON> {
+    public async putNetworkServer(data: string, id: number): Promise<JSON> {
         return await this.put("network-servers", data, id);
     }
-    async deleteNetworkServer(id: number): Promise<JSON> {
+    public async deleteNetworkServer(id: number): Promise<JSON> {
         return await this.get("network-servers", id);
     }
-    async getNetworkServer(limit?: number, offset?: number): Promise<JSON> {
+    public async getNetworkServer(
+        limit?: number,
+        offset?: number
+    ): Promise<JSON> {
         return await this.get("network-servers", limit, offset);
     }
-    async getCountNetworkServer(): Promise<number> {
+    public async getNetworkServerCount(): Promise<number> {
         return await this.getCount("network-servers");
     }
 
