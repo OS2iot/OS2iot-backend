@@ -39,7 +39,10 @@ export abstract class GenericChirpstackConfigurationService {
         };
     }
 
-    makeAxiosConfiguration(config: any): AxiosRequestConfig {
+    makeAxiosConfiguration(config: {
+        timeout: number;
+        authorizationHeader: string;
+    }): AxiosRequestConfig {
         const axiosConfig: AxiosRequestConfig = {
             timeout: config.timeout,
             headers: { "Content-Type": "application/json" },
