@@ -1,18 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
-import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 import { Application } from "@entities/application.entity";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { DataTarget } from "@entities/data-target.entity";
-import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { application } from "express";
 
 describe("ReceiveDataController (e2e)", () => {
     let app: INestApplication;
