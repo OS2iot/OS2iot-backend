@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
-
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/create-network-server.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/list-all-network-server-response.dto";
@@ -35,10 +34,20 @@ export class ChirpstackSetupNetworkServerService
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        return await this.getAll("network-servers", limit, offset);
+        const result: ListAllNetworkServerReponseDto = await this.getAll(
+            "network-servers",
+            limit,
+            offset
+        );
+        return result;
     }
     public async getNetworkServerCount(): Promise<number> {
-        return await this.getCount("network-servers");
+        const result: ListAllNetworkServerReponseDto = await this.getAll(
+            "network-servers",
+            0,
+            1000
+        );
+        return result.totalCount;
     }
 
     setupData(): string {

@@ -14,8 +14,6 @@ export class CreateNetworkServerDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     id?: number;
 
     @ApiProperty({ required: false })
@@ -26,26 +24,18 @@ export class CreateNetworkServerDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     gatewayDiscoveryDR?: number;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     gatewayDiscoveryEnabled?: boolean;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     gatewayDiscoveryInterval?: number;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
-    @MaxLength(1024)
     gatewayDiscoveryTXFrequency?: number;
 
     @ApiProperty({ required: false })
