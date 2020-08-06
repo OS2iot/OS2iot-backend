@@ -1,14 +1,7 @@
-import {
-    Injectable,
-    Logger,
-    HttpService,
-    NotFoundException,
-    BadRequestException,
-} from "@nestjs/common";
+import { Injectable, Logger, HttpService } from "@nestjs/common";
 import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig } from "axios";
-import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -60,7 +53,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post(endpoint: string, data: string): Promise<JSON> {
+    async post(endpoint: string, data: string): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -82,7 +75,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put(endpoint: string, data: string, id: number): Promise<JSON> {
+    async put(endpoint: string, data: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -105,17 +98,38 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async get(
+    async getAll(
         endpoint: string,
         limit?: number,
         offset?: number
-    ): Promise<JSON> {
+    ): Promise<any> {
         const header = this.setupHeader(endpoint, limit, offset);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
         try {
             const result = await this.httpService
                 .get(header.url, axiosConfig)
+                .toPromise();
+
+            Logger.warn(
+                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
+                    result.statusText
+                }`
+            );
+            return result.data;
+        } catch (err) {
+            Logger.error(`get got error: ${err}`);
+            return err;
+        }
+    }
+
+    async get(endpoint: string, id: number): Promise<any> {
+        const header = this.setupHeader(endpoint);
+        const axiosConfig = this.makeAxiosConfiguration(header);
+        const url = header.url + "/" + id;
+        try {
+            const result = await this.httpService
+                .get(url, axiosConfig)
                 .toPromise();
 
             Logger.warn(
@@ -153,7 +167,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async delete(endpoint: string, id: number): Promise<JSON> {
+    async delete(endpoint: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
