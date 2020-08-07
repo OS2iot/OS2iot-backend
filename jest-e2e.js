@@ -19,4 +19,5 @@ module.exports = {
         "^.+\\.(t|j)s$": "ts-jest",
     },
     coverageDirectory: "./coverage-e2e",
+    setupFiles: ["<rootDir>/.jest/setEnvVars.ts"],
 };
