@@ -78,8 +78,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
     }
 
-    private async findExistingRecevedMessage(relatedIoTDevice: IoTDevice) {
-        // Use QueryBuilder since the relation only exists from IoT-Device to RecevedMessage
+    private async findExistingRecevedMessage(relatedIoTDevice: IoTDevice): Promise<ReceivedMessage> {
+        // Use QueryBuilder since the relation only exists from IoT-Device to ReceivedMessage
         return await this.receivedMessageRepository
             .createQueryBuilder("msg")
             .leftJoinAndSelect("msg.device", "iot_device")
@@ -87,7 +87,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             .getOne();
     }
 
-    private mapDtoToReceivedMessage(
+    mapDtoToReceivedMessage(
         dto: RawRequestDto,
         existingMessage: ReceivedMessage,
         relatedIoTDevice: IoTDevice
@@ -160,7 +160,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
     }
 
-    private mapDtoToNewReceivedMessageMetadata(
+    mapDtoToNewReceivedMessageMetadata(
         dto: RawRequestDto,
         relatedIoTDevice: IoTDevice
     ): ReceivedMessageMetadata {
