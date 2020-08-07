@@ -32,6 +32,7 @@ export class GenericChirpstackConfigurationService {
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };
     }
+
     setupData(rawBody: string): any {
         return {
             rawBody: rawBody,
@@ -53,7 +54,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post(endpoint: string, data: string): Promise<any> {
+    async post<T>(endpoint: string, data: string): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -75,7 +76,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put(endpoint: string, data: string, id: number): Promise<any> {
+    async put<T>(endpoint: string, data: string, id: number): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -98,7 +99,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getById(endpoint: string, id: number): Promise<any> {
+    async getById<T>(endpoint: string, id: number): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -120,7 +121,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async delete(endpoint: string, id: number): Promise<any> {
+    async delete<T>(endpoint: string, id: number): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -142,11 +143,11 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getAll(
+    async getAll<T>(
         endpoint: string,
         limit?: number,
         offset?: number
-    ): Promise<any> {
+    ): Promise<T> {
         const header = this.setupHeader(endpoint, limit, offset);
         const axiosConfig = this.makeAxiosConfiguration(header);
 

@@ -34,10 +34,19 @@ export class ChirpstackSetupNetworkServerService
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        return await this.getAll("network-servers", limit, offset);
+        const result: ListAllNetworkServerReponseDto = await this.getAll(
+            "network-servers",
+            limit,
+            offset
+        );
+        return result;
     }
     public async getNetworkServerCount(): Promise<number> {
-        const result = await this.getAll("network-servers", 0, 100);
+        const result: ListAllNetworkServerReponseDto = await this.getAll(
+            "network-servers",
+            0,
+            1000
+        );
         return result.totalCount;
     }
 
