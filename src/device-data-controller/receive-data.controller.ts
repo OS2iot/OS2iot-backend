@@ -38,7 +38,6 @@ export class ReceiveDataController {
             );
             throw exception;
         }
-        Logger.log(data);
         return;
     }
 }

@@ -98,36 +98,11 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getAll(
-        endpoint: string,
-        limit?: number,
-        offset?: number
-    ): Promise<any> {
-        const header = this.setupHeader(endpoint, limit, offset);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-
-        try {
-            const result = await this.httpService
-                .get(header.url, axiosConfig)
-                .toPromise();
-
-            Logger.warn(
-                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-            return result.data;
-        } catch (err) {
-            Logger.error(`get got error: ${err}`);
-            return err;
-        }
-    }
-
-    async get(endpoint: string, id: number): Promise<any> {
+    async getById(endpoint: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
-        const url = header.url + "/" + id;
         try {
+            const url = header.url + "/" + id;
             const result = await this.httpService
                 .get(url, axiosConfig)
                 .toPromise();
@@ -140,28 +115,6 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`get got error: ${err}`);
-            return err;
-        }
-    }
-
-    async getCount(endpoint: string): Promise<number> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-        try {
-            const result = await this.httpService
-                .get(header.url, axiosConfig)
-                .toPromise();
-
-            Logger.warn(
-                `getCount: ${
-                    result.data.totalCount
-                } from ${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-            return result.data.totalCount;
-        } catch (err) {
-            Logger.error(`getCount got error: ${err}`);
             // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             return err;
         }
@@ -170,8 +123,8 @@ export class GenericChirpstackConfigurationService {
     async delete(endpoint: string, id: number): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
-        const url = header.url + "/" + id;
         try {
+            const url = header.url + "/" + id;
             const result = await this.httpService
                 .delete(url, axiosConfig)
                 .toPromise();
@@ -185,6 +138,30 @@ export class GenericChirpstackConfigurationService {
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
             // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            return err;
+        }
+    }
+
+    async getAll(
+        endpoint: string,
+        limit?: number,
+        offset?: number
+    ): Promise<any> {
+        const header = this.setupHeader(endpoint, limit, offset);
+        const axiosConfig = this.makeAxiosConfiguration(header);
+
+        try {
+            const result = await this.httpService
+                .get(header.url, axiosConfig)
+                .toPromise();
+            Logger.warn(
+                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
+                    result.statusText
+                }`
+            );
+            return result.data;
+        } catch (err) {
+            Logger.error(`get got error: ${err}`);
             return err;
         }
     }
