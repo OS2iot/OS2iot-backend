@@ -5,15 +5,22 @@ import { AxiosRequestConfig } from "axios";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    constructor(private httpService: HttpService) {}
+    baseUrl: string = `http://${process.env
+        .CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
+        "host.docker.internal"}:${process.env
+        .CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
 
-    private readonly baseUrl = "http://localhost:8080/api/";
+    networkServer: string = `${process.env.CHIRPSTACK_NETWORK_SERVER ||
+        "chirpstack-network-server"}:${process.env
+        .CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
+    constructor(private httpService: HttpService) {}
 
     setupHeader(endPoint: string, limit?: number, offset?: number): any {
         if (limit != null && offset != null) {
             return {
                 url:
                     this.baseUrl +
+                    "/api/" +
                     endPoint +
                     "?limit=" +
                     limit +
@@ -26,7 +33,7 @@ export class GenericChirpstackConfigurationService {
             };
         }
         return {
-            url: this.baseUrl + endPoint,
+            url: this.baseUrl + "/api/" + endPoint,
             timeout: 3000,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
@@ -54,7 +61,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: string): Promise<T> {
+    async post<T>(endpoint: string, data: string): Promise<any> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -68,6 +75,7 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
+            Logger.log("########## " + result.statusText.toString());
             return JSON.parse(result.statusText.toString());
         } catch (err) {
             Logger.error(`post got error: ${err}`);

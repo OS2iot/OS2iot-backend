@@ -51,12 +51,9 @@ export class ChirpstackSetupNetworkServerService
     }
 
     setupData(): string {
-        const chirpstackNetworkServerName =
-            "os2iot-docker_chirpstack-network-server_1:8000";
-
         const createNetworkServerDto: CreateNetworkServerDto = {
-            name: chirpstackNetworkServerName,
-            server: chirpstackNetworkServerName,
+            name: "OS2iot",
+            server: this.networkServer,
             /*
             caCert: "",
             gatewayDiscoveryDR: 0,
@@ -70,7 +67,7 @@ export class ChirpstackSetupNetworkServerService
             tlsKey: "",
             */
         };
-        const data: string = //TODO: skriv om til at bruge en DTO
+        const data: string =
             '{"networkServer":' + JSON.stringify(createNetworkServerDto) + "}";
 
         return data;
