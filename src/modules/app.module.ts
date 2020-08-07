@@ -36,6 +36,7 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
             logging: false,
             autoLoadEntities: true,
             retryAttempts: 0,
+            maxQueryExecutionTime: 1000 // Log queries slower than 1000 ms
         }),
         KafkaModule.register({
             clientId: "os2iot-client",
