@@ -22,4 +22,5 @@ module.exports = {
     coverageDirectory: "coverage",
     coverageReporters: ["text", "cobertura"],
     testEnvironment: "node",
+    setupFiles: ["<rootDir>/.jest/setEnvVars.ts"],
 };
