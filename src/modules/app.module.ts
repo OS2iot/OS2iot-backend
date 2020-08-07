@@ -1,7 +1,5 @@
 import { Module, HttpModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { AppController } from "@admin-controller/app.controller";
-import { AppService } from "@services/app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Connection } from "typeorm";
 import { ApplicationModule } from "@modules/application.module";
@@ -35,7 +33,7 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
             password: "toi2so",
             database: "os2iot",
             synchronize: true,
-            logging: true,
+            logging: false,
             autoLoadEntities: true,
             retryAttempts: 0,
         }),
@@ -60,13 +58,11 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         ReceiveDataModule,
     ],
     controllers: [
-        AppController,
         ApplicationController,
         IoTDeviceController,
         DataTargetController,
     ],
     providers: [
-        AppService,
         ApplicationService,
         IoTDeviceService,
         DataTargetService,
