@@ -33,7 +33,13 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         );
 
         const dto: TransformedPayloadDto = payload.body;
-        const iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
+        let iotDevice;
+        try {
+            iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
+        } catch (err) {
+            Logger.error(`Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`);
+            return;
+        }
 
         Logger.debug(
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
