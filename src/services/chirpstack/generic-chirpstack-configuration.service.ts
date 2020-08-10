@@ -72,7 +72,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: T): Promise<number> {
+    async post<T>(endpoint: string, data: T) {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -88,14 +88,13 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return result.status;
         } catch (err) {
             Logger.error(`post got error: ${err}`);
             throw new BadRequestException(ErrorCodes.InvalidPost);
         }
     }
 
-    async put<T>(endpoint: string, data: T, id: number): Promise<T> {
+    async put<T>(endpoint: string, data: T, id: number) {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -110,7 +109,6 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return result.data;
         } catch (err) {
             Logger.error(`Put got error: ${err}`);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);

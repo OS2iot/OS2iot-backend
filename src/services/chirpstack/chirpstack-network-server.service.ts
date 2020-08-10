@@ -24,15 +24,10 @@ export class ChirpstackSetupNetworkServerService
         }
     }
 
-    public async postNetworkServer(
-        data: CreateNetworkServerDto
-    ): Promise<number> {
+    public async postNetworkServer(data: CreateNetworkServerDto) {
         return await this.post("network-servers", data);
     }
-    public async putNetworkServer(
-        data: CreateNetworkServerDto,
-        id: number
-    ): Promise<UpdateNetworkServerDto> {
+    public async putNetworkServer(data: CreateNetworkServerDto, id: number) {
         return await this.put("network-servers", data, id);
     }
     public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {

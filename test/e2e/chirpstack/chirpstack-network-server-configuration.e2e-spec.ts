@@ -2,6 +2,8 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { INestApplication, Logger } from "@nestjs/common";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/chirpstack-network-server.service";
+import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
+import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
 
 describe("ChirpstackSetupNetworkServerService", () => {
     let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
@@ -62,7 +64,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
         });
 
         it("(POST) network-server ", async () => {
-            const data: string = chirpstackSetupNetworkServerService.setupData();
+            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupData();
             return await chirpstackSetupNetworkServerService
                 .postNetworkServer(data)
                 .then(response => {
@@ -81,7 +83,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
         });
 
         it("(PUT) /network-server/:id ", async () => {
-            const data: string = chirpstackSetupNetworkServerService.setupData();
+            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupData();
             return await chirpstackSetupNetworkServerService
                 .putNetworkServer(data, 1)
                 .then(response => {
