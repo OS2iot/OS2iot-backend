@@ -3,8 +3,8 @@ import {
     Logger,
     HttpService,
     NotFoundException,
-    InternalServerErrorException,
     BadRequestException,
+    InternalServerErrorException,
 } from "@nestjs/common";
 import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
@@ -44,9 +44,9 @@ export class GenericChirpstackConfigurationService {
         return headerDto;
     }
 
-    setupData(rawBody: string): any {
+    setupData(body: JSON) {
         return {
-            rawBody: rawBody,
+            rawBody: body,
             mimeType: "application/json",
         };
     }
@@ -65,7 +65,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: T): Promise<AxiosResponse> {
+    async create<T>(endpoint: string, data: T): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -97,7 +97,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put<T>(
+    async update<T>(
         endpoint: string,
         data: T,
         id: string
@@ -105,7 +105,6 @@ export class GenericChirpstackConfigurationService {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
-
         try {
             const result = await this.httpService
                 .put(url, data, axiosConfig)
@@ -132,7 +131,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getById<T>(endpoint: string, id: number): Promise<T> {
+    async findOne<T>(endpoint: string, id: string): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -142,10 +141,11 @@ export class GenericChirpstackConfigurationService {
                 .toPromise();
 
             Logger.debug(
-                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
+                `get by ID from:${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
             );
+
             return result.data;
         } catch (err) {
             Logger.error(`get got error: ${JSON.stringify(err?.response)}`);
@@ -196,7 +196,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getAll<T>(
+    async findAndCountAllWithPagination<T>(
         endpoint: string,
         limit?: number,
         offset?: number

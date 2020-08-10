@@ -1,9 +1,10 @@
-import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { Injectable, OnModuleInit, Logger, HttpStatus } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
+const endpoint = "network-servers";
 
 @Injectable()
 export class ChirpstackSetupNetworkServerService
@@ -16,7 +17,7 @@ export class ChirpstackSetupNetworkServerService
     async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
         if ((await this.getNetworkServerCount()) < 1) {
             try {
-                this.postNetworkServer(this.setupData());
+                this.postNetworkServer(this.setupNetworkServerData());
             } catch (error) {
                 Logger.error(error);
             }
@@ -41,8 +42,8 @@ export class ChirpstackSetupNetworkServerService
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        const result: ListAllNetworkServerReponseDto = await this.getAll(
-            "network-servers",
+        const result: ListAllNetworkServerReponseDto = await this.findAndCountAllWithPagination(
+            endpoint,
             limit,
             offset
         );
@@ -56,7 +57,7 @@ export class ChirpstackSetupNetworkServerService
         return result.totalCount;
     }
 
-    setupData(): CreateNetworkServerDto {
+    setupNetworkServerData(): CreateNetworkServerDto {
         const networkServerDto: NetworkServerDto = {
             name: "OS2iot",
             server: this.networkServer,
