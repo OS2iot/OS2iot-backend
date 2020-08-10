@@ -72,7 +72,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: T) {
+    async post<T>(endpoint: string, data: T): Promise<void> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -94,7 +94,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put<T>(endpoint: string, data: T, id: number) {
+    async put<T>(endpoint: string, data: T, id: number): Promise<void> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -104,7 +104,7 @@ export class GenericChirpstackConfigurationService {
                 .put(url, data, axiosConfig)
                 .toPromise();
 
-            Logger.warn(
+            Logger.debug(
                 `put: ${data} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
@@ -124,7 +124,7 @@ export class GenericChirpstackConfigurationService {
                 .get(url, axiosConfig)
                 .toPromise();
 
-            Logger.warn(
+            Logger.debug(
                 `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`

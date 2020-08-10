@@ -11,10 +11,10 @@ export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
     async onModuleInit(): Promise<void> {
-        this.bootstrapChirpstackNetworkServerConfiguration();
+        await this.bootstrapChirpstackNetworkServerConfiguration();
     }
 
-    async bootstrapChirpstackNetworkServerConfiguration() {
+    async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
         if ((await this.getNetworkServerCount()) < 1) {
             try {
                 this.postNetworkServer(this.setupData());
@@ -24,10 +24,10 @@ export class ChirpstackSetupNetworkServerService
         }
     }
 
-    public async postNetworkServer(data: CreateNetworkServerDto) {
+    public async postNetworkServer(data: CreateNetworkServerDto): Promise<void> {
         return await this.post("network-servers", data);
     }
-    public async putNetworkServer(data: CreateNetworkServerDto, id: number) {
+    public async putNetworkServer(data: CreateNetworkServerDto, id: number): Promise<void> {
         return await this.put("network-servers", data, id);
     }
     public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {
