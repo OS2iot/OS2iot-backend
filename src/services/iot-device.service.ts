@@ -42,11 +42,30 @@ export class IoTDeviceService {
         });
     }
 
-    async isApiKeyValid(key: string): Promise<boolean> {
-        const count = await this.genericHTTPDeviceRepository.count({
-            apiKey: key,
-        });
-        return count > 0;
+    async findOneWithApplicationAndMetadata(id: number): Promise<IoTDevice> {
+        // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
+        // Therefore we use the QueryBuilder ...
+        return await this.iotDeviceRepository
+            .createQueryBuilder("iot_device")
+            .where("iot_device.id = :id", { id: id })
+            .innerJoinAndSelect(
+                "iot_device.application",
+                "application",
+                'application.id = iot_device."applicationId"'
+            )
+            .leftJoinAndSelect(
+                "iot_device.receivedMessagesMetadata",
+                "metadata",
+                'metadata."deviceId" = iot_device.id'
+            )
+            .orderBy('metadata."sentTime"', "DESC")
+            .getOne();
+    }
+
+    async findGenericHttpDeviceByApiKey(
+        key: string
+    ): Promise<GenericHTTPDevice> {
+        return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
     }
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {

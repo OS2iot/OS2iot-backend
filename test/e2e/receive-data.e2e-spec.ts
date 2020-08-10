@@ -7,6 +7,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 import { Application } from "@entities/application.entity";
+import { KafkaModule } from "@modules/kafka.module";
 
 describe("ReceiveDataController (e2e)", () => {
     let app: INestApplication;
@@ -26,6 +27,11 @@ describe("ReceiveDataController (e2e)", () => {
                     synchronize: true,
                     logging: false,
                     autoLoadEntities: true,
+                }),
+                KafkaModule.register({
+                    clientId: "os2iot-client-e2e",
+                    brokers: ["host.docker.internal:9093"],
+                    groupId: "os2iot-backend-e2e",
                 }),
             ],
         }).compile();

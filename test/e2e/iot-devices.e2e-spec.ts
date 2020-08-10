@@ -8,6 +8,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { clearDatabase } from "./test-helpers";
 import { Application } from "@entities/application.entity";
 import { KafkaModule } from "@modules/kafka.module";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -26,7 +27,7 @@ describe("IoTDeviceController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: true,
+                    logging: false,
                     autoLoadEntities: true,
                 }),
                 KafkaModule.register({
@@ -90,6 +91,17 @@ describe("IoTDeviceController (e2e)", () => {
         const iotDevice = await manager.save(device);
 
         const iotDeviceId = iotDevice.id;
+
+        const now = new Date();
+        const metadata = new ReceivedMessageMetadata();
+        metadata.sentTime = new Date(now.valueOf() - 10);
+        metadata.device = iotDevice;
+        const metadata2 = new ReceivedMessageMetadata();
+        metadata2.sentTime = new Date(now.valueOf() - 24 * 60 * 60);
+        metadata2.device = iotDevice;
+
+        await manager.save([metadata, metadata2]);
+
         return await request(app.getHttpServer())
             .get("/iot-device/" + iotDeviceId)
             .expect(200)
@@ -106,6 +118,16 @@ describe("IoTDeviceController (e2e)", () => {
                         a_key: "a_value",
                     },
                 });
+                expect(response.body.receivedMessagesMetadata).toHaveLength(2);
+                expect(
+                    Date.parse(
+                        response.body.receivedMessagesMetadata[0].sentTime
+                    )
+                ).toBeGreaterThanOrEqual(
+                    Date.parse(
+                        response.body.receivedMessagesMetadata[1].sentTime
+                    )
+                );
             });
     });
 
