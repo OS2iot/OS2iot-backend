@@ -55,7 +55,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
     test.skip("my only true test", () => {
         it("(GET) /network-server/:id ", async () => {
             return await chirpstackSetupNetworkServerService
-                .getNetworkServer(100, 0)
+                .getNetworkServers(100, 0)
                 .then(response => {
                     expect(response).toEqual({ result: [], totalCount: "1" });
                 });

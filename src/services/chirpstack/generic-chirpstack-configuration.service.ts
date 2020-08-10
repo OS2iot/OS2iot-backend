@@ -31,20 +31,7 @@ export class GenericChirpstackConfigurationService {
                 authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
                 authorizationHeader: "Bearer " + JwtToken.setupToken(),
             };
-            return {
-                url:
-                    this.baseUrl +
-                    "/api/" +
-                    endPoint +
-                    "?limit=" +
-                    limit +
-                    "&" +
-                    offset +
-                    "=0",
-                timeout: 3000,
-                authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
-                authorizationHeader: "Bearer " + JwtToken.setupToken(),
-            };
+            return headerDto;
         }
         const headerDto: HeaderDto = {
             url: this.baseUrl + "/api/" + endPoint,
