@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
 
-export class CreateNetworkServerDto {
+export class NetworkServerDto {
     @ApiProperty({ required: true })
     @IsString()
     @MaxLength(1024)

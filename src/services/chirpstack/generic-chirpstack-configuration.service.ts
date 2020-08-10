@@ -2,21 +2,35 @@ import { Injectable, Logger, HttpService } from "@nestjs/common";
 import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig } from "axios";
+import { HeaderDto } from "@dto/chirpstack/header.dto";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    baseUrl: string = `http://${process.env
-        .CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
+    baseUrl = `http://${process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
         "host.docker.internal"}:${process.env
         .CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
 
-    networkServer: string = `${process.env.CHIRPSTACK_NETWORK_SERVER ||
+    networkServer = `${process.env.CHIRPSTACK_NETWORK_SERVER ||
         "chirpstack-network-server"}:${process.env
         .CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
     constructor(private httpService: HttpService) {}
 
     setupHeader(endPoint: string, limit?: number, offset?: number): any {
         if (limit != null && offset != null) {
+            const headerDto: HeaderDto = {
+                url:
+                    this.baseUrl +
+                    "/api/" +
+                    endPoint +
+                    "?limit=" +
+                    limit +
+                    "&" +
+                    offset +
+                    "=0",
+                timeout: 3000,
+                authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
+                authorizationHeader: "Bearer " + JwtToken.setupToken(),
+            };
             return {
                 url:
                     this.baseUrl +
@@ -32,12 +46,14 @@ export class GenericChirpstackConfigurationService {
                 authorizationHeader: "Bearer " + JwtToken.setupToken(),
             };
         }
-        return {
+        const headerDto: HeaderDto = {
             url: this.baseUrl + "/api/" + endPoint,
             timeout: 3000,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };
+
+        return headerDto;
     }
 
     setupData(rawBody: string): any {
@@ -61,7 +77,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: string): Promise<any> {
+    async post<T>(endpoint: string, data: T): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -75,7 +91,6 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            Logger.log("########## " + result.statusText.toString());
             return JSON.parse(result.statusText.toString());
         } catch (err) {
             Logger.error(`post got error: ${err}`);
@@ -84,7 +99,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put<T>(endpoint: string, data: string, id: number): Promise<T> {
+    async put<T>(endpoint: string, data: T, id: number): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;

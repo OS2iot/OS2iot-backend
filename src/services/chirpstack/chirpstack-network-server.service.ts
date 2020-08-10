@@ -1,9 +1,10 @@
 import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
-import { CreateNetworkServerDto } from "@dto/create-network-server.dto";
-import { ListAllNetworkServerReponseDto } from "@dto/list-all-network-server-response.dto";
-import { UpdateNetworkServerDto } from "@dto/update-network-server.dto";
+import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
+import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
+import { UpdateNetworkServerDto } from "@dto/chirpstack/update-network-server.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
 
 @Injectable()
 export class ChirpstackSetupNetworkServerService
@@ -16,12 +17,12 @@ export class ChirpstackSetupNetworkServerService
     }
 
     public async postNetworkServer(
-        data: string
+        data: CreateNetworkServerDto
     ): Promise<CreateNetworkServerDto> {
         return await this.post("network-servers", data);
     }
     public async putNetworkServer(
-        data: string,
+        data: CreateNetworkServerDto,
         id: number
     ): Promise<UpdateNetworkServerDto> {
         return await this.put("network-servers", data, id);
@@ -30,7 +31,7 @@ export class ChirpstackSetupNetworkServerService
         Logger.error("Delete " + id);
         return await this.delete("network-servers", id);
     }
-    public async getNetworkServer(
+    public async getNetworkServers(
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
@@ -42,16 +43,16 @@ export class ChirpstackSetupNetworkServerService
         return result;
     }
     public async getNetworkServerCount(): Promise<number> {
-        const result: ListAllNetworkServerReponseDto = await this.getAll(
-            "network-servers",
+        const result: ListAllNetworkServerReponseDto = await this.getNetworkServers(
             0,
             1000
         );
+        Logger.log("result.totalCount;" + result.totalCount);
         return result.totalCount;
     }
 
-    setupData(): string {
-        const createNetworkServerDto: CreateNetworkServerDto = {
+    setupData(): CreateNetworkServerDto {
+        const networkServerDto: NetworkServerDto = {
             name: "OS2iot",
             server: this.networkServer,
             /*
@@ -67,9 +68,10 @@ export class ChirpstackSetupNetworkServerService
             tlsKey: "",
             */
         };
-        const data: string =
-            '{"networkServer":' + JSON.stringify(createNetworkServerDto) + "}";
+        const createNetworkServerDto: CreateNetworkServerDto = {
+            networkServer: networkServerDto,
+        };
 
-        return data;
+        return createNetworkServerDto;
     }
 }
