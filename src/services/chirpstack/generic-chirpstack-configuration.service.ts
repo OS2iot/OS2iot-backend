@@ -64,7 +64,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: T): Promise<T> {
+    async post<T>(endpoint: string, data: T): Promise<number> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -74,11 +74,13 @@ export class GenericChirpstackConfigurationService {
                 .toPromise();
 
             Logger.warn(
-                `post: ${data} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
+                `post: ${JSON.stringify(
+                    data
+                )} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
             );
-            return JSON.parse(result.statusText.toString());
+            return result.status;
         } catch (err) {
             Logger.error(`post got error: ${err}`);
             // throw new BadRequestException(err);

@@ -11,14 +11,22 @@ export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
     async onModuleInit(): Promise<void> {
+        this.bootstrapChirpstackNetworkServerConfiguration();
+    }
+
+    async bootstrapChirpstackNetworkServerConfiguration() {
         if ((await this.getNetworkServerCount()) < 1) {
-            this.postNetworkServer(this.setupData());
+            try {
+                this.postNetworkServer(this.setupData());
+            } catch (error) {
+                Logger.error(error);
+            }
         }
     }
 
     public async postNetworkServer(
         data: CreateNetworkServerDto
-    ): Promise<CreateNetworkServerDto> {
+    ): Promise<number> {
         return await this.post("network-servers", data);
     }
     public async putNetworkServer(
@@ -28,7 +36,6 @@ export class ChirpstackSetupNetworkServerService
         return await this.put("network-servers", data, id);
     }
     public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {
-        Logger.error("Delete " + id);
         return await this.delete("network-servers", id);
     }
     public async getNetworkServers(
@@ -47,7 +54,6 @@ export class ChirpstackSetupNetworkServerService
             0,
             1000
         );
-        Logger.log("result.totalCount;" + result.totalCount);
         return result.totalCount;
     }
 
@@ -55,18 +61,6 @@ export class ChirpstackSetupNetworkServerService
         const networkServerDto: NetworkServerDto = {
             name: "OS2iot",
             server: this.networkServer,
-            /*
-            caCert: "",
-            gatewayDiscoveryDR: 0,
-            gatewayDiscoveryEnabled: false,
-            gatewayDiscoveryInterval: 0,
-            gatewayDiscoveryTXFrequency: 0,
-            routingProfileCACert: "",
-            routingProfileTLSCert: "",
-            routingProfileTLSKey: "",
-            tlsCert: "",
-            tlsKey: "",
-            */
         };
         const createNetworkServerDto: CreateNetworkServerDto = {
             networkServer: networkServerDto,
