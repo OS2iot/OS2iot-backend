@@ -1,8 +1,16 @@
-import { Injectable, Logger, HttpService } from "@nestjs/common";
+import {
+    Injectable,
+    Logger,
+    HttpService,
+    NotFoundException,
+    InternalServerErrorException,
+    BadRequestException,
+} from "@nestjs/common";
 import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -15,7 +23,7 @@ export class GenericChirpstackConfigurationService {
         .CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
     constructor(private httpService: HttpService) {}
 
-    setupHeader(endPoint: string, limit?: number, offset?: number): any {
+    setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
         if (limit != null && offset != null) {
             const headerDto: HeaderDto = {
                 url:
@@ -73,7 +81,7 @@ export class GenericChirpstackConfigurationService {
                 .post(header.url, data, axiosConfig)
                 .toPromise();
 
-            Logger.warn(
+            Logger.debug(
                 `post: ${JSON.stringify(
                     data
                 )} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
@@ -83,8 +91,7 @@ export class GenericChirpstackConfigurationService {
             return result.status;
         } catch (err) {
             Logger.error(`post got error: ${err}`);
-            // throw new BadRequestException(err);
-            return err;
+            throw new BadRequestException(ErrorCodes.InvalidPost);
         }
     }
 
@@ -106,8 +113,7 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`Put got error: ${err}`);
-            // throw new NotFoundException(ErrorCodes.IdDoesNotExists)
-            return err;
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 
@@ -128,8 +134,7 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`get got error: ${err}`);
-            // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-            return err;
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 
@@ -150,8 +155,7 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
-            // throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-            return err;
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 
@@ -175,7 +179,7 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`get got error: ${err}`);
-            return err;
+            throw new NotFoundException();
         }
     }
 }

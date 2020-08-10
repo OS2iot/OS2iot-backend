@@ -3,4 +3,5 @@ export enum ErrorCodes {
     IdMissing = "MESSAGE.ID-MISSING-FROM-REQUEST",
     NameInvalidOrAlreadyInUse = "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
     InvalidApiKey = "MESSAGE.DEVICE-DOES-NOT-EXIST",
+    InvalidPost = "MESSAGE.POST-FAILED",
 }
