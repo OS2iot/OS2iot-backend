@@ -63,7 +63,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
         });
 
         it("(POST) network-server ", async () => {
-            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupData();
+            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupNetworkServerData();
             return await chirpstackSetupNetworkServerService
                 .postNetworkServer(data)
                 .then(response => {
@@ -75,16 +75,16 @@ describe("ChirpstackSetupNetworkServerService", () => {
 
         it("(DELETE) /network-server/:id ", async () => {
             return await chirpstackSetupNetworkServerService
-                .deleteNetworkServer(1)
+                .deleteNetworkServer("1")
                 .then(response => {
                     expect(response).toBe(""); //TODO fix test
                 });
         });
 
         it("(PUT) /network-server/:id ", async () => {
-            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupData();
+            const data: CreateNetworkServerDto = chirpstackSetupNetworkServerService.setupNetworkServerData();
             return await chirpstackSetupNetworkServerService
-                .putNetworkServer(data, 1)
+                .putNetworkServer(data, "1")
                 .then(response => {
                     Logger.error(response);
                     expect(response).toBe(
