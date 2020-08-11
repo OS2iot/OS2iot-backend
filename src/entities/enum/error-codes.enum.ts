@@ -4,4 +4,6 @@ export enum ErrorCodes {
     NameInvalidOrAlreadyInUse = "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
     InvalidApiKey = "MESSAGE.DEVICE-DOES-NOT-EXIST",
     InvalidPost = "MESSAGE.POST-FAILED",
+    WrongLength = "MESSAGE.WRONG-LENGTH",
+    NotValidFormat = "MESSAGE.NOT-VALID-FORMAT"
 }

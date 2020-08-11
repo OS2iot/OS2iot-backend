@@ -25,10 +25,10 @@ export class ChirpstackSetupNetworkServerService
     }
 
     public async postNetworkServer(data: CreateNetworkServerDto): Promise<void> {
-        return await this.post("network-servers", data);
+        await this.post("network-servers", data);
     }
     public async putNetworkServer(data: CreateNetworkServerDto, id: number): Promise<void> {
-        return await this.put("network-servers", data, id);
+        await this.put("network-servers", data, id.toString());
     }
     public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {
         return await this.delete("network-servers", id);
