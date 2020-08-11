@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { JwtToken } from "./jwt-token";
 import { AuthorizationType } from "@enum/authorization-type.enum";
-import { AxiosRequestConfig } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
@@ -26,15 +26,7 @@ export class GenericChirpstackConfigurationService {
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
         if (limit != null && offset != null) {
             const headerDto: HeaderDto = {
-                url:
-                    this.baseUrl +
-                    "/api/" +
-                    endPoint +
-                    "?limit=" +
-                    limit +
-                    "&" +
-                    offset +
-                    "=0",
+                url: `${this.baseUrl}/api/${endPoint}?limit=${limit}&offset=${offset}`,
                 timeout: 3000,
                 authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
                 authorizationHeader: "Bearer " + JwtToken.setupToken(),
@@ -72,7 +64,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async post<T>(endpoint: string, data: T): Promise<void> {
+    async post<T>(endpoint: string, data: T): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -88,13 +80,27 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
+
+            return result;
         } catch (err) {
-            Logger.error(`post got error: ${err}`);
+            Logger.error(`post got error: ${JSON.stringify(err)}`);
+
+            if (err?.response?.status == 400) {
+                Logger.error(
+                    `Error 400: ${JSON.stringify(err?.response?.data)}`
+                );
+                return err?.response;
+            }
+
             throw new BadRequestException(ErrorCodes.InvalidPost);
         }
     }
 
-    async put<T>(endpoint: string, data: T, id: number): Promise<void> {
+    async put<T>(
+        endpoint: string,
+        data: T,
+        id: string
+    ): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
@@ -105,10 +111,14 @@ export class GenericChirpstackConfigurationService {
                 .toPromise();
 
             Logger.debug(
-                `put: ${data} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
+                `put: ${JSON.stringify(
+                    data
+                )} to ${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
             );
+
+            return result;
         } catch (err) {
             Logger.error(`Put got error: ${err}`);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -154,6 +164,28 @@ export class GenericChirpstackConfigurationService {
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    async get<T>(endpoint: string): Promise<T> {
+        const header = this.setupHeader(endpoint);
+        const axiosConfig = this.makeAxiosConfiguration(header);
+
+        try {
+            const result = await this.httpService
+                .get(header.url, axiosConfig)
+                .toPromise();
+
+            return result.data;
+        } catch (err) {
+            Logger.error(
+                `Error from Chirpstack ${JSON.stringify(err?.response?.data)}`
+            );
+            if (err?.response?.status == 404) {
+                throw new NotFoundException(err?.response?.data);
+            }
+
+            throw new InternalServerErrorException(err?.response?.data);
         }
     }
 
