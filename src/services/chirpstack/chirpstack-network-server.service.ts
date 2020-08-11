@@ -31,7 +31,7 @@ export class ChirpstackSetupNetworkServerService
         await this.put("network-servers", data, id.toString());
     }
     public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {
-        return await this.delete("network-servers", id);
+        return await this.delete("network-servers", id.toString());
     }
     public async getNetworkServers(
         limit?: number,

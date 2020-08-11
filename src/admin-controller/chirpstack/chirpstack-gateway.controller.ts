@@ -7,6 +7,7 @@ import {
     Param,
     Put,
     BadRequestException,
+    Delete,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -79,5 +80,12 @@ export class ChirpstackGatewayController {
             gatewayId,
             dto
         );
+    }
+
+    @Delete(":gatewayId")
+    async delete(
+        @Param("gatewayId") gatewayId: string
+    ): Promise<ChirpstackReponseStatus> {
+        return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
 }

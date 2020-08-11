@@ -13,6 +13,7 @@ import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -64,6 +65,26 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return this.handlePossibleError(result, dto);
     }
 
+    async deleteGateway(gatewayId: string): Promise<ChirpstackReponseStatus> {
+        try {
+            await this.delete("gateways", gatewayId);
+            return {
+                success: true,
+            };
+        } catch (err) {
+            Logger.error(
+                `Got error from Chirpstack: ${JSON.stringify(
+                    err?.response?.data
+                )}`
+            );
+            return {
+                success: false,
+                chirpstackError: err?.response
+                    ?.data as ChirpstackErrorResponseDto,
+            };
+        }
+    }
+
     private handlePossibleError(
         result: AxiosResponse,
         dto: CreateGatewayDto | UpdateGatewayDto
@@ -87,7 +108,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         dto: CreateGatewayDto | UpdateGatewayDto
     ): CreateGatewayDto | UpdateGatewayDto {
         // Chirpstack requires 'gatewayProfileID' to be set (with value or null)
-        if (!dto.gateway.gatewayProfileID) {
+        if (!dto?.gateway?.gatewayProfileID) {
             dto.gateway.gatewayProfileID = null;
         }
 
