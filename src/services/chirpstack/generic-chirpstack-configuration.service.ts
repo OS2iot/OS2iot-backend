@@ -11,6 +11,7 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { response } from "express";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -120,7 +121,13 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            Logger.error(`Put got error: ${err}`);
+            if (err?.response?.status == 400) {
+                throw new BadRequestException({
+                    success: false,
+                    chirpstackError: err?.response?.data,
+                });
+            }
+            Logger.error(`Put got error: `);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
@@ -141,12 +148,12 @@ export class GenericChirpstackConfigurationService {
             );
             return result.data;
         } catch (err) {
-            Logger.error(`get got error: ${err}`);
+            Logger.error(`get got error: ${JSON.stringify(err?.response)}`);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 
-    async delete<T>(endpoint: string, id: number): Promise<T> {
+    async delete<T>(endpoint: string, id: string): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -163,7 +170,7 @@ export class GenericChirpstackConfigurationService {
             return result.data;
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            throw err;
         }
     }
 
