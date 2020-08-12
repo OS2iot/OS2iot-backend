@@ -22,7 +22,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     public async createServiceProfile(
         data: CreateServiceProfileDto
     ): Promise<AxiosResponse> {
-        const result = await this.create(endpoint, data);
+        const result = await this.post(endpoint, data);
         return result;
     }
 
@@ -30,7 +30,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         data: CreateServiceProfileDto,
         id: string
     ): Promise<AxiosResponse> {
-        return await this.update(endpoint, data, id);
+        return await this.put(endpoint, data, id);
     }
     public async deleteServiceProfile(id: string): Promise<AxiosResponse> {
         return await this.delete(endpoint, id);
@@ -39,7 +39,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         limit?: number,
         offset?: number
     ): Promise<ListAllServiceProfilesReponseDto> {
-        const res = await this.findAndCountAllWithPagination<
+        const res = await this.getAllWithPagination<
             ListAllServiceProfilesReponseDto
         >(endpoint, limit, offset);
 
@@ -49,7 +49,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     public async findOneServiceProfileById(
         id: string
     ): Promise<CreateServiceProfileDto> {
-        const result: CreateServiceProfileDto = await this.findOne(
+        const result: CreateServiceProfileDto = await this.getOneById(
             endpoint,
             id
         );

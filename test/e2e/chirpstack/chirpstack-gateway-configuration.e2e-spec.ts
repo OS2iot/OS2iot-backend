@@ -46,7 +46,6 @@ describe("ChirpstackGatewayController (e2e)", () => {
         await service.createNewGateway(dto);
         return dto;
     }
-
     it("(POST) Create new Gateway", async () => {
         const req: CreateGatewayDto = makeCreateGatewayDto();
 
@@ -57,9 +56,8 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         // Check that it was created.
         const newElement = await service.getOne(req.gateway.id);
-        expect(newElement?.gateway).toMatchObject({ id: req.gateway.id });
+        expect(newElement?.data).toMatchObject({ id: req.gateway.id });
     });
-
     it("(GET) Get gateway by id", async () => {
         const id = await createGateway();
         return await request(app.getHttpServer())
@@ -119,7 +117,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         // Check that it was changed.
         const changedGateway = await service.getOne(dto.gateway.id);
-        expect(changedGateway?.gateway).toMatchObject({
+        expect(changedGateway?.data.gateway).toMatchObject({
             id: dto.gateway.id,
             name: dto.gateway.name,
         });
@@ -159,7 +157,7 @@ function randomMacAddress(): string {
 function makeCreateGatewayDto() {
     const mac = randomMacAddress();
     const networkServerId = "2";
-    Logger.log(mac);
+    // Logger.log(mac);
     const request: CreateGatewayDto = {
         gateway: {
             id: mac,

@@ -22,7 +22,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     ): Promise<ChirpstackReponseStatus> {
         dto = this.updateDto(dto);
 
-        const result = await this.create("gateways", dto);
+        const result = await this.post("gateways", dto);
         return this.handlePossibleError(result, dto);
     }
 
@@ -37,14 +37,10 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         if (!limit) {
             limit = 100;
         }
-        return await this.findAndCountAllWithPagination(
-            "gateways",
-            limit,
-            offset
-        );
+        return await this.getAllWithPagination("gateways", limit, offset);
     }
 
-    async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
+    async getOne(gatewayId: string): Promise<AxiosResponse> {
         try {
             return await this.get(`gateways/${gatewayId}`);
         } catch (err) {
@@ -63,29 +59,20 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     async modifyGateway(
         gatewayId: string,
         dto: UpdateGatewayDto
-    ): Promise<ChirpstackReponseStatus> {
+    ): Promise<AxiosResponse> {
         dto = this.updateDto(dto);
-        const result = await this.update("gateways", dto, gatewayId);
-        return this.handlePossibleError(result, dto);
+        return await this.put("gateways", dto, gatewayId);
     }
 
-    async deleteGateway(gatewayId: string): Promise<ChirpstackReponseStatus> {
+    async deleteGateway(gatewayId: string): Promise<AxiosResponse> {
         try {
-            await this.delete("gateways", gatewayId);
-            return {
-                success: true,
-            };
+            return await this.delete("gateways", gatewayId);
         } catch (err) {
             Logger.error(
                 `Got error from Chirpstack: ${JSON.stringify(
                     err?.response?.data
                 )}`
             );
-            return {
-                success: false,
-                chirpstackError: err?.response
-                    ?.data as ChirpstackErrorResponseDto,
-            };
         }
     }
 
