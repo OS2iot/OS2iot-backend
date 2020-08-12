@@ -22,7 +22,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     ): Promise<ChirpstackReponseStatus> {
         dto = this.updateDto(dto);
 
-        const result = await this.post("gateways", dto);
+        const result = await this.create("gateways", dto);
         return this.handlePossibleError(result, dto);
     }
 
@@ -37,7 +37,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         if (!limit) {
             limit = 100;
         }
-        return await this.getAll("gateways", limit, offset);
+        return await this.findAndCountAllWithPagination(
+            "gateways",
+            limit,
+            offset
+        );
     }
 
     async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
@@ -61,7 +65,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         dto: UpdateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
         dto = this.updateDto(dto);
-        const result = await this.put("gateways", dto, gatewayId);
+        const result = await this.update("gateways", dto, gatewayId);
         return this.handlePossibleError(result, dto);
     }
 

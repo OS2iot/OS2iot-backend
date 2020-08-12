@@ -153,7 +153,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async delete<T>(endpoint: string, id: string): Promise<T> {
+    async delete<T>(endpoint: string, id: string): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -167,7 +167,7 @@ export class GenericChirpstackConfigurationService {
                     result.statusText
                 }`
             );
-            return result.data;
+            return result;
         } catch (err) {
             Logger.error(`Delete got error: ${err}`);
             throw err;

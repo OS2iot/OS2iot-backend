@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 
@@ -33,7 +33,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             serviceProfileService.setupServiceProfileData(testProfileName)
         );
         //Assert
-        expect(result).toEqual(201);
+        expect(result.status).toEqual(200);
     });
 
     it("(GET One) /service-profile/ ", async () => {
@@ -43,7 +43,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             .findAllServiceProfiles(1000, 0)
             .then(response => {
                 response.result.some(element => {
-                    element.name === testProfileName, (identifier = element.id);
+                    if (element.name === testProfileName) {
+                        identifier = element.id;
+                    }
                 });
             });
         // Act
@@ -53,7 +55,6 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         //Assert
         expect(result.serviceProfile.name).toMatch(testProfileName);
     });
-
     it("(PUT) /service-profile/ ", async () => {
         // Arrange
         let identifier;
@@ -69,10 +70,10 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             serviceProfileService.setupServiceProfileData(testProfileName + 1),
             identifier
         );
+        Logger.log(result.status);
         //Assert
-        expect(result).toBe(201);
+        expect(result.status).toBe(200);
     });
-
     it("(DELETE) /service-profile/ ", async () => {
         // Arrange
         let identifier;
@@ -88,6 +89,6 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             identifier
         );
         //Assert
-        expect(JSON.stringify(result)).toBe(JSON.stringify({}));
+        expect(result.status).toBe(200);
     });
 });
