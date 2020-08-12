@@ -1,9 +1,10 @@
-import { Injectable, OnModuleInit, Logger, HttpStatus } from "@nestjs/common";
+import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
+import { AxiosResponse } from "axios";
+
 const endpoint = "network-servers";
 
 @Injectable()
@@ -26,16 +27,16 @@ export class ChirpstackSetupNetworkServerService
 
     public async postNetworkServer(
         data: CreateNetworkServerDto
-    ): Promise<void> {
-        await this.post("network-servers", data);
+    ): Promise<AxiosResponse> {
+        return await this.create("network-servers", data);
     }
     public async putNetworkServer(
         data: CreateNetworkServerDto,
         id: number
-    ): Promise<void> {
-        await this.put("network-servers", data, id.toString());
+    ): Promise<AxiosResponse> {
+        return await this.update("network-servers", data, id.toString());
     }
-    public async deleteNetworkServer(id: number): Promise<DeleteResponseDto> {
+    public async deleteNetworkServer(id: number): Promise<AxiosResponse> {
         return await this.delete("network-servers", id.toString());
     }
     public async getNetworkServers(

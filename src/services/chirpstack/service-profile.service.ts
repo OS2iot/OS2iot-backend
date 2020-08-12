@@ -1,4 +1,9 @@
-import { Injectable, Logger, HttpStatus } from "@nestjs/common";
+import {
+    Injectable,
+    Logger,
+    HttpStatus,
+    BadRequestException,
+} from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
@@ -6,6 +11,9 @@ import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { ListAllServiceProfilesDto } from "@dto/chirpstack/list-all-service-profiles.dto";
 import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-reponse.dto";
+import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 const endpoint = "service-profiles";
 
@@ -13,17 +21,18 @@ const endpoint = "service-profiles";
 export class ServiceProfileService extends GenericChirpstackConfigurationService {
     public async createServiceProfile(
         data: CreateServiceProfileDto
-    ): Promise<HttpStatus> {
-        return await this.create(endpoint, data);
+    ): Promise<AxiosResponse> {
+        const result = await this.create(endpoint, data);
+        return result;
     }
 
     public async updateServiceProfile(
         data: CreateServiceProfileDto,
         id: string
-    ): Promise<HttpStatus> {
+    ): Promise<AxiosResponse> {
         return await this.update(endpoint, data, id);
     }
-    public async deleteServiceProfile(id: string): Promise<DeleteResponseDto> {
+    public async deleteServiceProfile(id: string): Promise<AxiosResponse> {
         return await this.delete(endpoint, id);
     }
     public async findAllServiceProfiles(

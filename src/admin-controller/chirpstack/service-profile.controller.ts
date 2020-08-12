@@ -26,6 +26,7 @@ import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-servi
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { off } from "process";
 import { resolve } from "path";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 @ApiTags("Chirpstack: Service Profile")
 @Controller("chirpstack-service-profile")
@@ -38,7 +39,7 @@ export class ServiceProfileController {
     @ApiBadRequestResponse()
     async create(
         @Body() createDto: CreateServiceProfileDto
-    ): Promise<HttpStatus> {
+    ): Promise<AxiosResponse> {
         try {
             return this.serviceProfileService.createServiceProfile(createDto);
         } catch (e) {}
@@ -51,7 +52,7 @@ export class ServiceProfileController {
     async update(
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
-    ): Promise<HttpStatus> {
+    ): Promise<AxiosResponse> {
         return this.serviceProfileService.updateServiceProfile(updateDto, id);
     }
 
@@ -80,7 +81,7 @@ export class ServiceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Find one ServiceProfile by id" })
     @ApiNotFoundResponse()
-    async deleteOne(@Param("id") id: string): Promise<DeleteResponseDto> {
+    async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
         let result = undefined;
         try {
             result = this.serviceProfileService.deleteServiceProfile(id);
