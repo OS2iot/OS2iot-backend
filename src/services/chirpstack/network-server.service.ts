@@ -28,13 +28,13 @@ export class ChirpstackSetupNetworkServerService
     public async postNetworkServer(
         data: CreateNetworkServerDto
     ): Promise<AxiosResponse> {
-        return await this.create("network-servers", data);
+        return await this.post("network-servers", data);
     }
     public async putNetworkServer(
         data: CreateNetworkServerDto,
         id: number
     ): Promise<AxiosResponse> {
-        return await this.update("network-servers", data, id.toString());
+        return await this.put("network-servers", data, id.toString());
     }
     public async deleteNetworkServer(id: number): Promise<AxiosResponse> {
         return await this.delete("network-servers", id.toString());
@@ -43,7 +43,7 @@ export class ChirpstackSetupNetworkServerService
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        const result: ListAllNetworkServerReponseDto = await this.findAndCountAllWithPagination(
+        const result: ListAllNetworkServerReponseDto = await this.getAllWithPagination(
             endpoint,
             limit,
             offset

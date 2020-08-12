@@ -65,7 +65,7 @@ export class GenericChirpstackConfigurationService {
         return axiosConfig;
     }
 
-    async create<T>(endpoint: string, data: T): Promise<AxiosResponse> {
+    async post<T>(endpoint: string, data: T): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
 
@@ -93,11 +93,11 @@ export class GenericChirpstackConfigurationService {
                 return err?.response;
             }
 
-            throw new BadRequestException(ErrorCodes.InvalidPost);
+            // throw new BadRequestException(ErrorCodes.InvalidPost);
         }
     }
 
-    async update<T>(
+    async put<T>(
         endpoint: string,
         data: T,
         id: string
@@ -131,7 +131,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async findOne<T>(endpoint: string, id: string): Promise<T> {
+    async getOneById<T>(endpoint: string, id: string): Promise<T> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
@@ -196,7 +196,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async findAndCountAllWithPagination<T>(
+    async getAllWithPagination<T>(
         endpoint: string,
         limit?: number,
         offset?: number
