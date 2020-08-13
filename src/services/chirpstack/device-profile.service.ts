@@ -45,7 +45,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return result;
     }
 
-    public setupDeviceProfileData(name: string): CreateDeviceProfileDto {
+    public setupDeviceProfileData(): CreateDeviceProfileDto {
         const deviceProfileDto: DeviceProfileDto = {
             name: "e2e",
             classBTimeout: 1,
@@ -74,7 +74,6 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             supportsClassB: false,
             supportsClassC: false,
             supportsJoin: false,
-            tags: {},
         };
 
         const deviceProfile: CreateDeviceProfileDto = {

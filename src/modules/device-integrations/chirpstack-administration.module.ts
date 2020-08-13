@@ -9,7 +9,11 @@ import { DeviceProfileController } from "@admin-controller/chirpstack/device-pro
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 @Module({
-    controllers: [ChirpstackGatewayController, ServiceProfileController],
+    controllers: [
+        ChirpstackGatewayController,
+        ServiceProfileController,
+        DeviceProfileController,
+    ],
     imports: [HttpModule],
     providers: [
         ChirpstackSetupNetworkServerService,
