@@ -21,6 +21,7 @@ export class ApplicationService {
             where: {},
             take: query.limit,
             skip: query.offset,
+            relations: ['iotDevices'],
             order: { id: query.sort }, // TODO: Generic sorting possible?
         });
 
