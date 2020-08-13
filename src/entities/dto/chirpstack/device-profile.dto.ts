@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MaxLength, IsOptional } from "class-validator";
+import { IsOptional } from "class-validator";
 
 export class DeviceProfileDto {
     @ApiProperty({ required: false })
@@ -37,5 +37,4 @@ export class DeviceProfileDto {
     supportsClassB: boolean;
     supportsClassC: boolean;
     supportsJoin: boolean;
-    tags: {};
 }
