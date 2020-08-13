@@ -39,16 +39,16 @@ export class ChirpstackSetupNetworkServerService
     public async deleteNetworkServer(id: number): Promise<AxiosResponse> {
         return await this.delete("network-servers", id.toString());
     }
+
     public async getNetworkServers(
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        const result: ListAllNetworkServerReponseDto = await this.getAllWithPagination(
-            endpoint,
-            limit,
-            offset
-        );
-        return result;
+        const res = await this.getAllWithPagination<
+            ListAllNetworkServerReponseDto
+        >(endpoint, limit, offset);
+
+        return res;
     }
     public async getNetworkServerCount(): Promise<number> {
         const result: ListAllNetworkServerReponseDto = await this.getNetworkServers(
