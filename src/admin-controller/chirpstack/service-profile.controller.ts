@@ -17,6 +17,7 @@ import {
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiProduces,
 } from "@nestjs/swagger";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
@@ -27,43 +28,49 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import { off } from "process";
 import { resolve } from "path";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 
-@ApiTags("Chirpstack: Service Profile")
-@Controller("chirpstack-service-profile")
+@ApiTags("Chirpstack")
+@Controller("chirpstack/service-profiles")
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
 
     @Post()
-    @Header("Cache-Control", "none")
+    @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new ServiceProfile" })
     @ApiBadRequestResponse()
     async create(
         @Body() createDto: CreateServiceProfileDto
     ): Promise<AxiosResponse> {
-        try {
-            return this.serviceProfileService.createServiceProfile(createDto);
-        } catch (e) {}
+        return await this.serviceProfileService.createServiceProfile(createDto);
     }
 
     @Put(":id")
-    @Header("Cache-Control", "none")
+    @ApiProduces("application/json")
     @ApiOperation({ summary: "Update an existing ServiceProfile" })
     @ApiBadRequestResponse()
     async update(
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
     ): Promise<AxiosResponse> {
-        return this.serviceProfileService.updateServiceProfile(updateDto, id);
+        const result = await this.serviceProfileService.updateServiceProfile(
+            updateDto,
+            id
+        );
+        Logger.log(result);
+        return result;
     }
 
     @Get(":id")
+    @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one ServiceProfile by id" })
     @ApiNotFoundResponse()
     async findOne(@Param("id") id: string): Promise<CreateServiceProfileDto> {
-        return this.serviceProfileService.findOneServiceProfileById(id);
+        return await this.serviceProfileService.findOneServiceProfileById(id);
     }
 
     @Get()
+    @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all ServiceProfile" })
     async getAll(
         @Query("limit") limit: number,
@@ -84,7 +91,7 @@ export class ServiceProfileController {
     async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
         let result = undefined;
         try {
-            result = this.serviceProfileService.deleteServiceProfile(id);
+            result = await this.serviceProfileService.deleteServiceProfile(id);
         } catch (err) {
             Logger.error(
                 `Error occured during findOne: '${JSON.stringify(err)}'`

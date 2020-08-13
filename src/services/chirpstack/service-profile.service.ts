@@ -1,19 +1,25 @@
-import { Injectable } from "@nestjs/common";
+import {
+    Injectable,
+    OnModuleInit,
+    Logger,
+    BadRequestException,
+} from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
-import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 
 import { AxiosResponse } from "axios";
-
-const endpoint = "service-profiles";
+import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
+import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 
 @Injectable()
 export class ServiceProfileService extends GenericChirpstackConfigurationService {
     public async createServiceProfile(
-        data: CreateServiceProfileDto
+        dto: CreateServiceProfileDto
     ): Promise<AxiosResponse> {
-        const result = await this.post(endpoint, data);
+        dto = this.updateDto(dto);
+        const result = await this.post("service-profiles", dto);
         return result;
     }
 
@@ -21,10 +27,10 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         data: CreateServiceProfileDto,
         id: string
     ): Promise<AxiosResponse> {
-        return await this.put(endpoint, data, id);
+        return await this.put("service-profiles", data, id);
     }
     public async deleteServiceProfile(id: string): Promise<AxiosResponse> {
-        return await this.delete(endpoint, id);
+        return await this.delete("service-profiles", id);
     }
     public async findAllServiceProfiles(
         limit?: number,
@@ -32,7 +38,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     ): Promise<ListAllServiceProfilesReponseDto> {
         const res = await this.getAllWithPagination<
             ListAllServiceProfilesReponseDto
-        >(endpoint, limit, offset);
+        >("service-profiles", limit, offset);
 
         return res;
     }
@@ -41,17 +47,17 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         id: string
     ): Promise<CreateServiceProfileDto> {
         const result: CreateServiceProfileDto = await this.getOneById(
-            endpoint,
+            "service-profiles",
             id
         );
         return result;
     }
 
-    setupServiceProfileData(name: string): CreateServiceProfileDto {
+    public setupServiceProfileData(name: string): CreateServiceProfileDto {
         const serviceProfileDto: ServiceProfileDto = {
             name: name,
             networkServerID: "1",
-            organizationID: "1",
+            organizationID: "15",
             prAllowed: true,
             raAllowed: true,
             reportDevStatusBattery: true,
@@ -59,10 +65,38 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
             ulRatePolicy: "DROP",
         };
 
-        const createServiceProfileDto: CreateServiceProfileDto = {
+        const serviceProfile: CreateServiceProfileDto = {
             serviceProfile: serviceProfileDto,
         };
 
-        return createServiceProfileDto;
+        return serviceProfile;
+    }
+    private updateDto(
+        dto: CreateServiceProfileDto | UpdateServiceProfileDto
+    ): CreateServiceProfileDto | UpdateServiceProfileDto {
+        // Chirpstack requires 'gatewayProfileID' to be set (with value or null)
+        if (!dto?.serviceProfile?.id) {
+            dto.serviceProfile.id = null;
+        }
+
+        return dto;
+    }
+    private handlePossibleError(
+        result: AxiosResponse,
+        dto: CreateServiceProfileDto | UpdateServiceProfileDto
+    ): ChirpstackReponseStatus {
+        if (result.status != 200) {
+            Logger.error(
+                `Error from Chirpstack: '${JSON.stringify(
+                    dto
+                )}', got response: ${JSON.stringify(result.data)}`
+            );
+            throw new BadRequestException({
+                success: false,
+                error: result.data,
+            });
+        }
+
+        return { success: true };
     }
 }
