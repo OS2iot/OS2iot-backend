@@ -80,7 +80,7 @@ export class ServiceProfileController {
     }
 
     @Delete(":id")
-    @ApiOperation({ summary: "Find one ServiceProfile by id" })
+    @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
     async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
         let result = undefined;
