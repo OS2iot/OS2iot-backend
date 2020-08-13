@@ -3,11 +3,12 @@ import { ChirpstackAdministrationModule } from "@modules/device-integrations/chi
 import { INestApplication, Logger } from "@nestjs/common";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
+import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
     let app: INestApplication;
-    const testProfileName = "Test-service-profile1";
+    const testname = "e2e";
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [ChirpstackAdministrationModule],
@@ -25,70 +26,98 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     beforeEach(async () => {});
 
-    afterEach(async () => {});
+    afterEach(async () => {
+        await serviceProfileService
+            .findAllServiceProfiles(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (element.name === testname) {
+                        serviceProfileService.deleteServiceProfile(element.id);
+                    }
+                });
+            });
+    });
 
-    it("(POST) /service-profile/  OK", async () => {
+    it("(POST) /service-profiles/  OK", async () => {
         //Arrange & Act
-        const result = await serviceProfileService.createServiceProfile(
-            serviceProfileService.setupServiceProfileData(testProfileName)
-        );
+        const data: CreateServiceProfileDto = createServiceProfileData();
+        Logger.error(data);
+        const result = await serviceProfileService.createServiceProfile(data);
+
+        //Logger.error(JSON.stringify(result));
         //Assert
         expect(result.status).toEqual(200);
     });
 
-    it("(GET One) /service-profile/ ", async () => {
-        // Arrange
-        let identifier;
+    it("(PUT) /service-profiles/  OK", async () => {
+        //Arrange & Act
+        const data: CreateServiceProfileDto = createServiceProfileData();
+        Logger.error(data);
+        await serviceProfileService.createServiceProfile(data);
+
         await serviceProfileService
             .findAllServiceProfiles(1000, 0)
             .then(response => {
-                response.result.some(element => {
-                    if (element.name === testProfileName) {
-                        identifier = element.id;
+                response.result.forEach(async element => {
+                    if (element.name === testname) {
+                        const result = await serviceProfileService.updateServiceProfile(
+                            data,
+                            element.id
+                        );
+                        expect(result.status).toEqual(200);
                     }
                 });
             });
-        // Act
-        const result: CreateServiceProfileDto = await serviceProfileService.findOneServiceProfileById(
-            identifier
-        );
-        //Assert
-        expect(result.serviceProfile.name).toMatch(testProfileName);
     });
-    it("(PUT) /service-profile/ ", async () => {
-        // Arrange
-        let identifier;
+
+    it("(DELETE) /service-profiles/  OK", async () => {
+        //Arrange & Act
+        const data: CreateServiceProfileDto = createServiceProfileData();
+        Logger.error(data);
+        await serviceProfileService.createServiceProfile(data);
+
         await serviceProfileService
             .findAllServiceProfiles(1000, 0)
             .then(response => {
-                response.result.some(element => {
-                    element.name === testProfileName, (identifier = element.id);
+                response.result.forEach(async element => {
+                    if (element.name === testname) {
+                        const result = await serviceProfileService.deleteServiceProfile(
+                            element.id
+                        );
+                        expect(result.status).toEqual(200);
+                    }
                 });
             });
-        // Act
-        const result = await serviceProfileService.updateServiceProfile(
-            serviceProfileService.setupServiceProfileData(testProfileName + 1),
-            identifier
-        );
-        Logger.log(result.status);
-        //Assert
-        expect(result.status).toBe(200);
     });
-    it("(DELETE) /service-profile/ ", async () => {
-        // Arrange
-        let identifier;
-        await serviceProfileService
-            .findAllServiceProfiles(1000, 0)
-            .then(response => {
-                response.result.some(element => {
-                    element.name === testProfileName, (identifier = element.id);
-                });
-            });
-        // Act
-        const result = await serviceProfileService.deleteServiceProfile(
-            identifier
-        );
-        //Assert
-        expect(result.status).toBe(200);
-    });
+
+    function createServiceProfileData(): CreateServiceProfileDto {
+        const serviceProfileDto: ServiceProfileDto = {
+            name: testname,
+            networkServerID: "15",
+            organizationID: "1",
+            prAllowed: true,
+            raAllowed: true,
+            reportDevStatusBattery: true,
+            reportDevStatusMargin: true,
+            ulRatePolicy: "DROP",
+            addGWMetaData: true,
+            devStatusReqFreq: 0,
+            dlBucketSize: 0,
+            dlRate: 0,
+            drMax: 0,
+            drMin: 0,
+            hrAllowed: true,
+            minGWDiversity: 0,
+            nwkGeoLoc: true,
+            targetPER: 0,
+            ulBucketSize: 0,
+            ulRate: 0,
+        };
+
+        const serviceProfile: CreateServiceProfileDto = {
+            serviceProfile: serviceProfileDto,
+        };
+
+        return serviceProfile;
+    }
 });
