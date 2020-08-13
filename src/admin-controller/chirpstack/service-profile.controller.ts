@@ -1,7 +1,6 @@
 import {
     Controller,
     Post,
-    Header,
     Body,
     Put,
     Param,
@@ -10,7 +9,6 @@ import {
     NotFoundException,
     Delete,
     Query,
-    HttpStatus,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -22,13 +20,9 @@ import {
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
-import { off } from "process";
-import { resolve } from "path";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { AxiosResponse } from "axios";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/service-profiles")

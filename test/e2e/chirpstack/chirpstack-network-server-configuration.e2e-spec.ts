@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 
 describe("ChirpstackSetupNetworkServerService", () => {

@@ -24,8 +24,6 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await app.close();
     });
 
-    beforeEach(async () => {});
-
     afterEach(async () => {
         await serviceProfileService
             .findAllServiceProfiles(1000, 0)
