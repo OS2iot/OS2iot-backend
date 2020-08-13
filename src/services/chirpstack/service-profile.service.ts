@@ -1,19 +1,10 @@
-import {
-    Injectable,
-    Logger,
-    HttpStatus,
-    BadRequestException,
-} from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
-import { ListAllServiceProfilesDto } from "@dto/chirpstack/list-all-service-profiles.dto";
-import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-reponse.dto";
-import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
-import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
+
+import { AxiosResponse } from "axios";
 
 const endpoint = "service-profiles";
 
