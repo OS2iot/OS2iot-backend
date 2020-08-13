@@ -10,10 +10,8 @@ import { AxiosResponse } from "axios";
 import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
-import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {

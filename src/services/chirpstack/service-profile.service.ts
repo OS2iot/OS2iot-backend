@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    OnModuleInit,
-    Logger,
-    BadRequestException,
-} from "@nestjs/common";
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
