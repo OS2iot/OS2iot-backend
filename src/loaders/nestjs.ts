@@ -1,4 +1,9 @@
-import { INestApplication, ValidationPipe, Logger } from "@nestjs/common";
+import {
+    INestApplication,
+    ValidationPipe,
+    Logger,
+    BadRequestException,
+} from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "@modules/app.module";
 
@@ -10,7 +15,13 @@ export async function setupNestJs(config: {
 }): Promise<INestApplication> {
     const app = await NestFactory.create(AppModule);
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+        new ValidationPipe({
+            exceptionFactory: errors => {
+                return new BadRequestException(errors);
+            },
+        })
+    );
     app.enableCors();
 
     Logger.log(
