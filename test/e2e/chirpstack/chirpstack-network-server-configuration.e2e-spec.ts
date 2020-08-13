@@ -21,11 +21,24 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     });
 
     afterAll(async () => {
-        // Ensure clean shutdown
+        await chirpstackSetupNetworkServerService
+            .getNetworkServers(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (element.name === testProfileName) {
+                        chirpstackSetupNetworkServerService.deleteNetworkServer(
+                            element.id
+                        );
+                    }
+                });
+            });
         await app.close();
     });
 
-    beforeEach(async () => {});
+    beforeEach(async () => {
+        //onModuleInit is not called in tests. thus we have to setup the server before each test
+        chirpstackSetupNetworkServerService.bootstrapChirpstackNetworkServerConfiguration();
+    });
 
     afterEach(async () => {});
 
@@ -33,7 +46,6 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Arrange
         let name;
         const result = await chirpstackSetupNetworkServerService.getNetworkServerCount();
-
         // Act & Assert
         expect(result).toBe("1");
     });
@@ -44,26 +56,23 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         const result = await chirpstackSetupNetworkServerService
             .getNetworkServers(1000, 0)
             .then(response => {
-                response.result.some(element => {
-                    Logger.log(JSON.stringify(element.name));
+                response.result.forEach(element => {
                     if (element.name === testProfileName) {
                         name = element.name;
                     }
                 });
             });
-        // Act
-        //Assert
-        Logger.log("##################");
-        Logger.log(result);
+
         expect(name).toMatch(testProfileName);
     });
+
     it("(PUT) /network-server/ - expected to fail ", async () => {
         // Arrange
         let identifier;
         await chirpstackSetupNetworkServerService
             .getNetworkServers(1000, 0)
             .then(response => {
-                response.result.some(element => {
+                response.result.forEach(element => {
                     element.name === testProfileName, (identifier = element.id);
                 });
             });
