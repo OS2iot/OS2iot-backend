@@ -44,13 +44,6 @@ export class GenericChirpstackConfigurationService {
         return headerDto;
     }
 
-    setupData(body: JSON) {
-        return {
-            rawBody: body,
-            mimeType: "application/json",
-        };
-    }
-
     makeAxiosConfiguration(config: {
         timeout: number;
         authorizationHeader: string;

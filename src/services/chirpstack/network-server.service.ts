@@ -5,8 +5,6 @@ import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
 import { AxiosResponse } from "axios";
 
-const endpoint = "network-servers";
-
 @Injectable()
 export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
@@ -15,10 +13,12 @@ export class ChirpstackSetupNetworkServerService
         await this.bootstrapChirpstackNetworkServerConfiguration();
     }
 
-    async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
+    public async bootstrapChirpstackNetworkServerConfiguration(): Promise<
+        AxiosResponse
+    > {
         if ((await this.getNetworkServerCount()) < 1) {
             try {
-                this.postNetworkServer(this.setupNetworkServerData());
+                return this.postNetworkServer(this.setupNetworkServerData());
             } catch (error) {
                 Logger.error(error);
             }
@@ -30,6 +30,7 @@ export class ChirpstackSetupNetworkServerService
     ): Promise<AxiosResponse> {
         return await this.post("network-servers", data);
     }
+
     public async putNetworkServer(
         data: CreateNetworkServerDto,
         id: number
@@ -46,8 +47,7 @@ export class ChirpstackSetupNetworkServerService
     ): Promise<ListAllNetworkServerReponseDto> {
         const res = await this.getAllWithPagination<
             ListAllNetworkServerReponseDto
-        >(endpoint, limit, offset);
-
+        >("network-servers", limit, offset);
         return res;
     }
     public async getNetworkServerCount(): Promise<number> {
@@ -58,7 +58,7 @@ export class ChirpstackSetupNetworkServerService
         return result.totalCount;
     }
 
-    setupNetworkServerData(): CreateNetworkServerDto {
+    public setupNetworkServerData(): CreateNetworkServerDto {
         const networkServerDto: NetworkServerDto = {
             name: "OS2iot",
             server: this.networkServer,
