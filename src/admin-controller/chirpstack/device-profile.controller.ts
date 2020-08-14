@@ -1,29 +1,29 @@
 import {
+    Controller,
+    Post,
+    Body,
+    Put,
+    Param,
+    Logger,
+    NotFoundException,
+    Get,
+    Query,
+    Delete,
+} from "@nestjs/common";
+import {
     ApiTags,
     ApiProduces,
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
 } from "@nestjs/swagger";
-import {
-    Controller,
-    Post,
-    Body,
-    Get,
-    Query,
-    Param,
-    Put,
-    Delete,
-    Logger,
-    NotFoundException,
-} from "@nestjs/common";
 
-import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
-import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
-import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 import { AxiosResponse } from "axios";
+import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
@@ -37,15 +37,7 @@ export class DeviceProfileController {
     async create(
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<AxiosResponse> {
-        let result = undefined;
-        try {
-            result = await this.deviceProfileService.createDeviceProfile(
-                createDto
-            );
-        } catch (err) {
-            Logger.error(`Error occured during post: '${JSON.stringify(err)}'`);
-        }
-        return result;
+        return await this.deviceProfileService.createDeviceProfile(createDto);
     }
 
     @Put(":id")

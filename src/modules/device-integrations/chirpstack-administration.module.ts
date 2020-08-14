@@ -16,8 +16,8 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
     ],
     imports: [HttpModule],
     providers: [
-        ChirpstackSetupNetworkServerService,
         GenericChirpstackConfigurationService,
+        ChirpstackSetupNetworkServerService,
         ChirpstackGatewayService,
         ServiceProfileService,
         DeviceProfileService,

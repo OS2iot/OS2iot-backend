@@ -28,11 +28,11 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         limit?: number,
         offset?: number
     ): Promise<ListAllDeviceProfilesReponseDto> {
-        const res = await this.getAllWithPagination<
+        const result = await this.getAllWithPagination<
             ListAllDeviceProfilesReponseDto
         >("device-profiles", limit, offset);
 
-        return res;
+        return result;
     }
 
     public async findOneDeviceProfileById(

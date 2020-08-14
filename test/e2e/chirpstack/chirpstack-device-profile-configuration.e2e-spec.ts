@@ -117,7 +117,6 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
             supportsClassB: false,
             supportsClassC: false,
             supportsJoin: false,
-            //tags: {},
         };
 
         const deviceProfile: CreateDeviceProfileDto = {
