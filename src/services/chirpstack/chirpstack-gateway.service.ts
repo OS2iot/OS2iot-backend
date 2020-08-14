@@ -12,6 +12,8 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
+import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -38,9 +40,13 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return await this.getAllWithPagination("gateways", limit, offset);
     }
 
-    async getOne(gatewayId: string): Promise<AxiosResponse> {
+    async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
         try {
-            return await this.get(`gateways/${gatewayId}`);
+            const result: SingleGatewayResponseDto = await this.get(
+                `gateways/${gatewayId}`
+            );
+
+            return result;
         } catch (err) {
             Logger.error(
                 `Tried to find gateway with id: '${gatewayId}', got an error: ${JSON.stringify(
@@ -57,20 +63,29 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     async modifyGateway(
         gatewayId: string,
         dto: UpdateGatewayDto
-    ): Promise<AxiosResponse> {
+    ): Promise<ChirpstackReponseStatus> {
         dto = this.updateDto(dto);
-        return await this.put("gateways", dto, gatewayId);
+        const result = await this.put("gateways", dto, gatewayId);
+        return this.handlePossibleError(result, dto);
     }
 
-    async deleteGateway(gatewayId: string): Promise<AxiosResponse> {
+    async deleteGateway(gatewayId: string): Promise<ChirpstackReponseStatus> {
         try {
-            return await this.delete("gateways", gatewayId);
+            await this.delete("gateways", gatewayId);
+            return {
+                success: true,
+            };
         } catch (err) {
             Logger.error(
                 `Got error from Chirpstack: ${JSON.stringify(
                     err?.response?.data
                 )}`
             );
+            return {
+                success: false,
+                chirpstackError: err?.response
+                    ?.data as ChirpstackErrorResponseDto,
+            };
         }
     }
 

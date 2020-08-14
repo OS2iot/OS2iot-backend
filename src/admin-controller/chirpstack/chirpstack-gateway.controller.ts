@@ -65,8 +65,7 @@ export class ChirpstackGatewayController {
             throw new BadRequestException(ErrorCodes.NotValidFormat);
         }
 
-        return await (await this.chirpstackGatewayService.getOne(gatewayId))
-            .data;
+        return await this.chirpstackGatewayService.getOne(gatewayId);
     }
 
     @Put(":gatewayId")
@@ -77,17 +76,16 @@ export class ChirpstackGatewayController {
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
-        return await (
-            await this.chirpstackGatewayService.modifyGateway(gatewayId, dto)
-        ).data;
+        return await this.chirpstackGatewayService.modifyGateway(
+            gatewayId,
+            dto
+        );
     }
 
     @Delete(":gatewayId")
     async delete(
         @Param("gatewayId") gatewayId: string
     ): Promise<ChirpstackReponseStatus> {
-        return await (
-            await this.chirpstackGatewayService.deleteGateway(gatewayId)
-        ).data;
+        return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
 }

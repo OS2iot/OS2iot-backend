@@ -4,6 +4,7 @@ import { INestApplication, Logger } from "@nestjs/common";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import * as request from "supertest";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
+import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
@@ -56,8 +57,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         // Check that it was created.
         const newElement = await service.getOne(req.gateway.id);
-        expect(newElement?.data).toMatchObject({ id: req.gateway.id });
+        expect(newElement).toMatchObject({ gateway: { id: req.gateway.id } });
     });
+
     it("(GET) Get gateway by id", async () => {
         const id = await createGateway();
         return await request(app.getHttpServer())
@@ -116,8 +118,10 @@ describe("ChirpstackGatewayController (e2e)", () => {
             .expect(200);
 
         // Check that it was changed.
-        const changedGateway = await service.getOne(dto.gateway.id);
-        expect(changedGateway?.data.gateway).toMatchObject({
+        const changedGateway: SingleGatewayResponseDto = await service.getOne(
+            dto.gateway.id
+        );
+        expect(changedGateway?.gateway).toMatchObject({
             id: dto.gateway.id,
             name: dto.gateway.name,
         });
