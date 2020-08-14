@@ -12,6 +12,7 @@ import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
+import { ReceiveDataDto } from "@dto/receive-data.dto";
 
 @ApiTags("Receive Data")
 @Controller("receive-data")
@@ -28,7 +29,7 @@ export class ReceiveDataController {
     @HttpCode(204)
     async receive(
         @Query("apiKey") apiKey: string,
-        @Body() data: JSON
+        @Body() data: ReceiveDataDto
     ): Promise<void> {
         const iotDevice = await this.iotDeviceService.findGenericHttpDeviceByApiKey(
             apiKey
