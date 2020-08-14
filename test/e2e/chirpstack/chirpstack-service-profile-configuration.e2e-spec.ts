@@ -4,9 +4,11 @@ import { INestApplication, Logger } from "@nestjs/common";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
+    let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     const testname = "e2e";
     beforeAll(async () => {
@@ -88,10 +90,27 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             });
     });
 
+    /* async function getNetworkServerId(): Promise<string> {
+        let id: string;
+        Logger.error("#############");
+        await chirpstackSetupNetworkServerService
+            .getNetworkServers(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (element.name === "OS2iot") {
+                        Logger.log("name " + element.name);
+                        id = JSON.stringify(element.id);
+                    }
+                });
+            });
+        Logger.log("id " + id);
+        return id;
+    } */
     function createServiceProfileData(): CreateServiceProfileDto {
+        // const networkServerId = getNetworkServerId();
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
-            networkServerID: "15",
+            networkServerID: "3", //networkServerId
             organizationID: "1",
             prAllowed: true,
             raAllowed: true,
