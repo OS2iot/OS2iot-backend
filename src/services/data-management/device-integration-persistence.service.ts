@@ -38,10 +38,15 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             )}'`
         );
         const dto: RawRequestDto = payload.body;
-
-        const relatedIoTDevice = await this.ioTDeviceService.findOne(
-            dto.iotDeviceId
-        );
+        let relatedIoTDevice;
+        try {
+            relatedIoTDevice = await this.ioTDeviceService.findOne(
+                dto.iotDeviceId
+            );
+        } catch (err) {
+            Logger.error(`Could not find IoTDevice by ID: ${dto.iotDeviceId}`);
+            return;
+        }
 
         // Save latest message
         await this.saveLatestMessage(dto, relatedIoTDevice);
@@ -78,7 +83,9 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
     }
 
-    private async findExistingRecevedMessage(relatedIoTDevice: IoTDevice): Promise<ReceivedMessage> {
+    private async findExistingRecevedMessage(
+        relatedIoTDevice: IoTDevice
+    ): Promise<ReceivedMessage> {
         // Use QueryBuilder since the relation only exists from IoT-Device to ReceivedMessage
         return await this.receivedMessageRepository
             .createQueryBuilder("msg")
