@@ -39,13 +39,11 @@ export class DeviceProfileController {
     ): Promise<AxiosResponse> {
         let result = undefined;
         try {
-            result = await this.deviceProfileService
-                .createDeviceProfile(createDto)
-                .catch();
-        } catch (err) {
-            Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+            result = await this.deviceProfileService.createDeviceProfile(
+                createDto
             );
+        } catch (err) {
+            Logger.error(`Error occured during post: '${JSON.stringify(err)}'`);
         }
         return result;
     }
@@ -61,17 +59,18 @@ export class DeviceProfileController {
         let result = undefined;
 
         try {
-            result = await this.deviceProfileService
-                .updateDeviceProfile(updateDto, id)
-                .catch();
-        } catch (err) {
-            Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+            result = await this.deviceProfileService.updateDeviceProfile(
+                updateDto,
+                id
             );
+        } catch (err) {
+            Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
+        }
+        if (!result) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
         return result;
     }
-
     @Get(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one DeviceProfile by id" })
@@ -80,13 +79,16 @@ export class DeviceProfileController {
         let result = undefined;
 
         try {
-            result = await this.deviceProfileService
-                .findOneDeviceProfileById(id)
-                .catch();
+            result = await this.deviceProfileService.findOneDeviceProfileById(
+                id
+            );
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+                `Error occured during get/:id : '${JSON.stringify(err)}'`
             );
+        }
+        if (!result) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
         return result;
     }
@@ -101,19 +103,20 @@ export class DeviceProfileController {
         let result = undefined;
         try {
             Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
-            result = await this.deviceProfileService
-                .findAllDeviceProfiles(limit, offset)
-                .catch();
+            result = await this.deviceProfileService.findAllDeviceProfiles(
+                limit,
+                offset
+            );
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+                `Error occured during Find all: '${JSON.stringify(err)}'`
             );
         }
         return result;
     }
 
     @Delete(":id")
-    @ApiOperation({ summary: "Deleteq one DeviceProfile by id" })
+    @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
     async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
         let result = undefined;
