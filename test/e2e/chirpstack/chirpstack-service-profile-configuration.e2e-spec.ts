@@ -19,6 +19,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await app.init();
 
         serviceProfileService = moduleFixture.get("ServiceProfileService");
+        chirpstackSetupNetworkServerService = moduleFixture.get("ChirpstackSetupNetworkServerService");
     });
 
     afterAll(async () => {
@@ -90,7 +91,11 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             });
     });
 
-    /* async function getNetworkServerId(): Promise<string> {
+    it("getnetowkrServerId", async () => {
+        Logger.log(await getNetworkServerId())
+    })
+
+    async function getNetworkServerId(): Promise<string> {
         let id: string;
         Logger.error("#############");
         await chirpstackSetupNetworkServerService
@@ -105,7 +110,8 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             });
         Logger.log("id " + id);
         return id;
-    } */
+    }
+
     function createServiceProfileData(): CreateServiceProfileDto {
         // const networkServerId = getNetworkServerId();
         const serviceProfileDto: ServiceProfileDto = {
