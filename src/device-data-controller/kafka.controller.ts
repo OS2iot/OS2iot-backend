@@ -20,7 +20,21 @@ export class KafkaController {
     async makeRawRequest(@Param("id") id: number): Promise<void> {
         const dto = new RawRequestDto();
         dto.iotDeviceId = id;
-        dto.rawPayload = JSON.parse('{ "en_key": "en_value" }');
+        dto.rawPayload = JSON.parse(`{
+                "data": "AQEXAjEEAIsFCAcOPQ==",
+                "freq": 867100000,
+                "chan": 3,
+                "tmst": 71333956,
+                "utmms": 1597675976328,
+                "rfch": 0,
+                "stat": 1,
+                "rssi": -39,
+                "size": 26,
+                "modu": "LORA",
+                "datr": "SF12BW125",
+                "codr": "4/5",
+                "lsnr": 12
+            }`);
         dto.unixTimestamp = new Date().valueOf();
 
         const payload: KafkaPayload = {
