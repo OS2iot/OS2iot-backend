@@ -2,7 +2,10 @@ export const SUBSCRIBER_FN_REF_MAP = new Map<string, Array<any>>();
 export const SUBSCRIBER_FIXED_FN_REF_MAP = new Map<string, Array<any>>();
 export const SUBSCRIBER_OBJ_REF_MAP = new Map<string, any>();
 
-export function SubscribeTo(topic: string) {
+export const SUBSCRIBER_COMBINED_REF_MAP = new Map<string, Array<[any, any]>>();
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function CombinedSubscribeTo(topic: string, uniqueName: any) {
     return (
         target: { [x: string]: any },
         propertyKey: string | number,
@@ -10,33 +13,16 @@ export function SubscribeTo(topic: string) {
         descriptor: any
     ): any => {
         const originalMethod = target[propertyKey];
-        addFunctionToMap(topic, originalMethod, SUBSCRIBER_FN_REF_MAP);
+        // Create this if it doesn't exist
+        if (!SUBSCRIBER_COMBINED_REF_MAP.has(topic)) {
+            SUBSCRIBER_COMBINED_REF_MAP.set(topic, []);
+        }
+        const existing = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
+        // Append the new subscriber to it
+        SUBSCRIBER_COMBINED_REF_MAP.set(
+            topic,
+            existing.concat([[uniqueName, originalMethod]])
+        );
         return descriptor;
     };
-}
-
-export function SubscribeToFixedGroup(topic: string) {
-    return (
-        target: { [x: string]: any },
-        propertyKey: string | number,
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        descriptor: any
-    ): any => {
-        const originalMethod = target[propertyKey];
-        addFunctionToMap(topic, originalMethod, SUBSCRIBER_FIXED_FN_REF_MAP);
-        return descriptor;
-    };
-}
-
-function addFunctionToMap(
-    topic: string,
-    originalMethod: any,
-    map: Map<string, Array<any>>
-): void {
-    // Create this if it doesn't exist
-    if (!map.has(topic)) {
-        map.set(topic, []);
-    }
-    // Append the new subscriber to it
-    map.set(topic, map.get(topic).concat([originalMethod]));
 }

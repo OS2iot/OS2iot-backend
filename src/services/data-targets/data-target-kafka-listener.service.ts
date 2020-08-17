@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotImplementedException } from "@nestjs/common";
-import { SubscribeToFixedGroup } from "@services/kafka/kafka.decorator";
+import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -11,6 +11,8 @@ import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
 
+const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";
+
 @Injectable()
 export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     constructor(
@@ -21,10 +23,10 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         super();
     }
     protected registerTopic(): void {
-        this.addTopic(KafkaTopic.TRANSFORMED_REQUEST);
+        this.addTopic(KafkaTopic.TRANSFORMED_REQUEST, UNIQUE_NAME_FOR_KAFKA);
     }
 
-    @SubscribeToFixedGroup(KafkaTopic.TRANSFORMED_REQUEST)
+    @CombinedSubscribeTo(KafkaTopic.TRANSFORMED_REQUEST, UNIQUE_NAME_FOR_KAFKA)
     async transformedRequestListener(payload: KafkaPayload): Promise<void> {
         Logger.debug(
             `[DataTargetKafkaListener - #TRANSFORMED_REQUEST]: '${JSON.stringify(
