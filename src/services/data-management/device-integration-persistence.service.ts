@@ -5,7 +5,7 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { SubscribeToFixedGroup } from "@services/kafka/kafka.decorator";
+import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDeviceService } from "@services/iot-device.service";
@@ -26,11 +26,11 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     protected registerTopic(): void {
-        this.addTopic(KafkaTopic.RAW_REQUEST);
+        this.addTopic(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence");
     }
 
     // Listen to Kafka event
-    @SubscribeToFixedGroup(KafkaTopic.RAW_REQUEST)
+    @CombinedSubscribeTo(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence")
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
         Logger.debug(
             `[DeviceIntegrationPersistenceService - #RAW_REQUEST]: '${JSON.stringify(
