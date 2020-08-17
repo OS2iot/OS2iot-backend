@@ -18,6 +18,7 @@ import { ReceiveDataModule } from "@modules/receive-data.module";
 import { KafkaModule } from "@modules/kafka.module";
 import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 
 @Module({
     imports: [
@@ -60,6 +61,7 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
         DataTargetSenderModule,
         ReceiveDataModule,
         ChirpstackAdministrationModule,
+        PayloadDecoderModule,
     ],
     controllers: [
         ApplicationController,
