@@ -51,7 +51,9 @@ export class PayloadDecoderService {
         newPayloadDecoder: PayloadDecoder
     ) {
         newPayloadDecoder.name = createDto.name;
-        newPayloadDecoder.decodingFunction = createDto.decodingFunction;
+        newPayloadDecoder.decodingFunction = createDto.decodingFunctionLines.join(
+            "\n"
+        );
 
         return newPayloadDecoder;
     }
