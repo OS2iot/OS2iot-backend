@@ -3,10 +3,11 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
-import { Repository } from "typeorm";
+import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
 import { clearDatabase } from "./test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -212,6 +213,7 @@ describe("ApplicationController (e2e)", () => {
                     name: "Post Test",
                     description: "Post Tester",
                     iotDevices: [] as any[],
+                    dataTargets: [] as any[],
                 });
             });
 
@@ -406,6 +408,50 @@ describe("ApplicationController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     error: "Bad Request",
                     message: "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
+                });
+            });
+    });
+
+    it("(PUT) /application/ - Change application - show iotdevices and datatargets in results", async () => {
+        // Arrange
+        const application = await repository.save([
+            {
+                name: "Test",
+                description: "Tester",
+                iotDevices: [],
+                dataTargets: [],
+            },
+        ]);
+        const id = application[0].id;
+
+        const device = new GenericHTTPDevice();
+        device.name = "E2E Test GENERIC HTTP device";
+        device.application = application[0];
+        device.apiKey = "DUMMY-API-KEY";
+        device.metadata = JSON.parse('{"some_key": "a_value"}');
+
+        const savedIoTDevice = await getManager().save(device);
+
+        const putTest = {
+            name: `${application[0].name} changed`,
+            description: `${application[0].description} changed`,
+            // NO IOTDEVICE ARRAY
+            // NO DATA TARGET ARRAY
+        };
+
+        // Act
+        await request(app.getHttpServer())
+            .put(`/application/${id}`)
+            .send(putTest)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Assert
+                expect(response.body).toMatchObject({
+                    name: "Test changed",
+                    description: "Tester changed",
+                    iotDevices: [{ id: savedIoTDevice.id }],
+                    dataTargets: [],
                 });
             });
     });

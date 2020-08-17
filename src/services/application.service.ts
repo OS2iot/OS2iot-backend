@@ -21,7 +21,7 @@ export class ApplicationService {
             where: {},
             take: query.limit,
             skip: query.offset,
-            relations: ['iotDevices'],
+            relations: ["iotDevices"],
             order: { id: query.sort }, // TODO: Generic sorting possible?
         });
 
@@ -50,6 +50,8 @@ export class ApplicationService {
             createApplicationDto,
             application
         );
+        mappedApplication.iotDevices = [];
+        mappedApplication.dataTargets = [];
 
         return this.applicationRepository.save(mappedApplication);
     }
@@ -59,7 +61,8 @@ export class ApplicationService {
         updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
         const existingApplication = await this.applicationRepository.findOneOrFail(
-            id
+            id,
+            { relations: ["iotDevices", "dataTargets"] }
         );
 
         const mappedApplication = this.mapApplicationDtoToApplication(
@@ -99,12 +102,6 @@ export class ApplicationService {
     ): Application {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
-        if (
-            application.iotDevices === undefined ||
-            application.iotDevices === null
-        ) {
-            application.iotDevices = [];
-        }
 
         return application;
     }
