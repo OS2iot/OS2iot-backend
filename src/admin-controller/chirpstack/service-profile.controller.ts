@@ -10,6 +10,7 @@ import {
     Delete,
     Query,
     InternalServerErrorException,
+    HttpCode,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -23,7 +24,7 @@ import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
-import { CreateServiceProfileResponseDto } from "@dto/chirpstack/create-service-profile-response.dto";
+import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
 @ApiTags("Chirpstack")
@@ -37,7 +38,7 @@ export class ServiceProfileController {
     @ApiBadRequestResponse()
     async create(
         @Body() createDto: CreateServiceProfileDto
-    ): Promise<CreateServiceProfileResponseDto> {
+    ): Promise<CreateChirpstackProfileResponseDto> {
         const res = await this.serviceProfileService.createServiceProfile(
             createDto
         );
@@ -48,6 +49,7 @@ export class ServiceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Update an existing ServiceProfile" })
     @ApiBadRequestResponse()
+    @HttpCode(204)
     async update(
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
@@ -97,7 +99,9 @@ export class ServiceProfileController {
             result = await this.serviceProfileService.deleteServiceProfile(id);
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+                `Error occured during delete: '${JSON.stringify(
+                    err?.response?.data
+                )}'`
             );
         }
 
