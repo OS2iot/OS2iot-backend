@@ -9,5 +9,6 @@ export class CreatePayloadDecoderDto {
     name: string;
 
     @ApiProperty({ required: true })
-    decodingFunctionLines: string[];
+    @IsString()
+    decodingFunction: string;
 }
