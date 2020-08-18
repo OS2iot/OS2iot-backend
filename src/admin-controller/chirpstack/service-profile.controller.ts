@@ -9,6 +9,7 @@ import {
     NotFoundException,
     Delete,
     Query,
+    InternalServerErrorException,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -22,7 +23,8 @@ import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
-import { AxiosResponse } from "axios";
+import { CreateServiceProfileResponseDto } from "@dto/chirpstack/create-service-profile-response.dto";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/service-profiles")
@@ -35,8 +37,11 @@ export class ServiceProfileController {
     @ApiBadRequestResponse()
     async create(
         @Body() createDto: CreateServiceProfileDto
-    ): Promise<AxiosResponse> {
-        return await this.serviceProfileService.createServiceProfile(createDto);
+    ): Promise<CreateServiceProfileResponseDto> {
+        const res = await this.serviceProfileService.createServiceProfile(
+            createDto
+        );
+        return res.data;
     }
 
     @Put(":id")
@@ -46,13 +51,17 @@ export class ServiceProfileController {
     async update(
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
-    ): Promise<AxiosResponse> {
+    ): Promise<void> {
         const result = await this.serviceProfileService.updateServiceProfile(
             updateDto,
             id
         );
-        Logger.log(result);
-        return result;
+
+        if (result.status != 200) {
+            throw new InternalServerErrorException(result.data);
+        }
+
+        return;
     }
 
     @Get(":id")
@@ -72,8 +81,8 @@ export class ServiceProfileController {
     ): Promise<ListAllServiceProfilesReponseDto> {
         Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
         const res = await this.serviceProfileService.findAllServiceProfiles(
-            limit,
-            offset
+            limit || 50,
+            offset || 0
         );
 
         return res;
@@ -82,13 +91,13 @@ export class ServiceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
-    async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
+    async deleteOne(@Param("id") id: string): Promise<DeleteResponseDto> {
         let result = undefined;
         try {
             result = await this.serviceProfileService.deleteServiceProfile(id);
         } catch (err) {
             Logger.error(
-                `Error occured during findOne: '${JSON.stringify(err)}'`
+                `Error occured during delete: '${JSON.stringify(err)}'`
             );
         }
 
@@ -96,6 +105,6 @@ export class ServiceProfileController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
-        return result;
+        return new DeleteResponseDto(1);
     }
 }
