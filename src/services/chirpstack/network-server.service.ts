@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import {
+    Injectable,
+    OnModuleInit,
+    Logger,
+    InternalServerErrorException,
+} from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
@@ -9,18 +14,25 @@ import { AxiosResponse } from "axios";
 export class ChirpstackSetupNetworkServerService
     extends GenericChirpstackConfigurationService
     implements OnModuleInit {
+    networkServerName = "OS2iot";
+
     async onModuleInit(): Promise<void> {
-        await this.bootstrapChirpstackNetworkServerConfiguration();
+        // await this.bootstrapChirpstackNetworkServerConfiguration();
     }
 
     public async bootstrapChirpstackNetworkServerConfiguration(): Promise<
-        AxiosResponse
+        void
     > {
-        if ((await this.getNetworkServerCount()) < 1) {
+        const networkServers = await this.getNetworkServers(100, 0);
+        const alreadyCreated = networkServers.result.some(networkServer => {
+            networkServer.name == this.networkServerName;
+        });
+
+        if (!alreadyCreated) {
             try {
-                return this.postNetworkServer(this.setupNetworkServerData());
+                await this.postNetworkServer(this.setupNetworkServerData());
             } catch (error) {
-                Logger.error(error);
+                throw new InternalServerErrorException(error?.result?.data);
             }
         }
     }
@@ -50,17 +62,18 @@ export class ChirpstackSetupNetworkServerService
         >("network-servers", limit, offset);
         return res;
     }
+
     public async getNetworkServerCount(): Promise<number> {
         const result: ListAllNetworkServerReponseDto = await this.getNetworkServers(
-            0,
-            1000
+            1000,
+            0
         );
         return result.totalCount;
     }
 
     public setupNetworkServerData(): CreateNetworkServerDto {
         const networkServerDto: NetworkServerDto = {
-            name: "OS2iot",
+            name: this.networkServerName,
             server: this.networkServer,
         };
         const createNetworkServerDto: CreateNetworkServerDto = {
