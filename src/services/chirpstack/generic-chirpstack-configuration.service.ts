@@ -11,17 +11,17 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { response } from "express";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    baseUrl = `http://${process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
-        "host.docker.internal"}:${process.env
-        .CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
+    baseUrl = `http://${
+        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
+        "host.docker.internal"
+    }:${process.env.CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
 
-    networkServer = `${process.env.CHIRPSTACK_NETWORK_SERVER ||
-        "chirpstack-network-server"}:${process.env
-        .CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
+    networkServer = `${
+        process.env.CHIRPSTACK_NETWORK_SERVER || "chirpstack-network-server"
+    }:${process.env.CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
     constructor(private httpService: HttpService) {}
 
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {

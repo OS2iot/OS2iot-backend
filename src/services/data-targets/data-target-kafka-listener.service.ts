@@ -37,7 +37,9 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         try {
             iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
         } catch (err) {
-            Logger.error(`Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`);
+            Logger.error(
+                `Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`
+            );
             return;
         }
 

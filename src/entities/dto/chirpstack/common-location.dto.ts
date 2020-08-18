@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsOptional, Max, Min, IsNumber } from "class-validator";
+import { IsString, IsOptional } from "class-validator";
 
 export class CommonLocationDto {
     @ApiProperty({ required: false })

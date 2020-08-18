@@ -7,7 +7,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
-import { GenericHTTPDevice } from '../entities/generic-http-device.entity';
+import { GenericHTTPDevice } from "../entities/generic-http-device.entity";
 
 @Module({
     imports: [

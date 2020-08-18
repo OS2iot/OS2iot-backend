@@ -1,11 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-    IsString,
-    MinLength,
-    MaxLength,
-    IsOptional,
-    IsJSON,
-} from "class-validator";
+import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
 

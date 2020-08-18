@@ -25,8 +25,9 @@ export async function setupNestJs(config: {
     app.enableCors();
 
     Logger.log(
-        `Kafka: ${process.env.KAFKA_HOSTNAME ||
-            "host.docker.internal"}:${process.env.KAFKA_PORT || "9092"}`
+        `Kafka: ${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
+            process.env.KAFKA_PORT || "9092"
+        }`
     );
 
     return app;

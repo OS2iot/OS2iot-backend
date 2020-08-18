@@ -10,7 +10,11 @@ import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
 import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { generateSigfoxRawRequstDto, generateIoTDevice, generateApplication } from "../e2e/test-helpers";
+import {
+    generateSigfoxRawRequstDto,
+    generateIoTDevice,
+    generateApplication,
+} from "../e2e/test-helpers";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;

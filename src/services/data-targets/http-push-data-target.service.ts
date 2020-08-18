@@ -28,7 +28,9 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
                 .post(config.url, data.rawBody, axiosConfig)
                 .toPromise();
 
-            Logger.debug(`HttpPushDataTarget result: '${JSON.stringify(result.data)}'`);
+            Logger.debug(
+                `HttpPushDataTarget result: '${JSON.stringify(result.data)}'`
+            );
             if (!result.status.toString().startsWith("2")) {
                 Logger.warn(
                     `Got a non-2xx status-code: ${result.status.toString()} and message: ${

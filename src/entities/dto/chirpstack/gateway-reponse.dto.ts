@@ -7,7 +7,7 @@ export class GatewayResponseDto {
     organizationID: string;
     networkServerID: string;
     location: CommonLocationDto;
-    
+
     networkServerName?: string;
     createdAt?: string;
     updatedAt?: string;

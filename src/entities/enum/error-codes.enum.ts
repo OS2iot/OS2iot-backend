@@ -5,5 +5,5 @@ export enum ErrorCodes {
     InvalidApiKey = "MESSAGE.DEVICE-DOES-NOT-EXIST",
     InvalidPost = "MESSAGE.POST-FAILED",
     WrongLength = "MESSAGE.WRONG-LENGTH",
-    NotValidFormat = "MESSAGE.NOT-VALID-FORMAT"
+    NotValidFormat = "MESSAGE.NOT-VALID-FORMAT",
 }
