@@ -5,6 +5,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
 import { KafkaPayload } from "../../src/services/kafka/kafka.message";
 import { KafkaTopic } from "../../src/entities/enum/kafka-topic.enum";
+import { ChirpstackSetupNetworkServerService } from "../../src/services/chirpstack/network-server.service";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -77,4 +78,20 @@ export function generateRawRequestKafkaPayload(
         messageType: "receiveData.genericHttp",
         topicName: KafkaTopic.RAW_REQUEST,
     };
+}
+
+export async function getNetworkServerId(
+    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
+): Promise<string> {
+    let id: string;
+    await chirpstackSetupNetworkServerService
+        .getNetworkServers(1000, 0)
+        .then(response => {
+            response.result.forEach(element => {
+                if (element.name === "OS2iot") {
+                    id = element.id.toString();
+                }
+            });
+        });
+    return id;
 }

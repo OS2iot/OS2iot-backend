@@ -9,6 +9,8 @@ import {
     Get,
     Query,
     Delete,
+    InternalServerErrorException,
+    HttpCode,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -20,10 +22,11 @@ import {
 
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
-import { AxiosResponse } from "axios";
 import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
+import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
@@ -36,33 +39,30 @@ export class DeviceProfileController {
     @ApiBadRequestResponse()
     async create(
         @Body() createDto: CreateDeviceProfileDto
-    ): Promise<AxiosResponse> {
-        return await this.deviceProfileService.createDeviceProfile(createDto);
+    ): Promise<CreateChirpstackProfileResponseDto> {
+        const result = await this.deviceProfileService.createDeviceProfile(
+            createDto
+        );
+        return result.data;
     }
 
     @Put(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Update an existing DeviceProfile" })
     @ApiBadRequestResponse()
+    @HttpCode(204)
     async update(
         @Param("id") id: string,
         @Body() updateDto: UpdateDeviceProfileDto
-    ): Promise<AxiosResponse> {
-        let result = undefined;
-
+    ): Promise<void> {
         try {
-            result = await this.deviceProfileService.updateDeviceProfile(
-                updateDto,
-                id
-            );
+            await this.deviceProfileService.updateDeviceProfile(updateDto, id);
         } catch (err) {
             Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
+            throw new InternalServerErrorException(err?.response?.data);
         }
-        if (!result) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
-        return result;
     }
+
     @Get(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one DeviceProfile by id" })
@@ -96,12 +96,14 @@ export class DeviceProfileController {
         try {
             Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
             result = await this.deviceProfileService.findAllDeviceProfiles(
-                limit,
-                offset
+                limit || 50,
+                offset || 0
             );
         } catch (err) {
             Logger.error(
-                `Error occured during Find all: '${JSON.stringify(err)}'`
+                `Error occured during Find all: '${JSON.stringify(
+                    err?.response?.data
+                )}'`
             );
         }
         return result;
@@ -110,13 +112,15 @@ export class DeviceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
-    async deleteOne(@Param("id") id: string): Promise<AxiosResponse> {
+    async deleteOne(@Param("id") id: string): Promise<DeleteResponseDto> {
         let result = undefined;
         try {
             result = await this.deviceProfileService.deleteDeviceProfile(id);
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(err)}'`
+                `Error occured during delete: '${JSON.stringify(
+                    err?.response?.data
+                )}'`
             );
         }
 
@@ -124,6 +128,6 @@ export class DeviceProfileController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
-        return result;
+        return new DeleteResponseDto(1);
     }
 }
