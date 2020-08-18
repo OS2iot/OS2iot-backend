@@ -1,10 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import * as request from "supertest";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
@@ -19,7 +20,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await app.init();
 
         serviceProfileService = moduleFixture.get("ServiceProfileService");
-        chirpstackSetupNetworkServerService = moduleFixture.get("ChirpstackSetupNetworkServerService");
+        chirpstackSetupNetworkServerService = moduleFixture.get(
+            "ChirpstackSetupNetworkServerService"
+        );
     });
 
     afterAll(async () => {
@@ -31,92 +34,151 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await serviceProfileService
             .findAllServiceProfiles(1000, 0)
             .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === testname) {
-                        serviceProfileService.deleteServiceProfile(element.id);
+                response.result.forEach(serviceProfile => {
+                    if (serviceProfile.name.startsWith(testname)) {
+                        serviceProfileService.deleteServiceProfile(
+                            serviceProfile.id
+                        );
                     }
                 });
             });
     });
 
-    it("(POST) /service-profiles/  OK", async () => {
-        //Arrange & Act
-        const data: CreateServiceProfileDto = createServiceProfileData();
-        Logger.error(data);
+    it("(POST) /chirpstack/service-profiles/ - OK", async () => {
+        // Arrange
+        const data: CreateServiceProfileDto = await createServiceProfileData();
+
+        // Act
+        return await request(app.getHttpServer())
+            .post("/chirpstack/service-profiles/")
+            .send(data)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Assert
+                // Unfortinitly we just get a UUID from Chirpstack
+                expect(response.body).toHaveProperty("id");
+            });
+    });
+
+    it("(GET) /chirpstack/service-profiles/:id - OK", async () => {
+        // Arrange
+        const data: CreateServiceProfileDto = await createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(data);
+        const serviceProfileId = result.data.id;
 
-        //Logger.error(JSON.stringify(result));
-        //Assert
-        expect(result.status).toEqual(200);
-    });
-
-    it("(PUT) /service-profiles/  OK", async () => {
-        //Arrange & Act
-        const data: CreateServiceProfileDto = createServiceProfileData();
-        Logger.error(data);
-        await serviceProfileService.createServiceProfile(data);
-
-        await serviceProfileService
-            .findAllServiceProfiles(1000, 0)
+        // Act
+        return await request(app.getHttpServer())
+            .get("/chirpstack/service-profiles/" + serviceProfileId)
+            .expect(200)
+            .expect("Content-Type", /json/)
             .then(response => {
-                response.result.forEach(async element => {
-                    if (element.name === testname) {
-                        const result = await serviceProfileService.updateServiceProfile(
-                            data,
-                            element.id
-                        );
-                        expect(result.status).toEqual(200);
-                    }
+                // Assert
+                expect(response.body).toMatchObject({
+                    serviceProfile: {
+                        name: testname,
+                    },
                 });
             });
     });
 
-    it("(DELETE) /service-profiles/  OK", async () => {
-        //Arrange & Act
-        const data: CreateServiceProfileDto = createServiceProfileData();
-        Logger.error(data);
-        await serviceProfileService.createServiceProfile(data);
+    it("(GET) /chirpstack/service-profiles/ - OK", async () => {
+        // Arrange
+        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const result1 = await serviceProfileService.createServiceProfile(data);
 
-        await serviceProfileService
-            .findAllServiceProfiles(1000, 0)
+        data.serviceProfile.name = `${testname}-changed`;
+        const result2 = await serviceProfileService.createServiceProfile(data);
+
+        // Act
+        return await request(app.getHttpServer())
+            .get("/chirpstack/service-profiles/")
+            .expect(200)
+            .expect("Content-Type", /json/)
             .then(response => {
-                response.result.forEach(async element => {
-                    if (element.name === testname) {
-                        const result = await serviceProfileService.deleteServiceProfile(
-                            element.id
-                        );
-                        expect(result.status).toEqual(200);
-                    }
+                // Assert
+                expect(response.body.result).toContainEqual({
+                    id: result1.data.id,
+                    name: testname,
+                    networkServerID: expect.any(String),
+                    networkServerName: "",
+                    organizationID: "1",
+                    updatedAt: expect.any(String),
+                    createdAt: expect.any(String),
+                });
+
+                expect(response.body.result).toContainEqual({
+                    id: result2.data.id,
+                    name: `${testname}-changed`,
+                    networkServerID: expect.any(String),
+                    networkServerName: "",
+                    organizationID: "1",
+                    updatedAt: expect.any(String),
+                    createdAt: expect.any(String),
                 });
             });
     });
 
-    it("getnetowkrServerId", async () => {
-        Logger.log(await getNetworkServerId())
-    })
+    it("(PUT) /chirpstack/service-profiles/:id - OK", async () => {
+        // Arrange
+        const original: CreateServiceProfileDto = await createServiceProfileData();
+        const result = await serviceProfileService.createServiceProfile(
+            original
+        );
+        const serviceProfileId = result.data.id;
+
+        const changed = original;
+        changed.serviceProfile.name = `${testname}-changed`;
+
+        // Act
+        return await request(app.getHttpServer())
+            .put("/chirpstack/service-profiles/" + serviceProfileId)
+            .send(changed)
+            // Assert
+            // No body is sent back from Chirpstack :'(
+            .expect(200);
+    });
+
+    it("(DELETE) /service-profiles/:id - OK", async () => {
+        //Arrange
+        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const result = await serviceProfileService.createServiceProfile(data);
+        const serviceProfileId = result.data.id;
+
+        // Act
+        return await request(app.getHttpServer())
+            .delete("/chirpstack/service-profiles/" + serviceProfileId)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Assert
+                expect(response.body).toMatchObject({
+                    affected: 1,
+                });
+            });
+    });
 
     async function getNetworkServerId(): Promise<string> {
         let id: string;
-        Logger.error("#############");
         await chirpstackSetupNetworkServerService
             .getNetworkServers(1000, 0)
             .then(response => {
                 response.result.forEach(element => {
                     if (element.name === "OS2iot") {
-                        Logger.log("name " + element.name);
-                        id = JSON.stringify(element.id);
+                        id = element.id.toString();
                     }
                 });
             });
-        Logger.log("id " + id);
         return id;
     }
 
-    function createServiceProfileData(): CreateServiceProfileDto {
-        // const networkServerId = getNetworkServerId();
+    async function createServiceProfileData(): Promise<
+        CreateServiceProfileDto
+    > {
+        const networkServerId = await getNetworkServerId();
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
-            networkServerID: "3", //networkServerId
+            networkServerID: networkServerId,
             organizationID: "1",
             prAllowed: true,
             raAllowed: true,
