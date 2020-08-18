@@ -1,28 +1,28 @@
 import {
-    ApiTags,
+    Controller,
+    Get,
+    Post,
+    Body,
+    Query,
+    Param,
+    Put,
+    BadRequestException,
+    Delete,
+} from "@nestjs/common";
+import {
     ApiProduces,
+    ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
 } from "@nestjs/swagger";
-import {
-    Controller,
-    Post,
-    Body,
-    Get,
-    Query,
-    Param,
-    BadRequestException,
-    Put,
-    Delete,
-} from "@nestjs/common";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
-import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
-import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
+import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
-import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
-import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
+import { SingleGatewayResponseDto } from "../../entities/dto/chirpstack/single-gateway-response.dto";
+import { UpdateGatewayDto } from "../../entities/dto/chirpstack/update-gateway.dto";
+import { ErrorCodes } from "../../entities/enum/error-codes.enum";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
