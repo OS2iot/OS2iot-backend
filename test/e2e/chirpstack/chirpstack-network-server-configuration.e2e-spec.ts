@@ -6,7 +6,7 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 describe("ChirpstackSetupNetworkServerService", () => {
     let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
-    const testServerName = "OS2iot";
+    const testServerName = "OS2iot-e2e";
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,44 +25,32 @@ describe("ChirpstackSetupNetworkServerService", () => {
     });
 
     beforeEach(async () => {
+        chirpstackSetupNetworkServerService.networkServerName = testServerName;
         //onModuleInit is not called in tests. thus we have to setup the server before each test
-        chirpstackSetupNetworkServerService.bootstrapChirpstackNetworkServerConfiguration();
+        await chirpstackSetupNetworkServerService.bootstrapChirpstackNetworkServerConfiguration();
     });
 
     afterEach(async () => {
         await chirpstackSetupNetworkServerService
             .getNetworkServers(1000, 0)
             .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === testServerName) {
+                response.result.forEach(networkServer => {
+                    if (networkServer.name.startsWith(testServerName)) {
                         chirpstackSetupNetworkServerService.deleteNetworkServer(
-                            element.id
+                            networkServer.id
                         );
                     }
                 });
             });
     });
 
-    it("(GET count) /network-server/ ", async () => {
+    it("Check that at least one Network Server exists", async () => {
         // Act
-        const result = await chirpstackSetupNetworkServerService.getNetworkServerCount();
+        const result = await chirpstackSetupNetworkServerService.getNetworkServers(
+            100,
+            0
+        );
         // Assert
-        expect(result).toBe("1");
-    });
-
-    it("(GET One) /network-server/ ", async () => {
-        // Arrange
-        let name;
-
-        await chirpstackSetupNetworkServerService
-            .getNetworkServers(1000, 0)
-            .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === testServerName) {
-                        name = element.name;
-                    }
-                });
-            });
-        expect(name).toMatch(testServerName);
+        expect(+result.totalCount).toBeGreaterThanOrEqual(1);
     });
 });
