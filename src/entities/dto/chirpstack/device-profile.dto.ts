@@ -3,7 +3,7 @@ export class DeviceProfileDto {
     name: string;
     classBTimeout?: number;
     classCTimeout?: number;
-    factoryPresetFreqs?: [number];
+    factoryPresetFreqs?: number[];
     geolocBufferTTL?: number;
     geolocMinBufferSize?: number;
     macVersion?: string;
