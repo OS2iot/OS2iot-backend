@@ -1,5 +1,5 @@
 export class DeviceProfileDto {
-    id?: number;
+    id?: string;
     name: string;
     classBTimeout?: number;
     classCTimeout?: number;

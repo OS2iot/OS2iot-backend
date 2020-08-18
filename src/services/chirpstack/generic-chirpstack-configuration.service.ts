@@ -77,12 +77,11 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            Logger.error(`post got error: ${JSON.stringify(err)}`);
+            Logger.error(
+                `post got error: ${JSON.stringify(err?.response?.data)}`
+            );
 
             if (err?.response?.status == 400) {
-                Logger.error(
-                    `Error 400: ${JSON.stringify(err?.response?.data)}`
-                );
                 return err?.response;
             }
 

@@ -6,6 +6,7 @@ import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import * as request from "supertest";
+import { getNetworkServerId } from "../test-helpers";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
@@ -136,10 +137,10 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             .send(changed)
             // Assert
             // No body is sent back from Chirpstack :'(
-            .expect(200);
+            .expect(204);
     });
 
-    it("(DELETE) /service-profiles/:id - OK", async () => {
+    it("(DELETE) /chirpstack/service-profiles/:id - OK", async () => {
         //Arrange
         const data: CreateServiceProfileDto = await createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(data);
@@ -158,24 +159,10 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             });
     });
 
-    async function getNetworkServerId(): Promise<string> {
-        let id: string;
-        await chirpstackSetupNetworkServerService
-            .getNetworkServers(1000, 0)
-            .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === "OS2iot") {
-                        id = element.id.toString();
-                    }
-                });
-            });
-        return id;
-    }
-
     async function createServiceProfileData(): Promise<
         CreateServiceProfileDto
     > {
-        const networkServerId = await getNetworkServerId();
+        const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
             networkServerID: networkServerId,
