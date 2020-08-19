@@ -8,15 +8,23 @@ import { PayloadDecoderService } from "./payload-decoder.service";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { VM, VMScript } from "vm2";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { TransformedPayloadDto } from "../entities/dto/kafka/transformed-payload.dto";
+import { KafkaService } from "./kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
 
 @Injectable()
 export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
     constructor(
         private payloadDecoderService: PayloadDecoderService,
-        private ioTDeviceService: IoTDeviceService
+        private ioTDeviceService: IoTDeviceService,
+        private kafkaService: KafkaService
     ) {
         super();
     }
+
+    private readonly logger = new Logger(
+        PayloadTransformerListenerService.name
+    );
 
     protected registerTopic(): void {
         this.addTopic(
@@ -30,59 +38,103 @@ export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
         "PayloadTransformerListenerService"
     )
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
-        Logger.debug(
+        this.logger.debug(
             `[PayloadTransformerListenerService - #RAW_REQUEST]: '${JSON.stringify(
                 payload
             )}'`
         );
 
+        // Fetch related objects
         const dto: RawRequestDto = payload.body;
         const relatedIoTDevice = await this.ioTDeviceService.findOne(
             dto.iotDeviceId
         );
-        Logger.debug(`IoTDevice: ${JSON.stringify(relatedIoTDevice)}`);
+        this.logger.debug(`IoTDevice: ${JSON.stringify(relatedIoTDevice)}`);
         const payloadDecoder = await this.payloadDecoderService.findOne(1);
-        Logger.debug(`PayloadDecoder: ${JSON.stringify(payloadDecoder)}`);
-        await this.callUntrustedCode(
+        this.logger.debug(`PayloadDecoder: ${JSON.stringify(payloadDecoder)}`);
+
+        // Decode the payload
+        const decoded = await this.callUntrustedCode(
             payloadDecoder.decodingFunction,
             relatedIoTDevice,
             dto.rawPayload
         );
+
+        this.logger.debug(`Decoded payload to: '${decoded}'`);
+
+        // Add transformed request to Kafka
+        await this.sendTransformedRequest(relatedIoTDevice, decoded);
+    }
+
+    private async sendTransformedRequest(
+        relatedIoTDevice: IoTDevice,
+        decoded: string
+    ): Promise<void> {
+        const transformedPayloadDto: TransformedPayloadDto = await this.makeTransformedPayload(
+            relatedIoTDevice.id,
+            decoded
+        );
+
+        const kafkapayload: KafkaPayload = {
+            messageId: "transformedRequest" + new Date().valueOf(),
+            body: transformedPayloadDto,
+            messageType: "transformedRequest.decoded",
+            topicName: KafkaTopic.TRANSFORMED_REQUEST,
+        };
+
+        const rawStatus = await this.kafkaService.sendMessage(
+            KafkaTopic.TRANSFORMED_REQUEST,
+            kafkapayload
+        );
+
+        if (rawStatus) {
+            const metadata = rawStatus as RecordMetadata[];
+            this.logger.debug(`kafka status '${metadata[0].errorCode}'`);
+        }
+    }
+
+    async makeTransformedPayload(
+        id: number,
+        decodedPayload: string
+    ): Promise<TransformedPayloadDto> {
+        return {
+            iotDeviceId: id,
+            payload: JSON.parse(decodedPayload),
+        };
     }
 
     async callUntrustedCode(
         code: string,
         iotDevice: IoTDevice,
         rawPayload: JSON
-    ): Promise<void> {
+    ): Promise<string> {
+        const vm2Logger = new Logger(
+            `${PayloadTransformerListenerService.name}-VM2`
+        );
         const vm = new VM({
             timeout: 5000,
             sandbox: {
                 innerIotDevice: iotDevice,
                 innerPayload: rawPayload,
-                test: "1234",
                 log(data: any): void {
-                    Logger.debug(`Fra VM2: '${data}'`);
+                    vm2Logger.debug(data);
                 },
                 btoa(str: string): string {
-                    try {
-                        return btoa(str);
-                    } catch (err) {
-                        return Buffer.from(str).toString("base64");
-                    }
+                    return Buffer.from(str).toString("base64");
                 },
                 atob(str: string): string {
-                    Logger.debug(`called with ${str}`);
-                    return Buffer.from(str, 'base64').toString('binary');
+                    return Buffer.from(str, "base64").toString("binary");
                 },
             },
         });
         const callingCode = `\n\ndecode(innerPayload, innerIotDevice);`;
-        Logger.debug("Calling untrusted code ...");
+        // this.logger.debug("Calling untrusted code ...");
         const combinedCode = code + callingCode;
-        Logger.debug(combinedCode);
+        // this.logger.debug(combinedCode);
         const res = vm.run(new VMScript(combinedCode));
-        Logger.log(`Returned: '${JSON.stringify(res)}'`);
-        Logger.debug("Done with untrusted code ...");
+        this.logger.log(`Returned: '${JSON.stringify(res)}'`);
+        // this.logger.debug("Done with untrusted code ...");
+
+        return JSON.stringify(res);
     }
 }
