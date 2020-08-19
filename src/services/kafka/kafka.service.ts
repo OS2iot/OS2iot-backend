@@ -25,6 +25,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     private consumer: Consumer;
     private fixedConsumer: Consumer;
     private readonly consumerSuffix = "-" + Math.floor(Math.random() * 100000);
+    private readonly logger = new Logger(KafkaService.name);
 
     constructor(private kafkaConfig: KafkaConfig) {
         this.kafka = new Kafka({
@@ -35,6 +36,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
             groupId: this.kafkaConfig.groupId + this.consumerSuffix,
+            heartbeatInterval: 5000,
         });
     }
 
@@ -55,6 +57,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     }
 
     async disconnect(): Promise<void> {
+        Logger.debug("Disconnecting from Kafka!");
         await this.producer.disconnect();
         await this.consumer.disconnect();
     }
@@ -93,7 +96,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 topic: kafkaTopic,
                 messages: [{ value: JSON.stringify(kafkaMessage) }],
             })
-            .catch(e => Logger.error(e.message, e));
+            .catch(e => this.logger.error(e.message, e));
         await this.producer.disconnect();
         return metadata;
     }
