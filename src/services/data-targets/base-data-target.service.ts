@@ -10,13 +10,15 @@ export abstract class BaseDataTargetService {
         Logger.debug("Initialized BaseDateTargetService");
     }
 
+    protected abstract logger: Logger;
+
     success(receiver: string): DataTargetSendStatus {
-        Logger.debug(`Send to ${receiver} sucessful!`);
+        this.logger.debug(`Send to ${receiver} sucessful!`);
         return { status: SendStatus.OK };
     }
 
     failure(receiver: string, errorMessage: string): DataTargetSendStatus {
-        Logger.error(`Send to ${receiver} failed with error ${errorMessage}`);
+        this.logger.error(`Send to ${receiver} failed with error ${errorMessage}`);
         return {
             status: SendStatus.ERROR,
             errorMessage: errorMessage.toString(),

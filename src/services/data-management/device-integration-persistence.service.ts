@@ -25,6 +25,10 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         super();
     }
 
+    private readonly logger = new Logger(
+        DeviceIntegrationPersistenceService.name
+    );
+
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence");
     }
@@ -32,11 +36,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     // Listen to Kafka event
     @CombinedSubscribeTo(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence")
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
-        Logger.debug(
-            `[DeviceIntegrationPersistenceService - #RAW_REQUEST]: '${JSON.stringify(
-                payload
-            )}'`
-        );
+        this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
         const dto: RawRequestDto = payload.body;
         let relatedIoTDevice;
         try {
@@ -44,7 +44,9 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
                 dto.iotDeviceId
             );
         } catch (err) {
-            Logger.error(`Could not find IoTDevice by ID: ${dto.iotDeviceId}`);
+            this.logger.error(
+                `Could not find IoTDevice by ID: ${dto.iotDeviceId}`
+            );
             return;
         }
 
@@ -64,7 +66,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
 
         if (existingMessage) {
-            Logger.debug(
+            this.logger.debug(
                 `There was already a ReceivedMessage for device with id: ${dto.iotDeviceId}. Will be overwritten.`
             );
         } else {
@@ -77,7 +79,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             relatedIoTDevice
         );
         await this.receivedMessageRepository.save(mappedMessage);
-        Logger.debug(
+        this.logger.debug(
             "Saved ReceivedMessage for device with id: " +
                 mappedMessage.device.id
         );
@@ -120,7 +122,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         const savedMetadata = await this.receivedMessageMetadataRepository.save(
             mappedMetadata
         );
-        Logger.debug(
+        this.logger.debug(
             `Saved ReceivedMessageMetadata for device: ${
                 savedMetadata.device.id
             }. ${JSON.stringify(savedMetadata)}`
@@ -145,7 +147,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
 
         if (newestToDelete.length == 0) {
-            Logger.debug("We don't need to delete any metadata");
+            this.logger.debug("We don't need to delete any metadata");
             return;
         }
 
@@ -162,7 +164,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
                 }
             )
             .execute();
-        Logger.debug(
+        this.logger.debug(
             `Deleted: ${result.affected} rows from received_message_metadata`
         );
     }

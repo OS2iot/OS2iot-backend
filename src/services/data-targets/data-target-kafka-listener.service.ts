@@ -22,37 +22,35 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     ) {
         super();
     }
+    private readonly logger = new Logger(DataTargetKafkaListenerService.name);
+
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.TRANSFORMED_REQUEST, UNIQUE_NAME_FOR_KAFKA);
     }
 
     @CombinedSubscribeTo(KafkaTopic.TRANSFORMED_REQUEST, UNIQUE_NAME_FOR_KAFKA)
     async transformedRequestListener(payload: KafkaPayload): Promise<void> {
-        Logger.debug(
-            `[DataTargetKafkaListener - #TRANSFORMED_REQUEST]: '${JSON.stringify(
-                payload
-            )}'`
-        );
+        this.logger.debug(`TRANSFORMED_REQUEST: '${JSON.stringify(payload)}'`);
 
         const dto: TransformedPayloadDto = payload.body;
         let iotDevice;
         try {
             iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`
             );
             return;
         }
 
-        Logger.debug(
+        this.logger.debug(
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
         );
 
         const dataTargets = await this.dataTargetService.findDataTargetsByApplicationId(
             iotDevice.application.id
         );
-        Logger.debug(
+        this.logger.debug(
             `Found ${dataTargets.length} DataTargets: [${dataTargets
                 .map(x => x.id)
                 .join(", ")}]`
@@ -70,7 +68,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                 try {
                     await this.sendToHttpPushDataTarget(target, dto);
                 } catch (err) {
-                    Logger.error(
+                    this.logger.error(
                         `Error while sending to Http Push DataTarget: ${err}`
                     );
                 }
@@ -93,6 +91,6 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         };
 
         const status = await this.httpPushDataTargetService.send(config, data);
-        Logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
+        this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
     }
 }
