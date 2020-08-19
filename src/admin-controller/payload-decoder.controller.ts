@@ -10,6 +10,7 @@ import {
     Delete,
     BadRequestException,
     Logger,
+    Query,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -23,6 +24,8 @@ import { PayloadDecoderService } from "@services/payload-decoder.service";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
+import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
@@ -45,6 +48,18 @@ export class PayloadDecoderController {
         if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
+        return result;
+    }
+
+    @Get()
+    @ApiOperation({ summary: "Find all Payload Decoders" })
+    @ApiNotFoundResponse()
+    async findAll(
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllPayloadDecoderReponseDto> {
+        const result = await this.payloadDecoderService.findAndCountWithPagination(
+            query
+        );
         return result;
     }
 
