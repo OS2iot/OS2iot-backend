@@ -9,6 +9,7 @@ import {
     clearDatabase,
     generateSavedApplication,
     generateSavedIoTDevice,
+    generateSavedPayloadDecoder,
 } from "../test-helpers";
 import { Kafka, KafkaMessage, Consumer } from "kafkajs";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -74,6 +75,8 @@ describe("PayloadTransformerListenerService (e2e)", () => {
             iotDevice.id
         );
         kafkaPayload.body.unixTimestamp = null;
+        const payloadDecoder = await generateSavedPayloadDecoder();
+        service.hardCodedDecoderId = payloadDecoder.id;
 
         // Store all the messages sent to kafka
         const kafkaMessages: [string, KafkaMessage][] = [];

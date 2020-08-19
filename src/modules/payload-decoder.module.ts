@@ -10,7 +10,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { IoTDeviceService } from "@services/iot-device.service";
-import { ApplicationModule } from '@modules/application.module';
+import { ApplicationModule } from "@modules/application.module";
 import { ApplicationService } from "@services/application.service";
 
 @Module({

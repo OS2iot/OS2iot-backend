@@ -8,7 +8,6 @@ import {
     NotFoundException,
     Put,
     Delete,
-    BadRequestException,
     Logger,
     Query,
 } from "@nestjs/common";
@@ -96,13 +95,17 @@ export class PayloadDecoderController {
 
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing Payload Decoder" })
-    @ApiBadRequestResponse()
+    @ApiNotFoundResponse()
     async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
         try {
             const result = await this.payloadDecoderService.delete(id);
+            if (result.affected == 0) {
+                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            }
+
             return new DeleteResponseDto(result.affected);
         } catch (err) {
-            throw new BadRequestException(err);
+            throw new NotFoundException(err);
         }
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Repository, DeleteResult } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -6,6 +6,7 @@ import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
+import { ErrorCodes } from "../entities/enum/error-codes.enum";
 
 @Injectable()
 export class PayloadDecoderService {
@@ -72,9 +73,14 @@ export class PayloadDecoderService {
         newPayloadDecoder: PayloadDecoder
     ) {
         newPayloadDecoder.name = createDto.name;
-        newPayloadDecoder.decodingFunction = JSON.parse(
-            createDto.decodingFunction
-        );
+        try {
+            newPayloadDecoder.decodingFunction = JSON.parse(
+                createDto.decodingFunction
+            );
+        } catch (err) {
+            Logger.error("Failed to parse decodingFunction", err);
+            throw new BadRequestException(ErrorCodes.BadEncoding);
+        }
 
         return newPayloadDecoder;
     }
