@@ -3,9 +3,9 @@ import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
-import { KafkaPayload } from "../../src/services/kafka/kafka.message";
-import { KafkaTopic } from "../../src/entities/enum/kafka-topic.enum";
-import { ChirpstackSetupNetworkServerService } from "../../src/services/chirpstack/network-server.service";
+import { KafkaPayload } from "@services/kafka/kafka.message";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 
 export async function clearDatabase(): Promise<void> {
@@ -14,7 +14,8 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "application"; \n` +
             `DELETE FROM "data_target"; \n` +
             `DELETE FROM "received_message"; \n` +
-            `DELETE FROM "received_message_metadata";`
+            `DELETE FROM "received_message_metadata";  \n` +
+            `DELETE FROM "payload_decoder";  \n`
     );
 }
 
@@ -38,6 +39,7 @@ export function generateIoTDevice(applications: Application): IoTDevice {
     device.application = applications;
     device.apiKey = "DUMMY-API-KEY";
     device.metadata = JSON.parse('{"some_key": "a_value"}');
+    device.id = 1;
 
     return device;
 }
@@ -297,7 +299,6 @@ export function generatePayloadDecoder(): PayloadDecoder {
 
 export async function generateSavedPayloadDecoder(): Promise<PayloadDecoder> {
     const decoder = generatePayloadDecoder();
-    decoder.id = 1;
     return await getManager().save(decoder);
 }
 

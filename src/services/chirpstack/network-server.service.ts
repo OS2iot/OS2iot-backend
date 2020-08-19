@@ -1,7 +1,6 @@
 import {
     Injectable,
     OnModuleInit,
-    Logger,
     InternalServerErrorException,
 } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";

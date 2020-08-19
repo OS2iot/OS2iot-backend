@@ -1,0 +1,211 @@
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
+import * as request from "supertest";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { clearDatabase, generateSavedPayloadDecoder } from "./test-helpers";
+import { KafkaModule } from "@modules/kafka.module";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { PayloadDecoderModule } from "@modules/payload-decoder.module";
+import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
+import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
+
+describe("PayloadDecoderController (e2e)", () => {
+    let app: INestApplication;
+    let repository: Repository<PayloadDecoder>;
+
+    beforeAll(async () => {
+        const moduleFixture: TestingModule = await Test.createTestingModule({
+            imports: [
+                PayloadDecoderModule,
+                TypeOrmModule.forRoot({
+                    type: "postgres",
+                    host: "host.docker.internal",
+                    port: 5433,
+                    username: "os2iot",
+                    password: "toi2so",
+                    database: "os2iot-e2e",
+                    synchronize: true,
+                    logging: false,
+                    autoLoadEntities: true,
+                }),
+                KafkaModule.register({
+                    clientId: "os2iot-client-e2e",
+                    brokers: ["host.docker.internal:9093"],
+                    groupId: "os2iot-backend-e2e",
+                }),
+            ],
+        }).compile();
+
+        app = moduleFixture.createNestApplication();
+        await app.init();
+
+        // Get a reference to the repository such that we can CRUD on it.
+        repository = moduleFixture.get("PayloadDecoderRepository");
+    });
+
+    afterAll(async () => {
+        // Ensure clean shutdown
+        await app.close();
+    });
+
+    beforeEach(async () => {
+        // Clear data before each test
+        await clearDatabase();
+    });
+
+    afterEach(async () => {
+        // Clear data after each test
+        await clearDatabase();
+    });
+
+    it("(GET) /payload-decoder/ - empty", () => {
+        return request(app.getHttpServer())
+            .get("/payload-decoder/")
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toStrictEqual([]);
+            });
+    });
+
+    it("(GET) /payload-decoder/ - 1 result", async () => {
+        await generateSavedPayloadDecoder();
+
+        return await request(app.getHttpServer())
+            .get("/payload-decoder/")
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        name: "E2E Test Payload Decoder",
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /payload-decoder/:id - found", async () => {
+        const decoder = await generateSavedPayloadDecoder();
+
+        return await request(app.getHttpServer())
+            .get(`/payload-decoder/${decoder.id}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: decoder.name,
+                    decodingFunction: decoder.decodingFunction,
+                });
+            });
+    });
+
+    it("(GET) /payload-decoder/:id - not found", async () => {
+        const decoder = await generateSavedPayloadDecoder();
+        const wrongId = decoder.id + 1;
+
+        return await request(app.getHttpServer())
+            .get(`/payload-decoder/${wrongId}`)
+            .expect(404)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    error: "Not Found",
+                });
+            });
+    });
+
+    it("(POST) /payload-decoder/ - create new data target", async () => {
+        const body: CreatePayloadDecoderDto = {
+            name: "Test",
+            decodingFunction: JSON.stringify("return 1;"),
+        };
+
+        await request(app.getHttpServer())
+            .post(`/payload-decoder/`)
+            .send(body)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "Test",
+                    decodingFunction: "return 1;",
+                });
+            });
+
+        const payloadDecodersInDb = await repository.find();
+        expect(payloadDecodersInDb).toHaveLength(1);
+        expect(payloadDecodersInDb[0]).toMatchObject({
+            name: "Test",
+        });
+    });
+
+    it("(POST) /payload-decoder/ - decoding function not encoded", async () => {
+        const body: any = {
+            name: "Test",
+            decodingFunction: "not escaped at all ... ",
+        };
+
+        return await request(app.getHttpServer())
+            .post(`/payload-decoder/`)
+            .send(body)
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: `MESSAGE.BAD-ENCODING`,
+                });
+            });
+    });
+
+    it("(PUT) /payload-decoder/:id - change existing", async () => {
+        const decoder = await generateSavedPayloadDecoder();
+        const body: UpdatePayloadDecoderDto = {
+            name: decoder.name,
+            decodingFunction: JSON.stringify("return 0;"),
+        };
+
+        return await request(app.getHttpServer())
+            .put(`/payload-decoder/${decoder.id}`)
+            .send(body)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: decoder.name,
+                    decodingFunction: "return 0;",
+                });
+            });
+    });
+
+    it("(DELETE) /payload-decoder/:id - not found", async () => {
+        const decoder = await generateSavedPayloadDecoder();
+        const wrongId = decoder.id + 1;
+
+        return await request(app.getHttpServer())
+            .delete(`/payload-decoder/${wrongId}`)
+            .expect(404)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    status: 404,
+                });
+            });
+    });
+
+    it("(DELETE) /payload-decoder/:id - deleted", async () => {
+        const decoder = await generateSavedPayloadDecoder();
+
+        return await request(app.getHttpServer())
+            .delete(`/payload-decoder/${decoder.id}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    affected: 1,
+                });
+            });
+    });
+});

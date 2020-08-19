@@ -6,4 +6,5 @@ export enum ErrorCodes {
     InvalidPost = "MESSAGE.POST-FAILED",
     WrongLength = "MESSAGE.WRONG-LENGTH",
     NotValidFormat = "MESSAGE.NOT-VALID-FORMAT",
+    BadEncoding = "MESSAGE.BAD-ENCODING",
 }
