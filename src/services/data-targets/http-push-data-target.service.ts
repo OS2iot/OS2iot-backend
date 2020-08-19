@@ -12,6 +12,10 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
         super();
     }
 
+    protected readonly logger = new Logger(
+        HttpPushDataTargetService.name
+    );
+
     async send(
         config: HttpPushDataTargetConfiguration,
         data: HttpPushDataTargetData
@@ -28,11 +32,11 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
                 .post(config.url, data.rawBody, axiosConfig)
                 .toPromise();
 
-            Logger.debug(
+            this.logger.debug(
                 `HttpPushDataTarget result: '${JSON.stringify(result.data)}'`
             );
             if (!result.status.toString().startsWith("2")) {
-                Logger.warn(
+                this.logger.warn(
                     `Got a non-2xx status-code: ${result.status.toString()} and message: ${
                         result.statusText
                     }`
@@ -41,7 +45,7 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
             return this.success(target);
         } catch (err) {
             // TODO: Error handling for common errors
-            Logger.error(`HttpPushDataTarget got error: ${err}`);
+            this.logger.error(`HttpPushDataTarget got error: ${err}`);
             return this.failure(target, err);
         }
     }
