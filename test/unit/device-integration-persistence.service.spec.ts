@@ -11,7 +11,7 @@ import { ApplicationService } from "@services/application.service";
 import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import {
-    generateSigfoxRawRequstDto,
+    generateSigfoxRawRequestDto,
     generateIoTDevice,
     generateApplication,
 } from "../e2e/test-helpers";
@@ -79,7 +79,7 @@ describe("DeviceIntegrationPersistenceService", () => {
 
     it("test mapDtoToNewReceivedMessageMetadata - Sigfox data + with timestmap", async () => {
         // Arrange
-        const dto: RawRequestDto = generateSigfoxRawRequstDto();
+        const dto: RawRequestDto = generateSigfoxRawRequestDto();
         const application = generateApplication();
         const relatedIoTDevice: IoTDevice = generateIoTDevice(application);
 
@@ -96,7 +96,7 @@ describe("DeviceIntegrationPersistenceService", () => {
 
     it("test mapDtoToReceivedMessage - Sigfox data + with timestmap", () => {
         // Arrange
-        const dto: RawRequestDto = generateSigfoxRawRequstDto();
+        const dto: RawRequestDto = generateSigfoxRawRequestDto();
         const existingMessage = new ReceivedMessage();
         const relatedIoTDevice: IoTDevice = iotDevice;
 

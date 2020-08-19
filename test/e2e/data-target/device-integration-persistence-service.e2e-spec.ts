@@ -4,7 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import {
     clearDatabase,
-    generateRawRequestKafkaPayload,
+    generateRawRequestSigfoxKafkaPayload,
     generateSavedApplication,
     generateSavedIoTDevice,
 } from "../test-helpers";
@@ -75,7 +75,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         // Arrange
         const application = await generateSavedApplication();
         const iotDevice = await generateSavedIoTDevice(application);
-        const kafkaPayload = generateRawRequestKafkaPayload(iotDevice.id);
+        const kafkaPayload = generateRawRequestSigfoxKafkaPayload(iotDevice.id);
         kafkaPayload.body.unixTimestamp = null;
 
         // Act
@@ -99,7 +99,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         // Arrange
         const application = await generateSavedApplication();
         const iotDevice = await generateSavedIoTDevice(application);
-        const kafkaPayload = generateRawRequestKafkaPayload(iotDevice.id);
+        const kafkaPayload = generateRawRequestSigfoxKafkaPayload(iotDevice.id);
         kafkaPayload.body.unixTimestamp = 0;
 
         // Act
