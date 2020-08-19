@@ -12,9 +12,7 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
         super();
     }
 
-    protected readonly logger = new Logger(
-        HttpPushDataTargetService.name
-    );
+    protected readonly logger = new Logger(HttpPushDataTargetService.name);
 
     async send(
         config: HttpPushDataTargetConfiguration,

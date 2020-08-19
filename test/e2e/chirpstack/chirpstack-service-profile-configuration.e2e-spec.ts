@@ -162,7 +162,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     async function createServiceProfileData(): Promise<
         CreateServiceProfileDto
     > {
-        const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
+        const networkServerId = await getNetworkServerId(
+            chirpstackSetupNetworkServerService
+        );
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
             networkServerID: networkServerId,

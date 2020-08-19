@@ -14,6 +14,7 @@ import { RecordMetadata } from "kafkajs";
 
 @Injectable()
 export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
+    hardCodedDecoderId = 1;
     constructor(
         private payloadDecoderService: PayloadDecoderService,
         private ioTDeviceService: IoTDeviceService,
@@ -50,7 +51,9 @@ export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
             dto.iotDeviceId
         );
         this.logger.debug(`IoTDevice: ${JSON.stringify(relatedIoTDevice)}`);
-        const payloadDecoder = await this.payloadDecoderService.findOne(1);
+        const payloadDecoder = await this.payloadDecoderService.findOne(
+            this.hardCodedDecoderId
+        );
         this.logger.debug(`PayloadDecoder: ${JSON.stringify(payloadDecoder)}`);
 
         // Decode the payload
