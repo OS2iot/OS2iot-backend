@@ -7,10 +7,14 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { DataTarget } from "@entities/data-target.entity";
+import { HttpPushDataTarget } from "../../src/entities/http-push-data-target.entity";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
-        `DELETE FROM "iot_device"; \n` +
+        `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
+            `DELETE FROM "iot_device"; \n` +
             `DELETE FROM "application"; \n` +
             `DELETE FROM "data_target"; \n` +
             `DELETE FROM "received_message"; \n` +
@@ -48,6 +52,36 @@ export async function generateSavedIoTDevice(
     applications: Application
 ): Promise<IoTDevice> {
     return await getManager().save(generateIoTDevice(applications));
+}
+
+export async function generateSavedDataTarget(
+    application: Application
+): Promise<HttpPushDataTarget> {
+    return await getManager().save(generateDataTarget(application));
+}
+
+export function generateDataTarget(
+    application: Application
+): HttpPushDataTarget {
+    const dataTarget = new HttpPushDataTarget();
+    dataTarget.name = "E2E Test Http Push Data Target";
+    dataTarget.url = "https://enwehrrtrqajd1m.m.pipedream.net";
+    dataTarget.application = application;
+    dataTarget.timeout = 30000;
+
+    return dataTarget;
+}
+
+export async function generateSavedConnection(
+    iotDevice: IoTDevice,
+    dataTarget: DataTarget,
+    payloadDecoder?: PayloadDecoder
+): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
+    const connection = new IoTDevicePayloadDecoderDataTargetConnection();
+    connection.dataTarget = dataTarget;
+    connection.iotDevice = iotDevice;
+    connection.payloadDecoder = payloadDecoder;
+    return await getManager().save(connection);
 }
 
 export function generatePayloadDecoder(): PayloadDecoder {
