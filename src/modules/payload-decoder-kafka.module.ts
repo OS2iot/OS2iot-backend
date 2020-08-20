@@ -1,22 +1,22 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { PayloadDecoderService } from "@services/payload-decoder.service";
 import { PayloadDecoderController } from "@admin-controller/payload-decoder.controller";
 import { PayloadDecoderListenerService } from "@services/payload-decoder-listener.service";
 import { KafkaModule } from "@modules/kafka.module";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { IoTDeviceModule } from "@modules/iot-device.module";
-import { IoTDeviceService } from "@services/iot-device.service";
-import { ApplicationModule } from "@modules/application.module";
-import { ApplicationService } from "@services/application.service";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
-import { IoTDevicePayloadDecoderDataTargetConnection } from "../entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "./iot-device-payload-decoder-data-target-connection.module";
-import { DataTargetService } from "@services/data-target.service";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { IoTDeviceService } from "../services/iot-device.service";
+import { DataTargetService } from "../services/data-target.service";
+import { PayloadDecoderService } from "../services/payload-decoder.service";
+import { IoTDeviceModule } from "./iot-device.module";
 import { DataTargetModule } from "./data-target.module";
+import { PayloadDecoderModule } from "./payload-decoder.module";
+import { ApplicationService } from "../services/application.service";
 
 @Module({
     imports: [
@@ -27,21 +27,21 @@ import { DataTargetModule } from "./data-target.module";
             GenericHTTPDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
         ]),
-        IoTDeviceModule,
-        ApplicationModule,
         KafkaModule,
+        IoTDevicePayloadDecoderDataTargetConnectionModule,
+        IoTDeviceModule,
         DataTargetModule,
-        forwardRef(() => IoTDevicePayloadDecoderDataTargetConnectionModule),
+        PayloadDecoderModule,
     ],
     exports: [TypeOrmModule],
     controllers: [PayloadDecoderController],
     providers: [
-        PayloadDecoderService,
         PayloadDecoderListenerService,
-        ApplicationService,
-        IoTDeviceService,
         IoTDevicePayloadDecoderDataTargetConnectionService,
+        IoTDeviceService,
         DataTargetService,
+        PayloadDecoderService,
+        ApplicationService,
     ],
 })
-export class PayloadDecoderModule {}
+export class PayloadDecoderKafkaModule {}
