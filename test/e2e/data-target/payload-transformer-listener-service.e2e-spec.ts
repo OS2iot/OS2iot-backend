@@ -133,7 +133,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
 async function waitForEvents(kafkaMessages: [string, KafkaMessage][]) {
     const start = new Date().getTime();
     while (kafkaMessages.length == 0) {
-        await sleep(1);
+        await sleep(100);
         if (new Date().getTime() - start > 5000) {
             break;
         }

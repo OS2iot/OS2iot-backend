@@ -54,6 +54,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
                     dto.rawPayload
                 );
             } catch (err) {
+                // TODO: Systemlog skal agere her.
                 this.logger.error(err);
             }
         });
