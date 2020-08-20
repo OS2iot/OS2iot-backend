@@ -4,7 +4,6 @@ import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { clearDatabase, generateSavedPayloadDecoder } from "./test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
@@ -28,11 +27,6 @@ describe("PayloadDecoderController (e2e)", () => {
                     synchronize: true,
                     logging: false,
                     autoLoadEntities: true,
-                }),
-                KafkaModule.register({
-                    clientId: "os2iot-client-e2e",
-                    brokers: ["host.docker.internal:9093"],
-                    groupId: "os2iot-backend-e2e",
                 }),
             ],
         }).compile();
