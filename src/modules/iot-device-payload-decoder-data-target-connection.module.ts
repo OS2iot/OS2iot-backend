@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
@@ -34,7 +34,7 @@ import { ApplicationService } from "../services/application.service";
         ]),
         IoTDeviceModule,
         DataTargetModule,
-        PayloadDecoderModule,
+        forwardRef(() => PayloadDecoderModule),
     ],
     providers: [
         IoTDevicePayloadDecoderDataTargetConnectionService,
