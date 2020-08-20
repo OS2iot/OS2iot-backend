@@ -3,70 +3,88 @@ import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { IoTDeviceService } from "@services/iot-device.service";
-import { PayloadDecoderService } from "./payload-decoder.service";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { VM, VMScript } from "vm2";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { TransformedPayloadDto } from "../entities/dto/kafka/transformed-payload.dto";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { KafkaService } from "./kafka/kafka.service";
 import { RecordMetadata } from "kafkajs";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
 
 @Injectable()
-export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
-    hardCodedDecoderId = 1;
+export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
     constructor(
-        private payloadDecoderService: PayloadDecoderService,
-        private ioTDeviceService: IoTDeviceService,
+        private connectionService: IoTDevicePayloadDecoderDataTargetConnectionService,
         private kafkaService: KafkaService
     ) {
         super();
     }
 
-    private readonly logger = new Logger(
-        PayloadTransformerListenerService.name
-    );
+    private readonly logger = new Logger(PayloadDecoderListenerService.name);
 
     protected registerTopic(): void {
         this.addTopic(
             KafkaTopic.RAW_REQUEST,
-            "PayloadTransformerListenerService"
+            PayloadDecoderListenerService.name
         );
     }
 
     @CombinedSubscribeTo(
         KafkaTopic.RAW_REQUEST,
-        "PayloadTransformerListenerService"
+        PayloadDecoderListenerService.name
     )
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
-        this.logger.debug(
-            `[PayloadTransformerListenerService - #RAW_REQUEST]: '${JSON.stringify(
-                payload
-            )}'`
-        );
+        this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
 
         // Fetch related objects
         const dto: RawRequestDto = payload.body;
-        const relatedIoTDevice = await this.ioTDeviceService.findOne(
+        const connections = await this.connectionService.findAllByIoTDeviceId(
             dto.iotDeviceId
         );
-        this.logger.debug(`IoTDevice: ${JSON.stringify(relatedIoTDevice)}`);
-        const payloadDecoder = await this.payloadDecoderService.findOne(
-            this.hardCodedDecoderId
-        );
-        this.logger.debug(`PayloadDecoder: ${JSON.stringify(payloadDecoder)}`);
-
-        // Decode the payload
-        const decoded = await this.callUntrustedCode(
-            payloadDecoder.decodingFunction,
-            relatedIoTDevice,
-            dto.rawPayload
+        this.logger.debug(
+            `Found ${connections.count} connections for IoT-Device ${dto.iotDeviceId}`
         );
 
-        this.logger.debug(`Decoded payload to: '${decoded}'`);
+        connections.data.forEach(async connection => {
+            try {
+                await this.decodeAndSendTransformed(
+                    connection.payloadDecoder,
+                    connection.iotDevice,
+                    dto.rawPayload
+                );
+            } catch (err) {
+                this.logger.error(err);
+            }
+        });
+    }
+
+    private async decodeAndSendTransformed(
+        payloadDecoder: PayloadDecoder,
+        relatedIoTDevice: IoTDevice,
+        rawPayload: JSON
+    ) {
+        let payloadToSend: string;
+        if (payloadDecoder != undefined) {
+            this.logger.debug(
+                `Decoding payload of IoT-Device ${relatedIoTDevice.id} with decoder ${payloadDecoder?.id}`
+            );
+
+            // Decode the payload
+            payloadToSend = await this.callUntrustedCode(
+                payloadDecoder.decodingFunction,
+                relatedIoTDevice,
+                rawPayload
+            );
+
+            this.logger.debug(`Decoded payload to: '${payloadToSend}'`);
+        } else {
+            this.logger.debug(`Skip decoding payload ...`);
+            payloadToSend = JSON.stringify(rawPayload);
+        }
 
         // Add transformed request to Kafka
-        await this.sendTransformedRequest(relatedIoTDevice, decoded);
+        await this.sendTransformedRequest(relatedIoTDevice, payloadToSend);
     }
 
     private async sendTransformedRequest(
@@ -112,7 +130,7 @@ export class PayloadTransformerListenerService extends AbstractKafkaConsumer {
         rawPayload: JSON
     ): Promise<string> {
         const vm2Logger = new Logger(
-            `${PayloadTransformerListenerService.name}-VM2`
+            `${PayloadDecoderListenerService.name}-VM2`
         );
         const vm = new VM({
             timeout: 5000,
