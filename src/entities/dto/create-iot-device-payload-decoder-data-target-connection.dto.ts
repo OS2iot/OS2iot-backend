@@ -9,7 +9,7 @@ export class CreateIoTDevicePayloadDecoderDataTargetConnectionDto {
     @ApiProperty({ required: false })
     @IsNumber()
     payloadDecoderId?: number;
-    
+
     @ApiProperty({ required: true })
     @IsNumber()
     dataTargetId: number;
