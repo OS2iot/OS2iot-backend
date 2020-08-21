@@ -5,6 +5,7 @@ import {
     Logger,
     InternalServerErrorException,
     NotFoundException,
+    HttpService,
 } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
@@ -14,13 +15,21 @@ import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
+    constructor(
+        private internalHttpService: HttpService,
+        private chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
+    ) {
+        super(internalHttpService);
+    }
+
     async createNewGateway(
         dto: CreateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
-        dto = this.updateDto(dto);
+        dto = await this.updateDto(dto);
 
         const result = await this.post("gateways", dto);
         return this.handlePossibleError(result, dto);
@@ -64,7 +73,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         gatewayId: string,
         dto: UpdateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
-        dto = this.updateDto(dto);
+        dto = await this.updateDto(dto);
         const result = await this.put("gateways", dto, gatewayId);
         return this.handlePossibleError(result, dto);
     }
@@ -108,14 +117,33 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return { success: true };
     }
 
-    private updateDto(
+    private async updateDto(
         dto: CreateGatewayDto | UpdateGatewayDto
-    ): CreateGatewayDto | UpdateGatewayDto {
+    ): Promise<CreateGatewayDto | UpdateGatewayDto> {
         // Chirpstack requires 'gatewayProfileID' to be set (with value or null)
         if (!dto?.gateway?.gatewayProfileID) {
             dto.gateway.gatewayProfileID = null;
         }
 
+        // Add network server
+        if (!dto?.gateway?.networkServerID) {
+            dto.gateway.networkServerID = await this.getNetworkServerId();
+        }
+
         return dto;
+    }
+
+    private async getNetworkServerId(): Promise<string> {
+        let id: string;
+        await this.chirpstackSetupNetworkServerService
+            .getNetworkServers(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (element.name === "OS2iot") {
+                        id = element.id.toString();
+                    }
+                });
+            });
+        return id;
     }
 }

@@ -85,7 +85,7 @@ export class GenericChirpstackConfigurationService {
                 return err?.response;
             }
 
-            // throw new BadRequestException(ErrorCodes.InvalidPost);
+            return err?.response;
         }
     }
 

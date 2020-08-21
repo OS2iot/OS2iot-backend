@@ -2,13 +2,11 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsString, IsOptional } from "class-validator";
 
 export class CommonLocationDto {
-    @ApiProperty({ required: false })
-    @IsOptional()
-    longitude?: number;
+    @ApiProperty({ required: true })
+    longitude: number;
 
-    @ApiProperty({ required: false })
-    @IsOptional()
-    latitude?: number;
+    @ApiProperty({ required: true })
+    latitude: number;
 
     @ApiProperty({ required: false })
     @IsOptional()
@@ -16,6 +14,7 @@ export class CommonLocationDto {
 
     @ApiProperty({ required: false })
     @IsString()
+    @IsOptional()
     source?:
         | "UNKNOWN"
         | "GPS"
