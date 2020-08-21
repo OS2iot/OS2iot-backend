@@ -83,15 +83,8 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
         const rawPayload = (kafkaPayload.body as RawRequestDto).rawPayload;
         const payloadDecoder = await generateSavedPayloadDecoder();
         const dataTarget = await generateSavedDataTarget(application);
-        const connection = await generateSavedConnection(
-            iotDevice,
-            dataTarget,
-            payloadDecoder
-        );
-        const connection2 = await generateSavedConnection(
-            iotDevice,
-            dataTarget
-        );
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+        await generateSavedConnection(iotDevice, dataTarget);
 
         // Store all the messages sent to kafka
         const kafkaMessages: [string, KafkaMessage][] = [];
