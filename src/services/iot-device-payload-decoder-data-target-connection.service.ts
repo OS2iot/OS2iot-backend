@@ -12,9 +12,7 @@ import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/creat
 import { IoTDeviceService } from "./iot-device.service";
 import { DataTargetService } from "./data-target.service";
 import { PayloadDecoderService } from "./payload-decoder.service";
-import * as request from "supertest";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
 @Injectable()
 export class IoTDevicePayloadDecoderDataTargetConnectionService {
