@@ -49,7 +49,7 @@
         "vm2": "^3.9.2"
     },
     "devDependencies": {
-        "@nestjs/cli": "^7.0.0",
+        "@nestjs/cli": "^7.5.1",
         "@nestjs/schematics": "^7.0.0",
         "@nestjs/testing": "^7.4.2",
         "@types/atob": "^2.1.2",
