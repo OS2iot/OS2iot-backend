@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
 import {
     IsString,
     MinLength,
@@ -43,7 +43,7 @@ export class GatewayContentsDto {
 
     @ApiProperty({ required: false })
     @ValidateNested({ each: true })
-    @Type(() => CommonLocationDto)    
+    @Type(() => CommonLocationDto)
     location: CommonLocationDto;
 
     @ApiProperty({ required: false })
@@ -58,6 +58,7 @@ export class GatewayContentsDto {
     })
     name: string;
 
+    @ApiHideProperty()
     networkServerID: string;
 
     @ApiProperty({ required: true })
