@@ -8,6 +8,7 @@ import {
     IsOptional,
 } from "class-validator";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 
 export class CreateIoTDeviceDto {
     @ApiProperty({ required: true })
@@ -53,4 +54,6 @@ export class CreateIoTDeviceDto {
     @ApiProperty({ required: false })
     @IsOptional()
     metadata: JSON;
+
+    lorawanSettings: CreateLoRaWANSettingsDto;
 }

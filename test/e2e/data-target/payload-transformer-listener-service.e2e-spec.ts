@@ -123,6 +123,8 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
     }, 60000);
 });
 
+// TODO: rainy day test-case (dårlig JS)
+
 async function waitForEvents(kafkaMessages: [string, KafkaMessage][]) {
     const start = new Date().getTime();
     while (kafkaMessages.length == 0) {
