@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
 import { IsString, MaxLength } from "class-validator";
 
 export class ServiceProfileDto {
@@ -10,9 +10,7 @@ export class ServiceProfileDto {
     @IsString()
     name: string;
 
-    @ApiProperty({ required: true })
-    @IsString()
-    @MaxLength(1024)
+    @ApiHideProperty()
     networkServerID?: string;
 
     @ApiProperty({ required: false })
@@ -52,9 +50,7 @@ export class ServiceProfileDto {
     @ApiProperty({ required: false })
     nwkGeoLoc?: boolean;
 
-    @ApiProperty({ required: false })
-    @IsString()
-    @MaxLength(1024)
+    @ApiHideProperty()
     organizationID?: string;
 
     @ApiProperty({ required: false })

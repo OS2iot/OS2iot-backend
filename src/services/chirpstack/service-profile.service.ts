@@ -13,7 +13,7 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     public async createServiceProfile(
         dto: CreateServiceProfileDto
     ): Promise<AxiosResponse> {
-        dto = this.updateDto(dto);
+        dto = await this.updateDto(dto);
         const result = await this.post("service-profiles", dto);
         return result;
     }
@@ -22,11 +22,14 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         data: CreateServiceProfileDto,
         id: string
     ): Promise<AxiosResponse> {
+        data = await this.updateDto(data);
         return await this.put("service-profiles", data, id);
     }
+
     public async deleteServiceProfile(id: string): Promise<AxiosResponse> {
         return await this.delete("service-profiles", id);
     }
+
     public async findAllServiceProfiles(
         limit?: number,
         offset?: number
@@ -48,50 +51,17 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         return result;
     }
 
-    public setupServiceProfileData(name: string): CreateServiceProfileDto {
-        const serviceProfileDto: ServiceProfileDto = {
-            name: name,
-            networkServerID: "1",
-            organizationID: "15",
-            prAllowed: true,
-            raAllowed: true,
-            reportDevStatusBattery: true,
-            reportDevStatusMargin: true,
-            ulRatePolicy: "DROP",
-        };
-
-        const serviceProfile: CreateServiceProfileDto = {
-            serviceProfile: serviceProfileDto,
-        };
-
-        return serviceProfile;
-    }
-    private updateDto(
+    private async updateDto(
         dto: CreateServiceProfileDto | UpdateServiceProfileDto
-    ): CreateServiceProfileDto | UpdateServiceProfileDto {
+    ): Promise<Promise<CreateServiceProfileDto | UpdateServiceProfileDto>> {
         // Chirpstack requires 'gatewayProfileID' to be set (with value or null)
         if (!dto?.serviceProfile?.id) {
             dto.serviceProfile.id = null;
         }
 
-        return dto;
-    }
-    private handlePossibleError(
-        result: AxiosResponse,
-        dto: CreateServiceProfileDto | UpdateServiceProfileDto
-    ): ChirpstackReponseStatus {
-        if (result.status != 200) {
-            Logger.error(
-                `Error from Chirpstack: '${JSON.stringify(
-                    dto
-                )}', got response: ${JSON.stringify(result.data)}`
-            );
-            throw new BadRequestException({
-                success: false,
-                error: result.data,
-            });
-        }
+        dto.serviceProfile.networkServerID = await this.getDefaultNetworkServerId();
+        dto.serviceProfile.organizationID = await this.getDefaultOrganizationId();
 
-        return { success: true };
+        return dto;
     }
 }

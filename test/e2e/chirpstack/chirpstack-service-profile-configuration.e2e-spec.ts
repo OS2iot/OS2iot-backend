@@ -4,13 +4,10 @@ import { INestApplication } from "@nestjs/common";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
-import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import * as request from "supertest";
-import { getNetworkServerId } from "../test-helpers";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
-    let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     const testname = "e2e";
     beforeAll(async () => {
@@ -21,9 +18,6 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await app.init();
 
         serviceProfileService = moduleFixture.get("ServiceProfileService");
-        chirpstackSetupNetworkServerService = moduleFixture.get(
-            "ChirpstackSetupNetworkServerService"
-        );
     });
 
     afterAll(async () => {
@@ -103,7 +97,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                     name: testname,
                     networkServerID: expect.any(String),
                     networkServerName: "",
-                    organizationID: "1",
+                    organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                 });
@@ -113,7 +107,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                     name: `${testname}-changed`,
                     networkServerID: expect.any(String),
                     networkServerName: "",
-                    organizationID: "1",
+                    organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                 });
@@ -162,11 +156,8 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     async function createServiceProfileData(): Promise<
         CreateServiceProfileDto
     > {
-        const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
-            networkServerID: networkServerId,
-            organizationID: "1",
             prAllowed: true,
             raAllowed: true,
             reportDevStatusBattery: true,

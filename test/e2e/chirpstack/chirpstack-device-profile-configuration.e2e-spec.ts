@@ -4,13 +4,10 @@ import { INestApplication } from "@nestjs/common";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
-import { getNetworkServerId } from "../test-helpers";
-import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import * as request from "supertest";
 
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;
-    let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     const testname = "e2e";
 
@@ -22,9 +19,6 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         await app.init();
 
         deviceProfileService = moduleFixture.get("DeviceProfileService");
-        chirpstackSetupNetworkServerService = moduleFixture.get(
-            "ChirpstackSetupNetworkServerService"
-        );
     });
 
     afterAll(async () => {
@@ -90,7 +84,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     name: testname,
                     networkServerID: expect.any(String),
                     networkServerName: "OS2iot",
-                    organizationID: "1",
+                    organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                 });
@@ -100,7 +94,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     name: `${testname}-changed`,
                     networkServerID: expect.any(String),
                     networkServerName: "OS2iot",
-                    organizationID: "1",
+                    organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                 });
@@ -162,14 +156,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     });
 
     async function createDeviceProfileData(): Promise<CreateDeviceProfileDto> {
-        const networkServerId = await getNetworkServerId(
-            chirpstackSetupNetworkServerService
-        );
         const deviceProfileDto: DeviceProfileDto = {
             name: "e2e",
             macVersion: "1.0.3",
-            networkServerID: networkServerId,
-            organizationID: "1",
             regParamsRevision: "A",
         };
 

@@ -12,6 +12,7 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllOrganizationsReponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
+import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -213,6 +214,16 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
+    public async getNetworkServers(
+        limit?: number,
+        offset?: number
+    ): Promise<ListAllNetworkServerReponseDto> {
+        const res = await this.getAllWithPagination<
+            ListAllNetworkServerReponseDto
+        >("network-servers", limit, offset);
+        return res;
+    }
+
     public async getOrganizations(
         limit?: number,
         offset?: number
@@ -221,5 +232,39 @@ export class GenericChirpstackConfigurationService {
             ListAllOrganizationsReponseDto
         >("organizations", limit, offset);
         return res;
+    }
+
+    public async getDefaultNetworkServerId(): Promise<string> {
+        let id = null;
+        await this.getNetworkServers(1000, 0).then(response => {
+            response.result.forEach(element => {
+                if (element.name.toLowerCase() === "os2iot") {
+                    id = element.id.toString();
+                }
+            });
+        });
+        if (id) {
+            return id;
+        }
+        throw new InternalServerErrorException(
+            "Could not find any NetworkServer in Chirpstack named: 'OS2iot'"
+        );
+    }
+
+    public async getDefaultOrganizationId(): Promise<string> {
+        let id = null;
+        await this.getOrganizations(1000, 0).then(response => {
+            response.result.forEach(element => {
+                if (element.name.toLowerCase() == "os2iot" || element.name.toLowerCase() == "chirpstack") {
+                    id = element.id;
+                }
+            });
+        });
+        if (id) {
+            return id;
+        }
+        throw new InternalServerErrorException(
+            "Could not find any Organization in Chirpstack named: 'OS2iot' or 'chirpstack'"
+        );
     }
 }
