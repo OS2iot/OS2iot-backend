@@ -9,8 +9,8 @@ import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { ApplicationService } from "@services/application.service";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 
 @Injectable()
 export class DataTargetService {
@@ -21,16 +21,27 @@ export class DataTargetService {
     ) {}
 
     async findAndCountAllWithPagination(
-        query?: ListAllEntitiesDto
+        query?: ListAllDataTargetsDto
     ): Promise<ListAllDataTargetsReponseDto> {
-        const [result, total] = await getConnection()
+        let queryBuilder = getConnection()
             .getRepository(DataTarget)
             .createQueryBuilder("datatarget")
             .innerJoinAndSelect("datatarget.application", "application")
             .limit(query.limit)
             .offset(query.offset)
-            .orderBy(query.orderOn, "ASC")
-            .getManyAndCount();
+            .orderBy(query.orderOn, "ASC");
+
+        // Only apply applicationId filter, if one is given.
+        if (query.applicationId) {
+            queryBuilder = queryBuilder.where(
+                "datatarget.application = :appId",
+                {
+                    appId: query.applicationId,
+                }
+            );
+        }
+
+        const [result, total] = await queryBuilder.getManyAndCount();
 
         return {
             data: result,

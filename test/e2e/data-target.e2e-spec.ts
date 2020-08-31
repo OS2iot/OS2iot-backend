@@ -129,6 +129,45 @@ describe("DataTargetController (e2e)", () => {
             });
     });
 
+    it("(GET) /data-target/ - with applicationId filter", async () => {
+        const applications = await createApplications();
+        const appId = applications[0].id;
+        await createDataTarget(applications);
+
+        return await request(app.getHttpServer())
+            .get(`/data-target?applicationId=${appId}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        name: "my data target",
+                        type: "HTTP_PUSH",
+                        url: "http://example.com",
+                        application: {
+                            id: appId,
+                        },
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /data-target/ - with applicationId filter - but non matching appId", async () => {
+        const applications = await createApplications();
+        const appId = applications[0].id;
+        await createDataTarget(applications);
+
+        return await request(app.getHttpServer())
+            .get(`/data-target?applicationId=${appId + 1}`)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toMatchObject([]);
+            });
+    });
+
     it("(GET) /data-target/:id - found", async () => {
         const applications = await createApplications();
         const appId = applications[0].id;

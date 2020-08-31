@@ -17,8 +17,8 @@ import { DataTarget } from "@entities/data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { DataTargetService } from "@services/data-target.service";
+import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -28,7 +28,7 @@ export class DataTargetController {
     @Get()
     @ApiOperation({ summary: "Find all DataTargets" })
     async findAll(
-        @Query() query?: ListAllEntitiesDto
+        @Query() query?: ListAllDataTargetsDto
     ): Promise<ListAllDataTargetsReponseDto> {
         return await this.dataTargetService.findAndCountAllWithPagination(
             query
