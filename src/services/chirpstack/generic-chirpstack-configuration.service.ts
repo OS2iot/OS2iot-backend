@@ -11,6 +11,7 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ListAllOrganizationsReponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -210,5 +211,15 @@ export class GenericChirpstackConfigurationService {
             Logger.error(`get got error: ${err}`);
             throw new NotFoundException();
         }
+    }
+
+    public async getOrganizations(
+        limit?: number,
+        offset?: number
+    ): Promise<ListAllOrganizationsReponseDto> {
+        const res = await this.getAllWithPagination<
+            ListAllOrganizationsReponseDto
+        >("organizations", limit, offset);
+        return res;
     }
 }

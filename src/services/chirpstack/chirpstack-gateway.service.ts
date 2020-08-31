@@ -130,7 +130,25 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             dto.gateway.networkServerID = await this.getNetworkServerId();
         }
 
+        if (!dto?.gateway?.organizationID) {
+            dto.gateway.organizationID = await this.getDefaultOrganizationId();
+        }
+
         return dto;
+    }
+
+    private async getOrganizationId(): Promise<string> {
+        let id: string;
+        await this.chirpstackSetupNetworkServerService
+            .getNetworkServers(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (element.name === "OS2iot") {
+                        id = element.id.toString();
+                    }
+                });
+            });
+        return id;
     }
 
     private async getNetworkServerId(): Promise<string> {
@@ -145,5 +163,21 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                 });
             });
         return id;
+    }
+
+    private async getDefaultOrganizationId(): Promise<string> {
+        await this.chirpstackSetupNetworkServerService
+            .getOrganizations(1000, 0)
+            .then(response => {
+                response.result.forEach(element => {
+                    if (
+                        element.name == "OS2iot" ||
+                        element.name == "chirpstack"
+                    ) {
+                        return element.id;
+                    }
+                });
+            });
+        return "1";
     }
 }

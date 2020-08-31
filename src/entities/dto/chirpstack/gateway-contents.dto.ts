@@ -32,8 +32,7 @@ export class GatewayContentsDto {
     @IsOptional()
     discoveryEnabled: boolean;
 
-    @ApiProperty({ required: false, nullable: true, default: null })
-    @IsOptional()
+    @ApiHideProperty()
     gatewayProfileID?: string;
 
     @ApiProperty({ required: true })
@@ -61,8 +60,7 @@ export class GatewayContentsDto {
     @ApiHideProperty()
     networkServerID: string;
 
-    @ApiProperty({ required: true })
-    @IsString()
+    @ApiHideProperty()
     organizationID: string;
 
     @ApiProperty({ required: false })
