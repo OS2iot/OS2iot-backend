@@ -5,5 +5,6 @@ export class DetailedGatewayResponseDto extends GatewayResponseDto {
     gatewayProfileID: string;
     boards: any[];
     tags: JSON;
+    tagsString: string;
     metadata: JSON;
 }

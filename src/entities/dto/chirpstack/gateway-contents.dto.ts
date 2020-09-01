@@ -6,6 +6,7 @@ import {
     IsOptional,
     Matches,
     ValidateNested,
+    IsJSON,
 } from "class-validator";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
@@ -64,5 +65,10 @@ export class GatewayContentsDto {
     organizationID: string;
 
     @ApiProperty({ required: false })
+    @IsJSON()
+    tagsString?: string;
+
+    @ApiHideProperty()
     tags?: JSON;
+    
 }
