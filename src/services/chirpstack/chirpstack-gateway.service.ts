@@ -127,11 +127,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
         // Add network server
         if (!dto?.gateway?.networkServerID) {
-            dto.gateway.networkServerID = await this.getNetworkServerId();
+            dto.gateway.networkServerID = await this.chirpstackSetupNetworkServerService.getDefaultNetworkServerId();
         }
 
         if (!dto?.gateway?.organizationID) {
-            dto.gateway.organizationID = await this.getDefaultOrganizationId();
+            dto.gateway.organizationID = await this.chirpstackSetupNetworkServerService.getDefaultOrganizationId();
         }
 
         if (!dto?.gateway?.tagsString) {
@@ -139,49 +139,5 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         }
 
         return dto;
-    }
-
-    private async getOrganizationId(): Promise<string> {
-        let id: string;
-        await this.chirpstackSetupNetworkServerService
-            .getNetworkServers(1000, 0)
-            .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === "OS2iot") {
-                        id = element.id.toString();
-                    }
-                });
-            });
-        return id;
-    }
-
-    private async getNetworkServerId(): Promise<string> {
-        let id: string;
-        await this.chirpstackSetupNetworkServerService
-            .getNetworkServers(1000, 0)
-            .then(response => {
-                response.result.forEach(element => {
-                    if (element.name === "OS2iot") {
-                        id = element.id.toString();
-                    }
-                });
-            });
-        return id;
-    }
-
-    private async getDefaultOrganizationId(): Promise<string> {
-        await this.chirpstackSetupNetworkServerService
-            .getOrganizations(1000, 0)
-            .then(response => {
-                response.result.forEach(element => {
-                    if (
-                        element.name == "OS2iot" ||
-                        element.name == "chirpstack"
-                    ) {
-                        return element.id;
-                    }
-                });
-            });
-        return "1";
     }
 }

@@ -1,3 +1,5 @@
+import { ApiHideProperty } from "@nestjs/swagger";
+
 export class DeviceProfileDto {
     id?: string;
     name: string;
@@ -9,7 +11,9 @@ export class DeviceProfileDto {
     macVersion?: string;
     maxDutyCycle?: number;
     maxEIRP?: number;
+    @ApiHideProperty()
     networkServerID?: string;
+    @ApiHideProperty()
     organizationID?: string;
     payloadCodec?: string;
     payloadDecoderScript?: string;
