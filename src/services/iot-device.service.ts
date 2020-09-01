@@ -1,4 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import {
+    Injectable,
+    BadRequestException,
+    InternalServerErrorException,
+    Logger,
+} from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -8,6 +13,9 @@ import { ApplicationService } from "@services/application.service";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "./chirpstack/chirpstack-device.service";
 
 @Injectable()
 export class IoTDeviceService {
@@ -16,8 +24,10 @@ export class IoTDeviceService {
         private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService,
+        private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
+    private readonly logger = new Logger(IoTDeviceService.name);
 
     /*
     async findAndCountWithPagination(
@@ -70,15 +80,15 @@ export class IoTDeviceService {
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
         const childType = iotDeviceTypeMap[createIoTDeviceDto.type];
-        const iotDevice = this.createIoTDeviceByDto(childType);
+        const iotDevice = new childType();
 
-        const mappedIoTDevice = await this.mapIoTDeviceDtoToIoTDevice(
+        const mappedIotDevice = await this.mapDtoToIoTDevice(
             createIoTDeviceDto,
             iotDevice
         );
 
         const entityManager = getManager();
-        return entityManager.save(mappedIoTDevice);
+        return entityManager.save(mappedIotDevice);
     }
 
     async update(
@@ -89,7 +99,7 @@ export class IoTDeviceService {
             id
         );
 
-        const mappedIoTDevice = await this.mapIoTDeviceDtoToIoTDevice(
+        const mappedIoTDevice = await this.mapDtoToIoTDevice(
             updateDto,
             existingIoTDevice
         );
@@ -103,16 +113,10 @@ export class IoTDeviceService {
         return this.iotDeviceRepository.delete(id);
     }
 
-    private createIoTDeviceByDto<T extends IoTDevice>(childIoTDeviceType: {
-        new (): T;
-    }): T {
-        return new childIoTDeviceType();
-    }
-
-    private async mapIoTDeviceDtoToIoTDevice<T extends IoTDevice>(
+    private async mapDtoToIoTDevice(
         createIoTDeviceDto: CreateIoTDeviceDto,
-        iotDevice: T
-    ): Promise<T> {
+        iotDevice: IoTDevice
+    ): Promise<IoTDevice> {
         iotDevice.name = createIoTDeviceDto.name;
 
         if (createIoTDeviceDto.applicationId != null) {
@@ -138,20 +142,70 @@ export class IoTDeviceService {
             iotDevice.location = null;
         }
 
-        if (createIoTDeviceDto.comment != null) {
-            iotDevice.comment = createIoTDeviceDto.comment;
-        } else {
-            iotDevice.comment = null;
-        }
-
-        if (createIoTDeviceDto.commentOnLocation != null) {
-            iotDevice.commentOnLocation = createIoTDeviceDto.commentOnLocation;
-        } else {
-            iotDevice.commentOnLocation = null;
-        }
-
+        iotDevice.comment = createIoTDeviceDto.comment;
+        iotDevice.commentOnLocation = createIoTDeviceDto.commentOnLocation;
         iotDevice.metadata = createIoTDeviceDto.metadata;
 
+        iotDevice = await this.mapChildDtoToIoTDevice(
+            createIoTDeviceDto,
+            iotDevice
+        );
+
         return iotDevice;
+    }
+
+    private async mapChildDtoToIoTDevice(
+        dto: CreateIoTDeviceDto,
+        iotDevice: IoTDevice
+    ): Promise<IoTDevice> {
+        if (iotDevice.constructor.name === LoRaWANDevice.name) {
+            const cast = <LoRaWANDevice>iotDevice;
+            const loraDevice = await this.mapLoRaWANDevice(dto, cast);
+
+            return <IoTDevice>loraDevice;
+        }
+
+        return iotDevice;
+    }
+
+    private async mapLoRaWANDevice(
+        dto: CreateIoTDeviceDto,
+        lorawanDevice: LoRaWANDevice
+    ): Promise<LoRaWANDevice> {
+        lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
+
+        // Create in Chirpstack
+        try {
+            const chirpstackDeviceDto = await this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
+                dto.lorawanSettings,
+                dto.name
+            );
+
+            const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
+                chirpstackDeviceDto
+            );
+            // Save application
+            lorawanDevice.chirpstackApplicationId = applicationId;
+            //
+            chirpstackDeviceDto.device.applicationID = applicationId.toString();
+
+            await this.chirpstackDeviceService.createDevice(
+                chirpstackDeviceDto
+            );
+
+            // Activate
+            await this.chirpstackDeviceService.activateDevice(
+                dto.lorawanSettings.devEUI,
+                dto.lorawanSettings.OTAAapplicationKey
+            );
+        } catch (err) {
+            this.logger.error(err);
+            throw new BadRequestException(
+                "Could not create device in Chirpstack",
+                err
+            );
+        }
+
+        return lorawanDevice;
     }
 }

@@ -1,33 +1,27 @@
-import {
-    IsUUID,
-    IsString,
-    IsOptional,
-    MaxLength,
-} from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsUUID, IsString, IsOptional } from "class-validator";
+import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
 
 export class ChirpstackDeviceContentsDto {
-    @ApiProperty({ required: true })
-    @IsString()
-    @MaxLength(50)
-    name: string;
+    @ApiHideProperty()
+    name?: string;
 
-    @ApiProperty({ required: true })
-    @IsString()
-    description: string;
+    @ApiHideProperty()
+    description?: string;
 
-    @ApiProperty({ required: true })
-    @IsString()
-    applicationID: string;
+    @ApiHideProperty()
+    applicationID?: string;
 
     @ApiProperty({ required: true })
     @IsString()
     devEUI: string;
 
     @ApiProperty({ required: true })
-    @IsOptional()
     @IsUUID()
     deviceProfileID: string;
+
+    @ApiProperty({ required: true })
+    @IsUUID()
+    serviceProfileID: string;
 
     @ApiProperty({ required: false, default: false })
     @IsOptional()
@@ -38,8 +32,8 @@ export class ChirpstackDeviceContentsDto {
     skipFCntCheck: boolean;
 
     @ApiProperty({ required: false, default: {} })
-    variables: JSON;
+    variables?: JSON;
 
     @ApiProperty({ required: false, default: {} })
-    tags: JSON;
+    tags?: JSON;
 }

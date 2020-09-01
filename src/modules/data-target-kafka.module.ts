@@ -16,6 +16,8 @@ import { IoTDeviceModule } from "./iot-device.module";
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     imports: [
@@ -33,6 +35,8 @@ import { DeviceIntegrationPersistenceModule } from "@modules/data-management/dev
         DataTargetSenderModule,
         DeviceIntegrationPersistenceModule,
         IoTDeviceModule,
+        ChirpstackAdministrationModule,
+        HttpModule,
     ],
     providers: [
         IoTDeviceService,
@@ -40,6 +44,7 @@ import { DeviceIntegrationPersistenceModule } from "@modules/data-management/dev
         DataTargetService,
         DataTargetKafkaListenerService,
         HttpPushDataTargetService,
+        ChirpstackDeviceService,
     ],
 })
 export class DataTargetKafkaModule {}
