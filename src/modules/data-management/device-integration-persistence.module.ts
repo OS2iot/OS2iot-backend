@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, HttpModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
@@ -10,6 +10,8 @@ import { IoTDeviceModule } from "@modules/iot-device.module";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { ApplicationModule } from "@modules/application.module";
 import { ApplicationService } from "@services/application.service";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     imports: [
@@ -22,6 +24,8 @@ import { ApplicationService } from "@services/application.service";
         ]),
         IoTDeviceModule,
         ApplicationModule,
+        ChirpstackAdministrationModule,
+        HttpModule,
     ],
     exports: [TypeOrmModule],
     controllers: [],
@@ -29,6 +33,7 @@ import { ApplicationService } from "@services/application.service";
         DeviceIntegrationPersistenceService,
         IoTDeviceService,
         ApplicationService,
+        ChirpstackDeviceService,
     ],
 })
 export class DeviceIntegrationPersistenceModule {}

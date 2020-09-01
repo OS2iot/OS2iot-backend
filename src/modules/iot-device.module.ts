@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, HttpModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
@@ -9,6 +9,9 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     imports: [
@@ -16,13 +19,16 @@ import { ReceivedMessage } from "@entities/received-message";
             Application,
             IoTDevice,
             GenericHTTPDevice,
+            LoRaWANDevice,
             DataTarget,
             ReceivedMessage,
             ReceivedMessageMetadata,
         ]),
+        ChirpstackAdministrationModule,
+        HttpModule,
     ],
     exports: [TypeOrmModule],
     controllers: [IoTDeviceController],
-    providers: [IoTDeviceService, ApplicationService],
+    providers: [IoTDeviceService, ApplicationService, ChirpstackDeviceService],
 })
 export class IoTDeviceModule {}

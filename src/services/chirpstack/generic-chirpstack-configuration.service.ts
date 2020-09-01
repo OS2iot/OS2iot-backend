@@ -209,7 +209,7 @@ export class GenericChirpstackConfigurationService {
             );
             return result.data;
         } catch (err) {
-            Logger.error(`get got error: ${err}`);
+            Logger.error(`GET ${header.url} got error: ${err}`);
             throw new NotFoundException();
         }
     }

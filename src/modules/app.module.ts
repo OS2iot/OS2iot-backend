@@ -20,6 +20,7 @@ import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "./iot-device-payload-decoder-data-target-connection.module";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     imports: [
@@ -75,6 +76,7 @@ import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "./iot-device-
         IoTDeviceService,
         DataTargetService,
         HttpPushDataTargetService,
+        ChirpstackDeviceService,
     ],
 })
 export class AppModule {

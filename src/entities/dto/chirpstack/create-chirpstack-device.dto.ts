@@ -8,5 +8,4 @@ export class CreateChirpstackDeviceDto {
     @ValidateNested({ each: true })
     @Type(() => ChirpstackDeviceContentsDto)
     device: ChirpstackDeviceContentsDto;
-
 }

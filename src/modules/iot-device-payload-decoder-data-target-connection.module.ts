@@ -1,4 +1,4 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module, forwardRef, HttpModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
@@ -18,6 +18,8 @@ import { IoTDeviceService } from "@services/iot-device.service";
 import { DataTargetService } from "../services/data-target.service";
 import { PayloadDecoderService } from "../services/payload-decoder.service";
 import { ApplicationService } from "../services/application.service";
+import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     imports: [
@@ -35,6 +37,8 @@ import { ApplicationService } from "../services/application.service";
         IoTDeviceModule,
         DataTargetModule,
         forwardRef(() => PayloadDecoderModule),
+        ChirpstackAdministrationModule,
+        HttpModule,
     ],
     providers: [
         IoTDevicePayloadDecoderDataTargetConnectionService,
@@ -42,6 +46,7 @@ import { ApplicationService } from "../services/application.service";
         DataTargetService,
         PayloadDecoderService,
         ApplicationService,
+        ChirpstackDeviceService,
     ],
     exports: [IoTDevicePayloadDecoderDataTargetConnectionService],
     controllers: [IoTDevicePayloadDecoderDataTargetConnectionController],
