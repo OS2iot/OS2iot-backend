@@ -65,7 +65,6 @@ export class GatewayContentsDto {
     organizationID: string;
 
     @ApiProperty({ required: false })
-    @IsOptional()
     @IsJSON()
     tagsString?: string;
 
