@@ -7,7 +7,7 @@ import { SendStatus } from "@enum/send-status.enum";
  */
 export abstract class BaseDataTargetService {
     constructor() {
-        Logger.debug("Initialized BaseDateTargetService");
+        Logger.debug(`Initialized ${BaseDataTargetService.name}`);
     }
 
     protected abstract logger: Logger;

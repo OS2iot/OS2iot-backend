@@ -4,5 +4,6 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
 @Module({
     imports: [HttpModule],
     providers: [HttpPushDataTargetService],
+    exports: [HttpPushDataTargetService],
 })
 export class DataTargetSenderModule {}

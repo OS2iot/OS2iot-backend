@@ -27,7 +27,7 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
         ChirpstackAdministrationModule,
         HttpModule,
     ],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, IoTDeviceService],
     controllers: [IoTDeviceController],
     providers: [IoTDeviceService, ApplicationService, ChirpstackDeviceService],
 })

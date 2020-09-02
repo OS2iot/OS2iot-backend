@@ -12,13 +12,15 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
+import { LoRaWANDevice } from "../entities/lorawan-device.entity";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             IoTDevice,
-            Application,
             GenericHTTPDevice,
+            LoRaWANDevice,
+            Application,
             DataTarget,
             ReceivedMessage,
             ReceivedMessageMetadata,
@@ -26,7 +28,7 @@ import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack
         ChirpstackAdministrationModule,
         HttpModule,
     ],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, ReceiveDataService],
     controllers: [ReceiveDataController],
     providers: [
         IoTDeviceService,

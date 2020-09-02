@@ -1,8 +1,4 @@
-import {
-    Injectable,
-    BadRequestException,
-    Logger,
-} from "@nestjs/common";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -22,6 +18,8 @@ export class IoTDeviceService {
         private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
+        @InjectRepository(LoRaWANDevice)
+        private loRaWANDeviceRepository: Repository<LoRaWANDevice>,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
@@ -74,6 +72,14 @@ export class IoTDeviceService {
         key: string
     ): Promise<GenericHTTPDevice> {
         return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
+    }
+
+    async findLoRaWANDeviceByDeviceEUI(
+        deviceEUI: string
+    ): Promise<LoRaWANDevice> {
+        return await this.loRaWANDeviceRepository.findOne({
+            deviceEUI: deviceEUI.toUpperCase(),
+        });
     }
 
     async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
