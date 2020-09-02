@@ -134,7 +134,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             dto.gateway.organizationID = await this.chirpstackSetupNetworkServerService.getDefaultOrganizationId();
         }
 
-        if (!dto?.gateway?.tagsString) {
+        if (dto?.gateway?.tagsString) {
             dto.gateway.tags = JSON.parse(dto.gateway.tagsString)
         }
 
