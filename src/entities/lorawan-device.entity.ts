@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Column, ChildEntity, BeforeInsert } from "typeorm";
 import { IoTDeviceType } from "@enum/device-type.enum";

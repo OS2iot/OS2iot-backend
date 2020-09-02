@@ -52,7 +52,6 @@ export class ChirpstackSetupNetworkServerService
         return await this.delete("network-servers", id.toString());
     }
 
-
     public async getNetworkServerCount(): Promise<number> {
         const result: ListAllNetworkServerReponseDto = await this.getNetworkServers(
             1000,

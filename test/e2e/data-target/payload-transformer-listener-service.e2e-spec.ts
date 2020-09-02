@@ -96,7 +96,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
         await service.rawRequestListener(kafkaPayload);
 
         // Sleep a bit until the message is processed (to avoid race-condition)
-        await waitForEvents(kafkaMessages);
+        await waitForEvents(kafkaMessages, 2);
 
         // Assert
         expect(kafkaMessages.length).toBeGreaterThanOrEqual(2);
@@ -125,11 +125,14 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
 
 // TODO: rainy day test-case (dårlig JS)
 
-async function waitForEvents(kafkaMessages: [string, KafkaMessage][]) {
+async function waitForEvents(
+    kafkaMessages: [string, KafkaMessage][],
+    waitFor: number
+) {
     const start = new Date().getTime();
-    while (kafkaMessages.length == 0) {
+    while (kafkaMessages.length < waitFor) {
         await sleep(100);
-        if (new Date().getTime() - start > 5000) {
+        if (new Date().getTime() - start > 10000) {
             break;
         }
     }
