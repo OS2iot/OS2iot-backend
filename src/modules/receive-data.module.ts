@@ -24,7 +24,7 @@ import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack
             ReceivedMessageMetadata,
         ]),
         ChirpstackAdministrationModule,
-        HttpModule
+        HttpModule,
     ],
     exports: [TypeOrmModule],
     controllers: [ReceiveDataController],

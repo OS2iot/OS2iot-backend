@@ -1,7 +1,6 @@
 import {
     Injectable,
     BadRequestException,
-    InternalServerErrorException,
     Logger,
 } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
@@ -14,7 +13,6 @@ import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { IoTDeviceType } from "@enum/device-type.enum";
 import { ChirpstackDeviceService } from "./chirpstack/chirpstack-device.service";
 
 @Injectable()

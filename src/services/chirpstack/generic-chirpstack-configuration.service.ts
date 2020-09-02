@@ -255,7 +255,10 @@ export class GenericChirpstackConfigurationService {
         let id = null;
         await this.getOrganizations(1000, 0).then(response => {
             response.result.forEach(element => {
-                if (element.name.toLowerCase() == "os2iot" || element.name.toLowerCase() == "chirpstack") {
+                if (
+                    element.name.toLowerCase() == "os2iot" ||
+                    element.name.toLowerCase() == "chirpstack"
+                ) {
                     id = element.id;
                 }
             });
