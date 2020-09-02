@@ -15,7 +15,7 @@ module.exports = {
     },
     moduleFileExtensions: ["js", "json", "ts"],
     rootDir: "./",
-    testMatch: ["<rootDir>/test/**/*spec.{ts,js}"],
+    testMatch: ["<rootDir>/test/unit/**/*.spec.{ts,js}"],
     transform: {
         "^.+\\.(t|j)s$": "ts-jest",
     },
