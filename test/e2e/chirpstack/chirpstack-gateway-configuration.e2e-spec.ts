@@ -174,6 +174,7 @@ function makeCreateGatewayDto() {
             description: "E2E test description",
             networkServerID: networkServerId,
             organizationID: "1",
+            tagsString: '{ "asdf": "abcd" }',
         },
     };
     return request;

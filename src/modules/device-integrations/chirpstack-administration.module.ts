@@ -7,6 +7,7 @@ import { ServiceProfileController } from "@admin-controller/chirpstack/service-p
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { DeviceProfileController } from "@admin-controller/chirpstack/device-profile.controller";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Module({
     controllers: [
@@ -21,6 +22,8 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
         ChirpstackGatewayService,
         ServiceProfileService,
         DeviceProfileService,
+        ChirpstackDeviceService,
     ],
+    exports: [ChirpstackDeviceService],
 })
 export class ChirpstackAdministrationModule {}

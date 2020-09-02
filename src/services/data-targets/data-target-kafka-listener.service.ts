@@ -47,6 +47,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
         );
 
+        // TODO: Switch to new method ...
         const dataTargets = await this.dataTargetService.findDataTargetsByApplicationId(
             iotDevice.application.id
         );

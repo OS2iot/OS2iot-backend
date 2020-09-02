@@ -17,10 +17,11 @@ import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 import { KafkaModule } from "@modules/kafka.module";
 import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
-import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
-import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "./iot-device-payload-decoder-data-target-connection.module";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqttlistener.module";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
+import { PayloadDecoderKafkaModule } from '@modules/payload-decoder-kafka.module';
 
 @Module({
     imports: [
@@ -65,6 +66,8 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
         ChirpstackAdministrationModule,
         PayloadDecoderModule,
         IoTDevicePayloadDecoderDataTargetConnectionModule,
+        ChirpstackMqttListenerModule,
+        PayloadDecoderKafkaModule,
     ],
     controllers: [
         ApplicationController,
@@ -75,7 +78,6 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
         ApplicationService,
         IoTDeviceService,
         DataTargetService,
-        HttpPushDataTargetService,
         ChirpstackDeviceService,
     ],
 })
