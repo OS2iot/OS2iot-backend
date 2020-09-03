@@ -85,15 +85,21 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
         }
 
         // Add transformed request to Kafka
-        await this.sendTransformedRequest(relatedIoTDevice, payloadToSend);
+        await this.sendTransformedRequest(
+            relatedIoTDevice,
+            payloadDecoder,
+            payloadToSend
+        );
     }
 
     private async sendTransformedRequest(
         relatedIoTDevice: IoTDevice,
+        payloadTransformer: PayloadDecoder,
         decoded: string
     ): Promise<void> {
         const transformedPayloadDto: TransformedPayloadDto = await this.makeTransformedPayload(
             relatedIoTDevice.id,
+            payloadTransformer != null ? payloadTransformer.id : null,
             decoded
         );
 
@@ -117,11 +123,13 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
 
     async makeTransformedPayload(
         id: number,
+        payloadTransformerId: number,
         decodedPayload: string
     ): Promise<TransformedPayloadDto> {
         return {
             iotDeviceId: id,
             payload: JSON.parse(decodedPayload),
+            payloadDecoderId: payloadTransformerId,
         };
     }
 
