@@ -18,6 +18,9 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     MQTT_URL = "mqtt://localhost:1883";
     client: Client;
 
+    private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC =
+        "application/+/device/+/event/up";
+
     public async onApplicationBootstrap(): Promise<void> {
         this.logger.debug("Pre-init");
         this.client = mqtt.connect(this.MQTT_URL, {
@@ -26,7 +29,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
         });
         this.client.on("connect", () => {
             Logger.debug("Connect to MQTT.");
-            this.client.subscribe("application/+/device/+/event/up");
+            this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC);
 
             this.client.on("message", async (topic, message) => {
                 this.logger.debug(

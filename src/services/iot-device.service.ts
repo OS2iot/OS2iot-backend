@@ -178,30 +178,30 @@ export class IoTDeviceService {
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
 
-        // Create in Chirpstack
         try {
             const chirpstackDeviceDto = await this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
                 dto.lorawanSettings,
                 dto.name
             );
 
+            // Save application
             const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
                 chirpstackDeviceDto
             );
-            // Save application
             lorawanDevice.chirpstackApplicationId = applicationId;
-            //
             chirpstackDeviceDto.device.applicationID = applicationId.toString();
 
-            await this.chirpstackDeviceService.createDevice(
+            await this.chirpstackDeviceService.createOrUpdateDevice(
                 chirpstackDeviceDto
             );
 
-            // Activate
-            await this.chirpstackDeviceService.activateDevice(
-                dto.lorawanSettings.devEUI,
-                dto.lorawanSettings.OTAAapplicationKey
-            );
+            // OTAA Activate if key is provided
+            if (dto.lorawanSettings.OTAAapplicationKey) {
+                await this.chirpstackDeviceService.activateDevice(
+                    dto.lorawanSettings.devEUI,
+                    dto.lorawanSettings.OTAAapplicationKey
+                );
+            }
         } catch (err) {
             this.logger.error(err);
             throw new BadRequestException(
