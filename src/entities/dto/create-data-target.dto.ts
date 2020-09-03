@@ -7,6 +7,7 @@ import {
     IsNumber,
     Min,
     IsOptional,
+    isURL,
 } from "class-validator";
 
 export class CreateDataTargetDto {
@@ -24,8 +25,7 @@ export class CreateDataTargetDto {
     @ApiProperty({ required: true })
     type: DataTargetType;
 
-    @ApiProperty({ required: false, example: "https://example.com/endpoint" })
-    @IsOptional()
+    @ApiProperty({ required: true, example: "https://example.com/endpoint" })
     @IsString()
     @MaxLength(1024)
     url: string;
