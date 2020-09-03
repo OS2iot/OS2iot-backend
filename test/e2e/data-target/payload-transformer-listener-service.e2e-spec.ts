@@ -15,8 +15,6 @@ import {
 import { Kafka, KafkaMessage, Consumer } from "kafkajs";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
-import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { KafkaPayload } from "@services/kafka/kafka.message";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 
 describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
@@ -100,12 +98,14 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
 
         // Assert
         expect(kafkaMessages.length).toBeGreaterThanOrEqual(2);
-        expect(kafkaMessages[0][0]).toBe(KafkaTopic.TRANSFORMED_REQUEST);
-        const sentKafkaPayload: KafkaPayload = JSON.parse(
-            kafkaMessages[0][1].value.toString("utf8")
-        );
-        const sentDto: TransformedPayloadDto = sentKafkaPayload.body;
-        expect(sentDto.payload).toMatchObject({
+
+        // Pull out the payloads passed along after transforming
+        const payloads = kafkaMessages.map(x => {
+            return JSON.parse(x[1].value.toString("utf8")).body.payload;
+        });
+
+        // Expect the decoded payload
+        expect(payloads).toContainEqual({
             decoded: {
                 humidity: 49,
                 light: 139,
@@ -114,12 +114,8 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
                 vdd: 3645,
             },
         });
-
-        const sentKafkaPayload2: KafkaPayload = JSON.parse(
-            kafkaMessages[1][1].value.toString("utf8")
-        );
-        const sentDto2: TransformedPayloadDto = sentKafkaPayload2.body;
-        expect(sentDto2.payload).toMatchObject(rawPayload);
+        // Expect the non-decoded payload
+        expect(payloads).toContainEqual(rawPayload);
     }, 60000);
 });
 

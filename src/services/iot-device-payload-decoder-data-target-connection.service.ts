@@ -75,6 +75,17 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         return await this.findAllWithWhere({ dataTarget: { id: id } });
     }
 
+    async findAllByIoTDeviceAndPayloadDecoderId(
+        iotDeviceId: number,
+        payloadDecoderId: number
+    ): Promise<IoTDevicePayloadDecoderDataTargetConnection[]> {
+        const res = await this.findAllWithWhere({
+            iotDevice: { id: iotDeviceId },
+            payloadDecoder: { id: payloadDecoderId },
+        });
+        return res.data;
+    }
+
     async findOne(
         id: number
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {

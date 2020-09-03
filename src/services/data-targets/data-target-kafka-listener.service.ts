@@ -10,6 +10,7 @@ import { DataTargetType } from "@enum/data-target-type.enum";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
 
 const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";
 
@@ -18,7 +19,8 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     constructor(
         private ioTDeviceService: IoTDeviceService,
         private dataTargetService: DataTargetService,
-        private httpPushDataTargetService: HttpPushDataTargetService
+        private httpPushDataTargetService: HttpPushDataTargetService,
+        private ioTDevicePayloadDecoderDataTargetConnectionService: IoTDevicePayloadDecoderDataTargetConnectionService
     ) {
         super();
     }
@@ -47,15 +49,19 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
         );
 
-        // TODO: Switch to new method ...
-        const dataTargets = await this.dataTargetService.findDataTargetsByApplicationId(
-            iotDevice.application.id
+        // Get connections in order to only send to the dataTargets which is identified by the pair of IoTDevice and PayloadDecoder
+        const connections = await this.ioTDevicePayloadDecoderDataTargetConnectionService.findAllByIoTDeviceAndPayloadDecoderId(
+            iotDevice.id,
+            dto.payloadDecoderId
         );
         this.logger.debug(
-            `Found ${dataTargets.length} DataTargets: [${dataTargets
+            `Found ${connections.length} Connections: [${connections
                 .map(x => x.id)
                 .join(", ")}]`
         );
+
+        // Map from connections to datatargets 
+        const dataTargets = connections.map(x => x.dataTarget);
 
         this.sendToDataTargets(dataTargets, dto);
     }
