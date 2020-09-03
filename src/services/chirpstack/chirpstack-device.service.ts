@@ -5,6 +5,7 @@ import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstac
 import { CreateLoRaWANSettingsDto } from "../../entities/dto/create-lorawan-settings.dto";
 import { ChirpstackDeviceContentsDto } from "../../entities/dto/chirpstack/chirpstack-device-contents.dto";
 import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { ListAllDevicesResponseDto } from "../../entities/dto/chirpstack/list-all-devices-response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -97,8 +98,16 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return res.status == 200;
     }
 
-    async createDevice(dto: CreateChirpstackDeviceDto): Promise<boolean> {
-        const res = await this.post(`devices`, dto);
+    async createOrUpdateDevice(
+        dto: CreateChirpstackDeviceDto
+    ): Promise<boolean> {
+        let res;
+        if (await this.isDeviceAlreadyCreated(dto.device.devEUI)) {
+            res = await this.put(`devices`, dto, dto.device.devEUI);
+        } else {
+            res = await this.post(`devices`, dto);
+        }
+
         if (res.status != 200) {
             this.logger.warn(
                 `Could not create Chirpstack Device using body: ${JSON.stringify(
@@ -110,6 +119,21 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
 
         return res.status == 200;
+    }
+
+    private async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {
+        const devices = await this.getAllChirpstackDevices();
+        const alreadyExists = devices.some(x => {
+            return x.devEUI.toLowerCase() == deviceEUI.toLowerCase();
+        });
+        return alreadyExists;
+    }
+
+    private async getAllChirpstackDevices(): Promise<
+        ChirpstackDeviceContentsDto[]
+    > {
+        return (await this.get<ListAllDevicesResponseDto>("devices?limit=1000"))
+            .result;
     }
 
     private async createApplication(
