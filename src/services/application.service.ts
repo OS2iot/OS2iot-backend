@@ -37,7 +37,7 @@ export class ApplicationService {
 
     async findOne(id: number): Promise<Application> {
         return await this.applicationRepository.findOneOrFail(id, {
-            relations: ["iotDevices", "dataTargets"],
+            relations: ["iotDevices", "dataTargets", "iotDevices.receivedMessagesMetadata"],
         });
     }
 
