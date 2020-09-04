@@ -8,8 +8,9 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { DataTarget } from "@entities/data-target.entity";
-import { HttpPushDataTarget } from "../../src/entities/http-push-data-target.entity";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -52,6 +53,25 @@ export async function generateSavedIoTDevice(
     applications: Application
 ): Promise<IoTDevice> {
     return await getManager().save(generateIoTDevice(applications));
+}
+
+export function generateLoRaWANDevice(
+    applications: Application
+): LoRaWANDevice {
+    const device = new LoRaWANDevice();
+    device.name = "E2E Test LoRaWAN device";
+    device.application = applications;
+    device.metadata = JSON.parse('{"some_key": "a_value"}');
+    device.id = 1;
+    device.deviceEUI = "A81758FFFE042E82";
+
+    return device;
+}
+
+export async function generateSavedLoRaWANDevice(
+    applications: Application
+): Promise<LoRaWANDevice> {
+    return await getManager().save(generateLoRaWANDevice(applications));
 }
 
 export async function generateSavedDataTarget(

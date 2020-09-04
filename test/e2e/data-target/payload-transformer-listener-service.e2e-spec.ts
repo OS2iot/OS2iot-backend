@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { KafkaModule } from "@modules/kafka.module";
 import { PayloadDecoderListenerService } from "@services/payload-decoder-listener.service";
@@ -12,10 +12,11 @@ import {
     generateSavedDataTarget,
     generateSavedConnection,
 } from "../test-helpers";
-import { Kafka, KafkaMessage, Consumer } from "kafkajs";
+import { KafkaMessage, Consumer } from "kafkajs";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 
 describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
     let app: INestApplication;
@@ -88,7 +89,11 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
         const kafkaMessages: [string, KafkaMessage][] = [];
 
         // Setup kafkaListener to see if it is sent correctly.
-        consumer = await setupKafkaListener(consumer, kafkaMessages);
+        consumer = await setupKafkaListener(
+            consumer,
+            kafkaMessages,
+            KafkaTopic.TRANSFORMED_REQUEST
+        );
 
         // Act
         await service.rawRequestListener(kafkaPayload);
@@ -120,54 +125,3 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
 });
 
 // TODO: rainy day test-case (dårlig JS)
-
-async function waitForEvents(
-    kafkaMessages: [string, KafkaMessage][],
-    waitFor: number
-) {
-    const start = new Date().getTime();
-    while (kafkaMessages.length < waitFor) {
-        await sleep(100);
-        if (new Date().getTime() - start > 10000) {
-            break;
-        }
-    }
-}
-
-async function setupKafkaListener(
-    consumer: Consumer,
-    kafkaMessages: [string, KafkaMessage][]
-) {
-    const kafka = new Kafka({
-        ssl: false,
-        clientId: "os2iot-client-e2e",
-        brokers: ["host.docker.internal:9093"],
-    });
-    consumer = kafka.consumer({ groupId: "os2iot-backend-e2ea" });
-    await consumer.connect();
-    await consumer.subscribe({
-        topic: KafkaTopic.TRANSFORMED_REQUEST,
-        fromBeginning: false,
-    });
-    await consumer.run({
-        eachMessage: async ({
-            topic,
-            message,
-        }: {
-            topic: string;
-            message: KafkaMessage;
-        }) => {
-            Logger.debug(`Got new message in topic: ${topic}`);
-            kafkaMessages.push([topic, message]);
-        },
-    });
-    return consumer;
-}
-
-async function sleep(ms: number) {
-    await _sleep(ms);
-}
-
-function _sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
