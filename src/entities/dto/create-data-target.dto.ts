@@ -7,7 +7,6 @@ import {
     IsNumber,
     Min,
     IsOptional,
-    isURL,
 } from "class-validator";
 
 export class CreateDataTargetDto {

@@ -60,7 +60,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                 .join(", ")}]`
         );
 
-        // Map from connections to datatargets 
+        // Map from connections to datatargets
         const dataTargets = connections.map(x => x.dataTarget);
 
         this.sendToDataTargets(dataTargets, dto);
