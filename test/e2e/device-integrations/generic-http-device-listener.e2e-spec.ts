@@ -4,7 +4,7 @@ import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { clearDatabase } from "./test-helpers";
+import { clearDatabase } from "../test-helpers";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 import { Application } from "@entities/application.entity";
 import { KafkaModule } from "@modules/kafka.module";
