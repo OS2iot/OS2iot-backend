@@ -15,7 +15,9 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
 
     MQTT_CLIENT_ID = "os2iot-backend";
-    MQTT_URL = "mqtt://localhost:1883";
+    MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${
+        process.env.CS_MQTT_PORT || "1883"
+    }`;
     client: Client;
 
     private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC =
