@@ -53,7 +53,7 @@ export class GatewayContentsDto {
     @IsString()
     @MinLength(1)
     @MaxLength(50)
-    @Matches(/^[a-zA-Z0-9\-]+$/, {
+    @Matches(/^[a-zA-Z0-9\-_]+$/, {
         message: "The name may only contain words, numbers and dashes.",
     })
     name: string;
