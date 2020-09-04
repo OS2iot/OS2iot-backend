@@ -135,7 +135,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         }
 
         if (dto?.gateway?.tagsString) {
-            dto.gateway.tags = JSON.parse(dto.gateway.tagsString)
+            dto.gateway.tags = JSON.parse(dto.gateway.tagsString);
         }
 
         return dto;

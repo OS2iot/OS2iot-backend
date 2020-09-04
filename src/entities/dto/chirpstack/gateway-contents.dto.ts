@@ -70,5 +70,4 @@ export class GatewayContentsDto {
 
     @ApiHideProperty()
     tags?: JSON;
-    
 }

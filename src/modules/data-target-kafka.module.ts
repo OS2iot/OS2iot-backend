@@ -16,7 +16,7 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { IoTDevicePayloadDecoderDataTargetConnectionModule } from '@modules/iot-device-payload-decoder-data-target-connection.module';
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
 
 @Module({
     imports: [
