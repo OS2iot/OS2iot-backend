@@ -10,6 +10,7 @@ import {
     Producer,
     RecordMetadata,
     KafkaMessage,
+    logLevel,
 } from "kafkajs";
 import { KafkaConfig, KafkaPayload } from "./kafka.message";
 import { SUBSCRIBER_COMBINED_REF_MAP } from "./kafka.decorator";
@@ -32,6 +33,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
             ssl: false,
             clientId: this.kafkaConfig.clientId,
             brokers: this.kafkaConfig.brokers,
+            logLevel: logLevel.NOTHING,
         });
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({

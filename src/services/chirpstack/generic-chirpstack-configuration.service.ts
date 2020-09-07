@@ -156,7 +156,7 @@ export class GenericChirpstackConfigurationService {
                 .delete(url, axiosConfig)
                 .toPromise();
 
-            Logger.warn(
+            Logger.debug(
                 `delete : ${result.status.toString()} and message: ${
                     result.statusText
                 }`
@@ -202,7 +202,7 @@ export class GenericChirpstackConfigurationService {
             const result = await this.httpService
                 .get(header.url, axiosConfig)
                 .toPromise();
-            Logger.warn(
+            Logger.debug(
                 `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`

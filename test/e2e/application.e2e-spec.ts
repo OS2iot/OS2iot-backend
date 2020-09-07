@@ -93,13 +93,22 @@ describe("ApplicationController (e2e)", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body.count).toBe(2);
-                expect(response.body.data).toMatchObject([
-                    { name: "Test", description: "Tester" },
-                    {
-                        name: "Application2",
-                        description: "A description",
-                    },
-                ]);
+                expect(response.body.data).toContainEqual({
+                    name: "Test",
+                    description: "Tester",
+                    updatedAt: expect.any(String),
+                    createdAt: expect.any(String),
+                    id: expect.any(Number),
+                    iotDevices: [],
+                });
+                expect(response.body.data).toContainEqual({
+                    name: "Application2",
+                    description: "A description",
+                    updatedAt: expect.any(String),
+                    createdAt: expect.any(String),
+                    id: expect.any(Number),
+                    iotDevices: [],
+                });
             });
     });
 
