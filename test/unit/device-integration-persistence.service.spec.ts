@@ -15,6 +15,9 @@ import {
     generateIoTDevice,
     generateApplication,
 } from "../e2e/test-helpers";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { HttpService } from "@nestjs/common";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;
@@ -42,9 +45,20 @@ describe("DeviceIntegrationPersistenceService", () => {
                     provide: getRepositoryToken(Application),
                     useValue: {},
                 },
+                {
+                    provide: getRepositoryToken(LoRaWANDevice),
+                    useValue: {},
+                },
                 IoTDeviceService,
                 DeviceIntegrationPersistenceService,
                 ApplicationService,
+                ChirpstackDeviceService,
+                {
+                    provide: HttpService,
+                    useValue: {
+                        post: jest.fn().mockResolvedValue([{}]),
+                    },
+                },
             ],
         }).compile();
 

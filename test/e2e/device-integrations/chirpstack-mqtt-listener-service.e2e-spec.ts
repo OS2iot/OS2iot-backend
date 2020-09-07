@@ -64,7 +64,7 @@ describe("ChirpstackMQTTListenerService (e2e)", () => {
         if (service.client) {
             await service.client.end();
         }
-    });
+    }, 30000);
 
     it("receiveMqttMessage - Elsys ERS", async () => {
         // Arrange

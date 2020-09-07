@@ -25,7 +25,7 @@ export async function setupKafkaListener(
         clientId: "os2iot-client-e2e",
         brokers: ["host.docker.internal:9093"],
     });
-    consumer = kafka.consumer({ groupId: "os2iot-backend-e2ea" });
+    consumer = kafka.consumer({ groupId: "os2iot-backend-e2e" });
     await consumer.connect();
     await consumer.subscribe({
         topic: topic,

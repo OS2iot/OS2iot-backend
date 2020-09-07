@@ -1,10 +1,4 @@
-import {
-    Matches,
-    IsString,
-    IsOptional,
-    IsHexadecimal,
-    Length,
-} from "class-validator";
+import { Matches, IsString, IsOptional, Length } from "class-validator";
 import { ApiProperty, PickType } from "@nestjs/swagger";
 import { ChirpstackDeviceContentsDto } from "./chirpstack/chirpstack-device-contents.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
