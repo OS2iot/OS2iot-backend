@@ -76,7 +76,42 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return { device: csDto };
     }
 
-    async activateDevice(deviceEUI: string, nwkKey: string): Promise<boolean> {
+    async activateDeviceWithABP(
+        devEUI: string,
+        devAddr: string,
+        fCntUp: number,
+        nFCntDown: number,
+        networkSessionKey: string,
+        applicationSessionKey: string
+    ): Promise<boolean> {
+        const dto = {
+            deviceActivation: {
+                devAddr: devAddr,
+                nwkSEncKey: networkSessionKey,
+                appSKey: applicationSessionKey,
+                fCntUp: fCntUp,
+                nFCntDown: nFCntDown,
+                devEUI: devEUI,
+                fNwkSIntKey: networkSessionKey,
+                sNwkSIntKey: networkSessionKey,
+            },
+        };
+        const res = await this.post(`devices/${devEUI}/activate`, dto);
+        if (res.status != 200) {
+            this.logger.warn(
+                `Could not ABP activate Chirpstack Device using body: ${JSON.stringify(
+                    dto
+                )}`
+            );
+            return false;
+        }
+        return res.status == 200;
+    }
+
+    async activateDeviceWithOTAA(
+        deviceEUI: string,
+        nwkKey: string
+    ): Promise<boolean> {
         // http://localhost:8080/api/devices/0011223344557188/keys
         // {"deviceKeys":{"nwkKey":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","devEUI":"0011223344557188"}}
 

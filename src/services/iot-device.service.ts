@@ -10,6 +10,8 @@ import { Point } from "geojson";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackDeviceService } from "./chirpstack/chirpstack-device.service";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { ErrorCodes } from "../entities/enum/error-codes.enum";
 
 @Injectable()
 export class IoTDeviceService {
@@ -195,13 +197,7 @@ export class IoTDeviceService {
                 chirpstackDeviceDto
             );
 
-            // OTAA Activate if key is provided
-            if (dto.lorawanSettings.OTAAapplicationKey) {
-                await this.chirpstackDeviceService.activateDevice(
-                    dto.lorawanSettings.devEUI,
-                    dto.lorawanSettings.OTAAapplicationKey
-                );
-            }
+            await this.doActivation(dto);
         } catch (err) {
             this.logger.error(err);
             throw new BadRequestException(
@@ -211,5 +207,38 @@ export class IoTDeviceService {
         }
 
         return lorawanDevice;
+    }
+
+    private async doActivation(dto: CreateIoTDeviceDto): Promise<void> {
+        if (dto.lorawanSettings.activationType == ActivationType.OTAA) {
+            // OTAA Activate if key is provided
+            if (dto.lorawanSettings.OTAAapplicationKey) {
+                await this.chirpstackDeviceService.activateDeviceWithOTAA(
+                    dto.lorawanSettings.devEUI,
+                    dto.lorawanSettings.OTAAapplicationKey
+                );
+            } else {
+                throw new BadRequestException(ErrorCodes.MissingOTAAInfo);
+            }
+        } else if (dto.lorawanSettings.activationType == ActivationType.ABP) {
+            if (
+                dto.lorawanSettings.devAddr &&
+                dto.lorawanSettings.fCntUp != null &&
+                dto.lorawanSettings.nFCntDown != null &&
+                dto.lorawanSettings.networkSessionKey &&
+                dto.lorawanSettings.applicationSessionKey
+            ) {
+                await this.chirpstackDeviceService.activateDeviceWithABP(
+                    dto.lorawanSettings.devEUI,
+                    dto.lorawanSettings.devAddr,
+                    dto.lorawanSettings.fCntUp,
+                    dto.lorawanSettings.nFCntDown,
+                    dto.lorawanSettings.networkSessionKey,
+                    dto.lorawanSettings.applicationSessionKey
+                );
+            } else {
+                throw new BadRequestException(ErrorCodes.MissingABPInfo);
+            }
+        }
     }
 }
