@@ -6,7 +6,9 @@ import {
     Min,
     Max,
     IsOptional,
+    ValidateNested,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 
@@ -57,5 +59,7 @@ export class CreateIoTDeviceDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
+    @ValidateNested({ each: true })
+    @Type(() => CreateLoRaWANSettingsDto)
     lorawanSettings: CreateLoRaWANSettingsDto;
 }

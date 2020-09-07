@@ -7,4 +7,6 @@ export enum ErrorCodes {
     WrongLength = "MESSAGE.WRONG-LENGTH",
     NotValidFormat = "MESSAGE.NOT-VALID-FORMAT",
     BadEncoding = "MESSAGE.BAD-ENCODING",
+    MissingOTAAInfo = "MESSAGE.OTAA-INFO-MISSING",
+    MissingABPInfo = "MESSAGE.ABP-INFO-MISSING",
 }

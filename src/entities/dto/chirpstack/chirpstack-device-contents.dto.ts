@@ -1,4 +1,4 @@
-import { IsUUID, IsString, IsOptional } from "class-validator";
+import { IsUUID, IsString, IsOptional, Matches } from "class-validator";
 import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
 
 export class ChirpstackDeviceContentsDto {
@@ -13,6 +13,7 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiProperty({ required: true })
     @IsString()
+    @Matches(/[0-9A-Fa-f]{16}/)
     devEUI: string;
 
     @ApiProperty({ required: true })

@@ -158,12 +158,9 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             },
         });
         const callingCode = `\n\ndecode(innerPayload, innerIotDevice);`;
-        // this.logger.debug("Calling untrusted code ...");
         const combinedCode = code + callingCode;
-        // this.logger.debug(combinedCode);
         const res = vm.run(new VMScript(combinedCode));
-        this.logger.log(`Returned: '${JSON.stringify(res)}'`);
-        // this.logger.debug("Done with untrusted code ...");
+        this.logger.debug(`Returned: '${JSON.stringify(res)}'`);
 
         return JSON.stringify(res);
     }
