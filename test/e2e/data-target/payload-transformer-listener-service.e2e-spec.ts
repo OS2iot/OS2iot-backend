@@ -41,7 +41,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
                 KafkaModule.register({
                     clientId: "os2iot-client-e2e",
                     brokers: ["host.docker.internal:9093"],
-                    groupId: "os2iot-backend-e2ea",
+                    groupId: "os2iot-backend-e2e",
                 }),
             ],
         }).compile();
