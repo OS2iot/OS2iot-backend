@@ -14,6 +14,7 @@ import { AuthService } from "src/auth/auth.service";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { LoginDto } from "src/auth/login.dto";
+import { User } from "../entities/user.entity";
 
 @ApiTags("os2iot")
 @Controller()
@@ -36,8 +37,9 @@ export class DefaultController {
     @Post("auth/login")
     @ApiOperation({ summary: "Login" })
     @UseGuards(LocalAuthGuard)
-    async login(@Body() user: LoginDto): Promise<any> {
-        return this.authService.login(user);
+    async login(@Body() user: LoginDto, @Request() req: any): Promise<any> {
+        const { email, id } = req.user;
+        return this.authService.issueJwt(email, id);
     }
 
     @Get("profile")

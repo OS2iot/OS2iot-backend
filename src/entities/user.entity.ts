@@ -1,18 +1,21 @@
-import { Entity, Column } from "typeorm";
+import { Entity, Column, ManyToMany, JoinTable, Unique } from 'typeorm';
 import { DbBaseEntity } from "@entities/base.entity";
+import { Permission } from "./permission.entity";
 
 @Entity("user")
+@Unique(["email"])
 export class User extends DbBaseEntity {
     @Column()
-    firstName: string;
+    name: string;
 
     @Column()
-    lastName: string;
+    email: string;
 
-    @Column({ nullable: true })
-    age?: number;
+    @Column()
+    passwordHash: string;
 
-    toString(): string {
-        return `User: id: ${this.id} - firstName: ${this.firstName} - lastName: ${this.lastName} - age: ${this.age}`;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @ManyToMany(type => Permission, permission => permission.users)
+    @JoinTable()
+    permissions: Permission[];
 }

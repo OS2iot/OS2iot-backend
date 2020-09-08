@@ -1,7 +1,8 @@
-import { Entity, Column, OneToMany, Unique } from "typeorm";
+import { Entity, Column, OneToMany, Unique, ManyToOne } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
+import { Organization } from "./organization.entity";
 
 @Entity("application")
 @Unique(["name"])
@@ -27,4 +28,12 @@ export class Application extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     dataTargets: DataTarget[];
+
+    @ManyToOne(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => Organization,
+        organization => organization.applications,
+        { onDelete: "CASCADE" }
+    )
+    belongsTo: Organization;
 }

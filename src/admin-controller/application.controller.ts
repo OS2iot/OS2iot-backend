@@ -10,6 +10,7 @@ import {
     NotFoundException,
     Delete,
     Logger,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -17,6 +18,7 @@ import {
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiBearerAuth,
 } from "@nestjs/swagger";
 import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
@@ -28,12 +30,19 @@ import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { BadRequestException } from "@nestjs/common";
+import { RolesGuard } from "src/user/roles.guard";
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { Read, Write } from "../user/roles.decorator";
 
 @ApiTags("Application")
 @Controller("application")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+@Read()
 export class ApplicationController {
     constructor(private applicationService: ApplicationService) {}
 
+    @Read()
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all Applications (paginated)" })
@@ -62,6 +71,7 @@ export class ApplicationController {
         }
     }
 
+    @Write()
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Application" })
@@ -86,6 +96,7 @@ export class ApplicationController {
         return application;
     }
 
+    @Write()
     @Put(":id")
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing Application" })
@@ -114,6 +125,7 @@ export class ApplicationController {
         return application;
     }
 
+    @Write()
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing Application" })
     @ApiBadRequestResponse()
