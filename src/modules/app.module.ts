@@ -24,6 +24,8 @@ import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
 import { DefaultModule } from "@modules/default.module";
 import { AuthModule } from "../auth/auth.module";
+import { OrganizationModule } from "src/organization/organization.module";
+import { PermissionModule } from "../permission/permission.module";
 
 @Module({
     imports: [
@@ -72,6 +74,8 @@ import { AuthModule } from "../auth/auth.module";
         PayloadDecoderKafkaModule,
         DefaultModule,
         AuthModule,
+        OrganizationModule,
+        PermissionModule,
     ],
     controllers: [
         ApplicationController,

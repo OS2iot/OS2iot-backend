@@ -1,8 +1,18 @@
-import { Entity, Column, OneToMany, Unique, ManyToOne } from "typeorm";
+import {
+    Entity,
+    Column,
+    OneToMany,
+    Unique,
+    ManyToOne,
+    ManyToMany,
+    JoinTable,
+} from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { Organization } from "./organization.entity";
+import { OrganizationApplicationPermission } from "./organization-application-permission.entity";
+import { Type } from "class-transformer";
 
 @Entity("application")
 @Unique(["name"])
@@ -36,4 +46,12 @@ export class Application extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     belongsTo: Organization;
+
+    @ManyToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => OrganizationApplicationPermission,
+        permission => permission.applications
+    )
+    @JoinTable()
+    permissions: OrganizationApplicationPermission[];
 }
