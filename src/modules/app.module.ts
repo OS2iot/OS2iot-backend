@@ -22,6 +22,8 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
+import { DefaultModule } from "@modules/default.module";
+import { AuthModule } from "../auth/auth.module";
 
 @Module({
     imports: [
@@ -68,6 +70,8 @@ import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module
         IoTDevicePayloadDecoderDataTargetConnectionModule,
         ChirpstackMqttListenerModule,
         PayloadDecoderKafkaModule,
+        DefaultModule,
+        AuthModule,
     ],
     controllers: [
         ApplicationController,
