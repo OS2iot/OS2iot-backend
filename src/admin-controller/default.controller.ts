@@ -6,12 +6,16 @@ import {
     UseGuards,
     Post,
     Logger,
+    Body,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { LocalAuthGuard } from "../auth/local-auth.guard";
 import { AuthService } from "src/auth/auth.service";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { LoginDto } from "src/auth/login.dto";
 
+@ApiTags("os2iot")
 @Controller()
 export class DefaultController {
     constructor(private authService: AuthService) {}
@@ -29,14 +33,17 @@ export class DefaultController {
         return "OK";
     }
 
-    @UseGuards(LocalAuthGuard)
     @Post("auth/login")
-    async login(@Request() req: any): Promise<any> {
-        return this.authService.login(req.user);
+    @ApiOperation({ summary: "Login" })
+    @UseGuards(LocalAuthGuard)
+    async login(@Body() user: LoginDto): Promise<any> {
+        return this.authService.login(user);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Get("profile")
+    @ApiOperation({ summary: "Test login" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
     getProfile(@Request() req: any): Promise<any> {
         return req.user;
     }
