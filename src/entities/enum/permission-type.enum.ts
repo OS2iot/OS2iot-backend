@@ -1,6 +1,8 @@
 export enum PermissionType {
-    GlobalAdmin = "GLOBALADMIN",
-    OrganizationAdmin = "ORGANIZATIONADMIN",
-    Write = "WRITE",
-    READ = "READ",
+    GlobalAdmin = "GlobalAdmin",
+    OrganizationAdmin = "OrganizationAdmin",
+    Write = "Write",
+    Read = "Read",
+    OrganizationPermission = "OrganizationPermission",
+    OrganizationApplicationPermissions = "OrganizationApplicationPermissions",
 }

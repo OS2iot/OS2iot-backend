@@ -8,7 +8,6 @@ import {
 import { CreateUserDto } from "./create-user.dto";
 import { UserService } from "./user.service";
 import { ApiOperation } from "@nestjs/swagger";
-import { User } from "@entities/user.entity";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { QueryFailedError } from "typeorm";
 import { Logger } from "@nestjs/common";
@@ -46,4 +45,6 @@ export class UserController {
             throw new InternalServerErrorException();
         }
     }
+
+    // TODO: RUD
 }
