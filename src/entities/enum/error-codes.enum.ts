@@ -9,4 +9,5 @@ export enum ErrorCodes {
     BadEncoding = "MESSAGE.BAD-ENCODING",
     MissingOTAAInfo = "MESSAGE.OTAA-INFO-MISSING",
     MissingABPInfo = "MESSAGE.ABP-INFO-MISSING",
+    UserAlreadyExists = "MESSAGE.USER-ALREADY-EXISTS",
 }

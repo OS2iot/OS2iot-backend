@@ -1,28 +1,43 @@
-import { Injectable } from "@nestjs/common";
-import { UsersService } from "../users/users.service";
+import { Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcryptjs";
+import { UserResponseDto } from "@entities/dto/user-response.dto";
+import { JwtReponseDto } from "@dto/jwt-response.dto";
+import { UserService } from "../user/user.service";
 
 @Injectable()
 export class AuthService {
     constructor(
-        private usersService: UsersService,
+        private usersService: UserService,
         private jwtService: JwtService
     ) {}
+    private readonly logger = new Logger(AuthService.name);
 
-    async validateUser(username: string, pass: string): Promise<any> {
-        // TODO: Replace with hash'ed password
-        const user = await this.usersService.findOne(username);
-        if (user && user.password === pass) {
-            const { password, ...result } = user;
-            return result;
+    async validateUser(
+        username: string,
+        password: string
+    ): Promise<UserResponseDto> {
+        const user = await this.usersService.findOneUserByEmail(username);
+        if (user) {
+            const res = await bcrypt.compare(password, user.passwordHash);
+            if (res === true) {
+                const { passwordHash, ...result } = user;
+                return result;
+            } else {
+                this.logger.warn(
+                    `Login with user: '${username}' used wrong password`
+                );
+            }
+        } else {
+            this.logger.warn(`Login with non-existing user: '${username}'`);
         }
         return null;
     }
 
-    async login(user: any): Promise<any> {
-        const payload = { username: user.username, sub: user.userId };
+    async issueJwt(email: string, id: number): Promise<JwtReponseDto> {
+        const payload = { username: email, sub: id };
         return {
-            access_token: this.jwtService.sign(payload),
+            accessToken: this.jwtService.sign(payload),
         };
     }
 }
