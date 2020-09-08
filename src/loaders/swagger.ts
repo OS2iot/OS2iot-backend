@@ -10,6 +10,7 @@ export function setupSwagger(
         .setDescription("The back-end for OS2IoT")
         .setVersion("1.0")
         .addTag("os2iot")
+        .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })
         .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup(SWAGGER_PREFIX, app, document);
