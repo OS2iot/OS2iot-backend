@@ -6,7 +6,7 @@ import { AuthService } from "./auth.service";
 import { jwtConstants } from "./constants";
 import { LocalStrategy } from "./local.strategy";
 import { JwtStrategy } from "./jwt.strategy";
-import { RolesGuard } from "../user/roles.guard";
+import { PermissionModule } from "src/permission/permission.module";
 
 @Module({
     imports: [
@@ -14,8 +14,9 @@ import { RolesGuard } from "../user/roles.guard";
         PassportModule.register({ defaultStrategy: "jwt" }),
         JwtModule.register({
             secret: jwtConstants.secret,
-            signOptions: { expiresIn: "60m" },
+            signOptions: { expiresIn: "9h" }, // TODO: Make this configurable?
         }),
+        PermissionModule,
     ],
     providers: [AuthService, LocalStrategy, JwtStrategy],
     exports: [AuthService],

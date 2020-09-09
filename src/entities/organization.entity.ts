@@ -1,10 +1,11 @@
-import { Entity, Column, OneToMany } from "typeorm";
+import { Entity, Column, OneToMany, Unique } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
 import { Application } from "@entities/application.entity";
 
 @Entity("organization")
+@Unique(["name"])
 export class Organization extends DbBaseEntity {
-    @Column()
+    @Column({ unique: true })
     name: string;
 
     @OneToMany(

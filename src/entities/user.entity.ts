@@ -11,7 +11,7 @@ export class User extends DbBaseEntity {
     @Column()
     email: string;
 
-    @Column()
+    @Column({ select: false })
     passwordHash: string;
 
     @Column({ default: true })

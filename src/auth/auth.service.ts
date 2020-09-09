@@ -18,7 +18,9 @@ export class AuthService {
         username: string,
         password: string
     ): Promise<UserResponseDto> {
-        const user = await this.usersService.findOneUserByEmail(username);
+        const user = await this.usersService.findOneUserByEmailWithPassword(
+            username
+        );
         if (user) {
             if (!user.active) {
                 throw new UnauthorizedException(ErrorCodes.UserInactive);
