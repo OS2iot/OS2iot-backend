@@ -17,6 +17,15 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
+import { Organization } from "@entities/organization.entity";
+import { User } from "@entities/user.entity";
+import { Permission } from "@entities/permission.entity";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
+import { WritePermission } from "@entities/write-permission.entity";
 
 @Module({
     imports: [
@@ -28,6 +37,15 @@ import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-
             HttpPushDataTarget,
             ReceivedMessage,
             ReceivedMessageMetadata,
+            Organization,
+            User,
+            Permission,
+            GlobalAdminPermission,
+            OrganizationPermission,
+            OrganizationAdminPermission,
+            OrganizationApplicationPermission,
+            ReadPermission,
+            WritePermission,
         ]),
         HttpModule,
         KafkaModule,

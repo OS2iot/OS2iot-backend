@@ -6,6 +6,7 @@ import { AuthService } from "./auth.service";
 import { jwtConstants } from "./constants";
 import { LocalStrategy } from "./local.strategy";
 import { JwtStrategy } from "./jwt.strategy";
+import { RolesGuard } from "../user/roles.guard";
 
 @Module({
     imports: [

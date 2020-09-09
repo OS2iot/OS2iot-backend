@@ -13,6 +13,7 @@ import { ReceiveDataService } from "@services/data-management/receive-data.servi
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
 import { LoRaWANDevice } from "../entities/lorawan-device.entity";
+import { ApplicationModule } from "./application.module";
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { LoRaWANDevice } from "../entities/lorawan-device.entity";
         ]),
         ChirpstackAdministrationModule,
         HttpModule,
+        ApplicationModule,
     ],
     exports: [TypeOrmModule, ReceiveDataService],
     controllers: [ReceiveDataController],
