@@ -10,4 +10,5 @@ export enum ErrorCodes {
     MissingOTAAInfo = "MESSAGE.OTAA-INFO-MISSING",
     MissingABPInfo = "MESSAGE.ABP-INFO-MISSING",
     UserAlreadyExists = "MESSAGE.USER-ALREADY-EXISTS",
+    UserInactive = "MESSAGE.USER-INACTIVE",
 }

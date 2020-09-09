@@ -27,19 +27,31 @@ export class UserService {
         ).permissions;
     }
 
+    async updateLastLogin(user: User): Promise<void> {
+        user.lastLogin = new Date();
+        await this.userRepository.save(user);
+    }
+
     async createUser(dto: CreateUserDto): Promise<User> {
         const user = new User();
-        user.name = dto.name;
-        user.email = dto.email;
-        user.permissions = [];
+        const mappedUser = this.mapDtoToUser(user, dto);
 
         // Hash password with bcrpyt
         this.logger.verbose("Generating salt");
         const salt = await bcrypt.genSalt(10);
         this.logger.verbose("Generating hash");
-        user.passwordHash = await bcrypt.hash(dto.password, salt);
-        this.logger.verbose(`Generated hash: '${user.passwordHash}'`);
+        mappedUser.passwordHash = await bcrypt.hash(dto.password, salt);
+        this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
 
-        return await this.userRepository.save(user);
+        return await this.userRepository.save(mappedUser);
+    }
+
+    private mapDtoToUser(user: User, dto: CreateUserDto): User {
+        user.name = dto.name;
+        user.email = dto.email;
+        user.permissions = [];
+        user.active = dto.active;
+
+        return user;
     }
 }
