@@ -1,9 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { UserResponseDto } from "@entities/dto/user-response.dto";
 import { JwtReponseDto } from "@dto/jwt-response.dto";
 import { UserService } from "../user/user.service";
+import { ErrorCodes } from "../entities/enum/error-codes.enum";
 
 @Injectable()
 export class AuthService {
@@ -19,8 +20,13 @@ export class AuthService {
     ): Promise<UserResponseDto> {
         const user = await this.usersService.findOneUserByEmail(username);
         if (user) {
+            if (!user.active) {
+                throw new UnauthorizedException(ErrorCodes.UserInactive);
+            }
+
             const res = await bcrypt.compare(password, user.passwordHash);
             if (res === true) {
+                this.usersService.updateLastLogin(user);
                 const { passwordHash, ...result } = user;
                 return result;
             } else {
