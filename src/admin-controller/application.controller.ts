@@ -11,6 +11,7 @@ import {
     Delete,
     Logger,
     UseGuards,
+    Req,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -33,6 +34,12 @@ import { BadRequestException } from "@nestjs/common";
 import { RolesGuard } from "../user/roles.guard";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Read, Write } from "../user/roles.decorator";
+import { User } from "../entities/user.entity";
+import { AuthenticatedUser } from "../auth/authenticated-user";
+
+type hasAtLeastAUser = {
+    user: AuthenticatedUser;
+};
 
 @ApiTags("Application")
 @Controller("application")
@@ -52,8 +59,11 @@ export class ApplicationController {
         type: ListAllApplicationsReponseDto,
     })
     async findAll(
+        @Req() req: hasAtLeastAUser,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
+        const allowedOrganizations = req.user.permissions.getAllApplicationsWithRead();
+
         const applications = await this.applicationService.findAndCountWithPagination(
             query
         );

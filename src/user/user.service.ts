@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "../entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, FindOneOptions, getManager } from "typeorm";
 import { CreateUserDto } from "./create-user.dto";
 import * as bcrypt from "bcryptjs";
 import { Permission } from "@entities/permission.entity";
@@ -15,8 +15,20 @@ export class UserService {
 
     private readonly logger = new Logger(UserService.name, true);
 
-    async findOneUserByEmail(email: string): Promise<User> {
-        return this.userRepository.findOne({ email: email });
+    async findOneUserByEmailWithPassword(email: string): Promise<User> {
+        return await this.userRepository.findOne(
+            { email: email },
+            {
+                select: [
+                    "id",
+                    "name",
+                    "email",
+                    "active",
+                    "passwordHash", // This is requiredsince passwordHash normally is hidden.
+                    "lastLogin",
+                ],
+            }
+        );
     }
 
     async findUserPermissions(id: number): Promise<Permission[]> {
@@ -53,5 +65,9 @@ export class UserService {
         user.active = dto.active;
 
         return user;
+    }
+
+    async findManyUsersById(userIds: number[]): Promise<User[]> {
+        return await this.userRepository.findByIds(userIds);
     }
 }
