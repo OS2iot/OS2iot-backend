@@ -18,6 +18,15 @@ import { DataTargetModule } from "@modules/data-target.module";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { ApplicationService } from "@services/application.service";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { Organization } from "@entities/organization.entity";
+import { User } from "@entities/user.entity";
+import { Permission } from "@entities/permission.entity";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
+import { WritePermission } from "@entities/write-permission.entity";
 
 @Module({
     imports: [
@@ -27,6 +36,15 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
             IoTDevice,
             GenericHTTPDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
+            Organization,
+            User,
+            Permission,
+            GlobalAdminPermission,
+            OrganizationPermission,
+            OrganizationAdminPermission,
+            OrganizationApplicationPermission,
+            ReadPermission,
+            WritePermission,
         ]),
         KafkaModule,
         IoTDevicePayloadDecoderDataTargetConnectionModule,

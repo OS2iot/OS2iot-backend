@@ -30,8 +30,8 @@ import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { BadRequestException } from "@nestjs/common";
-import { RolesGuard } from "src/user/roles.guard";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { RolesGuard } from "../user/roles.guard";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Read, Write } from "../user/roles.decorator";
 
 @ApiTags("Application")

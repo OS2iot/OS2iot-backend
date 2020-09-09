@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from '@entities/organization.entity';
-import { Repository } from 'typeorm';
-import { CreateOrganizationDto } from './create-organization.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Organization } from "@entities/organization.entity";
+import { Repository } from "typeorm";
+import { CreateOrganizationDto } from "./create-organization.dto";
 
 @Injectable()
 export class OrganizationService {
@@ -13,10 +13,12 @@ export class OrganizationService {
 
     private readonly logger = new Logger(OrganizationService.name, true);
 
-    async createOrganization(dto: CreateOrganizationDto): Promise<Organization> {
-        const organization = new Organization()
+    async createOrganization(
+        dto: CreateOrganizationDto
+    ): Promise<Organization> {
+        const organization = new Organization();
         organization.name = dto.name;
 
-        return await this.organizationRepository.save(organization)
+        return await this.organizationRepository.save(organization);
     }
 }

@@ -1,7 +1,7 @@
 import { Controller, Logger, Body, Post } from "@nestjs/common";
 import { OrganizationService } from "./organization.service";
 import { Organization } from "@entities/organization.entity";
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CreateOrganizationDto } from "./create-organization.dto";
 
 @ApiTags("Organization")

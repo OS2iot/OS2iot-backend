@@ -1,17 +1,12 @@
 import { Module, HttpModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Connection } from "typeorm";
 import { ApplicationModule } from "@modules/application.module";
-import { ApplicationController } from "@admin-controller/application.controller";
 import { ApplicationService } from "@services/application.service";
-import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-
 import { DataTargetModule } from "@modules/data-target.module";
-import { DataTargetController } from "@admin-controller/data-target.controller";
 import { DataTargetService } from "@services/data-target.service";
 import { DataTargetSenderModule } from "@modules/data-target-sender.module";
 import { ReceiveDataModule } from "@modules/receive-data.module";
@@ -24,7 +19,7 @@ import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
 import { DefaultModule } from "@modules/default.module";
 import { AuthModule } from "../auth/auth.module";
-import { OrganizationModule } from "src/organization/organization.module";
+import { OrganizationModule } from "../organization/organization.module";
 import { PermissionModule } from "../permission/permission.module";
 
 @Module({
@@ -77,11 +72,7 @@ import { PermissionModule } from "../permission/permission.module";
         OrganizationModule,
         PermissionModule,
     ],
-    controllers: [
-        ApplicationController,
-        IoTDeviceController,
-        DataTargetController,
-    ],
+    controllers: [],
     providers: [
         ApplicationService,
         IoTDeviceService,
@@ -90,5 +81,5 @@ import { PermissionModule } from "../permission/permission.module";
     ],
 })
 export class AppModule {
-    constructor(private connection: Connection) {}
+    constructor() {}
 }

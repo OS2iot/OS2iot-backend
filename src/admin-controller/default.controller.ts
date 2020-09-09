@@ -10,10 +10,10 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { LocalAuthGuard } from "../auth/local-auth.guard";
-import { AuthService } from "src/auth/auth.service";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { AuthService } from "../auth/auth.service";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { LoginDto } from "src/auth/login.dto";
+import { LoginDto } from "../auth/login.dto";
 import { User } from "../entities/user.entity";
 
 @ApiTags("os2iot")
