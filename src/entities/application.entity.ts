@@ -12,7 +12,6 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { Organization } from "./organization.entity";
 import { OrganizationApplicationPermission } from "./organization-application-permission.entity";
-import { Type } from "class-transformer";
 
 @Entity("application")
 @Unique(["name"])

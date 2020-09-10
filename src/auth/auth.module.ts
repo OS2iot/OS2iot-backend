@@ -7,7 +7,7 @@ import { jwtConstants } from "./constants";
 import { LocalStrategy } from "./local.strategy";
 import { JwtStrategy } from "./jwt.strategy";
 import { PermissionModule } from "src/permission/permission.module";
-import { AuthController } from './auth.controller';
+import { AuthController } from "./auth.controller";
 
 @Module({
     imports: [

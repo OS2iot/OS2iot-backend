@@ -2,7 +2,6 @@ import { DbBaseEntity } from "./base.entity";
 import { User } from "@entities/user.entity";
 import { ManyToMany, Entity, TableInheritance, Column } from "typeorm";
 import { PermissionType } from "@enum/permission-type.enum";
-import { PermissionModule } from "../permission/permission.module";
 
 @Entity()
 @TableInheritance({
@@ -24,7 +23,7 @@ export abstract class Permission extends DbBaseEntity {
 
     @ManyToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => User,
+        () => User,
         user => user.permissions
     )
     users: User[];

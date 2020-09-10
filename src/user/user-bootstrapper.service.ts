@@ -16,7 +16,9 @@ export class UserBootstrapperService implements OnModuleInit {
 
     async onModuleInit(): Promise<void> {
         if (this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)) {
-            this.logger.debug("GlobalAdmin user already exists. Won't create a new one.");
+            this.logger.debug(
+                "GlobalAdmin user already exists. Won't create a new one."
+            );
             return;
         }
 

@@ -13,7 +13,6 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { OrganizationModule } from "../organization/organization.module";
-import { OrganizationService } from "../organization/organization.service";
 import { UserModule } from "../user/user.module";
 
 @Module({

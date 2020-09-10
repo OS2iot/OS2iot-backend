@@ -1,6 +1,5 @@
 import { PermissionType } from "../entities/enum/permission-type.enum";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNumber } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreatePermissionDto {
     @ApiProperty({ required: true })

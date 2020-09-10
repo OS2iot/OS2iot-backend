@@ -26,10 +26,7 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../user/roles.guard";
 import { OrganizationAdmin } from "../user/roles.decorator";
 import { RequestHasAtLeastAUser } from "../auth/has-at-least-user";
-import {
-    checkIfUserHasWriteAccessToOrganization,
-    checkIfUserHasAdminAccessToOrganization,
-} from "../auth/security-helper";
+import { checkIfUserHasAdminAccessToOrganization } from "../auth/security-helper";
 import { PermissionType } from "@enum/permission-type.enum";
 import { OrganizationPermission } from "../entities/organizion-permission.entity";
 import { DeleteResponseDto } from "../entities/dto/delete-application-response.dto";

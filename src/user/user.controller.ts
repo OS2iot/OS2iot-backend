@@ -27,6 +27,7 @@ export class UserController {
     ): Promise<UserResponseDto> {
         try {
             // Don't leak the passwordHash
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { passwordHash, ...user } = await this.userService.createUser(
                 createUserDto
             );
