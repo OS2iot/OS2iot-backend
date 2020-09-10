@@ -12,7 +12,6 @@ import {
     Logger,
     UseGuards,
     Req,
-    ForbiddenException,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -38,7 +37,6 @@ import { RolesGuard } from "../user/roles.guard";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Read, Write } from "../user/roles.decorator";
 import { RequestHasAtLeastAUser } from "../auth/has-at-least-user";
-import * as _ from "lodash";
 import { checkIfUserHasReadAccessToApplication } from "../auth/security-helper";
 import {
     checkIfUserHasWriteAccessToApplication,

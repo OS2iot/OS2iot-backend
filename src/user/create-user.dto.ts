@@ -1,4 +1,4 @@
-import { ApiProperty, ApiProduces } from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail } from "class-validator";
 
 export class CreateUserDto {

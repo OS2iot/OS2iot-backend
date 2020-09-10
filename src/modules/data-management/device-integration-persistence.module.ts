@@ -7,9 +7,7 @@ import { DeviceIntegrationPersistenceService } from "@services/data-management/d
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
 import { IoTDeviceModule } from "@modules/iot-device.module";
-import { IoTDeviceService } from "@services/iot-device.service";
 import { ApplicationModule } from "@modules/application.module";
-import { ApplicationService } from "@services/application.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { Organization } from "@entities/organization.entity";

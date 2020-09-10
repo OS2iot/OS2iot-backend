@@ -5,6 +5,7 @@ import { UserResponseDto } from "@entities/dto/user-response.dto";
 import { JwtReponseDto } from "@dto/jwt-response.dto";
 import { UserService } from "../user/user.service";
 import { ErrorCodes } from "../entities/enum/error-codes.enum";
+import { JwtPayloadDto } from "./jwt-payload.dto";
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
             const res = await bcrypt.compare(password, user.passwordHash);
             if (res === true) {
                 await this.usersService.updateLastLoginToNow(user);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { passwordHash, ...result } = user;
                 return result;
             } else {
@@ -43,7 +45,7 @@ export class AuthService {
     }
 
     async issueJwt(email: string, id: number): Promise<JwtReponseDto> {
-        const payload = { username: email, sub: id };
+        const payload: JwtPayloadDto = { username: email, sub: id };
         return {
             accessToken: this.jwtService.sign(payload),
         };

@@ -80,6 +80,4 @@ import { PermissionModule } from "../permission/permission.module";
         ChirpstackDeviceService,
     ],
 })
-export class AppModule {
-    constructor() {}
-}
+export class AppModule {}
