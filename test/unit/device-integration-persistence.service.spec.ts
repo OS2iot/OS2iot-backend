@@ -18,6 +18,10 @@ import {
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { HttpService } from "@nestjs/common";
+import { Organization } from "@entities/organization.entity";
+import { OrganizationService } from "../../src/organization/organization.service";
+import { Permission } from "@entities/permission.entity";
+import { User } from "../../src/entities/user.entity";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;
@@ -49,6 +53,18 @@ describe("DeviceIntegrationPersistenceService", () => {
                     provide: getRepositoryToken(LoRaWANDevice),
                     useValue: {},
                 },
+                {
+                    provide: getRepositoryToken(Organization),
+                    useValue: {},
+                },
+                {
+                    provide: getRepositoryToken(Permission),
+                    useValue: {},
+                },
+                {
+                    provide: getRepositoryToken(User),
+                    useValue: {},
+                },
                 IoTDeviceService,
                 DeviceIntegrationPersistenceService,
                 ApplicationService,
@@ -58,6 +74,10 @@ describe("DeviceIntegrationPersistenceService", () => {
                     useValue: {
                         post: jest.fn().mockResolvedValue([{}]),
                     },
+                },
+                {
+                    provide: OrganizationService,
+                    useValue: {},
                 },
             ],
         }).compile();
@@ -70,6 +90,14 @@ describe("DeviceIntegrationPersistenceService", () => {
     it("should be defined", () => {
         expect(service).toBeDefined();
     });
+    const org: Organization = {
+        id: 1,
+        name: "org",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        applications: [],
+        permissions: [],
+    };
 
     const iotDevice: IoTDevice = {
         id: 1,
@@ -81,6 +109,8 @@ describe("DeviceIntegrationPersistenceService", () => {
             id: 1,
             createdAt: new Date(),
             updatedAt: new Date(),
+            belongsTo: org,
+            permissions: [],
         },
         name: "Test IoTDevice",
         metadata: JSON.parse("{}"),
