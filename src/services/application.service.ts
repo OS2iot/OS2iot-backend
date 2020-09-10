@@ -20,6 +20,12 @@ export class ApplicationService {
         organizations: number[],
         query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
+        if (organizations.length == 0) {
+            return {
+                data: [],
+                count: 0,
+            };
+        }
         const [result, total] = await this.applicationRepository.findAndCount({
             where: { belongsTo: In(organizations) },
             take: query.limit,

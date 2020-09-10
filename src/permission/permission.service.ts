@@ -114,7 +114,7 @@ export class PermissionService {
         });
 
         permission.name = dto.name;
-        permission.users = await this.userService.findManyUsersById(
+        permission.users = await this.userService.findManyUsersByIds(
             dto.userIds
         );
 

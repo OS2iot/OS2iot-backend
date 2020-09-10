@@ -25,7 +25,7 @@ import { UpdatePermissionDto } from "./update-permission.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../user/roles.guard";
 import { OrganizationAdmin } from "../user/roles.decorator";
-import { RequestHasAtLeastAUser } from "../auth/has-at-least-user";
+import { AuthenticatedRequest } from "../auth/authenticated-request";
 import { checkIfUserHasAdminAccessToOrganization } from "../auth/security-helper";
 import { PermissionType } from "@enum/permission-type.enum";
 import { OrganizationPermission } from "../entities/organizion-permission.entity";
@@ -42,11 +42,10 @@ export class PermissionController {
     constructor(private permissionService: PermissionService) {}
     private readonly logger = new Logger(PermissionController.name);
 
-    @OrganizationAdmin()
     @Post()
     @ApiOperation({ summary: "Create new permission entity" })
     async createPermission(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Body() dto: CreatePermissionDto
     ): Promise<Permission> {
         checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
@@ -54,11 +53,10 @@ export class PermissionController {
         return await this.permissionService.createNewPermission(dto);
     }
 
-    @OrganizationAdmin()
     @Put(":id")
     @ApiOperation({ summary: "Update permission" })
     async updatePermission(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number,
         @Body() dto: UpdatePermissionDto
     ): Promise<Permission> {
@@ -68,11 +66,10 @@ export class PermissionController {
         return await this.permissionService.updatePermission(id, dto);
     }
 
-    @OrganizationAdmin()
     @Delete(":id")
     @ApiOperation({ summary: "Delete a permission entity" })
     async deletePermission(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<DeleteResponseDto> {
         const permission = await this.permissionService.getPermission(id);
@@ -81,11 +78,10 @@ export class PermissionController {
         return await this.permissionService.deletePermission(id);
     }
 
-    @OrganizationAdmin()
     @Get()
     @ApiOperation({ summary: "Get list of all permissions" })
     async getAllPermissions(
-        @Req() req: RequestHasAtLeastAUser
+        @Req() req: AuthenticatedRequest
     ): Promise<Permission[]> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.permissionService.getAllPermissions();
@@ -97,11 +93,10 @@ export class PermissionController {
         }
     }
 
-    @OrganizationAdmin()
     @Get(":id")
     @ApiOperation({ summary: "Get permissions entity" })
     async getOnePermissions(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<Permission> {
         const permission = await this.permissionService.getPermission(id);

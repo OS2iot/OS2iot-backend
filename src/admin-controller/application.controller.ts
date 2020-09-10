@@ -36,7 +36,7 @@ import { BadRequestException } from "@nestjs/common";
 import { RolesGuard } from "../user/roles.guard";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Read, Write } from "../user/roles.decorator";
-import { RequestHasAtLeastAUser } from "../auth/has-at-least-user";
+import { AuthenticatedRequest } from "../auth/authenticated-request";
 import { checkIfUserHasReadAccessToApplication } from "../auth/security-helper";
 import {
     checkIfUserHasWriteAccessToApplication,
@@ -63,7 +63,7 @@ export class ApplicationController {
         type: ListAllApplicationsReponseDto,
     })
     async findAll(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
         const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
@@ -80,7 +80,7 @@ export class ApplicationController {
     @ApiOperation({ summary: "Find one Application by id" })
     @ApiNotFoundResponse()
     async findOne(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<Application> {
         checkIfUserHasReadAccessToApplication(req, id);
@@ -98,7 +98,7 @@ export class ApplicationController {
     @ApiOperation({ summary: "Create a new Application" })
     @ApiBadRequestResponse()
     async create(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Body() createApplicationDto: CreateApplicationDto
     ): Promise<Application> {
         checkIfUserHasWriteAccessToOrganization(
@@ -129,7 +129,7 @@ export class ApplicationController {
     @ApiOperation({ summary: "Update an existing Application" })
     @ApiBadRequestResponse()
     async update(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number,
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
@@ -160,7 +160,7 @@ export class ApplicationController {
     @ApiOperation({ summary: "Delete an existing Application" })
     @ApiBadRequestResponse()
     async delete(
-        @Req() req: RequestHasAtLeastAUser,
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<DeleteResponseDto> {
         checkIfUserHasWriteAccessToApplication(req, id);

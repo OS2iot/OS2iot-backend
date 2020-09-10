@@ -10,7 +10,7 @@ import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 /**
  * This controller is intented to be used to send Kafka messages, mostly for testing.
  */
-@ApiTags("Kafka")
+@ApiTags("For testing only ...")
 @Controller("kafka")
 export class KafkaController {
     constructor(private readonly kafkaService: KafkaService) {}

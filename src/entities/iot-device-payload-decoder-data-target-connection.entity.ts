@@ -12,15 +12,15 @@ import { DataTarget } from "@entities/data-target.entity";
 @Index(["payloadDecoder"])
 @Index(["dataTarget"])
 export class IoTDevicePayloadDecoderDataTargetConnection extends DbBaseEntity {
-    @ManyToOne(() => IoTDevice)
+    @ManyToOne(() => IoTDevice, { onDelete: "CASCADE" })
     @JoinColumn()
     iotDevice: IoTDevice;
 
-    @ManyToOne(() => PayloadDecoder, { nullable: true })
+    @ManyToOne(() => PayloadDecoder, { nullable: true, onDelete: "CASCADE" })
     @JoinColumn()
     payloadDecoder?: PayloadDecoder;
 
-    @ManyToOne(() => DataTarget)
+    @ManyToOne(() => DataTarget, { onDelete: "CASCADE" })
     @JoinColumn()
     dataTarget: DataTarget;
 }
