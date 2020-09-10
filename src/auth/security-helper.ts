@@ -1,9 +1,9 @@
-import { RequestHasAtLeastAUser } from "./has-at-least-user";
+import { AuthenticatedRequest } from "./authenticated-request";
 import { ForbiddenException } from "@nestjs/common";
 import * as _ from "lodash";
 
 export function checkIfUserHasWriteAccessToApplication(
-    req: RequestHasAtLeastAUser,
+    req: AuthenticatedRequest,
     applicationId: number
 ): void {
     checkIfGlobalAdminOrInList(
@@ -14,7 +14,7 @@ export function checkIfUserHasWriteAccessToApplication(
 }
 
 export function checkIfUserHasReadAccessToApplication(
-    req: RequestHasAtLeastAUser,
+    req: AuthenticatedRequest,
     applicationId: number
 ): void {
     checkIfGlobalAdminOrInList(
@@ -25,7 +25,7 @@ export function checkIfUserHasReadAccessToApplication(
 }
 
 export function checkIfUserHasWriteAccessToOrganization(
-    req: RequestHasAtLeastAUser,
+    req: AuthenticatedRequest,
     organizationId: number
 ): void {
     checkIfGlobalAdminOrInList(
@@ -36,7 +36,7 @@ export function checkIfUserHasWriteAccessToOrganization(
 }
 
 export function checkIfUserHasAdminAccessToOrganization(
-    req: RequestHasAtLeastAUser,
+    req: AuthenticatedRequest,
     organizationId: number
 ): void {
     checkIfGlobalAdminOrInList(
@@ -47,7 +47,7 @@ export function checkIfUserHasAdminAccessToOrganization(
 }
 
 function checkIfGlobalAdminOrInList(
-    req: RequestHasAtLeastAUser,
+    req: AuthenticatedRequest,
     list: number[],
     id: number
 ): void {
@@ -55,7 +55,7 @@ function checkIfGlobalAdminOrInList(
         return;
     }
 
-    if (!_.includes(list, id)) {
+    if (!_.includes(list, +id)) {
         throw new ForbiddenException();
     }
 }

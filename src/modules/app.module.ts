@@ -41,7 +41,7 @@ import { PermissionModule } from "../permission/permission.module";
             logging: true,
             autoLoadEntities: true,
             retryAttempts: 0,
-            maxQueryExecutionTime: 1000, // Log queries slower than 1000 ms
+            maxQueryExecutionTime: 200, // Log queries slower than 200 ms
         }),
         KafkaModule.register({
             clientId: "os2iot-client",

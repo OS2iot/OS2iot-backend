@@ -1,10 +1,10 @@
 import { AuthenticatedUser } from "./authenticated-user";
 import { User } from "../entities/user.entity";
 
-export type RequestHasAtLeastAUser = {
+export type AuthenticatedRequest = {
     user: AuthenticatedUser;
 };
 
-export type RequestHasAtLeastAUserLocalStrategy = {
+export type AuthenticatedRequestLocalStrategy = {
     user: User;
 };

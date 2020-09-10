@@ -11,6 +11,6 @@ export abstract class OrganizationPermission extends Permission {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ManyToOne(() => Organization)
+    @ManyToOne(() => Organization, { onDelete: "CASCADE" })
     organization: Organization;
 }
