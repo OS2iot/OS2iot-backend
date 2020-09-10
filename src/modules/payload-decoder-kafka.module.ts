@@ -27,6 +27,8 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
+import { ApplicationModule } from "./application.module";
+import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
 
 @Module({
     imports: [
@@ -52,17 +54,10 @@ import { WritePermission } from "@entities/write-permission.entity";
         DataTargetModule,
         PayloadDecoderModule,
         HttpModule,
+        ApplicationModule,
     ],
     exports: [TypeOrmModule],
     controllers: [PayloadDecoderController],
-    providers: [
-        PayloadDecoderListenerService,
-        IoTDevicePayloadDecoderDataTargetConnectionService,
-        IoTDeviceService,
-        DataTargetService,
-        PayloadDecoderService,
-        ApplicationService,
-        ChirpstackDeviceService,
-    ],
+    providers: [PayloadDecoderListenerService, PayloadDecoderService],
 })
 export class PayloadDecoderKafkaModule {}

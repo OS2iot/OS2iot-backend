@@ -4,7 +4,7 @@ import { Organization } from "@entities/organization.entity";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CreateOrganizationDto } from "./create-organization.dto";
 
-@ApiTags("Organization")
+@ApiTags("User Management")
 @Controller("organization")
 export class OrganizationController {
     constructor(private organizationService: OrganizationService) {}

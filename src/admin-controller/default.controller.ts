@@ -1,25 +1,11 @@
-import {
-    Controller,
-    Request,
-    Get,
-    HttpCode,
-    UseGuards,
-    Post,
-    Logger,
-    Body,
-} from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-import { LocalAuthGuard } from "../auth/local-auth.guard";
+import { Controller, Get, HttpCode } from "@nestjs/common";
 import { AuthService } from "../auth/auth.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { LoginDto } from "../auth/login.dto";
-import { User } from "../entities/user.entity";
+import { ApiTags } from "@nestjs/swagger";
 
 @ApiTags("os2iot")
 @Controller()
 export class DefaultController {
-    constructor(private authService: AuthService) {}
+    constructor() {}
 
     @Get()
     getDefault(): string {
@@ -32,21 +18,5 @@ export class DefaultController {
         // This is the healthcheck for k8s
         // TODO: Check database status?
         return "OK";
-    }
-
-    @Post("auth/login")
-    @ApiOperation({ summary: "Login" })
-    @UseGuards(LocalAuthGuard)
-    async login(@Body() user: LoginDto, @Request() req: any): Promise<any> {
-        const { email, id } = req.user;
-        return this.authService.issueJwt(email, id);
-    }
-
-    @Get("profile")
-    @ApiOperation({ summary: "Test login" })
-    @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard)
-    getProfile(@Request() req: any): Promise<any> {
-        return req.user;
     }
 }

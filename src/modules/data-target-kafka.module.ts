@@ -26,6 +26,8 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
+import { ApplicationModule } from "./application.module";
+import { DataTargetModule } from "./data-target.module";
 
 @Module({
     imports: [
@@ -54,12 +56,9 @@ import { WritePermission } from "@entities/write-permission.entity";
         IoTDeviceModule,
         ChirpstackAdministrationModule,
         IoTDevicePayloadDecoderDataTargetConnectionModule,
+        ApplicationModule,
+        DataTargetModule,
     ],
-    providers: [
-        IoTDeviceService,
-        ApplicationService,
-        DataTargetService,
-        DataTargetKafkaListenerService,
-    ],
+    providers: [DataTargetKafkaListenerService],
 })
 export class DataTargetKafkaModule {}

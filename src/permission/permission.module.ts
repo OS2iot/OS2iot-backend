@@ -31,7 +31,7 @@ import { UserModule } from "../user/user.module";
             WritePermission,
         ]),
         forwardRef(() => OrganizationModule),
-        UserModule,
+        forwardRef(() => UserModule),
     ],
     providers: [PermissionService],
     exports: [PermissionService],

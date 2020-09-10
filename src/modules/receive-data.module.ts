@@ -14,6 +14,8 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
 import { LoRaWANDevice } from "../entities/lorawan-device.entity";
 import { ApplicationModule } from "./application.module";
+import { IoTDeviceController } from "@admin-controller/iot-device.controller";
+import { IoTDeviceModule } from "./iot-device.module";
 
 @Module({
     imports: [
@@ -29,14 +31,10 @@ import { ApplicationModule } from "./application.module";
         ChirpstackAdministrationModule,
         HttpModule,
         ApplicationModule,
+        IoTDeviceModule,
     ],
     exports: [TypeOrmModule, ReceiveDataService],
     controllers: [ReceiveDataController],
-    providers: [
-        IoTDeviceService,
-        ApplicationService,
-        ReceiveDataService,
-        ChirpstackDeviceService,
-    ],
+    providers: [ReceiveDataService],
 })
 export class ReceiveDataModule {}

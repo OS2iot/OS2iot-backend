@@ -13,6 +13,7 @@ import { User } from "@entities/user.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { Permission } from "@entities/permission.entity";
 import { AuthModule } from "../auth/auth.module";
+import { OrganizationModule } from "../organization/organization.module";
 
 @Module({
     imports: [
@@ -29,8 +30,9 @@ import { AuthModule } from "../auth/auth.module";
             GlobalAdminPermission,
         ]),
         AuthModule,
+        OrganizationModule,
     ],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, ApplicationService],
     controllers: [ApplicationController],
     providers: [ApplicationService],
 })

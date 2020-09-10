@@ -20,19 +20,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     async validate(payload: any): Promise<AuthenticatedUser> {
         // This data is already validated
-        const permissions = await this.permissionService.findPermissionsForUser(
+        const permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
             payload.sub
         );
-        const permissions2 = await this.permissionService.findPermissionGroupedByLevelForUser(
-            payload.sub
-        );
-
-        Logger.log(JSON.stringify(permissions2));
 
         return {
             userId: payload.sub,
             username: payload.username,
-            permissions: permissions2,
+            permissions: permissions,
         };
     }
 }

@@ -3,4 +3,8 @@ import { ChildEntity } from "typeorm";
 import { PermissionType } from "@enum/permission-type.enum";
 
 @ChildEntity(PermissionType.GlobalAdmin)
-export class GlobalAdminPermission extends Permission {}
+export class GlobalAdminPermission extends Permission {
+    constructor() {
+        super("GlobalAdmin");
+    }
+}

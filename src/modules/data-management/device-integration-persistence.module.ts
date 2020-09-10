@@ -48,12 +48,6 @@ import { AuthModule } from "../../auth/auth.module";
         AuthModule,
     ],
     exports: [TypeOrmModule],
-    controllers: [],
-    providers: [
-        DeviceIntegrationPersistenceService,
-        IoTDeviceService,
-        ApplicationService,
-        ChirpstackDeviceService,
-    ],
+    providers: [DeviceIntegrationPersistenceService, ChirpstackDeviceService],
 })
 export class DeviceIntegrationPersistenceModule {}

@@ -8,6 +8,9 @@ export class CreateApplicationDto {
     @MaxLength(50)
     name: string;
 
+    @ApiProperty({ required: true })
+    organizationId: number;
+
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()

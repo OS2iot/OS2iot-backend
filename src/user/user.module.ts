@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
@@ -12,6 +12,8 @@ import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { OrganizationApplicationPermission } from "../entities/organization-application-permission.entity";
+import { UserBootstrapperService } from "./user-bootstrapper.service";
+import { PermissionModule } from "../permission/permission.module";
 
 @Module({
     imports: [
@@ -27,9 +29,10 @@ import { OrganizationApplicationPermission } from "../entities/organization-appl
             ReadPermission,
             WritePermission,
         ]),
+        forwardRef(() => PermissionModule),
     ],
     controllers: [UserController],
-    providers: [UserService],
+    providers: [UserService, UserBootstrapperService],
     exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}
