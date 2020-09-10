@@ -5,6 +5,7 @@ import { Repository, FindOneOptions, getManager } from "typeorm";
 import { CreateUserDto } from "./create-user.dto";
 import * as bcrypt from "bcryptjs";
 import { Permission } from "@entities/permission.entity";
+import { IsEmail } from "class-validator";
 
 @Injectable()
 export class UserService {
@@ -14,6 +15,14 @@ export class UserService {
     ) {}
 
     private readonly logger = new Logger(UserService.name, true);
+
+    async isEmailUsedByAUser(email: string): Promise<boolean> {
+        return (
+            (await this.userRepository.count({
+                email: email,
+            })) > 0
+        );
+    }
 
     async findOneUserByEmailWithPassword(email: string): Promise<User> {
         return await this.userRepository.findOne(
@@ -39,9 +48,13 @@ export class UserService {
         ).permissions;
     }
 
-    async updateLastLogin(user: User): Promise<void> {
-        user.lastLogin = new Date();
-        await this.userRepository.save(user);
+    async updateLastLoginToNow(user: User): Promise<void> {
+        await this.userRepository
+            .createQueryBuilder()
+            .update(User)
+            .set({ lastLogin: new Date() })
+            .where("id = :id", { id: user.id })
+            .execute();
     }
 
     async createUser(dto: CreateUserDto): Promise<User> {

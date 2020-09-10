@@ -10,6 +10,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
+import { ApplicationModule } from "./application.module";
 
 @Module({
     imports: [
@@ -22,9 +23,10 @@ import { ReceivedMessage } from "@entities/received-message";
             ReceivedMessage,
             ReceivedMessageMetadata,
         ]),
+        ApplicationModule,
     ],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, DataTargetService],
     controllers: [DataTargetController],
-    providers: [DataTargetService, ApplicationService],
+    providers: [DataTargetService],
 })
 export class DataTargetModule {}

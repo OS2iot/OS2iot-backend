@@ -54,15 +54,8 @@ import { AuthModule } from "../auth/auth.module";
         HttpModule,
         AuthModule,
     ],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, PayloadDecoderService],
     controllers: [PayloadDecoderController],
-    providers: [
-        PayloadDecoderService,
-        ApplicationService,
-        IoTDeviceService,
-        IoTDevicePayloadDecoderDataTargetConnectionService,
-        DataTargetService,
-        ChirpstackDeviceService,
-    ],
+    providers: [PayloadDecoderService],
 })
 export class PayloadDecoderModule {}

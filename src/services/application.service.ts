@@ -1,24 +1,27 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
-import { Repository, DeleteResult } from "typeorm";
+import { Repository, DeleteResult, In } from "typeorm";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
+import { OrganizationService } from "../organization/organization.service";
 
 @Injectable()
 export class ApplicationService {
     constructor(
         @InjectRepository(Application)
-        private applicationRepository: Repository<Application>
+        private applicationRepository: Repository<Application>,
+        private organizationService: OrganizationService
     ) {}
 
     async findAndCountWithPagination(
+        organizations: number[],
         query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
-            where: {},
+            where: { belongsTo: In(organizations) },
             take: query.limit,
             skip: query.offset,
             relations: ["iotDevices"],
@@ -50,7 +53,7 @@ export class ApplicationService {
     ): Promise<Application> {
         const application = new Application();
 
-        const mappedApplication = this.mapApplicationDtoToApplication(
+        const mappedApplication = await this.mapApplicationDtoToApplication(
             createApplicationDto,
             application
         );
@@ -69,7 +72,7 @@ export class ApplicationService {
             { relations: ["iotDevices", "dataTargets"] }
         );
 
-        const mappedApplication = this.mapApplicationDtoToApplication(
+        const mappedApplication = await this.mapApplicationDtoToApplication(
             updateApplicationDto,
             existingApplication
         );
@@ -100,12 +103,15 @@ export class ApplicationService {
         return false;
     }
 
-    private mapApplicationDtoToApplication(
+    private async mapApplicationDtoToApplication(
         applicationDto: CreateApplicationDto | UpdateApplicationDto,
         application: Application
-    ): Application {
+    ): Promise<Application> {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
+        application.belongsTo = await this.organizationService.findById(
+            applicationDto.organizationId
+        );
 
         return application;
     }

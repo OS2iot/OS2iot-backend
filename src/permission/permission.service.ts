@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { Organization } from "@entities/organization.entity";
 import { Permission } from "@entities/permission.entity";
-import { getManager, Repository } from "typeorm";
+import { getManager, Repository, In } from "typeorm";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
@@ -20,6 +20,9 @@ import { UserService } from "../user/user.service";
 import { PermissionMinimalDto } from "../entities/dto/permission-minimal.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserPermissions } from "../entities/dto/permission-organization-application.dto";
+import { GlobalAdminPermission } from "../entities/global-admin-permission.entity";
+import { User } from "@entities/user.entity";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 
 @Injectable()
 export class PermissionService {
@@ -59,6 +62,15 @@ export class PermissionService {
         ]);
     }
 
+    async findOrCreateGlobalAdminPermission(): Promise<GlobalAdminPermission> {
+        const globalAdmin = await getManager().findOne(GlobalAdminPermission);
+        if (globalAdmin) {
+            return globalAdmin;
+        }
+
+        return await getManager().save(new GlobalAdminPermission());
+    }
+
     async createNewPermission(dto: CreatePermissionDto): Promise<Permission> {
         let permission;
         const org: Organization = await this.organizationService.findById(
@@ -84,6 +96,14 @@ export class PermissionService {
         return await getManager().save(permission);
     }
 
+    async addUsersToPermission(
+        permission: Permission,
+        users: User[]
+    ): Promise<Permission> {
+        permission.users = _.union(permission.users, users);
+        return await getManager().save(permission);
+    }
+
     async updatePermission(
         id: number,
         dto: UpdatePermissionDto
@@ -95,12 +115,39 @@ export class PermissionService {
 
         permission.name = dto.name;
         permission.users = await this.userService.findManyUsersById(
-            dto.usesIds
+            dto.userIds
         );
 
         const savedPermission = await getManager().save(permission);
 
         return savedPermission;
+    }
+
+    async deletePermission(id: number): Promise<DeleteResponseDto> {
+        const res = await getManager().delete(Permission, id);
+        return new DeleteResponseDto(res.affected);
+    }
+
+    async getAllPermissions(): Promise<Permission[]> {
+        return await getManager().find(Permission, {
+            relations: ["organization", "users"],
+        });
+    }
+
+    async getAllPermissionsInOrganizations(
+        orgs: number[]
+    ): Promise<Permission[]> {
+        return await getManager().find(OrganizationPermission, {
+            where: { organization: In(orgs) },
+            relations: ["organization", "users"],
+        });
+    }
+
+    async getPermission(id: number): Promise<Permission> {
+        return await getManager().findOne(Permission, {
+            where: { id: id },
+            relations: ["organization", "users"],
+        });
     }
 
     async findPermissionsForUser(
@@ -129,9 +176,9 @@ export class PermissionService {
 
         permissions.forEach(p => {
             if (p.permission_type == PermissionType.GlobalAdmin) {
-                this.addOrUpdate(res.globalAdminPermissions, p);
+                res.isGlobalAdmin = true;
             } else if (p.permission_type == PermissionType.OrganizationAdmin) {
-                this.addOrUpdate(res.organizationAdminPermissions, p);
+                res.organizationAdminPermissions.add(p.organization_id);
             } else if (p.permission_type == PermissionType.Write) {
                 this.addOrUpdate(res.writePermissions, p);
             } else if (p.permission_type == PermissionType.Read) {

@@ -28,7 +28,7 @@ export class AuthService {
 
             const res = await bcrypt.compare(password, user.passwordHash);
             if (res === true) {
-                this.usersService.updateLastLogin(user);
+                await this.usersService.updateLastLoginToNow(user);
                 const { passwordHash, ...result } = user;
                 return result;
             } else {

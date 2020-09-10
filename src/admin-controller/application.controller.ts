@@ -12,6 +12,7 @@ import {
     Logger,
     UseGuards,
     Req,
+    ForbiddenException,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -20,6 +21,8 @@ import {
     ApiBadRequestResponse,
     ApiNotFoundResponse,
     ApiBearerAuth,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse,
 } from "@nestjs/swagger";
 import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
@@ -34,18 +37,21 @@ import { BadRequestException } from "@nestjs/common";
 import { RolesGuard } from "../user/roles.guard";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Read, Write } from "../user/roles.decorator";
-import { User } from "../entities/user.entity";
-import { AuthenticatedUser } from "../auth/authenticated-user";
-
-type hasAtLeastAUser = {
-    user: AuthenticatedUser;
-};
+import { RequestHasAtLeastAUser } from "../auth/has-at-least-user";
+import * as _ from "lodash";
+import { checkIfUserHasReadAccessToApplication } from "../auth/security-helper";
+import {
+    checkIfUserHasWriteAccessToApplication,
+    checkIfUserHasWriteAccessToOrganization,
+} from "../auth/security-helper";
 
 @ApiTags("Application")
 @Controller("application")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
+@ApiForbiddenResponse()
+@ApiUnauthorizedResponse()
 export class ApplicationController {
     constructor(private applicationService: ApplicationService) {}
 
@@ -59,21 +65,28 @@ export class ApplicationController {
         type: ListAllApplicationsReponseDto,
     })
     async findAll(
-        @Req() req: hasAtLeastAUser,
+        @Req() req: RequestHasAtLeastAUser,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
-        const allowedOrganizations = req.user.permissions.getAllApplicationsWithRead();
+        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
 
         const applications = await this.applicationService.findAndCountWithPagination(
+            allowedOrganizations,
             query
         );
         return applications;
     }
 
+    @Read()
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })
     @ApiNotFoundResponse()
-    async findOne(@Param("id") id: number): Promise<Application> {
+    async findOne(
+        @Req() req: RequestHasAtLeastAUser,
+        @Param("id") id: number
+    ): Promise<Application> {
+        checkIfUserHasReadAccessToApplication(req, id);
+
         try {
             return await this.applicationService.findOne(id);
         } catch (err) {
@@ -87,8 +100,14 @@ export class ApplicationController {
     @ApiOperation({ summary: "Create a new Application" })
     @ApiBadRequestResponse()
     async create(
+        @Req() req: RequestHasAtLeastAUser,
         @Body() createApplicationDto: CreateApplicationDto
     ): Promise<Application> {
+        checkIfUserHasWriteAccessToOrganization(
+            req,
+            createApplicationDto?.organizationId
+        );
+
         const isValid = await this.applicationService.isNameValidAndNotUsed(
             createApplicationDto?.name
         );
@@ -112,9 +131,12 @@ export class ApplicationController {
     @ApiOperation({ summary: "Update an existing Application" })
     @ApiBadRequestResponse()
     async update(
+        @Req() req: RequestHasAtLeastAUser,
         @Param("id") id: number,
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
+        checkIfUserHasWriteAccessToApplication(req, id);
+
         const isValid = await this.applicationService.isNameValidAndNotUsed(
             updateApplicationDto?.name,
             id
@@ -139,7 +161,12 @@ export class ApplicationController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing Application" })
     @ApiBadRequestResponse()
-    async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
+    async delete(
+        @Req() req: RequestHasAtLeastAUser,
+        @Param("id") id: number
+    ): Promise<DeleteResponseDto> {
+        checkIfUserHasWriteAccessToApplication(req, id);
+
         try {
             const result = await this.applicationService.delete(id);
 

@@ -7,12 +7,13 @@ import {
 } from "@nestjs/common";
 import { CreateUserDto } from "./create-user.dto";
 import { UserService } from "./user.service";
-import { ApiOperation } from "@nestjs/swagger";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { QueryFailedError } from "typeorm";
 import { Logger } from "@nestjs/common";
 import { ErrorCodes } from "../entities/enum/error-codes.enum";
 
+@ApiTags("User Management")
 @Controller("user")
 export class UserController {
     constructor(private userService: UserService) {}
