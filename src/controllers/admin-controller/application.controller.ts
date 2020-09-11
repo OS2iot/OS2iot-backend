@@ -33,15 +33,15 @@ import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { BadRequestException } from "@nestjs/common";
-import { RolesGuard } from "../user/roles.guard";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { Read, Write } from "../user/roles.decorator";
-import { AuthenticatedRequest } from "../auth/authenticated-request";
-import { checkIfUserHasReadAccessToApplication } from "../auth/security-helper";
+import { RolesGuard } from "@auth/roles.guard";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { Read, Write } from "@auth/roles.decorator";
+import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
+import { checkIfUserHasReadAccessToApplication } from "@helpers/security-helper";
 import {
     checkIfUserHasWriteAccessToApplication,
     checkIfUserHasWriteAccessToOrganization,
-} from "../auth/security-helper";
+} from "@helpers/security-helper";
 
 @ApiTags("Application")
 @Controller("application")
@@ -66,11 +66,14 @@ export class ApplicationController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllApplicationsReponseDto> {
-        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
+        if (req.user.permissions.isGlobalAdmin) {
+            return this.applicationService.findAndCountWithPagination(query);
+        }
 
+        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
         const applications = await this.applicationService.findAndCountWithPagination(
-            allowedOrganizations,
-            query
+            query,
+            allowedOrganizations
         );
         return applications;
     }

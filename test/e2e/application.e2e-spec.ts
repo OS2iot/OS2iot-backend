@@ -5,13 +5,18 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
 import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
-import { clearDatabase } from "./test-helpers";
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+} from "./test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<Application>;
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,7 +30,7 @@ describe("ApplicationController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 KafkaModule.register({
@@ -51,6 +56,10 @@ describe("ApplicationController (e2e)", () => {
     beforeEach(async () => {
         // Clear data before each test
         await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterEach(async () => {
@@ -60,8 +69,9 @@ describe("ApplicationController (e2e)", () => {
     it("(GET) /application/ - empty", () => {
         return request(app.getHttpServer())
             .get("/application/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
-
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body.count).toBe(0);
@@ -87,6 +97,8 @@ describe("ApplicationController (e2e)", () => {
 
         return request(app.getHttpServer())
             .get("/application/")
+            .auth(globalAdminJwt, { type: "bearer" })
+
             .send()
             .expect(200)
 
@@ -136,6 +148,7 @@ describe("ApplicationController (e2e)", () => {
 
         return request(app.getHttpServer())
             .get("/application?limit=1&offset=1")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
 
@@ -168,6 +181,7 @@ describe("ApplicationController (e2e)", () => {
 
         return request(app.getHttpServer())
             .get(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
 
             .expect("Content-Type", /json/)
@@ -194,6 +208,7 @@ describe("ApplicationController (e2e)", () => {
 
         return request(app.getHttpServer())
             .get(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
 
             .expect("Content-Type", /json/)
@@ -214,6 +229,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .post("/application/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(testAppOne)
             .expect(201)
             .expect("Content-Type", /json/)
@@ -249,6 +265,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .post("/application/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(testAppOne)
             .expect(400)
             .expect("Content-Type", /json/)
@@ -276,6 +293,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -301,6 +319,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -328,6 +347,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .put(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(putTest)
             .expect(200)
             .expect("Content-Type", /json/)
@@ -366,6 +386,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .put(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(putTest)
             .expect(200)
             .expect("Content-Type", /json/)
@@ -410,6 +431,7 @@ describe("ApplicationController (e2e)", () => {
 
         await request(app.getHttpServer())
             .put(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(putTest)
             .expect(400)
             .expect("Content-Type", /json/)
@@ -451,6 +473,7 @@ describe("ApplicationController (e2e)", () => {
         // Act
         await request(app.getHttpServer())
             .put(`/application/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(putTest)
             .expect(200)
             .expect("Content-Type", /json/)

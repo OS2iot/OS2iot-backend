@@ -8,7 +8,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
-import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import {
     generateSigfoxRawRequestDto,
@@ -19,9 +19,9 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { HttpService } from "@nestjs/common";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationService } from "../../src/organization/organization.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 import { Permission } from "@entities/permission.entity";
-import { User } from "../../src/entities/user.entity";
+import { User } from "@entities/user.entity";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;

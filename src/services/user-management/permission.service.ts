@@ -11,18 +11,18 @@ import { ReadPermission } from "@entities/read-permission.entity";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { CreatePermissionDto } from "./create-permission.dto";
 import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationService } from "../organization/organization.service";
-import { UpdatePermissionDto } from "./update-permission.dto";
+import { OrganizationService } from "./organization.service";
 import * as _ from "lodash";
-import { UserService } from "../user/user.service";
-import { PermissionMinimalDto } from "../entities/dto/permission-minimal.dto";
+import { UserService } from "./user.service";
+import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UserPermissions } from "../entities/dto/permission-organization-application.dto";
-import { GlobalAdminPermission } from "../entities/global-admin-permission.entity";
+import { UserPermissions } from "@dto/permission-organization-application.dto";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { User } from "@entities/user.entity";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
+import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 
 @Injectable()
 export class PermissionService {

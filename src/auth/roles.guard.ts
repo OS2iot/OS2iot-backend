@@ -5,8 +5,8 @@ import {
     Logger,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { AuthenticatedUser } from "../auth/authenticated-user";
 import { PermissionType } from "@enum/permission-type.enum";
+import { AuthenticatedUser } from "@dto/internal/authenticated-user";
 
 @Injectable()
 export class RolesGuard implements CanActivate {

@@ -10,7 +10,7 @@ import {
     Get,
     Delete,
 } from "@nestjs/common";
-import { OrganizationService } from "./organization.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
 import {
     ApiOperation,
@@ -19,15 +19,15 @@ import {
     ApiForbiddenResponse,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { CreateOrganizationDto } from "./create-organization.dto";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
-import { RolesGuard } from "src/user/roles.guard";
-import { OrganizationAdmin } from "src/user/roles.decorator";
-import { GlobalAdmin } from "../user/roles.decorator";
-import { AuthenticatedRequest } from "src/auth/authenticated-request";
-import { UpdateOrganizationDto } from "./update-organization.dto";
-import { checkIfUserHasAdminAccessToOrganization } from "../auth/security-helper";
-import { DeleteResponseDto } from "../entities/dto/delete-application-response.dto";
+import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
+import { OrganizationAdmin } from "@auth/roles.decorator";
+import { GlobalAdmin } from "@auth/roles.decorator";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { RolesGuard } from "@auth/roles.guard";
+import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
+import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

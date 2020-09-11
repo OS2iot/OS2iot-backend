@@ -1,11 +1,11 @@
 import { Injectable, HttpService, Logger } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { CreateChirpstackDeviceDto } from "../../entities/dto/chirpstack/create-chirpstack-device.dto";
+import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-device.dto";
 import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
-import { CreateLoRaWANSettingsDto } from "../../entities/dto/create-lorawan-settings.dto";
-import { ChirpstackDeviceContentsDto } from "../../entities/dto/chirpstack/chirpstack-device-contents.dto";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
+import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
-import { ListAllDevicesResponseDto } from "../../entities/dto/chirpstack/list-all-devices-response.dto";
+import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {

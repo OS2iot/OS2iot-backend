@@ -15,14 +15,19 @@
         "lib": ["dom", "es2017"],
         "paths": {
             "@services/*": ["src/services/*"],
-            "@admin-controller/*": ["src/admin-controller/*"],
-            "@device-data-controller/*": ["src/device-data-controller/*"],
+            "@admin-controller/*": ["src/controllers/admin-controller/*"],
+            "@device-data-controller/*": [
+                "src/controllers/device-data-controller/*"
+            ],
+            "@user-management-controller/*": ["src/controllers/user-management/*"],
             "@interfaces/*": ["src/entities/interfaces/*"],
             "@dto/*": ["src/entities/dto/*"],
             "@enum/*": ["src/entities/enum/*"],
             "@entities/*": ["src/entities/*"],
             "@modules/*": ["src/modules/*"],
-            "@loaders/*": ["src/loaders/*"]
+            "@loaders/*": ["src/loaders/*"],
+            "@auth/*": ["src/auth/*"],
+            "@helpers/*": ["src/helpers/*"]
         }
     },
     "exclude": ["node_modules", "dist"]

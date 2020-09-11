@@ -7,13 +7,13 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
-import { GenericHTTPDevice } from "../entities/generic-http-device.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { Permission } from "@entities/permission.entity";
-import { AuthModule } from "../auth/auth.module";
-import { OrganizationModule } from "../organization/organization.module";
+import { AuthModule } from "./auth.module";
+import { OrganizationModule } from "./organization.module";
 
 @Module({
     imports: [

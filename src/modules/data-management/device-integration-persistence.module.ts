@@ -19,7 +19,7 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { AuthModule } from "../../auth/auth.module";
+import { AuthModule } from "@modules/auth.module";
 
 @Module({
     imports: [

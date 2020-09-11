@@ -6,7 +6,7 @@ import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
-import { ErrorCodes } from "../entities/enum/error-codes.enum";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
 
 @Injectable()
 export class PayloadDecoderService {

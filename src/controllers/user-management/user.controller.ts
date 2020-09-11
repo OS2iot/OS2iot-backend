@@ -9,8 +9,7 @@ import {
     Put,
     Param,
 } from "@nestjs/common";
-import { CreateUserDto } from "./create-user.dto";
-import { UserService } from "./user.service";
+import { UserService } from "@services/user-management/user.service";
 import {
     ApiOperation,
     ApiTags,
@@ -21,11 +20,12 @@ import {
 import { UserResponseDto } from "@dto/user-response.dto";
 import { QueryFailedError } from "typeorm";
 import { Logger } from "@nestjs/common";
-import { ErrorCodes } from "../entities/enum/error-codes.enum";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
-import { RolesGuard } from "./roles.guard";
-import { OrganizationAdmin } from "./roles.decorator";
-import { UpdateUserDto } from "./update-user.dto";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { RolesGuard } from "@auth/roles.guard";
+import { OrganizationAdmin } from "@auth/roles.decorator";
+import { CreateUserDto } from "@dto/user-management/create-user.dto";
+import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

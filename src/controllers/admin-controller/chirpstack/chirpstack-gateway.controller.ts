@@ -20,9 +20,9 @@ import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
-import { SingleGatewayResponseDto } from "../../entities/dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayDto } from "../../entities/dto/chirpstack/update-gateway.dto";
-import { ErrorCodes } from "../../entities/enum/error-codes.enum";
+import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")

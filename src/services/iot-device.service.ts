@@ -11,7 +11,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackDeviceService } from "./chirpstack/chirpstack-device.service";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
-import { ErrorCodes } from "../entities/enum/error-codes.enum";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
 
 @Injectable()
 export class IoTDeviceService {
