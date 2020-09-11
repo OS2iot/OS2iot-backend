@@ -10,7 +10,7 @@ import {
     generateSavedIoTDevice,
     generateSavedApplication,
     generateSavedDataTarget,
-} from "./test-helpers";
+} from "../test-helpers";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";

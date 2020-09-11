@@ -3,7 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { clearDatabase, generateSavedPayloadDecoder } from "./test-helpers";
+import { clearDatabase, generateSavedPayloadDecoder } from "../test-helpers";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";

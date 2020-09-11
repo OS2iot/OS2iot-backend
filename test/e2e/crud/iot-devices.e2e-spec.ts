@@ -5,7 +5,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { clearDatabase } from "./test-helpers";
+import { clearDatabase } from "../test-helpers";
 import { Application } from "@entities/application.entity";
 import { KafkaModule } from "@modules/kafka.module";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
