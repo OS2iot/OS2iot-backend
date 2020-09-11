@@ -9,7 +9,7 @@ import {
     clearDatabase,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
-} from "./test-helpers";
+} from "../test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 

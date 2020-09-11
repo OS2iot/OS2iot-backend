@@ -4,7 +4,7 @@ import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
-import { clearDatabase } from "./test-helpers";
+import { clearDatabase } from "../test-helpers";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetModule } from "@modules/data-target.module";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
