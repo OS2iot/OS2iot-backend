@@ -6,6 +6,9 @@ import * as bcrypt from "bcryptjs";
 import { Permission } from "@entities/permission.entity";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
+import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
+import { CombinedSubscribeTo } from "../kafka/kafka.decorator";
+import { UserResponseDto } from "../../entities/dto/user-response.dto";
 
 @Injectable()
 export class UserService {
@@ -108,9 +111,14 @@ export class UserService {
         return await this.userRepository.findByIds(userIds);
     }
 
-    async findAll(): Promise<User[]> {
-        return await this.userRepository.find({
+    async findAll(): Promise<ListAllUsersReponseDto> {
+        const [data, count] = await this.userRepository.findAndCount({
             relations: ["permissions"],
         });
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
     }
 }

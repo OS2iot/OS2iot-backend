@@ -8,6 +8,7 @@ import {
     Get,
     Put,
     Param,
+    NotFoundException,
 } from "@nestjs/common";
 import { UserService } from "@services/user-management/user.service";
 import {
@@ -26,6 +27,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
+import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -86,16 +88,22 @@ export class UserController {
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     async find(@Param("id") id: number): Promise<UserResponseDto> {
-        // Don't leak the passwordHash
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { passwordHash, ...user } = await this.userService.findOne(id);
+        try {
+            // Don't leak the passwordHash
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { passwordHash, ...user } = await this.userService.findOne(
+                id
+            );
 
-        return user;
+            return user;
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
     }
 
     @Get()
     @ApiOperation({ summary: "Get all users" })
-    async findAll(): Promise<UserResponseDto[]> {
+    async findAll(): Promise<ListAllUsersReponseDto> {
         return await this.userService.findAll();
     }
 }
