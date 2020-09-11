@@ -14,6 +14,10 @@ import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { UserBootstrapperService } from "@services/user-management/user-bootstrapper.service";
 import { PermissionModule } from "@modules/permission.module";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { ReceivedMessage } from "../entities/received-message";
+import { ReceivedMessageMetadata } from "../entities/received-message-metadata";
+import { DataTarget } from "@entities/data-target.entity";
 
 @Module({
     imports: [
@@ -28,6 +32,10 @@ import { PermissionModule } from "@modules/permission.module";
             OrganizationApplicationPermission,
             ReadPermission,
             WritePermission,
+            IoTDevice,
+            ReceivedMessage,
+            ReceivedMessageMetadata,
+            DataTarget,
         ]),
         forwardRef(() => PermissionModule),
     ],
