@@ -2,10 +2,10 @@ import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Organization } from "@entities/organization.entity";
 import { Repository, In } from "typeorm";
-import { CreateOrganizationDto } from "./create-organization.dto";
-import { PermissionService } from "../permission/permission.service";
-import { UpdateOrganizationDto } from "./update-organization.dto";
+import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
+import { PermissionService } from "./permission.service";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 
 @Injectable()
 export class OrganizationService {

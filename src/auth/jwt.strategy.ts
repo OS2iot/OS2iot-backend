@@ -2,9 +2,9 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { PassportStrategy } from "@nestjs/passport";
 import { Injectable } from "@nestjs/common";
 import { jwtConstants } from "./constants";
-import { AuthenticatedUser } from "./authenticated-user";
-import { PermissionService } from "../permission/permission.service";
-import { JwtPayloadDto } from "./jwt-payload.dto";
+import { PermissionService } from "@services/user-management/permission.service";
+import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
+import { AuthenticatedUser } from "@dto/internal/authenticated-user";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

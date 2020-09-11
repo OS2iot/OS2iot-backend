@@ -1,6 +1,5 @@
 import { Module, HttpModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
@@ -9,9 +8,10 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
-import { LoRaWANDevice } from "../entities/lorawan-device.entity";
-import { ApplicationModule } from "./application.module";
-import { IoTDeviceModule } from "./iot-device.module";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { ApplicationModule } from "@modules/application.module";
+import { IoTDeviceModule } from "@modules/iot-device.module";
+import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 
 @Module({
     imports: [

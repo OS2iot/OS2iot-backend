@@ -1,4 +1,4 @@
-import { PermissionType } from "../entities/enum/permission-type.enum";
+import { PermissionType } from "@entities/enum/permission-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class CreatePermissionDto {

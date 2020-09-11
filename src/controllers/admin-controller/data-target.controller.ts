@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBadRequestResponse } from "@nestjs/swagger";
 import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
-import { CreateDataTargetDto } from "@entities/dto/create-data-target.dto";
+import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";

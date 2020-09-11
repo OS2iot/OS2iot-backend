@@ -6,7 +6,7 @@ import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
-import { OrganizationService } from "../organization/organization.service";
+import { OrganizationService } from "./user-management/organization.service";
 
 @Injectable()
 export class ApplicationService {
@@ -17,17 +17,12 @@ export class ApplicationService {
     ) {}
 
     async findAndCountWithPagination(
-        organizations: number[],
-        query?: ListAllEntitiesDto
+        query?: ListAllEntitiesDto,
+        organizations?: number[]
     ): Promise<ListAllApplicationsReponseDto> {
-        if (organizations.length == 0) {
-            return {
-                data: [],
-                count: 0,
-            };
-        }
         const [result, total] = await this.applicationRepository.findAndCount({
-            where: { belongsTo: In(organizations) },
+            where:
+                organizations != null ? { belongsTo: In(organizations) } : {},
             take: query.limit,
             skip: query.offset,
             relations: ["iotDevices"],

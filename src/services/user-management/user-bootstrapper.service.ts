@@ -1,6 +1,6 @@
 import { OnModuleInit, Logger, Inject, forwardRef } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { PermissionService } from "../permission/permission.service";
+import { PermissionService } from "./permission.service";
 
 export class UserBootstrapperService implements OnModuleInit {
     constructor(

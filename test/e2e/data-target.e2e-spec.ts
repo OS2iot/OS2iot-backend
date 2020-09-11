@@ -8,7 +8,7 @@ import { clearDatabase } from "./test-helpers";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetModule } from "@modules/data-target.module";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { CreateDataTargetDto } from "@entities/dto/create-data-target.dto";
+import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { KafkaModule } from "@modules/kafka.module";
 

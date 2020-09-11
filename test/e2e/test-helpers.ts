@@ -2,7 +2,7 @@ import { getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { RawRequestDto } from "@entities/dto/kafka/raw-request.dto";
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
@@ -11,6 +11,13 @@ import { DataTarget } from "@entities/data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { User } from "@entities/user.entity";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
+import { GlobalAdmin } from "../../src/auth/roles.decorator";
+import { Permission } from "@entities/permission.entity";
+import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
+import { JwtService } from "@nestjs/jwt";
+import { jwtConstants } from "@auth/constants";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -20,8 +27,50 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "data_target"; \n` +
             `DELETE FROM "received_message"; \n` +
             `DELETE FROM "received_message_metadata";  \n` +
-            `DELETE FROM "payload_decoder";  \n`
+            `DELETE FROM "payload_decoder";  \n` +
+            `DELETE FROM "user";  \n` +
+            `DELETE FROM "permission";  \n` +
+            `DELETE FROM "user_permissions_permission";  \n` +
+            `DELETE FROM "organization";  \n` +
+            `DELETE FROM "application_permissions_permission";  \n`
     );
+}
+
+export function generateValidJwtForUser(user: User): string {
+    const jwtService = new JwtService({
+        secret: jwtConstants.secret,
+        signOptions: { expiresIn: "9h" },
+    });
+    const payload: JwtPayloadDto = { username: user.email, sub: user.id };
+    return jwtService.sign(payload);
+}
+
+export function generateGlobalAdminPermission(): GlobalAdminPermission {
+    return new GlobalAdminPermission();
+}
+
+export async function generateSavedGlobalAdminPermission(): Promise<
+    GlobalAdminPermission
+> {
+    return await getManager().save(generateGlobalAdminPermission());
+}
+
+export function generateUser(permissions: Permission[]): User {
+    const user = new User();
+    user.name = "Admin";
+    user.email = "test@test.test";
+    user.active = true;
+    user.passwordHash = "";
+    user.permissions = permissions;
+
+    return user;
+}
+
+export async function generateSavedGlobalAdminUser(): Promise<User> {
+    const globalAdmin = await generateSavedGlobalAdminPermission();
+    const user = await getManager().save(generateUser([globalAdmin]));
+
+    return user;
 }
 
 export function generateApplication(): Application {

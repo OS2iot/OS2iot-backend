@@ -11,7 +11,7 @@ import {
     ForbiddenException,
     Delete,
 } from "@nestjs/common";
-import { PermissionService } from "./permission.service";
+import { PermissionService } from "@services/user-management/permission.service";
 import {
     ApiOperation,
     ApiTags,
@@ -20,16 +20,16 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { Permission } from "@entities/permission.entity";
-import { CreatePermissionDto } from "./create-permission.dto";
-import { UpdatePermissionDto } from "./update-permission.dto";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard } from "../user/roles.guard";
-import { OrganizationAdmin } from "../user/roles.decorator";
-import { AuthenticatedRequest } from "../auth/authenticated-request";
-import { checkIfUserHasAdminAccessToOrganization } from "../auth/security-helper";
+import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
+import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
 import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationPermission } from "../entities/organizion-permission.entity";
-import { DeleteResponseDto } from "../entities/dto/delete-application-response.dto";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { RolesGuard } from "@auth/roles.guard";
+import { OrganizationAdmin } from "@auth/roles.decorator";
+import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

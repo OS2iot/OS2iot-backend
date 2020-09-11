@@ -7,14 +7,14 @@ import {
     Body,
 } from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { LocalAuthGuard } from "./local-auth.guard";
-import { JwtAuthGuard } from "./jwt-auth.guard";
-import { AuthService } from "./auth.service";
+import { AuthService } from "@services/user-management/auth.service";
+import { LocalAuthGuard } from "@auth/local-auth.guard";
 import {
-    AuthenticatedRequest,
     AuthenticatedRequestLocalStrategy,
-} from "./authenticated-request";
-import { LoginDto } from "./login.dto";
+    AuthenticatedRequest,
+} from "@dto/internal/authenticated-request";
+import { LoginDto } from "@dto/login.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 
 @ApiTags("Auth")
 @Controller("auth")

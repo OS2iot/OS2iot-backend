@@ -21,7 +21,7 @@ import {
     ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
-import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "../entities/dto/create-iot-device-payload-decoder-data-target-connection.dto";
+import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
