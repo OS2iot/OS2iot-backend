@@ -15,6 +15,7 @@ import {
 } from "@dto/internal/authenticated-request";
 import { LoginDto } from "@dto/login.dto";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -39,10 +40,12 @@ export class AuthController {
     })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    async getProfile(@Request() req: AuthenticatedRequest): Promise<any> {
+    async getProfile(
+        @Request() req: AuthenticatedRequest
+    ): Promise<JwtPayloadDto> {
         return {
-            userId: req.user.userId,
-            email: req.user.username,
+            sub: req.user.userId,
+            username: req.user.username,
         };
     }
 }

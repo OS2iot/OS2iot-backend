@@ -60,7 +60,9 @@ export function generateUser(permissions: Permission[]): User {
     user.name = "Admin";
     user.email = "test@test.test";
     user.active = true;
-    user.passwordHash = "";
+    // Password is 'hunter2', but saving the hash since it takes ~100 ms (by design) to generate the hash.
+    user.passwordHash =
+        "$2a$10$ypJWMZzMokzdq/gaNYsNieDTCjSCYyzpBzEtyqXDd5VVW1STbmXT2";
     user.permissions = permissions;
 
     return user;
