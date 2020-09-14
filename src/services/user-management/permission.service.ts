@@ -23,6 +23,7 @@ import { User } from "@entities/user.entity";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
+import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
 
 @Injectable()
 export class PermissionService {
@@ -128,19 +129,32 @@ export class PermissionService {
         return new DeleteResponseDto(res.affected);
     }
 
-    async getAllPermissions(): Promise<Permission[]> {
-        return await getManager().find(Permission, {
+    async getAllPermissions(): Promise<ListAllPermissionsReponseDto> {
+        const [data, count] = await getManager().findAndCount(Permission, {
             relations: ["organization", "users"],
         });
+
+        return {
+            data: data,
+            count: count,
+        };
     }
 
     async getAllPermissionsInOrganizations(
         orgs: number[]
-    ): Promise<Permission[]> {
-        return await getManager().find(OrganizationPermission, {
-            where: { organization: In(orgs) },
-            relations: ["organization", "users"],
-        });
+    ): Promise<ListAllPermissionsReponseDto> {
+        const [data, count] = await getManager().findAndCount(
+            OrganizationPermission,
+            {
+                where: { organization: In(orgs) },
+                relations: ["organization", "users"],
+            }
+        );
+
+        return {
+            data: data,
+            count: count,
+        };
     }
 
     async getPermission(id: number): Promise<Permission> {

@@ -31,6 +31,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { ListAllApplicationsReponseDto } from '../../entities/dto/list-all-applications-response.dto';
+import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -83,7 +84,7 @@ export class PermissionController {
     @ApiOperation({ summary: "Get list of all permissions" })
     async getAllPermissions(
         @Req() req: AuthenticatedRequest
-    ): ListAllPermissionsReponseDto {
+    ): Promise<ListAllPermissionsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.permissionService.getAllPermissions();
         } else {
