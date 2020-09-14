@@ -21,7 +21,8 @@ export class DataTargetService {
     ) {}
 
     async findAndCountAllWithPagination(
-        query?: ListAllDataTargetsDto
+        query?: ListAllDataTargetsDto,
+        applicationIds?: number[]
     ): Promise<ListAllDataTargetsReponseDto> {
         let queryBuilder = getConnection()
             .getRepository(DataTarget)
@@ -37,6 +38,13 @@ export class DataTargetService {
                 "datatarget.application = :appId",
                 {
                     appId: query.applicationId,
+                }
+            );
+        } else if (applicationIds) {
+            queryBuilder = queryBuilder.where(
+                '"application"."id" IN (:...allowedApplications)',
+                {
+                    allowedApplications: applicationIds,
                 }
             );
         }

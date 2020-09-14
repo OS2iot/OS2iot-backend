@@ -4,7 +4,7 @@ import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
-import { clearDatabase } from "../test-helpers";
+import { clearDatabase, generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetModule } from "@modules/data-target.module";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
@@ -16,6 +16,7 @@ describe("DataTargetController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<HttpPushDataTarget>;
     let applicationRepository: Repository<Application>;
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -56,6 +57,10 @@ describe("DataTargetController (e2e)", () => {
     beforeEach(async () => {
         // Clear data before each test
         await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterEach(async () => {
@@ -97,6 +102,8 @@ describe("DataTargetController (e2e)", () => {
     it("(GET) /data-target/ - empty", () => {
         return request(app.getHttpServer())
             .get("/data-target/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -112,6 +119,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get("/data-target/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -136,6 +145,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/data-target?applicationId=${appId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -160,6 +171,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/data-target?applicationId=${appId + 1}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -176,6 +189,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/data-target/${dataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -198,6 +213,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/data-target/${wrongDataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -221,6 +238,7 @@ describe("DataTargetController (e2e)", () => {
 
         await request(app.getHttpServer())
             .post(`/data-target/`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
             .expect(201)
             .expect("Content-Type", /json/)
@@ -252,6 +270,7 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(`/data-target/`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
             .expect(400)
             .expect("Content-Type", /json/)
@@ -273,6 +292,7 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(`/data-target/`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
             .expect(400)
             .expect("Content-Type", /json/)
@@ -300,6 +320,7 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .put(`/data-target/${dataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
             .expect(200)
             .expect("Content-Type", /json/)
@@ -317,6 +338,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .delete(`/data-target/${wrongDataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -333,6 +356,8 @@ describe("DataTargetController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .delete(`/data-target/${wrongDataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
