@@ -3,7 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { clearDatabase, generateSavedPayloadDecoder } from "../test-helpers";
+import { clearDatabase, generateSavedPayloadDecoder, generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
@@ -12,6 +12,7 @@ import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<PayloadDecoder>;
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -46,6 +47,10 @@ describe("PayloadDecoderController (e2e)", () => {
     beforeEach(async () => {
         // Clear data before each test
         await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterEach(async () => {
@@ -56,6 +61,7 @@ describe("PayloadDecoderController (e2e)", () => {
     it("(GET) /payload-decoder/ - empty", () => {
         return request(app.getHttpServer())
             .get("/payload-decoder/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -69,6 +75,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get("/payload-decoder/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -86,6 +93,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/payload-decoder/${decoder.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -102,6 +110,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`/payload-decoder/${wrongId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -119,6 +128,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         await request(app.getHttpServer())
             .post(`/payload-decoder/`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(body)
             .expect(201)
             .expect("Content-Type", /json/)
@@ -144,6 +154,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(`/payload-decoder/`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(body)
             .expect(400)
             .expect("Content-Type", /json/)
@@ -163,6 +174,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .put(`/payload-decoder/${decoder.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(body)
             .expect(200)
             .expect("Content-Type", /json/)
@@ -180,6 +192,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .delete(`/payload-decoder/${wrongId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -194,6 +207,7 @@ describe("PayloadDecoderController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .delete(`/payload-decoder/${decoder.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
