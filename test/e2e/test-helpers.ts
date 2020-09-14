@@ -13,11 +13,15 @@ import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-devic
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { User } from "@entities/user.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { GlobalAdmin } from "../../src/auth/roles.decorator";
 import { Permission } from "@entities/permission.entity";
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { JwtService } from "@nestjs/jwt";
 import { jwtConstants } from "@auth/constants";
+import { OrganizationAdminPermission } from "../../src/entities/organization-admin-permission.entity";
+import { Organization } from "@entities/organization.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
+import { WritePermission } from "@entities/write-permission.entity";
+import { PermissionType } from "@enum/permission-type.enum";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -55,10 +59,51 @@ export async function generateSavedGlobalAdminPermission(): Promise<
     return await getManager().save(generateGlobalAdminPermission());
 }
 
+export function generateOrganizationAdminPermission(
+    org: Organization
+): OrganizationAdminPermission {
+    return new OrganizationAdminPermission("E2E Test - Org admin", org);
+}
+
+export async function generateSavedOrganizationAdminPermission(
+    org: Organization
+): Promise<OrganizationAdminPermission> {
+    return await getManager().save(generateOrganizationAdminPermission(org));
+}
+
+export function generateOrganization(name?: string): Organization {
+    const org = new Organization();
+    org.name = name ? name : "E2E Test Organization";
+    org.applications = [];
+
+    const READ_SUFFIX = " - Read";
+    const WRITE_SUFFIX = " - Write";
+    const ADMIN_SUFFIX = " - OrganizationAdmin";
+
+    const readPermission = new ReadPermission(org.name + READ_SUFFIX, org);
+    const writePermission = new WritePermission(org.name + WRITE_SUFFIX, org);
+    const adminPermission = new OrganizationAdminPermission(
+        org.name + ADMIN_SUFFIX,
+        org
+    );
+    org.permissions = [adminPermission, writePermission, readPermission];
+
+    return org;
+}
+
+export async function generateSavedOrganization(
+    name?: string
+): Promise<Organization> {
+    const org = generateOrganization(name);
+    const savedOrg = await getManager().save(org);
+    await getManager().save(org.permissions);
+    return savedOrg;
+}
+
 export function generateUser(permissions: Permission[]): User {
     const user = new User();
-    user.name = "Admin";
-    user.email = "test@test.test";
+    user.name = `TestUser${randomMacAddress()}`;
+    user.email = `${user.name}@test.test`;
     user.active = true;
     // Password is 'hunter2', but saving the hash since it takes ~100 ms (by design) to generate the hash.
     user.passwordHash =
@@ -75,18 +120,42 @@ export async function generateSavedGlobalAdminUser(): Promise<User> {
     return user;
 }
 
-export function generateApplication(): Application {
+export async function generateSavedOrganizationAdminUser(
+    org: Organization
+): Promise<User> {
+    let orgAdmin = org.permissions.find(
+        x => x.type == PermissionType.OrganizationAdmin
+    );
+    if (!orgAdmin) {
+        orgAdmin = await generateSavedOrganizationAdminPermission(org);
+    }
+    const user = await getManager().save(generateUser([orgAdmin]));
+
+    return user;
+}
+
+export function generateApplication(org?: Organization): Application {
     const app = new Application();
     app.name = "E2E Test Application";
     app.description = "E2E Test Application Description";
     app.iotDevices = [];
     app.dataTargets = [];
+    app.belongsTo = org;
 
     return app;
 }
 
-export async function generateSavedApplication(): Promise<Application> {
-    return await getManager().save(generateApplication());
+export async function generateSavedApplication(
+    org?: Organization
+): Promise<Application> {
+    let app;
+    if (org) {
+        app = generateApplication(org);
+    } else {
+        const org = await generateSavedOrganization();
+        app = generateApplication(org);
+    }
+    return await getManager().save(app);
 }
 
 export function generateIoTDevice(applications: Application): IoTDevice {
@@ -489,4 +558,9 @@ export async function getNetworkServerId(
             });
         });
     return id;
+}
+
+function randomMacAddress(): string {
+    const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
+    return n.padStart(16, "0");
 }

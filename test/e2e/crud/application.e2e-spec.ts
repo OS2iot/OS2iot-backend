@@ -9,9 +9,12 @@ import {
     clearDatabase,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
+    generateSavedOrganization,
+    generateSavedApplication,
 } from "../test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { CreateApplicationDto } from "../../../src/entities/dto/create-application.dto";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -30,7 +33,7 @@ describe("ApplicationController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: true,
+                    logging: false,
                     autoLoadEntities: true,
                 }),
                 KafkaModule.register({
@@ -220,11 +223,12 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(POST) /application/ - Create application", async () => {
-        const testAppOne = {
+        const org = await generateSavedOrganization();
+
+        const testAppOne: CreateApplicationDto = {
             name: "Post Test",
             description: "Post Tester",
-            iotDevices: [] as any,
-            dataTargets: [] as any,
+            organizationId: org.id,
         };
 
         await request(app.getHttpServer())
@@ -247,20 +251,21 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(POST) /application/ - Create application - fail as name is not unique", async () => {
+        const org = await generateSavedOrganization();
         const application = await repository.save([
             {
                 name: "Test",
                 description: "Tester",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
         ]);
 
         const testAppOne = {
             name: application[0].name,
             description: "Post Tester",
-            iotDevices: [] as any,
-            dataTargets: [] as any,
+            organizationId: org.id,
         };
 
         await request(app.getHttpServer())
@@ -281,12 +286,14 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(DELETE) /application/ - Delete application", async () => {
+        const org = await generateSavedOrganization();
         const application = await repository.save([
             {
                 name: "test sletning",
                 description: "test sletning description",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
         ]);
         const id = application[0].id;
@@ -307,12 +314,14 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(DELETE) /application/ - Delete application - Not existing", async () => {
+        const org = await generateSavedOrganization();
         const application = await repository.save([
             {
                 name: "Test",
                 description: "Tester",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
         ]);
         const id = application[0].id + 1; // Doesn't exist
@@ -333,15 +342,8 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(PUT) /application/ - Change application", async () => {
-        const application = await repository.save([
-            {
-                name: "Test",
-                description: "Tester",
-                iotDevices: [],
-                dataTargets: [],
-            },
-        ]);
-        const id = application[0].id;
+        const application = await generateSavedApplication();
+        const id = application.id;
 
         const putTest = { name: "PUT Test", description: "PUT Tester" };
 
@@ -369,18 +371,11 @@ describe("ApplicationController (e2e)", () => {
     });
 
     it("(PUT) /application/ - Change application - to same name allowed", async () => {
-        const application = await repository.save([
-            {
-                name: "Test",
-                description: "Tester",
-                iotDevices: [],
-                dataTargets: [],
-            },
-        ]);
-        const id = application[0].id;
+        const application = await generateSavedApplication();
+        const id = application.id;
 
         const putTest = {
-            name: application[0].name,
+            name: application.name,
             description: "PUT Tester",
         };
 
@@ -393,7 +388,7 @@ describe("ApplicationController (e2e)", () => {
             .then(response => {
                 expect(response.body).toMatchObject({
                     id: id,
-                    name: application[0].name,
+                    name: application.name,
                     description: "PUT Tester",
                 });
             });
@@ -402,24 +397,27 @@ describe("ApplicationController (e2e)", () => {
         expect(applicationInDatabase).toHaveLength(1);
         expect(applicationInDatabase[0]).toMatchObject({
             id: id,
-            name: application[0].name,
+            name: application.name,
             description: "PUT Tester",
         });
     });
 
     it("(PUT) /application/ - Change application - to same name allowed of another, not allowed", async () => {
+        const org = await generateSavedOrganization();
         const application = await repository.save([
             {
                 name: "Test",
                 description: "Tester",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
             {
                 name: "Test2",
                 description: "Tester",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
         ]);
         const id = application[0].id;
@@ -445,12 +443,14 @@ describe("ApplicationController (e2e)", () => {
 
     it("(PUT) /application/ - Change application - show iotdevices and datatargets in results", async () => {
         // Arrange
+        const org = await generateSavedOrganization();
         const application = await repository.save([
             {
                 name: "Test",
                 description: "Tester",
                 iotDevices: [],
                 dataTargets: [],
+                belongsTo: org,
             },
         ]);
         const id = application[0].id;

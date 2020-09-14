@@ -10,8 +10,9 @@ import {
 } from "../test-helpers";
 import { UserModule } from "@modules/user.module";
 import { User } from "@entities/user.entity";
-import { AuthModule } from "../../../src/modules/auth.module";
+import { AuthModule } from "@modules/auth.module";
 import * as bcrypt from "bcryptjs";
+import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 
 describe("UserController (e2e)", () => {
     let app: INestApplication;
@@ -74,7 +75,7 @@ describe("UserController (e2e)", () => {
                 expect(response.body.count).toBe(1);
                 expect(response.body.data).toMatchObject([
                     {
-                        email: "test@test.test",
+                        email: user.email,
                     },
                 ]);
                 // Ensure that passwords / passwordHashes are not leaked.
@@ -186,12 +187,69 @@ describe("UserController (e2e)", () => {
     });
 
     it("(PUT) /user/:id - Update user", async () => {
-        // TODO: This
-        return true;
+        const dto: UpdateUserDto = {
+            name: `${user.name} - changed`,
+            email: user.email,
+            password: "nothunter2",
+            active: true,
+        };
+
+        await request(app.getHttpServer())
+            .put(`/user/${user.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: `${user.name} - changed`,
+                    email: user.email,
+                    active: true,
+                });
+            });
+
+        const usersInDb: User[] = await repository.find();
+        expect(usersInDb).toHaveLength(1);
+        const userFromDb = await repository.findOne(user.id, {
+            select: ["passwordHash"],
+        });
+        const isPasswordCorrect = await bcrypt.compare(
+            dto.password,
+            userFromDb.passwordHash
+        );
+        expect(isPasswordCorrect).toBeTruthy();
     });
 
-    it("(DELETE) /user/:id - Delete user", async () => {
-        // TODO: This
-        return true;
+    it("(PUT) /user/:id - Update user - password optional", async () => {
+        const dto: UpdateUserDto = {
+            name: `${user.name} - changed2`,
+            email: user.email,
+            active: true,
+        };
+
+        await request(app.getHttpServer())
+            .put(`/user/${user.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: `${user.name} - changed2`,
+                    email: user.email,
+                    active: true,
+                });
+            });
+
+        const usersInDb: User[] = await repository.find();
+        expect(usersInDb).toHaveLength(1);
+        const userFromDb = await repository.findOne(user.id, {
+            select: ["passwordHash"],
+        });
+        const isPasswordCorrect = await bcrypt.compare(
+            "hunter2",
+            userFromDb.passwordHash
+        );
+        expect(isPasswordCorrect).toBeTruthy();
     });
 });
