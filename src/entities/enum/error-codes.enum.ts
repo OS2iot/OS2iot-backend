@@ -12,4 +12,5 @@ export enum ErrorCodes {
     UserAlreadyExists = "MESSAGE.USER-ALREADY-EXISTS",
     OrganizationAlreadyExists = "MESSAGE.ORGANIZATION-ALREADY-EXISTS",
     UserInactive = "MESSAGE.USER-INACTIVE",
+    NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION"
 }

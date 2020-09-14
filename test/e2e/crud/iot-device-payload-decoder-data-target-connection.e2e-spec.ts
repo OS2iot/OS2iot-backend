@@ -10,6 +10,8 @@ import {
     generateSavedIoTDevice,
     generateSavedApplication,
     generateSavedDataTarget,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
 } from "../test-helpers";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
@@ -19,6 +21,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<IoTDevicePayloadDecoderDataTargetConnection>;
     const urlPath = "/iot-device-payload-decoder-data-target-connection/";
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -55,6 +58,10 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     beforeEach(async () => {
         // Clear data before each test
         await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterEach(async () => {
@@ -65,6 +72,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     it("(GET) /iot-device-payload-decoder-data-target-connection/ - Empty", async () => {
         return await request(app.getHttpServer())
             .get(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .then(response => {
                 expect(response.body.count).toBe(0);
@@ -81,6 +90,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .then(response => {
                 expect(response.body.count).toBe(1);
@@ -113,6 +124,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get(`${urlPath}${connection.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .then(response => {
                 expect(response.body).toMatchObject({
@@ -143,6 +156,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(201)
             .then(response => {
@@ -171,6 +185,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(201)
             .then(response => {
@@ -200,6 +215,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(201)
             .then(response => {
@@ -234,6 +250,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         return await request(app.getHttpServer())
             .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(201)
             .then(response => {
@@ -262,6 +279,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete(`${urlPath}${connection.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
             .then(response => {
                 expect(response.body).toMatchObject({

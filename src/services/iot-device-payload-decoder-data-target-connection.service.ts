@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
-import { Repository, FindConditions, DeleteResult } from "typeorm";
+import { Repository, FindConditions, DeleteResult, In } from "typeorm";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
@@ -13,6 +13,7 @@ import { IoTDeviceService } from "./iot-device.service";
 import { DataTargetService } from "./data-target.service";
 import { PayloadDecoderService } from "./payload-decoder.service";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class IoTDevicePayloadDecoderDataTargetConnectionService {
@@ -27,10 +28,19 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     ) {}
 
     async findAndCountWithPagination(
-        query?: ListAllEntitiesDto
+        query?: ListAllEntitiesDto,
+        allowed?: number[]
     ): Promise<ListAllConnectionsReponseDto> {
         return await this.findAllWithWhere(
-            {},
+            allowed
+                ? {
+                      iotDevice: {
+                          application: {
+                              id: In(allowed),
+                          },
+                      },
+                  }
+                : {},
             query.limit,
             query.offset,
             query.sort
@@ -47,7 +57,13 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
             where: where || {},
             take: limit || 1000,
             skip: offset || 0,
-            relations: ["iotDevice", "payloadDecoder", "dataTarget"],
+            relations: [
+                "iotDevice",
+                "payloadDecoder",
+                "dataTarget",
+                "iotDevice.application",
+                "dataTarget.application",
+            ],
             order: { id: sort },
         });
 
@@ -58,21 +74,67 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     }
 
     async findAllByIoTDeviceId(
-        id: number
+        id: number,
+        allowed?: number[]
     ): Promise<ListAllConnectionsReponseDto> {
-        return await this.findAllWithWhere({ iotDevice: { id: id } });
+        if (allowed) {
+            return await this.findAllWithWhere({
+                iotDevice: {
+                    id: id,
+                    application: {
+                        id: In(allowed),
+                    },
+                },
+            });
+        } else {
+            return await this.findAllWithWhere({
+                iotDevice: {
+                    id: id,
+                },
+            });
+        }
     }
 
     async findAllByPayloadDecoderId(
-        id: number
+        id: number,
+        allowed?: number[]
     ): Promise<ListAllConnectionsReponseDto> {
-        return await this.findAllWithWhere({ payloadDecoder: { id: id } });
+        if (allowed) {
+            return await this.findAllWithWhere({
+                payloadDecoder: { id: id },
+                iotDevice: {
+                    application: {
+                        id: In(allowed),
+                    },
+                },
+            });
+        } else {
+            return await this.findAllWithWhere({
+                payloadDecoder: { id: id },
+            });
+        }
     }
 
     async findAllByDataTargetId(
-        id: number
+        id: number,
+        allowed?: number[]
     ): Promise<ListAllConnectionsReponseDto> {
-        return await this.findAllWithWhere({ dataTarget: { id: id } });
+        if (allowed) {
+            return await this.findAllWithWhere({
+                dataTarget: {
+                    id: id,
+                    application: {
+                        id: In(allowed),
+                    },
+                },
+            });
+        } else {
+            return await this.findAllWithWhere({
+                dataTarget: {
+                    id: id,
+                },
+            });
+        }
     }
 
     async findAllByIoTDeviceAndPayloadDecoderId(
@@ -91,7 +153,12 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         try {
             return await this.repository.findOne(id, {
-                relations: ["iotDevice", "payloadDecoder", "dataTarget"],
+                relations: [
+                    "iotDevice",
+                    "payloadDecoder",
+                    "dataTarget",
+                    "iotDevice.application",
+                ],
             });
         } catch (err) {
             throw new NotFoundException(
@@ -171,6 +238,13 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
                     `Could not find PayloadDecoder by id: '${createConnectionDto.payloadDecoderId}'`
                 );
             }
+        }
+
+        if (
+            connection.iotDevice.application.id !=
+            connection.dataTarget.application.id
+        ) {
+            throw new BadRequestException(ErrorCodes.NotSameApplication);
         }
 
         return connection;

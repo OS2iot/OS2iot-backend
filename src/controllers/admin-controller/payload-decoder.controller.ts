@@ -10,12 +10,16 @@ import {
     Delete,
     Logger,
     Query,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiBearerAuth,
+    ApiForbiddenResponse,
+    ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -25,9 +29,17 @@ import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { RolesGuard } from "@auth/roles.guard";
+import { Read, Write } from "@auth/roles.decorator";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+@Read()
+@ApiForbiddenResponse()
+@ApiUnauthorizedResponse()
 export class PayloadDecoderController {
     constructor(private payloadDecoderService: PayloadDecoderService) {}
 
@@ -63,6 +75,7 @@ export class PayloadDecoderController {
     }
 
     @Post()
+    @Write()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Payload Decoder" })
     @ApiBadRequestResponse()
@@ -77,6 +90,7 @@ export class PayloadDecoderController {
     }
 
     @Put(":id")
+    @Write()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing Payload Decoder" })
     @ApiBadRequestResponse()
@@ -94,6 +108,7 @@ export class PayloadDecoderController {
     }
 
     @Delete(":id")
+    @Write()
     @ApiOperation({ summary: "Delete an existing Payload Decoder" })
     @ApiNotFoundResponse()
     async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
