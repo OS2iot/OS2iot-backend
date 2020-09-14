@@ -5,7 +5,11 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { clearDatabase } from "../test-helpers";
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+} from "../test-helpers";
 import { Application } from "@entities/application.entity";
 import { KafkaModule } from "@modules/kafka.module";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
@@ -14,6 +18,7 @@ describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<GenericHTTPDevice>;
     let applicationRepository: Repository<Application>;
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -53,6 +58,10 @@ describe("IoTDeviceController (e2e)", () => {
 
     beforeEach(async () => {
         await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterEach(async () => {
@@ -63,6 +72,8 @@ describe("IoTDeviceController (e2e)", () => {
         const id = 1;
         const response = await request(app.getHttpServer())
             .get("/iot-device/" + id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(404)
             .expect("Content-Type", /json/);
         await expect(response.body).toMatchObject({
@@ -104,8 +115,9 @@ describe("IoTDeviceController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .get("/iot-device/" + iotDeviceId)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
-
             .expect("Content-Type", /json/)
             .then(response => {
                 // console.log(response.body);
@@ -155,9 +167,9 @@ describe("IoTDeviceController (e2e)", () => {
         };
         return await request(app.getHttpServer())
             .post("/iot-device/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(testIoTDevice)
             .expect(201)
-
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
@@ -213,6 +225,7 @@ describe("IoTDeviceController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .put("/iot-device/" + iotDeviceId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(changedIoTDeviceJson)
             .expect(200)
 
@@ -256,8 +269,9 @@ describe("IoTDeviceController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete("/iot-device/" + iotDeviceId)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
-
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({ affected: 1 });
@@ -291,8 +305,9 @@ describe("IoTDeviceController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete("/iot-device/" + iotDeviceId)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
             .expect(200)
-
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({ affected: 0 });
