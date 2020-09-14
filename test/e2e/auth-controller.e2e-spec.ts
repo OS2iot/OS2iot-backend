@@ -20,7 +20,7 @@ describe("AuthController (e2e)", () => {
                 PassportModule.register({ defaultStrategy: "jwt" }),
                 JwtModule.register({
                     secret: jwtConstants.secret,
-                    signOptions: { expiresIn: "9h" }, // TODO: Make this configurable?
+                    signOptions: { expiresIn: "9h" },
                 }),
                 TypeOrmModule.forRoot({
                     type: "postgres",
