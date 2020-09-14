@@ -9,6 +9,7 @@ import {
     Param,
     Get,
     Delete,
+    NotFoundException,
 } from "@nestjs/common";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
@@ -18,6 +19,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
 import { OrganizationAdmin } from "@auth/roles.decorator";
@@ -28,6 +30,8 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
+import { ErrorCodes } from "../../entities/enum/error-codes.enum";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -51,6 +55,7 @@ export class OrganizationController {
 
     @Put(":id")
     @ApiOperation({ summary: "Update an Organization" })
+    @ApiNotFoundResponse()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: number,
@@ -63,7 +68,9 @@ export class OrganizationController {
 
     @Get()
     @ApiOperation({ summary: "Get list of all Organizations" })
-    async findAll(@Req() req: AuthenticatedRequest): Promise<Organization[]> {
+    async findAll(
+        @Req() req: AuthenticatedRequest
+    ): Promise<ListAllOrganizationsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.organizationService.findAll();
         } else {
@@ -76,17 +83,22 @@ export class OrganizationController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one Organization" })
+    @ApiNotFoundResponse()
     async findOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, id);
-
-        return await this.organizationService.findById(id);
+        try {
+            return await this.organizationService.findById(id);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
     }
 
     @Delete(":id")
     @ApiOperation({ summary: "Delete an Organization" })
+    @ApiNotFoundResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: number

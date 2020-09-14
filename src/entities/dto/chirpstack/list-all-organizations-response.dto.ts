@@ -1,7 +1,7 @@
-import { OrganizationDto } from "./organization.dto";
+import { Organization } from "@entities/organization.entity";
 
 export class ListAllOrganizationsReponseDto {
     totalCount: number;
 
-    result: OrganizationDto[];
+    result: Organization[];
 }

@@ -38,7 +38,7 @@ import { PermissionModule } from "./permission.module";
             password: "toi2so",
             database: "os2iot",
             synchronize: true,
-            logging: true,
+            logging: false,
             autoLoadEntities: true,
             retryAttempts: 0,
             maxQueryExecutionTime: 200, // Log queries slower than 200 ms

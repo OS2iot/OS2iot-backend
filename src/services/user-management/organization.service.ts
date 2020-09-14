@@ -1,4 +1,10 @@
-import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
+import {
+    Injectable,
+    Logger,
+    Inject,
+    forwardRef,
+    BadRequestException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Organization } from "@entities/organization.entity";
 import { Repository, In } from "typeorm";
@@ -6,6 +12,8 @@ import { CreateOrganizationDto } from "@dto/user-management/create-organization.
 import { PermissionService } from "./permission.service";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
+import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class OrganizationService {
@@ -22,11 +30,15 @@ export class OrganizationService {
         const organization = new Organization();
         organization.name = dto.name;
 
-        const res = await this.organizationRepository.save(organization);
+        try {
+            const res = await this.organizationRepository.save(organization);
 
-        await this.permissionService.createDefaultPermissions(res);
+            await this.permissionService.createDefaultPermissions(res);
 
-        return res;
+            return res;
+        } catch (err) {
+            throw new BadRequestException(ErrorCodes.OrganizationAlreadyExists);
+        }
     }
 
     async update(
@@ -39,20 +51,35 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async findAll(): Promise<Organization[]> {
-        return await this.organizationRepository.find();
+    async findAll(): Promise<ListAllOrganizationsReponseDto> {
+        const [data, count] = await this.organizationRepository.findAndCount({
+            relations: ["permissions"],
+        });
+
+        return {
+            count: count,
+            data: data,
+        };
     }
 
     async findAllInOrganizationList(
         allowedOrganizations: number[]
-    ): Promise<Organization[]> {
-        return await this.organizationRepository.find({
+    ): Promise<ListAllOrganizationsReponseDto> {
+        const [data, count] = await this.organizationRepository.findAndCount({
             where: { id: In(allowedOrganizations) },
+            relations: ["permissions"],
         });
+
+        return {
+            count: count,
+            data: data,
+        };
     }
 
     async findById(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOne(organizationId);
+        return await this.organizationRepository.findOneOrFail(organizationId, {
+            relations: ["permissions", "applications"],
+        });
     }
 
     async delete(id: number): Promise<DeleteResponseDto> {
