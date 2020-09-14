@@ -1,6 +1,5 @@
 import {
     Controller,
-    Logger,
     Post,
     Body,
     Put,
@@ -10,6 +9,7 @@ import {
     Req,
     ForbiddenException,
     Delete,
+    NotFoundException,
 } from "@nestjs/common";
 import { PermissionService } from "@services/user-management/permission.service";
 import {
@@ -18,6 +18,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
 } from "@nestjs/swagger";
 import { Permission } from "@entities/permission.entity";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
@@ -30,7 +31,6 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { ListAllApplicationsReponseDto } from '../../entities/dto/list-all-applications-response.dto';
 import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,7 +42,6 @@ import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.
 @Controller("permission")
 export class PermissionController {
     constructor(private permissionService: PermissionService) {}
-    private readonly logger = new Logger(PermissionController.name);
 
     @Post()
     @ApiOperation({ summary: "Create new permission entity" })
@@ -97,11 +96,17 @@ export class PermissionController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get permissions entity" })
+    @ApiNotFoundResponse()
     async getOnePermissions(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: number
     ): Promise<Permission> {
-        const permission = await this.permissionService.getPermission(id);
+        let permission;
+        try {
+            permission = await this.permissionService.getPermission(id);
+        } catch (err) {
+            throw new NotFoundException();
+        }
 
         if (req.user.permissions.isGlobalAdmin) {
             return permission;

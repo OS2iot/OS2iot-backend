@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { AuthModule } from "@modules/auth.module";
 import { PassportModule } from "@nestjs/passport";

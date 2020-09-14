@@ -84,7 +84,7 @@ describe("OrganizationController (e2e)", () => {
     });
 
     it("(GET) /organization/ - One", async () => {
-        await generateSavedOrganization();
+        await generateSavedOrganization("E2E");
 
         return request(app.getHttpServer())
             .get("/organization/")
@@ -96,7 +96,7 @@ describe("OrganizationController (e2e)", () => {
                 expect(response.body.count).toBe(1);
                 expect(response.body.data).toMatchObject([
                     {
-                        name: "E2E Test Organization",
+                        name: "E2E",
                     },
                 ]);
             });

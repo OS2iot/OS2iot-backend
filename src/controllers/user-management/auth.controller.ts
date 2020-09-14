@@ -6,7 +6,12 @@ import {
     Get,
     Body,
 } from "@nestjs/common";
-import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import {
+    ApiOperation,
+    ApiBearerAuth,
+    ApiTags,
+    ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import { AuthService } from "@services/user-management/auth.service";
 import { LocalAuthGuard } from "@auth/local-auth.guard";
 import {
@@ -24,6 +29,7 @@ export class AuthController {
 
     @Post("login")
     @ApiOperation({ summary: "Login using username and password" })
+    @ApiUnauthorizedResponse()
     @UseGuards(LocalAuthGuard)
     async login(
         @Request() req: AuthenticatedRequestLocalStrategy,

@@ -7,8 +7,7 @@ import { Permission } from "@entities/permission.entity";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
-import { CombinedSubscribeTo } from "../kafka/kafka.decorator";
-import { UserResponseDto } from "../../entities/dto/user-response.dto";
+import { UserResponseDto } from "@dto/user-response.dto";
 
 @Injectable()
 export class UserService {
