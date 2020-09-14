@@ -15,7 +15,9 @@ export class UserBootstrapperService implements OnModuleInit {
     GLOBAL_ADMIN_DEFAULT_PASSWORD = "hunter2";
 
     async onModuleInit(): Promise<void> {
-        if (this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)) {
+        if (
+            await this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)
+        ) {
             this.logger.debug(
                 "GlobalAdmin user already exists. Won't create a new one."
             );
