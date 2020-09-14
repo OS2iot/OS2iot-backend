@@ -32,11 +32,11 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "received_message"; \n` +
             `DELETE FROM "received_message_metadata";  \n` +
             `DELETE FROM "payload_decoder";  \n` +
+            `DELETE FROM "user_permissions_permission";  \n` +
+            `DELETE FROM "application_permissions_permission";  \n` +
             `DELETE FROM "user";  \n` +
             `DELETE FROM "permission";  \n` +
-            `DELETE FROM "user_permissions_permission";  \n` +
-            `DELETE FROM "organization";  \n` +
-            `DELETE FROM "application_permissions_permission";  \n`
+            `DELETE FROM "organization";  \n`
     );
 }
 

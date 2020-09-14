@@ -30,7 +30,6 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
             clientId: this.MQTT_CLIENT_ID,
         });
         this.client.on("connect", () => {
-            Logger.debug("Connect to MQTT.");
             this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC);
 
             this.client.on("message", async (topic, message) => {
@@ -39,7 +38,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
                 );
                 await this.receiveMqttMessage(message.toString());
             });
-            this.logger.debug("Initialized.");
+            this.logger.debug("Connected to MQTT.");
         });
     }
 

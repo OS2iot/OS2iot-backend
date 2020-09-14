@@ -158,7 +158,7 @@ export class PermissionService {
     }
 
     async getPermission(id: number): Promise<Permission> {
-        return await getManager().findOne(Permission, {
+        return await getManager().findOneOrFail(Permission, {
             where: { id: id },
             relations: ["organization", "users"],
         });

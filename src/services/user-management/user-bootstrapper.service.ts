@@ -1,8 +1,13 @@
-import { OnModuleInit, Logger, Inject, forwardRef } from "@nestjs/common";
+import {
+    Logger,
+    Inject,
+    forwardRef,
+    OnApplicationBootstrap,
+} from "@nestjs/common";
 import { UserService } from "./user.service";
 import { PermissionService } from "./permission.service";
 
-export class UserBootstrapperService implements OnModuleInit {
+export class UserBootstrapperService implements OnApplicationBootstrap {
     constructor(
         private userService: UserService,
         @Inject(forwardRef(() => PermissionService))
@@ -14,7 +19,7 @@ export class UserBootstrapperService implements OnModuleInit {
     GLOBAL_ADMIN_NAME = "GlobalAdmin";
     GLOBAL_ADMIN_DEFAULT_PASSWORD = "hunter2";
 
-    async onModuleInit(): Promise<void> {
+    async onApplicationBootstrap(): Promise<void> {
         if (
             await this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)
         ) {
@@ -35,8 +40,9 @@ export class UserBootstrapperService implements OnModuleInit {
         );
 
         const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-        this.permissionService.addUsersToPermission(globalAdminPermission, [
-            globalAdminUser,
-        ]);
+        await this.permissionService.addUsersToPermission(
+            globalAdminPermission,
+            [globalAdminUser]
+        );
     }
 }

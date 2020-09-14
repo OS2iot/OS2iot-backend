@@ -65,6 +65,9 @@ export class OrganizationService {
     async findAllInOrganizationList(
         allowedOrganizations: number[]
     ): Promise<ListAllOrganizationsReponseDto> {
+        if (allowedOrganizations.length === 0) {
+            return { count: 0, data: [] };
+        }
         const [data, count] = await this.organizationRepository.findAndCount({
             where: { id: In(allowedOrganizations) },
             relations: ["permissions"],
