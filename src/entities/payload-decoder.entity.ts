@@ -1,5 +1,6 @@
 import { DbBaseEntity } from "@entities/base.entity";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, ManyToOne } from "typeorm";
+import { Organization } from "./organization.entity";
 
 @Entity("payload_decoder")
 export class PayloadDecoder extends DbBaseEntity {
@@ -8,4 +9,12 @@ export class PayloadDecoder extends DbBaseEntity {
 
     @Column({ type: "text" })
     decodingFunction: string;
+
+    @ManyToOne(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => Organization,
+        organization => organization.payloadDecoders,
+        { onDelete: "CASCADE", nullable: true }
+    )
+    organization?: Organization;
 }

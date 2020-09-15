@@ -22,6 +22,7 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { AuthModule } from "./auth.module";
+import { OrganizationModule } from "./organization.module";
 
 @Module({
     imports: [
@@ -48,6 +49,7 @@ import { AuthModule } from "./auth.module";
         ChirpstackAdministrationModule,
         HttpModule,
         AuthModule,
+        OrganizationModule,
     ],
     exports: [TypeOrmModule, PayloadDecoderService],
     controllers: [PayloadDecoderController],

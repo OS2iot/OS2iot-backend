@@ -75,6 +75,7 @@ export function generateOrganization(name?: string): Organization {
     const org = new Organization();
     org.name = name ? name : "E2E Test Organization";
     org.applications = [];
+    org.payloadDecoders = [];
 
     const READ_SUFFIX = " - Read";
     const WRITE_SUFFIX = " - Write";

@@ -11,6 +11,7 @@ export enum ErrorCodes {
     MissingABPInfo = "MESSAGE.ABP-INFO-MISSING",
     UserAlreadyExists = "MESSAGE.USER-ALREADY-EXISTS",
     OrganizationAlreadyExists = "MESSAGE.ORGANIZATION-ALREADY-EXISTS",
+    OrganizationDoesNotExists = "MESSAGE.ORGANIZATION-DOES-NOT-EXISTS",
     UserInactive = "MESSAGE.USER-INACTIVE",
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION"
 }

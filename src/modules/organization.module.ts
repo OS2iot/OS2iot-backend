@@ -13,6 +13,7 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { PermissionModule } from "@modules/permission.module";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { PermissionModule } from "@modules/permission.module";
             OrganizationApplicationPermission,
             ReadPermission,
             WritePermission,
+            PayloadDecoder,
         ]),
         forwardRef(() => PermissionModule),
     ],

@@ -11,6 +11,7 @@ import {
     Logger,
     Query,
     UseGuards,
+    Req,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -32,6 +33,11 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read, Write } from "@auth/roles.decorator";
+import {
+    checkIfUserHasReadAccessToOrganization,
+    checkIfUserHasWriteAccessToOrganization,
+} from "@helpers/security-helper";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
@@ -46,7 +52,10 @@ export class PayloadDecoderController {
     @Get(":id")
     @ApiOperation({ summary: "Find one Payload Decoder by id" })
     @ApiNotFoundResponse()
-    async findOne(@Param("id") id: number): Promise<PayloadDecoder> {
+    async findOne(
+        @Req() req: AuthenticatedRequest,
+        @Param("id") id: number
+    ): Promise<PayloadDecoder> {
         let result = undefined;
         try {
             result = await this.payloadDecoderService.findOne(id);
@@ -59,6 +68,9 @@ export class PayloadDecoderController {
         if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
+
+        checkIfUserHasReadAccessToOrganization(req, result?.organization?.id);
+
         return result;
     }
 
@@ -66,10 +78,19 @@ export class PayloadDecoderController {
     @ApiOperation({ summary: "Find all Payload Decoders" })
     @ApiNotFoundResponse()
     async findAll(
+        @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllPayloadDecoderReponseDto> {
+        if (req.user.permissions.isGlobalAdmin) {
+            return await this.payloadDecoderService.findAndCountWithPagination(
+                query,
+                null
+            );
+        }
+
         const result = await this.payloadDecoderService.findAndCountWithPagination(
-            query
+            query,
+            req.user.permissions.getAllOrganizationsWithAtLeastRead()
         );
         return result;
     }
@@ -80,8 +101,11 @@ export class PayloadDecoderController {
     @ApiOperation({ summary: "Create a new Payload Decoder" })
     @ApiBadRequestResponse()
     async create(
+        @Req() req: AuthenticatedRequest,
         @Body() createDto: CreatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
+        checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
+
         // TODO: Valider at funktionen er gyldig
         const payloadDecoder = await this.payloadDecoderService.create(
             createDto
@@ -95,9 +119,18 @@ export class PayloadDecoderController {
     @ApiOperation({ summary: "Update an existing Payload Decoder" })
     @ApiBadRequestResponse()
     async update(
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: number,
         @Body() updateDto: UpdatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
+        checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
+        const oldDecoder = await this.payloadDecoderService.findOne(id);
+        if (oldDecoder?.organization?.id) {
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                oldDecoder.organization.id
+            );
+        }
         // TODO: Valider at funktionen er gyldig
         const payloadDecoder = await this.payloadDecoderService.update(
             id,
@@ -111,8 +144,19 @@ export class PayloadDecoderController {
     @Write()
     @ApiOperation({ summary: "Delete an existing Payload Decoder" })
     @ApiNotFoundResponse()
-    async delete(@Param("id") id: number): Promise<DeleteResponseDto> {
+    async delete(
+        @Req() req: AuthenticatedRequest,
+        @Param("id") id: number
+    ): Promise<DeleteResponseDto> {
         try {
+            const oldDecoder = await this.payloadDecoderService.findOne(id);
+            if (oldDecoder?.organization?.id) {
+                checkIfUserHasWriteAccessToOrganization(
+                    req,
+                    oldDecoder.organization.id
+                );
+            }
+
             const result = await this.payloadDecoderService.delete(id);
             if (result.affected == 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
