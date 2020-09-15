@@ -3,7 +3,13 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { clearDatabase, generateSavedPayloadDecoder, generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
+import {
+    clearDatabase,
+    generateSavedPayloadDecoder,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+    generateSavedOrganization,
+} from "../test-helpers";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
@@ -121,9 +127,12 @@ describe("PayloadDecoderController (e2e)", () => {
     });
 
     it("(POST) /payload-decoder/ - create new data target", async () => {
+        const organization = await generateSavedOrganization();
+
         const body: CreatePayloadDecoderDto = {
             name: "Test",
             decodingFunction: JSON.stringify("return 1;"),
+            organizationId: organization.id,
         };
 
         await request(app.getHttpServer())
@@ -166,10 +175,12 @@ describe("PayloadDecoderController (e2e)", () => {
     });
 
     it("(PUT) /payload-decoder/:id - change existing", async () => {
+        const organization = await generateSavedOrganization();
         const decoder = await generateSavedPayloadDecoder();
         const body: UpdatePayloadDecoderDto = {
             name: decoder.name,
             decodingFunction: JSON.stringify("return 0;"),
+            organizationId: organization.id,
         };
 
         return await request(app.getHttpServer())
@@ -197,7 +208,7 @@ describe("PayloadDecoderController (e2e)", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    status: 404,
+                    name: "EntityNotFound",
                 });
             });
     });

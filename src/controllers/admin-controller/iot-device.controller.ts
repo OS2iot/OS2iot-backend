@@ -36,7 +36,6 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read } from "@auth/roles.decorator";
-import { response } from "express";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")

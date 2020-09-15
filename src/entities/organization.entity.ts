@@ -3,6 +3,7 @@ import { DbBaseEntity } from "@entities/base.entity";
 import { Application } from "@entities/application.entity";
 import { Permission } from "./permission.entity";
 import { OrganizationPermission } from "./organizion-permission.entity";
+import { PayloadDecoder } from "./payload-decoder.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -25,4 +26,12 @@ export class Organization extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     permissions: Permission[];
+
+    @OneToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => PayloadDecoder,
+        payloadDecoder => payloadDecoder.organization,
+        { onDelete: "CASCADE", nullable: true }
+    )
+    payloadDecoders?: PayloadDecoder[];
 }

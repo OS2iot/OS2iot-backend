@@ -52,6 +52,6 @@ import { ApplicationModule } from "./application.module";
     ],
     exports: [TypeOrmModule],
     controllers: [PayloadDecoderController],
-    providers: [PayloadDecoderListenerService, PayloadDecoderService],
+    providers: [PayloadDecoderListenerService],
 })
 export class PayloadDecoderKafkaModule {}

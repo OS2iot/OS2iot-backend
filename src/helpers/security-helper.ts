@@ -24,6 +24,19 @@ export function checkIfUserHasReadAccessToApplication(
     );
 }
 
+export function checkIfUserHasReadAccessToOrganization(
+    req: AuthenticatedRequest,
+    organizationId: number
+): void {
+    if (organizationId != null) {
+        checkIfGlobalAdminOrInList(
+            req,
+            req.user.permissions.getAllOrganizationsWithAtLeastRead(),
+            organizationId
+        );
+    }
+}
+
 export function checkIfUserHasWriteAccessToOrganization(
     req: AuthenticatedRequest,
     organizationId: number
