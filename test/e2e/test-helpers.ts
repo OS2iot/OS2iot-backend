@@ -16,7 +16,6 @@ import { GlobalAdminPermission } from "@entities/global-admin-permission.entity"
 import { Permission } from "@entities/permission.entity";
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { JwtService } from "@nestjs/jwt";
-import { jwtConstants } from "@auth/constants";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
@@ -42,7 +41,7 @@ export async function clearDatabase(): Promise<void> {
 
 export function generateValidJwtForUser(user: User): string {
     const jwtService = new JwtService({
-        secret: jwtConstants.secret,
+        secret: "secretKey-os2iot-secretKey",
         signOptions: { expiresIn: "9h" },
     });
     const payload: JwtPayloadDto = { username: user.email, sub: user.id };
