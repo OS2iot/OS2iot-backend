@@ -4,7 +4,6 @@ import * as request from "supertest";
 import { AuthModule } from "@modules/auth.module";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule, JwtService } from "@nestjs/jwt";
-import { jwtConstants } from "@auth/constants";
 import { generateSavedGlobalAdminUser, clearDatabase } from "./test-helpers";
 import { LoginDto } from "@dto/login.dto";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -19,7 +18,7 @@ describe("AuthController (e2e)", () => {
                 AuthModule,
                 PassportModule.register({ defaultStrategy: "jwt" }),
                 JwtModule.register({
-                    secret: jwtConstants.secret,
+                    secret: "secretKey-os2iot-secretKey",
                     signOptions: { expiresIn: "9h" },
                 }),
                 TypeOrmModule.forRoot({

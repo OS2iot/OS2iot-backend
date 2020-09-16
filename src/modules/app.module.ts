@@ -1,5 +1,5 @@
 import { Module, HttpModule } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ApplicationModule } from "@modules/application.module";
 import { ApplicationService } from "@services/application.service";
@@ -21,39 +21,39 @@ import { DefaultModule } from "@modules/default.module";
 import { AuthModule } from "./auth.module";
 import { OrganizationModule } from "./organization.module";
 import { PermissionModule } from "./permission.module";
+import configuration from "../config/configuration";
 
 @Module({
     imports: [
-        TypeOrmModule.forRoot({
-            type: "postgres",
-            host:
-                process.env.DATABASE_HOSTNAME != undefined
-                    ? process.env.DATABASE_HOSTNAME
-                    : "host.docker.internal",
-            port:
-                process.env.DATABASE_PORT != undefined
-                    ? Number.parseInt(process.env.DATABASE_PORT, 10)
-                    : 5433,
-            username: "os2iot",
-            password: "toi2so",
-            database: "os2iot",
-            synchronize: true,
-            logging: false,
-            autoLoadEntities: true,
-            retryAttempts: 0,
-            maxQueryExecutionTime: 200, // Log queries slower than 200 ms
+        ConfigModule.forRoot({
+            isGlobal: true,
+            load: [configuration],
+        }),
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: async (configService: ConfigService) => ({
+                type: "postgres" as const,
+                host: configService.get<string>("database.host"),
+                port: configService.get<number>("database.port"),
+                username: configService.get<string>("database.username"),
+                password: configService.get<string>("database.password"),
+                database: "os2iot",
+                synchronize: true,
+                logging: false,
+                autoLoadEntities: true,
+                retryAttempts: 0,
+                maxQueryExecutionTime: 200, // Log queries slower than 200 ms
+            }),
         }),
         KafkaModule.register({
-            clientId: "os2iot-client",
+            clientId: process.env.KAFKA_CLIENTID || "os2iot-client",
             brokers: [
                 `${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
                     process.env.KAFKA_PORT || "9093"
                 }`,
             ],
-            groupId: "os2iot-backend",
-        }),
-        ConfigModule.forRoot({
-            isGlobal: true,
+            groupId: process.env.KAFKA_GROUPID || "os2iot-backend",
         }),
         HttpModule,
         ApplicationModule,

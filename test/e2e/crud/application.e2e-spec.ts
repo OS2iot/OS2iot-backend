@@ -15,6 +15,7 @@ import {
 import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { CreateApplicationDto } from "@entities/dto/create-application.dto";
+import { ConfigService } from "@nestjs/config";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
