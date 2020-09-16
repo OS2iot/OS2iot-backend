@@ -5,7 +5,7 @@ import { jwtConstants } from "./constants";
 import { PermissionService } from "@services/user-management/permission.service";
 import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { AuthenticatedUser } from "@dto/internal/authenticated-user";
-import { UserService } from "../services/user-management/user.service";
+import { UserService } from "@services/user-management/user.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

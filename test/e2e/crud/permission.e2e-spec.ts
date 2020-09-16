@@ -16,7 +16,7 @@ import * as request from "supertest";
 import { PermissionType } from "@enum/permission-type.enum";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { ReadPermission } from "../../../src/entities/read-permission.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;

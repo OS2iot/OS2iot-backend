@@ -17,7 +17,7 @@ import { Permission } from "@entities/permission.entity";
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { JwtService } from "@nestjs/jwt";
 import { jwtConstants } from "@auth/constants";
-import { OrganizationAdminPermission } from "../../src/entities/organization-admin-permission.entity";
+import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";

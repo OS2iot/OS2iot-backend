@@ -14,7 +14,7 @@ import {
 } from "../test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { CreateApplicationDto } from "../../../src/entities/dto/create-application.dto";
+import { CreateApplicationDto } from "@entities/dto/create-application.dto";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
