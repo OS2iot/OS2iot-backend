@@ -35,8 +35,8 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasWriteAccessToApplication } from "../../helpers/security-helper";
-import { IoTDeviceService } from "../../services/iot-device.service";
+import { checkIfUserHasWriteAccessToApplication } from "@helpers/security-helper";
+import { IoTDeviceService } from "@services/iot-device.service";
 
 @ApiTags("IoT-Device, PayloadDecoder and DataTarget Connection")
 @Controller("iot-device-payload-decoder-data-target-connection")

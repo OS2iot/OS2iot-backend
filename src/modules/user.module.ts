@@ -15,8 +15,8 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { UserBootstrapperService } from "@services/user-management/user-bootstrapper.service";
 import { PermissionModule } from "@modules/permission.module";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { ReceivedMessage } from "../entities/received-message";
-import { ReceivedMessageMetadata } from "../entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DataTarget } from "@entities/data-target.entity";
 
 @Module({

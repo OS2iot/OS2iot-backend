@@ -31,7 +31,10 @@ export class PayloadDecoderService {
             result,
             total,
         ] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationIds != null ? { organization: In(organizationIds) } : {},
+            where:
+                organizationIds != null
+                    ? { organization: In(organizationIds) }
+                    : {},
             take: query.limit,
             skip: query.offset,
             order: { id: query.sort }, // TODO: Generic sorting possible?

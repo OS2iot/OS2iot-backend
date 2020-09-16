@@ -31,7 +31,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
 import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
-import { ErrorCodes } from "../../entities/enum/error-codes.enum";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

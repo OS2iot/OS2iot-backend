@@ -8,7 +8,11 @@ export class CreatePayloadDecoderDto {
     @MaxLength(50)
     name: string;
 
-    @ApiProperty({ required: true, description: "the decoding function must be encoded using JSON.stringify" })
+    @ApiProperty({
+        required: true,
+        description:
+            "the decoding function must be encoded using JSON.stringify",
+    })
     @IsString()
     decodingFunction: string;
 

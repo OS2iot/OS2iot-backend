@@ -10,8 +10,8 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { OrganizationModule } from "../modules/organization.module";
-import { UserModule } from "./user.module";
+import { OrganizationModule } from "@modules/organization.module";
+import { UserModule } from "@modules/user.module";
 import { PermissionService } from "@services/user-management/permission.service";
 import { PermissionController } from "@user-management-controller/permission.controller";
 
