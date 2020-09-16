@@ -29,7 +29,6 @@ import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read, Write } from "@auth/roles.decorator";
@@ -38,6 +37,7 @@ import {
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ListAllPayloadDecoderDto } from "@dto/list-all-payload-decoder.dto";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
@@ -79,7 +79,7 @@ export class PayloadDecoderController {
     @ApiNotFoundResponse()
     async findAll(
         @Req() req: AuthenticatedRequest,
-        @Query() query?: ListAllEntitiesDto
+        @Query() query?: ListAllPayloadDecoderDto
     ): Promise<ListAllPayloadDecoderReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.payloadDecoderService.findAndCountWithPagination(
@@ -88,9 +88,14 @@ export class PayloadDecoderController {
             );
         }
 
+        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
+        if (query?.organizationId) {
+            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+        }
+
         const result = await this.payloadDecoderService.findAndCountWithPagination(
             query,
-            req.user.permissions.getAllOrganizationsWithAtLeastRead()
+            query.organizationId ? [query.organizationId] : allowedOrganizations
         );
         return result;
     }
