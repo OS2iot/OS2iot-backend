@@ -16,6 +16,8 @@ import {
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
@@ -26,6 +28,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 IoTDevicePayloadDecoderDataTargetConnectionModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

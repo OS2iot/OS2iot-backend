@@ -17,6 +17,8 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
     let app: INestApplication;
@@ -26,6 +28,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 PayloadDecoderKafkaModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

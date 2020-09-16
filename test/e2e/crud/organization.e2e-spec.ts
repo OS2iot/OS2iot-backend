@@ -18,6 +18,8 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
 import { Repository } from "typeorm";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("OrganizationController (e2e)", () => {
     let app: INestApplication;
@@ -28,6 +30,7 @@ describe("OrganizationController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 OrganizationModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

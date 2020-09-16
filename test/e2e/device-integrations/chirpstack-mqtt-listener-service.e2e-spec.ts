@@ -12,6 +12,8 @@ import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirp
 import { Consumer, KafkaMessage } from "kafkajs";
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("ChirpstackMQTTListenerService (e2e)", () => {
     let app: INestApplication;
@@ -21,6 +23,7 @@ describe("ChirpstackMQTTListenerService (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 ChirpstackMqttListenerModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

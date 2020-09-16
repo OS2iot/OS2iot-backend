@@ -7,6 +7,8 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { generateSavedGlobalAdminUser, clearDatabase } from "./test-helpers";
 import { LoginDto } from "@dto/login.dto";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("AuthController (e2e)", () => {
     let app: INestApplication;
@@ -15,6 +17,7 @@ describe("AuthController (e2e)", () => {
     beforeEach(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 AuthModule,
                 PassportModule.register({ defaultStrategy: "jwt" }),
                 JwtModule.register({

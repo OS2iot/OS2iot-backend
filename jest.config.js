@@ -17,6 +17,7 @@ module.exports = {
         "^@loaders/(.*)": "<rootDir>//src/loaders/$1",
         "^@auth/(.*)": "<rootDir>//src/auth/$1",
         "^@helpers/(.*)": "<rootDir>//src/helpers/$1",
+        "^@config/(.*)": "<rootDir>//@config/$1",
     },
     moduleFileExtensions: ["js", "json", "ts"],
     rootDir: "./",

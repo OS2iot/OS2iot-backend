@@ -16,6 +16,8 @@ import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { CreateApplicationDto } from "@entities/dto/create-application.dto";
 import { ConfigService } from "@nestjs/config";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -25,6 +27,7 @@ describe("ApplicationController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 ApplicationModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

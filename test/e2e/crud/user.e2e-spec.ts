@@ -13,6 +13,8 @@ import { User } from "@entities/user.entity";
 import { AuthModule } from "@modules/auth.module";
 import * as bcrypt from "bcryptjs";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("UserController (e2e)", () => {
     let app: INestApplication;
@@ -23,6 +25,7 @@ describe("UserController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 UserModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

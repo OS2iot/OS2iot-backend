@@ -15,6 +15,8 @@ import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { KafkaModule } from "@modules/kafka.module";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("DataTargetController (e2e)", () => {
     let app: INestApplication;
@@ -25,6 +27,7 @@ describe("DataTargetController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 DataTargetModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

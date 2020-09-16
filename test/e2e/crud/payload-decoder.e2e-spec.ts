@@ -14,6 +14,8 @@ import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
@@ -23,6 +25,7 @@ describe("PayloadDecoderController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 PayloadDecoderModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
