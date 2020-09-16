@@ -26,7 +26,7 @@ import {
 import { Application } from "@entities/application.entity";
 import { ApplicationService } from "@services/application.service";
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { ApiResponse } from "@nestjs/swagger";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
@@ -37,10 +37,11 @@ import { RolesGuard } from "@auth/roles.guard";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { checkIfUserHasReadAccessToApplication } from "@helpers/security-helper";
 import {
     checkIfUserHasWriteAccessToApplication,
+    checkIfUserHasReadAccessToApplication,
     checkIfUserHasWriteAccessToOrganization,
+    checkIfUserHasReadAccessToOrganization,
 } from "@helpers/security-helper";
 
 @ApiTags("Application")
@@ -64,16 +65,20 @@ export class ApplicationController {
     })
     async findAll(
         @Req() req: AuthenticatedRequest,
-        @Query() query?: ListAllEntitiesDto
+        @Query() query?: ListAllApplicationsDto
     ): Promise<ListAllApplicationsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.applicationService.findAndCountWithPagination(query);
         }
 
         const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
+        if (query?.organizationId) {
+            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+        }
+
         const applications = await this.applicationService.findAndCountWithPagination(
             query,
-            allowedOrganizations
+            query.organizationId ? [query.organizationId] : allowedOrganizations
         );
         return applications;
     }
