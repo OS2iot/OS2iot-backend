@@ -27,7 +27,8 @@
             "@modules/*": ["src/modules/*"],
             "@loaders/*": ["src/loaders/*"],
             "@auth/*": ["src/auth/*"],
-            "@helpers/*": ["src/helpers/*"]
+            "@helpers/*": ["src/helpers/*"],
+            "@config/*": ["src/config/*"],
         }
     },
     "exclude": ["node_modules", "dist"]

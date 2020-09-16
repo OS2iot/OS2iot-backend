@@ -13,6 +13,8 @@ import {
 import { Application } from "@entities/application.entity";
 import { KafkaModule } from "@modules/kafka.module";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -23,6 +25,7 @@ describe("IoTDeviceController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 IoTDeviceModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

@@ -11,6 +11,8 @@ import { KafkaModule } from "@modules/kafka.module";
 import { KafkaMessage, Consumer } from "kafkajs";
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("ReceiveDataController (e2e)", () => {
     let app: INestApplication;
@@ -20,6 +22,7 @@ describe("ReceiveDataController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 ReceiveDataModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

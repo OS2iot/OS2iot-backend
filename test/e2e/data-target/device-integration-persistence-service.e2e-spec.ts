@@ -13,6 +13,8 @@ import { DeviceIntegrationPersistenceModule } from "@modules/data-management/dev
 import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("DeviceIntegrationPersistenceService (e2e)", () => {
     let app: INestApplication;
@@ -23,6 +25,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 DeviceIntegrationPersistenceModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

@@ -23,6 +23,7 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { ApplicationModule } from "./application.module";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
     imports: [

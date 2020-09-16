@@ -17,6 +17,8 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { ReadPermission } from "@entities/read-permission.entity";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;
@@ -26,6 +28,7 @@ describe("PermissionController (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 PermissionModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

@@ -17,6 +17,8 @@ import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { RecordMetadata } from "kafkajs";
 import { of } from "rxjs";
 import { AxiosResponse, AxiosRequestConfig } from "axios";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 describe("DataTargetKafkaListener (e2e)", () => {
     let app: INestApplication;
@@ -27,6 +29,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
                 DataTargetKafkaModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",

@@ -8,9 +8,11 @@ import { LocalStrategy } from "@auth/local.strategy";
 import { JwtStrategy } from "@auth/jwt.strategy";
 import { AuthController } from "@user-management-controller/auth.controller";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 @Module({
     imports: [
+        ConfigModule.forRoot({ load: [configuration] }),
         UserModule,
         PassportModule.register({ defaultStrategy: "jwt" }),
         JwtModule.registerAsync({
