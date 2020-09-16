@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MinLength, MaxLength } from "class-validator";
+import { IsString, MinLength, MaxLength, IsNumber } from "class-validator";
 
 export class CreatePayloadDecoderDto {
     @ApiProperty({ required: true })
@@ -8,7 +8,7 @@ export class CreatePayloadDecoderDto {
     @MaxLength(50)
     name: string;
 
-    @ApiProperty({ required: true })
+    @ApiProperty({ required: true, description: "the decoding function must be encoded using JSON.stringify" })
     @IsString()
     decodingFunction: string;
 }
