@@ -193,6 +193,8 @@ export class PermissionService {
                 res.isGlobalAdmin = true;
             } else if (p.permission_type == PermissionType.OrganizationAdmin) {
                 res.organizationAdminPermissions.add(p.organization_id);
+                // Also grant writePermission to the application
+                this.addOrUpdate(res.writePermissions, p);
             } else if (p.permission_type == PermissionType.Write) {
                 this.addOrUpdate(res.writePermissions, p);
             } else if (p.permission_type == PermissionType.Read) {
