@@ -13,6 +13,7 @@ import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllOrganizationsReponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
+import { BadRequestException } from "@nestjs/common";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -84,10 +85,13 @@ export class GenericChirpstackConfigurationService {
             );
 
             if (err?.response?.status == 400) {
-                return err?.response;
+                throw new BadRequestException({
+                    success: false,
+                    chirpstackError: err?.response?.data,
+                });
             }
 
-            return err?.response;
+            throw err;
         }
     }
 
