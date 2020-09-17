@@ -53,7 +53,7 @@ export class OrganizationService {
 
     async findAll(): Promise<ListAllOrganizationsReponseDto> {
         const [data, count] = await this.organizationRepository.findAndCount({
-            relations: ["permissions"],
+            relations: ["permissions", "applications"],
         });
 
         return {
@@ -70,7 +70,7 @@ export class OrganizationService {
         }
         const [data, count] = await this.organizationRepository.findAndCount({
             where: { id: In(allowedOrganizations) },
-            relations: ["permissions"],
+            relations: ["permissions", "applications"],
         });
 
         return {
@@ -81,7 +81,11 @@ export class OrganizationService {
 
     async findById(organizationId: number): Promise<Organization> {
         return await this.organizationRepository.findOneOrFail(organizationId, {
-            relations: ["permissions", "applications"],
+            relations: [
+                "permissions",
+                "applications",
+                "applications.iotDevices",
+            ],
         });
     }
 
