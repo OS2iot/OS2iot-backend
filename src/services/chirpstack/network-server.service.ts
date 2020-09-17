@@ -24,7 +24,7 @@ export class ChirpstackSetupNetworkServerService
     > {
         const networkServers = await this.getNetworkServers(100, 0);
         const alreadyCreated = networkServers.result.some(networkServer => {
-            networkServer.name == this.networkServerName;
+            return networkServer.name == this.networkServerName;
         });
 
         if (!alreadyCreated) {

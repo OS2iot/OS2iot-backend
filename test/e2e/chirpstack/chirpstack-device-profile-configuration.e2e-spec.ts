@@ -101,6 +101,28 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
             });
     });
 
+    it("(POST) /chirpstack/device-profiles/ - IOT-444 replication", async () => {
+        const input = JSON.parse(
+            `{"deviceProfile":{"id":"683521bb-8416-40e8-a79a-37fff674897d","name":"","organizationID":"1","networkServerID":"3","supportsClassB":true,"classBTimeout":0,"pingSlotPeriod":0,"pingSlotDR":0,"pingSlotFreq":0,"supportsClassC":false,"classCTimeout":0,"macVersion":"1.0.0","regParamsRevision":"A","rxDelay1":0,"rxDROffset1":0,"rxDataRate2":0,"rxFreq2":0,"factoryPresetFreqs":[],"maxEIRP":0,"maxDutyCycle":0,"supportsJoin":false,"rfRegion":"EU868","supports32BitFCnt":false,"payloadCodec":"","payloadEncoderScript":"","payloadDecoderScript":"","geolocBufferTTL":0,"geolocMinBufferSize":0,"tags":{}}}`
+        );
+
+        return await request(app.getHttpServer())
+            .post("/chirpstack/device-profiles/")
+            .send(input)
+            .expect(400) // Missing name ...
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Assert
+                expect(response.body).toMatchObject({
+                    chirpstackError: {
+                        error: "invalid device-profile name",
+                        message: "invalid device-profile name",
+                    },
+                    success: false,
+                });
+            });
+    });
+
     it("(POST) /chirpstack/device-profiles/ - OK", async () => {
         // Arrange
         const data: CreateDeviceProfileDto = await createDeviceProfileData();
@@ -160,6 +182,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
             name: "e2e",
             macVersion: "1.0.3",
             regParamsRevision: "A",
+            maxEIRP: 1,
         };
 
         const deviceProfile: CreateDeviceProfileDto = {

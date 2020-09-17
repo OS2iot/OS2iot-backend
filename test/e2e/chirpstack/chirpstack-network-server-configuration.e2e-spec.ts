@@ -6,7 +6,7 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 describe("ChirpstackSetupNetworkServerService", () => {
     let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
-    const testServerName = "OS2iot-e2e";
+    const testServerName = "OS2iot";
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
