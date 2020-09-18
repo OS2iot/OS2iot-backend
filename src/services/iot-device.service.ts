@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Logger, NotFoundException } from "@nestjs/common";
+import {
+    Injectable,
+    BadRequestException,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -74,7 +79,7 @@ export class IoTDeviceService {
             .getOne();
 
         if (iotDevice == null) {
-            throw new NotFoundException()
+            throw new NotFoundException();
         }
 
         if (iotDevice.type == IoTDeviceType.LoRaWAN) {

@@ -1,4 +1,11 @@
-import { Controller, Post, Logger, HttpCode, Param } from "@nestjs/common";
+import {
+    Controller,
+    Post,
+    Logger,
+    HttpCode,
+    Param,
+    ParseIntPipe,
+} from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { KafkaService } from "@services/kafka/kafka.service";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -17,7 +24,9 @@ export class KafkaController {
 
     @Post("rawRequest/:id")
     @HttpCode(204)
-    async makeRawRequest(@Param("id") id: number): Promise<void> {
+    async makeRawRequest(
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<void> {
         const dto = new RawRequestDto();
         dto.iotDeviceId = id;
         dto.rawPayload = JSON.parse(`{

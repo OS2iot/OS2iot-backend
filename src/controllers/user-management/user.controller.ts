@@ -9,6 +9,7 @@ import {
     Put,
     Param,
     NotFoundException,
+    ParseIntPipe,
 } from "@nestjs/common";
 import { UserService } from "@services/user-management/user.service";
 import {
@@ -72,7 +73,7 @@ export class UserController {
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
     async update(
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateUserDto
     ): Promise<UserResponseDto> {
         // Don't leak the passwordHash
@@ -87,7 +88,9 @@ export class UserController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
-    async find(@Param("id") id: number): Promise<UserResponseDto> {
+    async find(
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<UserResponseDto> {
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars

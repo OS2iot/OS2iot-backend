@@ -12,6 +12,7 @@ import {
     Logger,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -53,7 +54,7 @@ export class IoTDeviceController {
     @ApiNotFoundResponse()
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
         let result = undefined;
         try {
@@ -95,7 +96,7 @@ export class IoTDeviceController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdateIoTDeviceDto
     ): Promise<IoTDevice> {
         // Old application
@@ -124,7 +125,7 @@ export class IoTDeviceController {
     @ApiBadRequestResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
             id

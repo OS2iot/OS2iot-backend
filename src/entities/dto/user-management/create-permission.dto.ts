@@ -11,11 +11,11 @@ export class CreatePermissionDto {
     @ApiProperty({ required: true })
     name: string;
 
-    @ApiProperty({ required: true })
-    organizationId: number;
+    @ApiProperty({ required: false })
+    organizationId?: number;
 
     @ApiProperty({
-        required: false,
+        required: true,
         type: "array",
         items: {
             type: "number",

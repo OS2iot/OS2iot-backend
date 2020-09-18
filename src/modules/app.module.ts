@@ -21,7 +21,7 @@ import { DefaultModule } from "@modules/default.module";
 import { AuthModule } from "./auth.module";
 import { OrganizationModule } from "./organization.module";
 import { PermissionModule } from "./permission.module";
-import configuration from "../config/configuration";
+import configuration from "@config/configuration";
 
 @Module({
     imports: [

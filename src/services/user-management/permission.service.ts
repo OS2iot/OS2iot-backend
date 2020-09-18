@@ -109,7 +109,7 @@ export class PermissionService {
         id: number,
         dto: UpdatePermissionDto
     ): Promise<Permission> {
-        const permission = await getManager().findOne(OrganizationPermission, {
+        const permission = await getManager().findOne(Permission, {
             where: { id: id },
             relations: ["organization", "users"],
         });

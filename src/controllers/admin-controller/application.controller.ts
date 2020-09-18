@@ -12,6 +12,7 @@ import {
     Logger,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from "@nestjs/common";
 import {
     ApiProduces,
@@ -89,7 +90,7 @@ export class ApplicationController {
     @ApiNotFoundResponse()
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<Application> {
         checkIfUserHasReadAccessToApplication(req, id);
 
@@ -138,7 +139,7 @@ export class ApplicationController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
         checkIfUserHasWriteAccessToApplication(req, id);
@@ -169,7 +170,7 @@ export class ApplicationController {
     @ApiBadRequestResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         checkIfUserHasWriteAccessToApplication(req, id);
 

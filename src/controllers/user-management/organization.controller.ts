@@ -10,6 +10,7 @@ import {
     Get,
     Delete,
     NotFoundException,
+    ParseIntPipe,
 } from "@nestjs/common";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
@@ -58,7 +59,7 @@ export class OrganizationController {
     @ApiNotFoundResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateOrganizationDto: UpdateOrganizationDto
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, id);
@@ -86,7 +87,7 @@ export class OrganizationController {
     @ApiNotFoundResponse()
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, id);
         try {
@@ -101,7 +102,7 @@ export class OrganizationController {
     @ApiNotFoundResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         checkIfUserHasAdminAccessToOrganization(req, id);
 

@@ -10,6 +10,7 @@ import {
     NotFoundException,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from "@nestjs/common";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
 import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
@@ -82,7 +83,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         return await this.service.findOne(id);
     }
@@ -93,7 +94,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async findByIoTDeviceId(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<ListAllConnectionsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByIoTDeviceId(id);
@@ -111,7 +112,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async findByPayloadDecoderId(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<ListAllConnectionsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByPayloadDecoderId(id);
@@ -129,7 +130,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async findByDataTargetId(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<ListAllConnectionsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByDataTargetId(id);
@@ -171,7 +172,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body()
         updateDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
@@ -199,7 +200,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     })
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const oldConnection = await this.service.findOne(id);
         checkIfUserHasWriteAccessToApplication(

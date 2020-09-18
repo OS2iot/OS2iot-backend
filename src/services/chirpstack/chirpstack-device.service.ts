@@ -161,7 +161,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     async getChirpstackApplication(
         id: string
     ): Promise<ChirpstackSingleApplicationResponseDto> {
-        return await this.get<ChirpstackSingleApplicationResponseDto>(`applications/${id}`)
+        return await this.get<ChirpstackSingleApplicationResponseDto>(
+            `applications/${id}`
+        );
     }
 
     async getChirpstackDevice(

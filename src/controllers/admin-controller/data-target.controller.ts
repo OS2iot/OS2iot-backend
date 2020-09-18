@@ -11,6 +11,7 @@ import {
     Query,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -78,7 +79,7 @@ export class DataTargetController {
     @ApiOperation({ summary: "Find DataTarget by id" })
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DataTarget> {
         try {
             const dataTarget = await this.dataTargetService.findOne(id);
@@ -112,7 +113,7 @@ export class DataTargetController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdateDataTargetDto
     ): Promise<DataTarget> {
         const oldDataTarget = await this.dataTargetService.findOne(id);
@@ -136,7 +137,7 @@ export class DataTargetController {
     @ApiBadRequestResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         checkIfUserHasWriteAccessToApplication(req, id);
         try {

@@ -10,6 +10,7 @@ import {
     ForbiddenException,
     Delete,
     NotFoundException,
+    ParseIntPipe,
 } from "@nestjs/common";
 import { PermissionService } from "@services/user-management/permission.service";
 import {
@@ -58,7 +59,7 @@ export class PermissionController {
     @ApiOperation({ summary: "Update permission" })
     async updatePermission(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdatePermissionDto
     ): Promise<Permission> {
         const permission = await this.permissionService.getPermission(id);
@@ -71,7 +72,7 @@ export class PermissionController {
     @ApiOperation({ summary: "Delete a permission entity" })
     async deletePermission(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const permission = await this.permissionService.getPermission(id);
         checkIfUserHasAdminAccessToOrganization(req, permission.id);
@@ -99,7 +100,7 @@ export class PermissionController {
     @ApiNotFoundResponse()
     async getOnePermissions(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<Permission> {
         let permission;
         try {

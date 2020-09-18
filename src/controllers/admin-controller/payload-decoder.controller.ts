@@ -12,6 +12,7 @@ import {
     Query,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -54,7 +55,7 @@ export class PayloadDecoderController {
     @ApiNotFoundResponse()
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<PayloadDecoder> {
         let result = undefined;
         try {
@@ -125,7 +126,7 @@ export class PayloadDecoderController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
         checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
@@ -151,7 +152,7 @@ export class PayloadDecoderController {
     @ApiNotFoundResponse()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: number
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
             const oldDecoder = await this.payloadDecoderService.findOne(id);
