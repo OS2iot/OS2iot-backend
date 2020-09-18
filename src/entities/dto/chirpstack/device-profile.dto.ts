@@ -36,7 +36,6 @@ export class DeviceProfileDto {
     maxDutyCycle?: number;
 
     @ApiProperty({ required: false })
-    @IsString()
     id?: string;
 
     @ApiHideProperty()
