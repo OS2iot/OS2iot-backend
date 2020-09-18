@@ -310,11 +310,8 @@ describe("IoTDeviceController (e2e)", () => {
             .delete("/iot-device/" + iotDeviceId)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
-            .expect(200)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({ affected: 0 });
-            });
+            .expect(404)
+            .expect("Content-Type", /json/);
 
         const [res, count] = await repository.findAndCount();
         expect(res.length).toBe(1);

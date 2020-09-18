@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DeleteResult, getManager } from "typeorm";
@@ -12,6 +12,8 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackDeviceService } from "./chirpstack/chirpstack-device.service";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -50,10 +52,12 @@ export class IoTDeviceService {
         });
     }
 
-    async findOneWithApplicationAndMetadata(id: number): Promise<IoTDevice> {
+    async findOneWithApplicationAndMetadata(
+        id: number
+    ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
         // Therefore we use the QueryBuilder ...
-        return await this.iotDeviceRepository
+        const iotDevice = await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
             .where("iot_device.id = :id", { id: id })
             .innerJoinAndSelect(
@@ -68,6 +72,26 @@ export class IoTDeviceService {
             )
             .orderBy('metadata."sentTime"', "DESC")
             .getOne();
+
+        if (iotDevice == null) {
+            throw new NotFoundException()
+        }
+
+        if (iotDevice.type == IoTDeviceType.LoRaWAN) {
+            // Add more suplimental info about LoRaWAN devices.
+            const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
+            loraDevice.lorawanSettings = await this.chirpstackDeviceService.getChirpstackDevice(
+                loraDevice.deviceEUI
+            );
+            const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
+                loraDevice.lorawanSettings.applicationID
+            );
+            loraDevice.lorawanSettings.serviceProfileID =
+                csAppliation.application.serviceProfileID;
+            return loraDevice;
+        }
+
+        return iotDevice;
     }
 
     async findGenericHttpDeviceByApiKey(

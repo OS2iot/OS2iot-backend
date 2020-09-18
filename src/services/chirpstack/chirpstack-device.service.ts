@@ -6,6 +6,8 @@ import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
+import { ChirpstackSingleDeviceResponseDto } from "@dto/chirpstack/chirpstack-single-device-response.dto";
+import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -154,6 +156,21 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
 
         return res.status == 200;
+    }
+
+    async getChirpstackApplication(
+        id: string
+    ): Promise<ChirpstackSingleApplicationResponseDto> {
+        return await this.get<ChirpstackSingleApplicationResponseDto>(`applications/${id}`)
+    }
+
+    async getChirpstackDevice(
+        id: string
+    ): Promise<ChirpstackDeviceContentsDto> {
+        const res = await this.get<ChirpstackSingleDeviceResponseDto>(
+            `devices/${id}`
+        );
+        return res.device;
     }
 
     private async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {

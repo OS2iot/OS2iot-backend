@@ -36,6 +36,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read } from "@auth/roles.decorator";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -53,7 +54,7 @@ export class IoTDeviceController {
     async findOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: number
-    ): Promise<IoTDevice> {
+    ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
         let result = undefined;
         try {
             result = await this.iotDeviceService.findOneWithApplicationAndMetadata(
