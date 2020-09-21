@@ -4,6 +4,7 @@ import { Injectable, OnApplicationBootstrap, Logger } from "@nestjs/common";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { IoTDeviceService } from "@services/iot-device.service";
 import { ChirpstackMQTTMessageDto } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
@@ -55,6 +56,10 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
             return;
         }
 
-        await this.receiveDataService.sendToKafka(iotDevice, message);
+        await this.receiveDataService.sendToKafka(
+            iotDevice,
+            message,
+            IoTDeviceType.LoRaWAN.toString()
+        );
     }
 }

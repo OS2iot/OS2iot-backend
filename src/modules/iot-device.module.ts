@@ -12,6 +12,7 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ApplicationModule } from "./application.module";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { ApplicationModule } from "./application.module";
             IoTDevice,
             GenericHTTPDevice,
             LoRaWANDevice,
+            SigFoxDevice,
             DataTarget,
             ReceivedMessage,
             ReceivedMessageMetadata,
@@ -30,6 +32,6 @@ import { ApplicationModule } from "./application.module";
     ],
     exports: [TypeOrmModule, IoTDeviceService],
     controllers: [IoTDeviceController],
-    providers: [IoTDeviceService, ChirpstackDeviceService],
+    providers: [IoTDeviceService],
 })
 export class IoTDeviceModule {}

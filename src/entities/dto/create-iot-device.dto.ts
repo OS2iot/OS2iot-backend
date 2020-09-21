@@ -11,6 +11,7 @@ import {
 import { Type } from "class-transformer";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
+import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
 
 export class CreateIoTDeviceDto {
     @ApiProperty({ required: true })
@@ -62,4 +63,10 @@ export class CreateIoTDeviceDto {
     @ValidateNested({ each: true })
     @Type(() => CreateLoRaWANSettingsDto)
     lorawanSettings: CreateLoRaWANSettingsDto;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @ValidateNested({ each: true })
+    @Type(() => CreateSigFoxSettingsDto)
+    sigfoxSettings: CreateSigFoxSettingsDto;
 }
