@@ -7,5 +7,6 @@ import { Organization } from "@entities/organization.entity";
 export class WritePermission extends OrganizationApplicationPermission {
     constructor(name: string, org: Organization) {
         super(name, org);
+        this.type = PermissionType.Write;
     }
 }

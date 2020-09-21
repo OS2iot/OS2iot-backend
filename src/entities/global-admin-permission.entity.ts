@@ -6,5 +6,6 @@ import { PermissionType } from "@enum/permission-type.enum";
 export class GlobalAdminPermission extends Permission {
     constructor() {
         super("GlobalAdmin");
+        this.type = PermissionType.GlobalAdmin;
     }
 }

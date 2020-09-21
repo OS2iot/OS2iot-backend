@@ -14,6 +14,7 @@ import { OrganizationModule } from "@modules/organization.module";
 import { UserModule } from "@modules/user.module";
 import { PermissionService } from "@services/user-management/permission.service";
 import { PermissionController } from "@user-management-controller/permission.controller";
+import { ApplicationModule } from './application.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { PermissionController } from "@user-management-controller/permission.con
         ]),
         forwardRef(() => OrganizationModule),
         forwardRef(() => UserModule),
+        forwardRef(() => ApplicationModule),
     ],
     providers: [PermissionService],
     exports: [PermissionService],

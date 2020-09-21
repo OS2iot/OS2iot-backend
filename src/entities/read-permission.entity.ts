@@ -7,5 +7,6 @@ import { Organization } from "@entities/organization.entity";
 export class ReadPermission extends OrganizationApplicationPermission {
     constructor(name: string, org: Organization) {
         super(name, org);
+        this.type = PermissionType.Read;
     }
 }

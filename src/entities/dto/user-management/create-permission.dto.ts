@@ -22,4 +22,13 @@ export class CreatePermissionDto {
         },
     })
     userIds: number[];
+
+    @ApiProperty({
+        required: true,
+        type: "array",
+        items: {
+            type: "number",
+        },
+    })
+    applicationIds: number[];
 }

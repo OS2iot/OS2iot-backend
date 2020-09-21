@@ -49,6 +49,13 @@ export class ApplicationService {
         });
     }
 
+    async findManyByIds(ids: number[]): Promise<Application[]> {
+        if (ids.length == 0) {
+            return [];
+        }
+        return await this.applicationRepository.find({ id: In(ids) });
+    }
+
     async create(
         createApplicationDto: CreateApplicationDto
     ): Promise<Application> {

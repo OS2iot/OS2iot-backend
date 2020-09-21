@@ -24,6 +24,8 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { OrganizationApplicationPermission } from "../../entities/organization-application-permission.entity";
+import { ApplicationService } from "../application.service";
 
 @Injectable()
 export class PermissionService {
@@ -32,7 +34,9 @@ export class PermissionService {
         private permissionReposity: Repository<Permission>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
-        private userService: UserService
+        private userService: UserService,
+        @Inject(forwardRef(() => ApplicationService))
+        private applicationService: ApplicationService
     ) {}
 
     READ_SUFFIX = " - Read";
@@ -94,6 +98,9 @@ export class PermissionService {
             default:
                 throw new BadRequestException("Bad PermissionLevel");
         }
+
+        await this.mapToPermission(permission, dto);
+
         return await getManager().save(permission);
     }
 
@@ -111,17 +118,39 @@ export class PermissionService {
     ): Promise<Permission> {
         const permission = await getManager().findOne(Permission, {
             where: { id: id },
-            relations: ["organization", "users"],
+            relations: ["organization", "users", "applications"],
         });
 
         permission.name = dto.name;
-        permission.users = await this.userService.findManyUsersByIds(
-            dto.userIds
-        );
+
+        await this.mapToPermission(permission, dto);
 
         const savedPermission = await getManager().save(permission);
 
         return savedPermission;
+    }
+
+    private async mapToPermission(
+        permission: Permission,
+        dto: UpdatePermissionDto
+    ): Promise<void> {
+        if (permission.type == PermissionType.Read || PermissionType.Write) {
+            (permission as OrganizationApplicationPermission).applications = await this.applicationService.findManyByIds(
+                dto.applicationIds
+            );
+        }
+        permission.users = await this.userService.findManyUsersByIds(
+            dto.userIds
+        );
+    }
+
+    private async setApplicationsOnPermission(
+        permission: OrganizationApplicationPermission,
+        dto: UpdatePermissionDto
+    ) {
+        permission.applications = await this.applicationService.findManyByIds(
+            dto.applicationIds
+        );
     }
 
     async deletePermission(id: number): Promise<DeleteResponseDto> {
@@ -160,7 +189,7 @@ export class PermissionService {
     async getPermission(id: number): Promise<Permission> {
         return await getManager().findOneOrFail(Permission, {
             where: { id: id },
-            relations: ["organization", "users"],
+            relations: ["organization", "users", "applications"],
         });
     }
 
