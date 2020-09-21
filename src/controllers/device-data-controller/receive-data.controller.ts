@@ -13,6 +13,7 @@ import { IoTDeviceService } from "@services/iot-device.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { ReceiveDataDto } from "@dto/receive-data.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @ApiTags("Receive Data")
 @Controller("receive-data")
@@ -47,7 +48,11 @@ export class ReceiveDataController {
         // @HACK: Convert the 'data' back to a string.
         // NestJS / BodyParser always converts the input to an object for us.
         const dataAsString = JSON.stringify(data);
-        await this.receiveDataService.sendToKafka(iotDevice, dataAsString);
+        await this.receiveDataService.sendToKafka(
+            iotDevice,
+            dataAsString,
+            IoTDeviceType.GenericHttp.toString()
+        );
 
         return;
     }

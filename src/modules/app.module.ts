@@ -22,6 +22,7 @@ import { AuthModule } from "./auth.module";
 import { OrganizationModule } from "./organization.module";
 import { PermissionModule } from "./permission.module";
 import configuration from "@config/configuration";
+import { SigFoxListenerModule } from "./device-integrations/sigfox-listener.module";
 
 @Module({
     imports: [
@@ -70,6 +71,7 @@ import configuration from "@config/configuration";
         AuthModule,
         OrganizationModule,
         PermissionModule,
+        SigFoxListenerModule,
     ],
     controllers: [],
     providers: [],

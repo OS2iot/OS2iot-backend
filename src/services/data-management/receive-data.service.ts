@@ -10,17 +10,23 @@ import { RecordMetadata } from "kafkajs";
 export class ReceiveDataService {
     constructor(private kafkaService: KafkaService) {}
 
-    async sendToKafka(iotDevice: IoTDevice, data: string): Promise<void> {
+    async sendToKafka(
+        iotDevice: IoTDevice,
+        data: string,
+        type: string,
+        timestamp?: number
+    ): Promise<void> {
         const dto = new RawRequestDto();
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
         // We cannot generically know when it was sent by the device, "now" is accurate enough
-        dto.unixTimestamp = new Date().valueOf();
+        dto.unixTimestamp =
+            timestamp != null ? timestamp : new Date().valueOf();
 
         const payload: KafkaPayload = {
-            messageId: "genericHttp" + new Date().valueOf(),
+            messageId: `${type}${new Date().valueOf()}`,
             body: dto,
-            messageType: "receiveData.genericHttp",
+            messageType: `receiveData.${type}`,
             topicName: KafkaTopic.RAW_REQUEST,
         };
 

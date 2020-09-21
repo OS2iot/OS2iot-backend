@@ -19,12 +19,15 @@ import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 @Injectable()
 export class IoTDeviceService {
     constructor(
         @InjectRepository(GenericHTTPDevice)
         private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
+        @InjectRepository(SigFoxDevice)
+        private sigFoxRepository: Repository<SigFoxDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
         @InjectRepository(LoRaWANDevice)
@@ -103,6 +106,16 @@ export class IoTDeviceService {
         key: string
     ): Promise<GenericHTTPDevice> {
         return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
+    }
+
+    async findSigFoxDeviceByDeviceIdAndDeviceTypeId(
+        deviceId: string,
+        apiKey: string
+    ): Promise<SigFoxDevice> {
+        return await this.sigFoxRepository.findOne({
+            deviceId: deviceId,
+            deviceTypeId: apiKey,
+        });
     }
 
     async findLoRaWANDeviceByDeviceEUI(
@@ -198,9 +211,24 @@ export class IoTDeviceService {
             const loraDevice = await this.mapLoRaWANDevice(dto, cast);
 
             return <IoTDevice>loraDevice;
+        } else if (iotDevice.constructor.name === SigFoxDevice.name) {
+            const cast = <SigFoxDevice>iotDevice;
+            const sigfoxDevice = await this.mapSigFoxDevice(dto, cast);
+
+            return <IoTDevice>sigfoxDevice;
         }
 
         return iotDevice;
+    }
+
+    private async mapSigFoxDevice(
+        dto: CreateIoTDeviceDto,
+        cast: SigFoxDevice
+    ): Promise<SigFoxDevice> {
+        cast.deviceId = dto?.sigfoxSettings?.deviceId;
+        cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
+
+        return cast;
     }
 
     private async mapLoRaWANDevice(
