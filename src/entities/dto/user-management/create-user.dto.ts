@@ -14,4 +14,7 @@ export class CreateUserDto {
 
     @ApiProperty({ required: true })
     active: boolean;
+
+    @ApiProperty({ required: false })
+    globalAdmin?: boolean;
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { User } from "@entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -8,12 +8,15 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
+import { PermissionService } from "./permission.service";
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User)
-        private userRepository: Repository<User>
+        private userRepository: Repository<User>,
+        @Inject(forwardRef(() => PermissionService))
+        private permissionService: PermissionService
     ) {}
 
     private readonly logger = new Logger(UserService.name, true);
@@ -71,6 +74,14 @@ export class UserService {
 
         await this.setPasswordHash(mappedUser, dto.password);
 
+        if (dto.globalAdmin) {
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            await this.permissionService.addUsersToPermission(
+                globalAdminPermission,
+                [mappedUser]
+            );
+        }
+
         return await this.userRepository.save(mappedUser);
     }
 
@@ -101,6 +112,14 @@ export class UserService {
                 `Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`
             );
             await this.setPasswordHash(mappedUser, dto.password);
+        }
+
+        if (dto.globalAdmin) {
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            await this.permissionService.addUsersToPermission(
+                globalAdminPermission,
+                [mappedUser]
+            );
         }
 
         return await this.userRepository.save(mappedUser);

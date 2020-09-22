@@ -59,6 +59,12 @@ export function checkIfUserHasAdminAccessToOrganization(
     );
 }
 
+export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {
+    if (!req.user.permissions.isGlobalAdmin) {
+        throw new ForbiddenException();
+    }
+}
+
 function checkIfGlobalAdminOrInList(
     req: AuthenticatedRequest,
     list: number[],

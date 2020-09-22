@@ -1,18 +1,12 @@
-import {
-    Logger,
-    Inject,
-    forwardRef,
-    OnApplicationBootstrap,
-} from "@nestjs/common";
+import { Inject, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { PermissionService } from "./permission.service";
 
 export class UserBootstrapperService implements OnApplicationBootstrap {
     constructor(
-        private userService: UserService,
-        @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        @Inject(UserService)
+        private userService: UserService
     ) {}
+
     private readonly logger = new Logger(UserBootstrapperService.name);
 
     GLOBAL_ADMIN_EMAIL = "global-admin@os2iot.dk";
@@ -29,20 +23,15 @@ export class UserBootstrapperService implements OnApplicationBootstrap {
             return;
         }
 
-        const globalAdminUser = await this.userService.createUser({
+        await this.userService.createUser({
             email: this.GLOBAL_ADMIN_EMAIL,
             name: this.GLOBAL_ADMIN_NAME,
             password: this.GLOBAL_ADMIN_DEFAULT_PASSWORD,
             active: true,
+            globalAdmin: true,
         });
         this.logger.log(
             `Created GlobalAdmin user with login - E-mail: '${this.GLOBAL_ADMIN_EMAIL}' - Password: '${this.GLOBAL_ADMIN_DEFAULT_PASSWORD}'`
-        );
-
-        const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-        await this.permissionService.addUsersToPermission(
-            globalAdminPermission,
-            [globalAdminUser]
         );
     }
 }

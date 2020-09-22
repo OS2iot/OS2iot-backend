@@ -10,6 +10,7 @@ import {
     Param,
     NotFoundException,
     ParseIntPipe,
+    Req,
 } from "@nestjs/common";
 import { UserService } from "@services/user-management/user.service";
 import {
@@ -29,6 +30,8 @@ import { OrganizationAdmin } from "@auth/roles.decorator";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
+import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -45,8 +48,12 @@ export class UserController {
     @Post()
     @ApiOperation({ summary: "Create a new User" })
     async create(
+        @Req() req: AuthenticatedRequest,
         @Body() createUserDto: CreateUserDto
     ): Promise<UserResponseDto> {
+        if (createUserDto.globalAdmin) {
+            checkIfUserIsGlobalAdmin(req);
+        }
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -73,9 +80,13 @@ export class UserController {
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
     async update(
+        @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateUserDto
     ): Promise<UserResponseDto> {
+        if (dto.globalAdmin) {
+            checkIfUserIsGlobalAdmin(req);
+        }
         // Don't leak the passwordHash
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { passwordHash, ...user } = await this.userService.updateUser(

@@ -72,11 +72,6 @@ import configuration from "@config/configuration";
         PermissionModule,
     ],
     controllers: [],
-    providers: [
-        ApplicationService,
-        IoTDeviceService,
-        DataTargetService,
-        ChirpstackDeviceService,
-    ],
+    providers: [],
 })
 export class AppModule {}
