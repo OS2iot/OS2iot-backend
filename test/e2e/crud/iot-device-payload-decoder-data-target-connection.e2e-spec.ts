@@ -23,8 +23,6 @@ import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
 import { AuthModule } from "@modules/auth.module";
 import { Organization } from "@entities/organization.entity";
-import { Length } from "class-validator";
-import { iotDeviceTypeMap } from "../../../src/entities/enum/device-type-mapping";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;

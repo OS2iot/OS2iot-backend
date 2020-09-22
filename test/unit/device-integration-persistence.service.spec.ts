@@ -22,6 +22,7 @@ import { Organization } from "@entities/organization.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Permission } from "@entities/permission.entity";
 import { User } from "@entities/user.entity";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;
@@ -39,6 +40,10 @@ describe("DeviceIntegrationPersistenceService", () => {
                 },
                 {
                     provide: getRepositoryToken(GenericHTTPDevice),
+                    useValue: {},
+                },
+                {
+                    provide: getRepositoryToken(SigFoxDevice),
                     useValue: {},
                 },
                 {
