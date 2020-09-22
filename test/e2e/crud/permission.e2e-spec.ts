@@ -19,6 +19,7 @@ import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto"
 import { ReadPermission } from "@entities/read-permission.entity";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { OrganizationApplicationPermission } from "../../../src/entities/organization-application-permission.entity";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;
@@ -147,6 +148,7 @@ describe("PermissionController (e2e)", () => {
             name: "E2E readers",
             organizationId: org.id,
             userIds: [],
+            applicationIds: [],
         };
 
         return await request(app.getHttpServer())
@@ -176,6 +178,9 @@ describe("PermissionController (e2e)", () => {
         const dto: UpdatePermissionDto = {
             name: "E2E readers - changed",
             userIds: [userToAdd.id],
+            applicationIds: (permissionToChange as OrganizationApplicationPermission)?.applications?.map(
+                x => x.id
+            ),
         };
 
         await request(app.getHttpServer())
