@@ -21,6 +21,7 @@ import { Organization } from "@entities/organization.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -156,6 +157,23 @@ export async function generateSavedApplication(
         app = generateApplication(org);
     }
     return await getManager().save(app);
+}
+
+export function generateSigfoxDevice(application: Application): SigFoxDevice {
+    const sigFoxDevice = new SigFoxDevice();
+    sigFoxDevice.name = "E2E Test SigFox Device";
+    sigFoxDevice.application = application;
+    sigFoxDevice.deviceId = "B443A5";
+    sigFoxDevice.deviceTypeId = "5e74c318aa8aec41f9cc6b8d";
+    sigFoxDevice.metadata = JSON.parse('""');
+
+    return sigFoxDevice;
+}
+
+export async function generateSavedSigfoxDevice(
+    app: Application
+): Promise<SigFoxDevice> {
+    return await getManager().save(generateSigfoxDevice(app));
 }
 
 export function generateIoTDevice(applications: Application): IoTDevice {
@@ -500,11 +518,18 @@ export function generateLoRaWANRawRequestDto(
     };
 }
 
-export function generateSigfoxRawRequestDto(
-    iotDeviceId?: number
-): RawRequestDto {
-    return {
-        rawPayload: JSON.parse(`{
+export const SIGFOX_PAYLOAD_2 = `{
+  "time": 1600674364,
+  "deviceTypeId": "5e74c318aa8aec41f9cc6b8d",
+  "deviceId": "B443A5",
+  "snr": 6.00,
+  "rssi": -128.00,
+  "station": "93CF",
+  "data": "ce20000046003f0f8004223c",
+  "seqNumber": 49
+  }`;
+
+export const SIGFOX_PAYLOAD = `{
                 "data": "c6099764",
                 "sigfoxId": "B445A9",
                 "time": "1596721546",
@@ -516,7 +541,13 @@ export function generateSigfoxRawRequestDto(
                 "latStation": "null",
                 "lngStation": "null",
                 "ack": "false"
-            }`),
+            }`;
+
+export function generateSigfoxRawRequestDto(
+    iotDeviceId?: number
+): RawRequestDto {
+    return {
+        rawPayload: JSON.parse(SIGFOX_PAYLOAD),
         iotDeviceId: iotDeviceId || 1,
         unixTimestamp: 1596721546,
     };
