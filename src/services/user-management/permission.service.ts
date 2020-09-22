@@ -69,7 +69,9 @@ export class PermissionService {
     }
 
     async findOrCreateGlobalAdminPermission(): Promise<GlobalAdminPermission> {
-        const globalAdmin = await getManager().findOne(GlobalAdminPermission);
+        const globalAdmin = await getManager().findOne(GlobalAdminPermission, {
+            relations: ["users"],
+        });
         if (globalAdmin) {
             return globalAdmin;
         }
