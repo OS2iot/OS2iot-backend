@@ -22,4 +22,4 @@ async function bootstrap() {
         `Application started on: ${url}${config.CURRENT_VERSION_PREFIX}`
     );
 }
-bootstrap();
+void bootstrap();

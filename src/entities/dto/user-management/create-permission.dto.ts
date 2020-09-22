@@ -30,5 +30,5 @@ export class CreatePermissionDto {
             type: "number",
         },
     })
-    applicationIds: number[];
+    applicationIds?: number[];
 }
