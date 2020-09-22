@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
 import { ApplicationController } from "@admin-controller/application.controller";
@@ -12,7 +12,6 @@ import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { Permission } from "@entities/permission.entity";
-import { AuthModule } from "./auth.module";
 import { OrganizationModule } from "./organization.module";
 
 @Module({
@@ -29,8 +28,7 @@ import { OrganizationModule } from "./organization.module";
             Permission,
             GlobalAdminPermission,
         ]),
-        AuthModule,
-        OrganizationModule,
+        forwardRef(() => OrganizationModule),
     ],
     exports: [TypeOrmModule, ApplicationService],
     controllers: [ApplicationController],

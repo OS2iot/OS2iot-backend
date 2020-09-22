@@ -29,9 +29,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await serviceProfileService
             .findAllServiceProfiles(1000, 0)
             .then(response => {
-                response.result.forEach(serviceProfile => {
+                response.result.forEach(async serviceProfile => {
                     if (serviceProfile.name.startsWith(testname)) {
-                        serviceProfileService.deleteServiceProfile(
+                        await serviceProfileService.deleteServiceProfile(
                             serviceProfile.id
                         );
                     }

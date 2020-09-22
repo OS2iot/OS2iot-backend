@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
 import { Repository, DeleteResult, In } from "typeorm";
@@ -13,6 +13,7 @@ export class ApplicationService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
+        @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService
     ) {}
 
@@ -50,7 +51,7 @@ export class ApplicationService {
     }
 
     async findManyByIds(ids: number[]): Promise<Application[]> {
-        if (ids.length == 0) {
+        if (ids == null || ids?.length == 0) {
             return [];
         }
         return await this.applicationRepository.find({ id: In(ids) });

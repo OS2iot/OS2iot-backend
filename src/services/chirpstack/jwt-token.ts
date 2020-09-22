@@ -17,7 +17,7 @@ export class JwtToken {
 
         const jwt = nJwt.create(claims, "verysecret", "HS256");
         const token = jwt.compact();
-        Logger.verbose(`JWT token for Chirpstack: ${token}`);
+        // Logger.verbose(`JWT token for Chirpstack: ${token}`);
         return token;
     }
 }

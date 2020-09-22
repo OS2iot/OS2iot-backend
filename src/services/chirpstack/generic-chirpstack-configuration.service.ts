@@ -166,8 +166,10 @@ export class GenericChirpstackConfigurationService {
             );
             return result;
         } catch (err) {
-            Logger.error(`Delete got error: ${err}`);
-            throw err;
+            Logger.error(
+                `Delete got error: ${JSON.stringify(err?.response?.data)}`
+            );
+            throw new InternalServerErrorException(err?.response?.data);
         }
     }
 

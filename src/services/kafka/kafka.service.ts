@@ -44,8 +44,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     async onModuleInit(): Promise<void> {
         await this.connect();
-        SUBSCRIBER_COMBINED_REF_MAP.forEach((functionRef, topic) => {
-            this.bindAllCombinedTopicToConsumer(topic);
+        SUBSCRIBER_COMBINED_REF_MAP.forEach(async (functionRef, topic) => {
+            await this.bindAllCombinedTopicToConsumer(topic);
         });
     }
 

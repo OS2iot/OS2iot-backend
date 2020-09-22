@@ -1,20 +1,20 @@
-import { Module, forwardRef } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
 import { Application } from "@entities/application.entity";
-import { Organization } from "@entities/organization.entity";
-import { User } from "@entities/user.entity";
-import { Permission } from "@entities/permission.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { Organization } from "@entities/organization.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { Permission } from "@entities/permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
+import { User } from "@entities/user.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { OrganizationModule } from "@modules/organization.module";
-import { UserModule } from "@modules/user.module";
+import { forwardRef, Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { PermissionService } from "@services/user-management/permission.service";
 import { PermissionController } from "@user-management-controller/permission.controller";
-import { ApplicationModule } from './application.module';
+import { ApplicationModule } from "./application.module";
+import { OrganizationModule } from "./organization.module";
+import { UserModule } from "./user.module";
 
 @Module({
     imports: [
@@ -30,9 +30,9 @@ import { ApplicationModule } from './application.module';
             ReadPermission,
             WritePermission,
         ]),
-        forwardRef(() => OrganizationModule),
-        forwardRef(() => UserModule),
         forwardRef(() => ApplicationModule),
+        forwardRef(() => UserModule),
+        forwardRef(() => OrganizationModule),
     ],
     providers: [PermissionService],
     exports: [PermissionService],

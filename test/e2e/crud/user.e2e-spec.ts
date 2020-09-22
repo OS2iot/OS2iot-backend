@@ -26,7 +26,6 @@ describe("UserController (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                UserModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -39,6 +38,7 @@ describe("UserController (e2e)", () => {
                     autoLoadEntities: true,
                 }),
                 AuthModule,
+                UserModule,
             ],
         }).compile();
 

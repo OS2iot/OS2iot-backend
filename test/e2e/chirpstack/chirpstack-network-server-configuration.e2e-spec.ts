@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 
 describe("ChirpstackSetupNetworkServerService", () => {
@@ -31,17 +31,21 @@ describe("ChirpstackSetupNetworkServerService", () => {
     });
 
     afterEach(async () => {
-        await chirpstackSetupNetworkServerService
-            .getNetworkServers(1000, 0)
-            .then(response => {
-                response.result.forEach(networkServer => {
-                    if (networkServer.name.startsWith(testServerName)) {
-                        chirpstackSetupNetworkServerService.deleteNetworkServer(
-                            networkServer.id
-                        );
-                    }
+        try {
+            await chirpstackSetupNetworkServerService
+                .getNetworkServers(1000, 0)
+                .then(response => {
+                    response.result.forEach(async networkServer => {
+                        if (networkServer.name.startsWith(testServerName)) {
+                            await chirpstackSetupNetworkServerService.deleteNetworkServer(
+                                networkServer.id
+                            );
+                        }
+                    });
                 });
-            });
+        } catch (err) {
+            Logger.warn("Clean-up failed ...", err);
+        }
     });
 
     it("Check that at least one Network Server exists", async () => {

@@ -14,9 +14,9 @@ import { DataTargetModule } from "@modules/data-target.module";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
-import { KafkaModule } from "@modules/kafka.module";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
 
 describe("DataTargetController (e2e)", () => {
     let app: INestApplication;
@@ -28,7 +28,6 @@ describe("DataTargetController (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                DataTargetModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -40,11 +39,8 @@ describe("DataTargetController (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
-                KafkaModule.register({
-                    clientId: "os2iot-client-e2e",
-                    brokers: ["host.docker.internal:9093"],
-                    groupId: "os2iot-backend-e2e",
-                }),
+                AuthModule,
+                DataTargetModule,
             ],
         }).compile();
 

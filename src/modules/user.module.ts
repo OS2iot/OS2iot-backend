@@ -18,6 +18,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DataTarget } from "@entities/data-target.entity";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { DataTarget } from "@entities/data-target.entity";
             ReadPermission,
             WritePermission,
             IoTDevice,
+            SigFoxDevice,
             ReceivedMessage,
             ReceivedMessageMetadata,
             DataTarget,
@@ -41,6 +43,6 @@ import { DataTarget } from "@entities/data-target.entity";
     ],
     controllers: [UserController],
     providers: [UserService, UserBootstrapperService],
-    exports: [UserService, TypeOrmModule],
+    exports: [UserService],
 })
 export class UserModule {}

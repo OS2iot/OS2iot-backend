@@ -27,10 +27,9 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
             ReceivedMessageMetadata,
         ]),
         ChirpstackAdministrationModule,
-        HttpModule,
         ApplicationModule,
     ],
-    exports: [TypeOrmModule, IoTDeviceService],
+    exports: [IoTDeviceService],
     controllers: [IoTDeviceController],
     providers: [IoTDeviceService],
 })
