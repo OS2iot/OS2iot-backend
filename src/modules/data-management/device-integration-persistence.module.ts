@@ -19,7 +19,6 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { AuthModule } from "@modules/auth.module";
 
 @Module({
     imports: [
@@ -40,12 +39,9 @@ import { AuthModule } from "@modules/auth.module";
             WritePermission,
         ]),
         IoTDeviceModule,
-        ApplicationModule,
-        ChirpstackAdministrationModule,
         HttpModule,
-        AuthModule,
     ],
     exports: [TypeOrmModule],
-    providers: [DeviceIntegrationPersistenceService, ChirpstackDeviceService],
+    providers: [DeviceIntegrationPersistenceService],
 })
 export class DeviceIntegrationPersistenceModule {}

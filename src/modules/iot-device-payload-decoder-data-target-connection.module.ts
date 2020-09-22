@@ -14,7 +14,6 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { IoTDeviceModule } from "./iot-device.module";
 import { DataTargetModule } from "./data-target.module";
 import { PayloadDecoderModule } from "./payload-decoder.module";
-import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack-administration.module";
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
 import { Permission } from "@entities/permission.entity";
@@ -24,7 +23,6 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
-import { ApplicationModule } from "./application.module";
 
 @Module({
     imports: [
@@ -50,10 +48,7 @@ import { ApplicationModule } from "./application.module";
         ]),
         IoTDeviceModule,
         DataTargetModule,
-        forwardRef(() => PayloadDecoderModule),
-        ChirpstackAdministrationModule,
-        HttpModule,
-        ApplicationModule,
+        PayloadDecoderModule,
     ],
     providers: [IoTDevicePayloadDecoderDataTargetConnectionService],
     exports: [IoTDevicePayloadDecoderDataTargetConnectionService],

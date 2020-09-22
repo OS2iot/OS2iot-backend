@@ -34,6 +34,7 @@ export class PermissionService {
         private permissionReposity: Repository<Permission>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
+        @Inject(forwardRef(() => UserService))
         private userService: UserService,
         @Inject(forwardRef(() => ApplicationService))
         private applicationService: ApplicationService

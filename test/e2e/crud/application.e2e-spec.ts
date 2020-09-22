@@ -12,12 +12,11 @@ import {
     generateSavedOrganization,
     generateSavedApplication,
 } from "../test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { CreateApplicationDto } from "@entities/dto/create-application.dto";
-import { ConfigService } from "@nestjs/config";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -28,7 +27,6 @@ describe("ApplicationController (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                ApplicationModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -40,11 +38,8 @@ describe("ApplicationController (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
-                KafkaModule.register({
-                    clientId: "os2iot-client-e2e",
-                    brokers: ["host.docker.internal:9093"],
-                    groupId: "os2iot-backend-e2e",
-                }),
+                AuthModule,
+                ApplicationModule,
             ],
         }).compile();
 

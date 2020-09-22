@@ -18,6 +18,7 @@ import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
@@ -29,7 +30,6 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                IoTDevicePayloadDecoderDataTargetConnectionModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -41,6 +41,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
+                AuthModule,
+                IoTDevicePayloadDecoderDataTargetConnectionModule,
             ],
         }).compile();
 

@@ -10,6 +10,7 @@ import {
     generateValidJwtForUser,
     generateSavedOrganization,
 } from "../test-helpers";
+import { AuthModule } from "@modules/auth.module";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { PayloadDecoderModule } from "@modules/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
@@ -26,7 +27,6 @@ describe("PayloadDecoderController (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                PayloadDecoderModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -38,6 +38,8 @@ describe("PayloadDecoderController (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
+                AuthModule,
+                PayloadDecoderModule,
             ],
         }).compile();
 

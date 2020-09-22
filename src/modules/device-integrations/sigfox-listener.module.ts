@@ -8,7 +8,6 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { SigFoxListenerService } from "@services/data-management/sigfox-listener.service";
 import { SigFoxListenerController } from "@device-data-controller/sigfox-listener.controller";
 import { ReceiveDataModule } from "@modules/receive-data.module";
 
@@ -28,6 +27,5 @@ import { ReceiveDataModule } from "@modules/receive-data.module";
     ],
     exports: [TypeOrmModule],
     controllers: [SigFoxListenerController],
-    providers: [],
 })
 export class SigFoxListenerModule {}

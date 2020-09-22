@@ -89,11 +89,11 @@ export class UserService {
     private async setPasswordHash(mappedUser: User, password: string) {
         this.checkPassword(password);
         // Hash password with bcrpyt
-        this.logger.verbose("Generating salt");
+        // this.logger.verbose("Generating salt");
         const salt = await bcrypt.genSalt(10);
-        this.logger.verbose("Generating hash");
+        // this.logger.verbose("Generating hash");
         mappedUser.passwordHash = await bcrypt.hash(password, salt);
-        this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
+        // this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
     }
 
     private checkPassword(password: string) {

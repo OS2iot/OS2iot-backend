@@ -15,6 +15,7 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
 
 describe("DeviceIntegrationPersistenceService (e2e)", () => {
     let app: INestApplication;
@@ -26,7 +27,6 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ load: [configuration] }),
-                DeviceIntegrationPersistenceModule,
                 TypeOrmModule.forRoot({
                     type: "postgres",
                     host: "host.docker.internal",
@@ -43,6 +43,8 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
                     brokers: ["host.docker.internal:9093"],
                     groupId: "os2iot-backend-e2e",
                 }),
+                AuthModule,
+                DeviceIntegrationPersistenceModule,
             ],
         }).compile();
 

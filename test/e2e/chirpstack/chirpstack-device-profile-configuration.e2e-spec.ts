@@ -30,9 +30,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         await deviceProfileService
             .findAllDeviceProfiles(1000, 0)
             .then(response => {
-                response.result.forEach(deviceProfile => {
+                response.result.forEach(async deviceProfile => {
                     if (deviceProfile.name.startsWith(testname)) {
-                        deviceProfileService.deleteDeviceProfile(
+                        await deviceProfileService.deleteDeviceProfile(
                             deviceProfile.id
                         );
                     }
