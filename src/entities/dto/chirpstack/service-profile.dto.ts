@@ -3,11 +3,9 @@ import { IsString, Length, MaxLength } from "class-validator";
 
 export class ServiceProfileDto {
     @ApiProperty({ required: false })
-    @IsString()
     id?: string;
 
     @ApiProperty({ required: true })
-    @IsString()
     @Length(1, 1024)
     name: string;
 
@@ -18,8 +16,6 @@ export class ServiceProfileDto {
     addGWMetaData?: boolean;
 
     @ApiProperty({ required: false })
-    @IsString()
-    @MaxLength(1024)
     channelMask?: string;
 
     @ApiProperty({ required: false })
@@ -32,8 +28,6 @@ export class ServiceProfileDto {
     dlRate?: number;
 
     @ApiProperty({ required: false })
-    @IsString()
-    @MaxLength(1024)
     dlRatePolicy?: string;
 
     @ApiProperty({ required: false })
@@ -76,7 +70,5 @@ export class ServiceProfileDto {
     ulRate?: number;
 
     @ApiProperty({ required: false })
-    @IsString()
-    @MaxLength(1024)
     ulRatePolicy?: string;
 }
