@@ -52,6 +52,12 @@ export class UserService {
         });
     }
 
+    async findOneWithOrganizations(id: number): Promise<User> {
+        return await this.userRepository.findOne(id, {
+            relations: ["permissions", "permissions.organization"]
+        })
+    }
+
     async findUserPermissions(id: number): Promise<Permission[]> {
         return (
             await this.userRepository.findOne(id, {

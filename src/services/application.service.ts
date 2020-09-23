@@ -19,11 +19,13 @@ export class ApplicationService {
 
     async findAndCountWithPagination(
         query?: ListAllEntitiesDto,
-        organizations?: number[]
+        allowedOrganisations?: number[]
     ): Promise<ListAllApplicationsReponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
-                organizations != null ? { belongsTo: In(organizations) } : {},
+                allowedOrganisations != null
+                    ? { belongsTo: In(allowedOrganisations) }
+                    : {},
             take: query.limit,
             skip: query.offset,
             relations: ["iotDevices"],
@@ -46,6 +48,7 @@ export class ApplicationService {
                 "iotDevices",
                 "dataTargets",
                 "iotDevices.receivedMessagesMetadata",
+                "belongsTo",
             ],
         });
     }

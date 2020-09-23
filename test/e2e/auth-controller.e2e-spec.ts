@@ -4,7 +4,11 @@ import * as request from "supertest";
 import { AuthModule } from "@modules/auth.module";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule, JwtService } from "@nestjs/jwt";
-import { generateSavedGlobalAdminUser, clearDatabase } from "./test-helpers";
+import {
+    generateSavedGlobalAdminUser,
+    clearDatabase,
+    generateSavedOrganization,
+} from "./test-helpers";
 import { LoginDto } from "@dto/login.dto";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
@@ -185,6 +189,46 @@ describe("AuthController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     sub: globalAdmin.id,
                     username: globalAdmin.email,
+                });
+            });
+    });
+
+    it("(GET) /me/ - Login and use JWT", async () => {
+        // Arrange
+        const globalAdmin = await generateSavedGlobalAdminUser();
+        const org = await generateSavedOrganization("E2E");
+        const loginDto: LoginDto = {
+            username: globalAdmin.email,
+            password: "hunter2",
+        };
+
+        // Act - login
+        let jwt = "";
+        await request(app.getHttpServer())
+            .post("/auth/me")
+            .send(loginDto)
+            // Assert
+            .expect(201)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    accessToken: expect.any(String),
+                });
+
+                jwt = response.body.accessToken;
+            });
+
+        return await request(app.getHttpServer())
+            .get("/auth/me")
+            .auth(jwt, { type: "bearer" })
+            .expect(200)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    user: {
+                        name: globalAdmin.name,
+                    },
+                });
+                expect(response.body.organisations[0]).toMatchObject({
+                    name: org.name,
                 });
             });
     });

@@ -69,7 +69,10 @@ export class ApplicationController {
         @Query() query?: ListAllApplicationsDto
     ): Promise<ListAllApplicationsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
-            return this.applicationService.findAndCountWithPagination(query);
+            return this.applicationService.findAndCountWithPagination(
+                query,
+                query.organizationId ? [+query.organizationId] : null
+            );
         }
 
         const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();

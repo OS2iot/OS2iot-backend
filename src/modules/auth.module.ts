@@ -9,6 +9,7 @@ import { JwtStrategy } from "@auth/jwt.strategy";
 import { AuthController } from "@user-management-controller/auth.controller";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { OrganizationModule } from "./organization.module";
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import configuration from "@config/configuration";
         }),
         forwardRef(() => UserModule),
         forwardRef(() => PermissionModule),
+        forwardRef(() => OrganizationModule),
     ],
     providers: [AuthService, LocalStrategy, JwtStrategy],
     exports: [AuthService],
