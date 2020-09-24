@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsPositive, IsString, Length, Min } from "class-validator";
+import { IsOptional, IsPositive, IsString, Length, Min } from "class-validator";
 
 export class DeviceProfileDto {
     @ApiProperty({ required: true })
@@ -27,9 +27,13 @@ export class DeviceProfileDto {
     factoryPresetFreqs?: number[];
 
     @ApiProperty({ required: false })
+    @IsOptional()
+    @Min(0)
     geolocBufferTTL?: number;
 
     @ApiProperty({ required: false })
+    @IsOptional()
+    @Min(0)
     geolocMinBufferSize?: number;
 
     @ApiProperty({ required: false })
