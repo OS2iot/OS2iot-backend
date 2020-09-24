@@ -8,6 +8,12 @@ import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-al
 import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
 import { ChirpstackSingleDeviceResponseDto } from "@dto/chirpstack/chirpstack-single-device-response.dto";
 import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
+import { ChirpstackDeviceActivationDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import {
+    ChirpstackDeviceKeysContentDto,
+    ChirpstackDeviceKeysResponseDto,
+} from "@dto/chirpstack/chirpstack-device-keys-response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -173,6 +179,27 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             `devices/${id}`
         );
         return res.device;
+    }
+
+    async getKeys(deviceId: string): Promise<ChirpstackDeviceKeysContentDto> {
+        try {
+            const res = await this.get<ChirpstackDeviceKeysResponseDto>(
+                `devices/${deviceId}/keys`
+            );
+            return res.deviceKeys;
+        } catch (err) {
+            // Chirpstack returns 404 if keys are not saved ..
+            return new ChirpstackDeviceKeysContentDto();
+        }
+    }
+
+    async getActivation(
+        deviceId: string
+    ): Promise<ChirpstackDeviceActivationContentsDto> {
+        const res = await this.get<ChirpstackDeviceActivationDto>(
+            `devices/${deviceId}/activation`
+        );
+        return res.deviceActivation;
     }
 
     private async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {

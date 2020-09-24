@@ -100,6 +100,10 @@ export class IoTDeviceService {
             loraDevice.lorawanSettings = await this.chirpstackDeviceService.getChirpstackDevice(
                 loraDevice.deviceEUI
             );
+            const keys = await this.chirpstackDeviceService.getKeys(
+                loraDevice.deviceEUI
+            );
+            loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
             const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
                 loraDevice.lorawanSettings.applicationID
             );

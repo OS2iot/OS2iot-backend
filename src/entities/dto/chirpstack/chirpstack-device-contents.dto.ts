@@ -37,4 +37,7 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiProperty({ required: false, default: {} })
     tags?: JSON;
+
+    @ApiProperty({ required: false, default: {} })
+    OTAAapplicationKey: string;
 }
