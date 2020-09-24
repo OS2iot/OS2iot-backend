@@ -112,7 +112,10 @@ export class PermissionService {
         users: User[]
     ): Promise<Permission> {
         permission.users = _.union(permission.users, users);
-        return await getManager().save(permission);
+        users.forEach(x => {
+            x.permissions = _.union(x.permissions, [permission]);
+        });
+        return await getManager().save(permission, { reload: true });
     }
 
     async updatePermission(
@@ -137,7 +140,10 @@ export class PermissionService {
         permission: Permission,
         dto: UpdatePermissionDto
     ): Promise<void> {
-        if (permission.type == PermissionType.Read || PermissionType.Write) {
+        if (
+            permission.type == PermissionType.Read ||
+            permission.type == PermissionType.Write
+        ) {
             (permission as OrganizationApplicationPermission).applications = await this.applicationService.findManyByIds(
                 dto.applicationIds
             );

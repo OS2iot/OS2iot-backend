@@ -54,8 +54,8 @@ export class UserService {
 
     async findOneWithOrganizations(id: number): Promise<User> {
         return await this.userRepository.findOne(id, {
-            relations: ["permissions", "permissions.organization"]
-        })
+            relations: ["permissions", "permissions.organization"],
+        });
     }
 
     async findUserPermissions(id: number): Promise<Permission[]> {
@@ -89,7 +89,7 @@ export class UserService {
             );
         }
 
-        return await this.userRepository.save(mappedUser);
+        return await this.userRepository.save(mappedUser, { reload: true });
     }
 
     private async setPasswordHash(mappedUser: User, password: string) {
@@ -118,7 +118,12 @@ export class UserService {
     }
 
     async updateUser(id: number, dto: UpdateUserDto): Promise<User> {
-        const user = await this.userRepository.findOne({ id: id });
+        const user = await this.userRepository.findOne(
+            { id: id },
+            {
+                relations: ["permissions"],
+            }
+        );
 
         const mappedUser = this.mapDtoToUser(user, dto);
         if (dto.password != null && dto.password != undefined) {
@@ -136,7 +141,7 @@ export class UserService {
             );
         }
 
-        return await this.userRepository.save(mappedUser);
+        return await this.userRepository.save(mappedUser, { reload: true });
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
