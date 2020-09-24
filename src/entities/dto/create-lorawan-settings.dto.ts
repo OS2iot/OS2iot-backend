@@ -21,8 +21,8 @@ export class CreateLoRaWANSettingsDto extends PickType(
     @ApiProperty({ required: false })
     @IsString()
     @IsOptional()
-    @Length(16, 16)
-    @Matches(/[0-9A-Fa-f]{16}/)
+    @Length(32, 32)
+    @Matches(/[0-9A-Fa-f]{32}/)
     OTAAapplicationKey?: string;
 
     /* ABP */
