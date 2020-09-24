@@ -69,9 +69,7 @@ export class PermissionService {
     }
 
     async findOrCreateGlobalAdminPermission(): Promise<GlobalAdminPermission> {
-        const globalAdmin = await getManager().findOne(GlobalAdminPermission, {
-            relations: ["users"],
-        });
+        const globalAdmin = await getManager().findOne(GlobalAdminPermission);
         if (globalAdmin) {
             return globalAdmin;
         }
@@ -110,12 +108,17 @@ export class PermissionService {
     async addUsersToPermission(
         permission: Permission,
         users: User[]
-    ): Promise<Permission> {
-        permission.users = _.union(permission.users, users);
+    ): Promise<void> {
         users.forEach(x => {
             x.permissions = _.union(x.permissions, [permission]);
         });
-        return await getManager().save(permission, { reload: true });
+    }
+
+    async removeUserFromPermission(
+        permission: Permission,
+        user: User
+    ): Promise<void> {
+        user.permissions = user.permissions.filter(x => x.id != permission.id);
     }
 
     async updatePermission(

@@ -1,4 +1,10 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
+import {
+    BadRequestException,
+    forwardRef,
+    Inject,
+    Injectable,
+    Logger,
+} from "@nestjs/common";
 import { User } from "@entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -10,6 +16,7 @@ import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { PermissionService } from "./permission.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { map } from "lodash";
 
 @Injectable()
 export class UserService {
@@ -103,8 +110,10 @@ export class UserService {
     }
 
     private checkPassword(password: string) {
-        if (password.length < 6 ) {
-            throw new BadRequestException(ErrorCodes.PasswordNotMetRequirements)
+        if (password.length < 6) {
+            throw new BadRequestException(
+                ErrorCodes.PasswordNotMetRequirements
+            );
         }
     }
 
@@ -135,13 +144,26 @@ export class UserService {
 
         if (dto.globalAdmin) {
             const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-            await this.permissionService.addUsersToPermission(
+            // Don't do anything if the user already is global admin.
+            if (
+                !mappedUser.permissions.some(
+                    x => x.id == globalAdminPermission.id
+                )
+            ) {
+                await this.permissionService.addUsersToPermission(
+                    globalAdminPermission,
+                    [mappedUser]
+                );
+            }
+        } else {
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            await this.permissionService.removeUserFromPermission(
                 globalAdminPermission,
-                [mappedUser]
+                mappedUser
             );
         }
 
-        return await this.userRepository.save(mappedUser, { reload: true });
+        return await this.userRepository.save(mappedUser);
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
