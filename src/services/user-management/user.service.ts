@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { User } from "@entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -9,6 +9,7 @@ import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { PermissionService } from "./permission.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class UserService {
@@ -86,12 +87,19 @@ export class UserService {
     }
 
     private async setPasswordHash(mappedUser: User, password: string) {
+        this.checkPassword(password);
         // Hash password with bcrpyt
         this.logger.verbose("Generating salt");
         const salt = await bcrypt.genSalt(10);
         this.logger.verbose("Generating hash");
         mappedUser.passwordHash = await bcrypt.hash(password, salt);
         this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
+    }
+
+    private checkPassword(password: string) {
+        if (password.length < 6 ) {
+            throw new BadRequestException(ErrorCodes.PasswordNotMetRequirements)
+        }
     }
 
     private mapDtoToUser(user: User, dto: UpdateUserDto): User {

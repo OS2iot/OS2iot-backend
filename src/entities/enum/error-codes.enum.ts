@@ -14,4 +14,5 @@ export enum ErrorCodes {
     OrganizationDoesNotExists = "MESSAGE.ORGANIZATION-DOES-NOT-EXISTS",
     UserInactive = "MESSAGE.USER-INACTIVE",
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION",
+    PasswordNotMetRequirements = "MESSAGE.PASSWORD-DOES-NOT-MEET-REQUIREMENTS"
 }
