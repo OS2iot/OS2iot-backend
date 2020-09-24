@@ -12,8 +12,8 @@ export class ServiceProfileDto {
     @ApiHideProperty()
     networkServerID?: string;
 
-    @ApiProperty({ required: false })
-    addGWMetaData?: boolean;
+    @ApiHideProperty()
+    addGWMetaData = true;
 
     @ApiProperty({ required: false })
     channelMask?: string;
@@ -42,8 +42,8 @@ export class ServiceProfileDto {
     @ApiProperty({ required: false })
     minGWDiversity?: number;
 
-    @ApiProperty({ required: false })
-    nwkGeoLoc?: boolean;
+    @ApiHideProperty()
+    nwkGeoLoc = true;
 
     @ApiHideProperty()
     organizationID?: string;
