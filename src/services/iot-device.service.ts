@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DeleteResult, getManager } from "typeorm";
+import { Repository, DeleteResult, getManager, In } from "typeorm";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { ApplicationService } from "@services/application.service";
@@ -56,6 +56,15 @@ export class IoTDeviceService {
 
     async findOne(id: number): Promise<IoTDevice> {
         return await this.iotDeviceRepository.findOneOrFail(id, {
+            relations: ["application"],
+        });
+    }
+
+    async findManyByIds(iotDeviceIds: number[]): Promise<IoTDevice[]> {
+        if (iotDeviceIds == null || iotDeviceIds?.length == 0) {
+            return [];
+        }
+        return await this.iotDeviceRepository.findByIds(iotDeviceIds, {
             relations: ["application"],
         });
     }

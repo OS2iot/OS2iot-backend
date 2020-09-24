@@ -205,7 +205,7 @@ describe("AuthController (e2e)", () => {
         // Act - login
         let jwt = "";
         await request(app.getHttpServer())
-            .post("/auth/me")
+            .post("/auth/login")
             .send(loginDto)
             // Assert
             .expect(201)
@@ -227,7 +227,7 @@ describe("AuthController (e2e)", () => {
                         name: globalAdmin.name,
                     },
                 });
-                expect(response.body.organisations[0]).toMatchObject({
+                expect(response.body.organizations[0]).toMatchObject({
                     name: org.name,
                 });
             });

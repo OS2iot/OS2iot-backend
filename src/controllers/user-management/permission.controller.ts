@@ -33,6 +33,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { BadRequestException } from "@nestjs/common";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -76,6 +77,9 @@ export class PermissionController {
     ): Promise<DeleteResponseDto> {
         const permission = await this.permissionService.getPermission(id);
         checkIfUserHasAdminAccessToOrganization(req, permission.id);
+        if (permission.type == PermissionType.GlobalAdmin) {
+            throw new BadRequestException("You cannot delete GlobalAdmin");
+        }
 
         return await this.permissionService.deletePermission(id);
     }

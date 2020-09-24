@@ -40,7 +40,7 @@ import { SigFoxListenerModule } from "./device-integrations/sigfox-listener.modu
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
                 synchronize: true,
-                logging: false,
+                logging: true,
                 autoLoadEntities: true,
                 retryAttempts: 0,
                 maxQueryExecutionTime: 200, // Log queries slower than 200 ms

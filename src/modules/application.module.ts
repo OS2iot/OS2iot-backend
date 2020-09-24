@@ -27,6 +27,7 @@ import { OrganizationModule } from "./organization.module";
             User,
             Permission,
             GlobalAdminPermission,
+            Organization,
         ]),
         forwardRef(() => OrganizationModule),
     ],

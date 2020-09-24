@@ -19,6 +19,7 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { DataTarget } from "@entities/data-target.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
             ReadPermission,
             WritePermission,
             IoTDevice,
+            IoTDevicePayloadDecoderDataTargetConnection,
             SigFoxDevice,
             ReceivedMessage,
             ReceivedMessageMetadata,

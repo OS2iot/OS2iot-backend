@@ -237,13 +237,14 @@ export async function generateSavedConnection(
 ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
     const connection = new IoTDevicePayloadDecoderDataTargetConnection();
     connection.dataTarget = dataTarget;
-    connection.iotDevice = iotDevice;
+    connection.iotDevices = [iotDevice];
     connection.payloadDecoder = payloadDecoder;
     return await getManager().save(connection);
 }
 
-export function generatePayloadDecoder(): PayloadDecoder {
+export function generatePayloadDecoder(org?: Organization): PayloadDecoder {
     const decoder = new PayloadDecoder();
+    decoder.organization = org;
     decoder.name = "E2E Test Payload Decoder";
     decoder.decodingFunction = `const TYPE_TEMP = 0x01; //temp 2 bytes -3276.8°C -->3276.7°C
     const TYPE_RH = 0x02; //Humidity 1 byte  0-100%
@@ -489,8 +490,10 @@ export function generatePayloadDecoder(): PayloadDecoder {
     return decoder;
 }
 
-export async function generateSavedPayloadDecoder(): Promise<PayloadDecoder> {
-    const decoder = generatePayloadDecoder();
+export async function generateSavedPayloadDecoder(
+    org?: Organization
+): Promise<PayloadDecoder> {
+    const decoder = generatePayloadDecoder(org);
     return await getManager().save(decoder);
 }
 

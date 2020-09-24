@@ -251,7 +251,9 @@ export class PermissionService {
             permissions.set(p.organization_id, []);
         }
         const applications = permissions.get(p.organization_id);
-        applications.push(p.application_id);
+        if (p.application_id != null) {
+            applications.push(p.application_id);
+        }
         permissions.set(p.organization_id, applications);
     }
 }

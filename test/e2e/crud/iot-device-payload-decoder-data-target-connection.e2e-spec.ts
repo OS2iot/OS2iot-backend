@@ -12,6 +12,9 @@ import {
     generateSavedDataTarget,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
+    generateSavedOrganization,
+    generateSavedOrganizationAdminUser,
+    generateSavedLoRaWANDevice,
 } from "../test-helpers";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
@@ -19,12 +22,17 @@ import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/creat
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
 import { AuthModule } from "@modules/auth.module";
+import { Organization } from "@entities/organization.entity";
+import { Length } from "class-validator";
+import { iotDeviceTypeMap } from "../../../src/entities/enum/device-type-mapping";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<IoTDevicePayloadDecoderDataTargetConnection>;
     const urlPath = "/iot-device-payload-decoder-data-target-connection/";
     let globalAdminJwt: string;
+    let orgAdminJwt: string;
+    let organisation: Organization;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -67,6 +75,12 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
         const user = await generateSavedGlobalAdminUser();
         // Generate store jwt
         globalAdminJwt = generateValidJwtForUser(user);
+
+        organisation = await generateSavedOrganization();
+        const nonAdminUser = await generateSavedOrganizationAdminUser(
+            organisation
+        );
+        orgAdminJwt = generateValidJwtForUser(nonAdminUser);
     });
 
     afterEach(async () => {
@@ -87,9 +101,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     });
 
     it("(GET) /iot-device-payload-decoder-data-target-connection/ - One element", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const dataTarget = await generateSavedDataTarget(application);
         await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
 
@@ -102,9 +116,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                 expect(response.body.count).toBe(1);
                 expect(response.body.data).toMatchObject([
                     {
-                        iotDevice: {
-                            id: iotDevice.id,
-                        },
+                        iotDevices: [
+                            {
+                                id: iotDevice.id,
+                            },
+                        ],
                         payloadDecoder: {
                             id: payloadDecoder.id,
                         },
@@ -116,10 +132,214 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             });
     });
 
-    it("(GET) /iot-device-payload-decoder-data-target-connection/:id - Found", async () => {
-        const application = await generateSavedApplication();
+    it("(GET) /iot-device-payload-decoder-data-target-connection/ - One element - org admin", async () => {
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(urlPath)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        iotDevices: [
+                            {
+                                id: iotDevice.id,
+                            },
+                        ],
+                        payloadDecoder: {
+                            id: payloadDecoder.id,
+                        },
+                        dataTarget: {
+                            id: dataTarget.id,
+                        },
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/ - One element on another org - org admin", async () => {
+        const otherOrg = await generateSavedOrganization("another one");
+        const application = await generateSavedApplication(otherOrg);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(otherOrg);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(urlPath)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toMatchObject([]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byIoTDevice/:id - One element - org admin", async () => {
+        const application = await generateSavedApplication(organisation);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byIoTDevice/${iotDevice.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        iotDevices: [
+                            {
+                                id: iotDevice.id,
+                            },
+                        ],
+                        payloadDecoder: {
+                            id: payloadDecoder.id,
+                        },
+                        dataTarget: {
+                            id: dataTarget.id,
+                        },
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byPayloadDecoder/:id - One element - org admin", async () => {
+        const application = await generateSavedApplication(organisation);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byPayloadDecoder/${payloadDecoder.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        iotDevices: [
+                            {
+                                id: iotDevice.id,
+                            },
+                        ],
+                        payloadDecoder: {
+                            id: payloadDecoder.id,
+                        },
+                        dataTarget: {
+                            id: dataTarget.id,
+                        },
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byDataTarget/:id - One element - org admin", async () => {
+        const application = await generateSavedApplication(organisation);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byDataTarget/${dataTarget.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toMatchObject([
+                    {
+                        iotDevices: [
+                            {
+                                id: iotDevice.id,
+                            },
+                        ],
+                        payloadDecoder: {
+                            id: payloadDecoder.id,
+                        },
+                        dataTarget: {
+                            id: dataTarget.id,
+                        },
+                    },
+                ]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byIoTDevice/:id - One element - another org - org admin", async () => {
+        const anotherOrg = await generateSavedOrganization("another");
+        const application = await generateSavedApplication(anotherOrg);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(anotherOrg);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byIoTDevice/${iotDevice.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toMatchObject([]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byPayloadDecoder/:id - One element - another org - org admin", async () => {
+        const anotherOrg = await generateSavedOrganization("another");
+        const application = await generateSavedApplication(anotherOrg);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(anotherOrg);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byPayloadDecoder/${payloadDecoder.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toMatchObject([]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/byDataTarget/:id - One element - another org - org admin", async () => {
+        const anotherOrg = await generateSavedOrganization("another");
+        const application = await generateSavedApplication(anotherOrg);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(anotherOrg);
+        const dataTarget = await generateSavedDataTarget(application);
+        await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
+
+        return await request(app.getHttpServer())
+            .get(`${urlPath}byDataTarget/${dataTarget.id}`)
+            .auth(orgAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                expect(response.body.count).toBe(0);
+                expect(response.body.data).toMatchObject([]);
+            });
+    });
+
+    it("(GET) /iot-device-payload-decoder-data-target-connection/:id - Found", async () => {
+        const application = await generateSavedApplication(organisation);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const dataTarget = await generateSavedDataTarget(application);
         const connection = await generateSavedConnection(
             iotDevice,
@@ -135,9 +355,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .then(response => {
                 expect(response.body).toMatchObject({
                     id: connection.id,
-                    iotDevice: {
-                        id: iotDevice.id,
-                    },
+                    iotDevices: [
+                        {
+                            id: iotDevice.id,
+                        },
+                    ],
                     payloadDecoder: {
                         id: payloadDecoder.id,
                     },
@@ -149,12 +371,12 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     });
 
     it("(POST) /iot-device-payload-decoder-data-target-connection/:id - All ok", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const dataTarget = await generateSavedDataTarget(application);
         const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
-            iotDeviceId: iotDevice.id,
+            iotDeviceIds: [iotDevice.id],
             dataTargetId: dataTarget.id,
             payloadDecoderId: payloadDecoder.id,
         };
@@ -166,9 +388,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .expect(201)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    iotDevice: {
-                        id: iotDevice.id,
-                    },
+                    iotDevices: [
+                        {
+                            id: iotDevice.id,
+                        },
+                    ],
                     payloadDecoder: {
                         id: payloadDecoder.id,
                     },
@@ -179,12 +403,69 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             });
     });
 
+    it("(POST) /iot-device-payload-decoder-data-target-connection/:id - All ok - Multiple IoTDevices.", async () => {
+        const application = await generateSavedApplication(organisation);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const loraDevice = await generateSavedLoRaWANDevice(application);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
+            iotDeviceIds: [iotDevice.id, loraDevice.id],
+            dataTargetId: dataTarget.id,
+            payloadDecoderId: payloadDecoder.id,
+        };
+
+        return await request(app.getHttpServer())
+            .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(201)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    payloadDecoder: {
+                        id: payloadDecoder.id,
+                    },
+                    dataTarget: {
+                        id: dataTarget.id,
+                    },
+                });
+                expect(
+                    response.body.iotDevices.map((x: any) => x.id)
+                ).toContainEqual(iotDevice.id);
+                expect(
+                    response.body.iotDevices.map((x: any) => x.id)
+                ).toContainEqual(loraDevice.id);
+            });
+    });
+
+    it("(POST) /iot-device-payload-decoder-data-target-connection/:id - No IoTDevices.", async () => {
+        const application = await generateSavedApplication(organisation);
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
+        const dataTarget = await generateSavedDataTarget(application);
+        const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
+            iotDeviceIds: [],
+            dataTargetId: dataTarget.id,
+            payloadDecoderId: payloadDecoder.id,
+        };
+
+        return await request(app.getHttpServer())
+            .post(urlPath)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(400)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: "Must contain at least one IoTDevice",
+                });
+            });
+    });
+
     it("(POST) /iot-device-payload-decoder-data-target-connection/:id - No payload decoder", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
         const dataTarget = await generateSavedDataTarget(application);
         const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
-            iotDeviceId: iotDevice.id,
+            iotDeviceIds: [iotDevice.id],
             dataTargetId: dataTarget.id,
         };
 
@@ -195,9 +476,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .expect(201)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    iotDevice: {
-                        id: iotDevice.id,
-                    },
+                    iotDevices: [
+                        {
+                            id: iotDevice.id,
+                        },
+                    ],
                     dataTarget: {
                         id: dataTarget.id,
                     },
@@ -206,14 +489,14 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     });
 
     it("(PUT) /iot-device-payload-decoder-data-target-connection/:id - Add payload decoder", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
         const dataTarget = await generateSavedDataTarget(application);
         const connection = await generateSavedConnection(iotDevice, dataTarget);
 
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
-            iotDeviceId: connection.iotDevice.id,
+            iotDeviceIds: connection.iotDevices.map(x => x.id),
             dataTargetId: connection.dataTarget.id,
             payloadDecoderId: payloadDecoder.id,
         };
@@ -225,9 +508,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .expect(201)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    iotDevice: {
-                        id: iotDevice.id,
-                    },
+                    iotDevices: [
+                        {
+                            id: iotDevice.id,
+                        },
+                    ],
                     dataTarget: {
                         id: dataTarget.id,
                     },
@@ -239,17 +524,17 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     });
 
     it("(PUT) /iot-device-payload-decoder-data-target-connection/:id - Remove payload decoder", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
         const dataTarget = await generateSavedDataTarget(application);
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const connection = await generateSavedConnection(
             iotDevice,
             dataTarget,
             payloadDecoder
         );
         const dto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto = {
-            iotDeviceId: connection.iotDevice.id,
+            iotDeviceIds: connection.iotDevices.map(x => x.id),
             dataTargetId: connection.dataTarget.id,
         };
 
@@ -260,9 +545,11 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .expect(201)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    iotDevice: {
-                        id: iotDevice.id,
-                    },
+                    iotDevices: [
+                        {
+                            id: iotDevice.id,
+                        },
+                    ],
                     dataTarget: {
                         id: dataTarget.id,
                     },
@@ -272,10 +559,10 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     });
 
     it("(DELETE) /iot-device-payload-decoder-data-target-connection/:id - All ok", async () => {
-        const application = await generateSavedApplication();
+        const application = await generateSavedApplication(organisation);
         const iotDevice = await generateSavedIoTDevice(application);
         const dataTarget = await generateSavedDataTarget(application);
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(organisation);
         const connection = await generateSavedConnection(
             iotDevice,
             dataTarget,

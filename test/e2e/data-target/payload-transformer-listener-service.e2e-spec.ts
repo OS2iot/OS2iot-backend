@@ -11,6 +11,7 @@ import {
     generateSavedPayloadDecoder,
     generateSavedDataTarget,
     generateSavedConnection,
+    generateSavedOrganization,
 } from "../test-helpers";
 import { KafkaMessage, Consumer } from "kafkajs";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -38,7 +39,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 KafkaModule.register({
@@ -76,14 +77,15 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
 
     it("Test rawRequestListener - All OK", async () => {
         // Arrange
-        const application = await generateSavedApplication();
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
         const iotDevice = await generateSavedIoTDevice(application);
         const kafkaPayload = generateRawRequestLoRaWANKafkaPayload(
             iotDevice.id
         );
         kafkaPayload.body.unixTimestamp = null;
         const rawPayload = (kafkaPayload.body as RawRequestDto).rawPayload;
-        const payloadDecoder = await generateSavedPayloadDecoder();
+        const payloadDecoder = await generateSavedPayloadDecoder(org);
         const dataTarget = await generateSavedDataTarget(application);
         await generateSavedConnection(iotDevice, dataTarget, payloadDecoder);
         await generateSavedConnection(iotDevice, dataTarget);

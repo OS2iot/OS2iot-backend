@@ -112,6 +112,7 @@ describe("DeviceIntegrationPersistenceService", () => {
             belongsTo: org,
             permissions: [],
         },
+        connections: [],
         name: "Test IoTDevice",
         metadata: JSON.parse("{}"),
         createdAt: new Date(),

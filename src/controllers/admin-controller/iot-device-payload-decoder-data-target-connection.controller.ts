@@ -70,9 +70,10 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAndCountWithPagination(query);
         } else {
+            const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
             return await this.service.findAndCountWithPagination(
                 query,
-                req.user.permissions.getAllApplicationsWithAtLeastRead()
+                allowed
             );
         }
     }
@@ -119,7 +120,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         } else {
             return await this.service.findAllByPayloadDecoderId(
                 id,
-                req.user.permissions.getAllApplicationsWithAtLeastRead()
+                req.user.permissions.getAllOrganizationsWithAtLeastRead()
             );
         }
     }
@@ -135,10 +136,8 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByDataTargetId(id);
         } else {
-            return await this.service.findAllByDataTargetId(
-                id,
-                req.user.permissions.getAllApplicationsWithAtLeastRead()
-            );
+            const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
+            return await this.service.findAllByDataTargetId(id, allowed);
         }
     }
 
@@ -155,11 +154,21 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Body()
         createDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-        const iotDevice = await this.iotDeviceService.findOne(
-            createDto.iotDeviceId
+        await this.checkUserHasWriteAccessToAllIotDevices(
+            createDto.iotDeviceIds,
+            req
         );
-        checkIfUserHasWriteAccessToApplication(req, iotDevice.application.id);
         return await this.service.create(createDto);
+    }
+
+    private async checkUserHasWriteAccessToAllIotDevices(
+        ids: number[],
+        req: AuthenticatedRequest
+    ) {
+        const iotDevices = await this.iotDeviceService.findManyByIds(ids);
+        iotDevices.forEach(x => {
+            checkIfUserHasWriteAccessToApplication(req, x.application.id);
+        });
     }
 
     @Put(":id")
@@ -177,18 +186,20 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         updateDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         const newIotDevice = await this.iotDeviceService.findOne(
-            updateDto.iotDeviceId
+            updateDto.iotDeviceIds[0]
         );
         checkIfUserHasWriteAccessToApplication(
             req,
             newIotDevice.application.id
         );
         const oldConnection = await this.service.findOne(id);
-        if (updateDto.iotDeviceId != oldConnection.iotDevice.id) {
-            checkIfUserHasWriteAccessToApplication(
-                req,
-                oldConnection.iotDevice.application.id
-            );
+        await this.checkUserHasWriteAccessToAllIotDevices(
+            updateDto.iotDeviceIds,
+            req
+        );
+        const oldIds = oldConnection.iotDevices.map(x => x.id);
+        if (updateDto.iotDeviceIds != oldIds) {
+            await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
         }
         return await this.service.update(id, updateDto);
     }
@@ -203,9 +214,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const oldConnection = await this.service.findOne(id);
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            oldConnection.iotDevice.application.id
+        await this.checkUserHasWriteAccessToAllIotDevices(
+            oldConnection.iotDevices.map(x => x.id),
+            req
         );
         try {
             const result = await this.service.delete(id);

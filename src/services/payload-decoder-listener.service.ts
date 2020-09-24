@@ -48,9 +48,13 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
 
         connections.data.forEach(async connection => {
             try {
+                const iotDevice = connection.iotDevices.find(
+                    x => x.id == dto.iotDeviceId
+                );
+
                 await this.decodeAndSendTransformed(
                     connection.payloadDecoder,
-                    connection.iotDevice,
+                    iotDevice,
                     dto.rawPayload
                 );
             } catch (err) {
