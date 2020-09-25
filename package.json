@@ -39,7 +39,7 @@
         "bcryptjs": "^2.4.3",
         "class-transformer": "^0.3.1",
         "class-validator": "^0.12.2",
-        "kafkajs": "^1.13.0",
+        "kafkajs": "^1.14.0",
         "lodash": "^4.17.20",
         "mqtt": "^4.2.1",
         "njwt": "^1.0.0",
