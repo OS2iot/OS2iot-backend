@@ -90,7 +90,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         fCntUp: number,
         nFCntDown: number,
         networkSessionKey: string,
-        applicationSessionKey: string
+        applicationSessionKey: string,
+        isUpdate: boolean
     ): Promise<boolean> {
         const dto = {
             deviceActivation: {
@@ -104,7 +105,12 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
                 sNwkSIntKey: networkSessionKey,
             },
         };
-        const res = await this.post(`devices/${devEUI}/activate`, dto);
+        let res;
+        if (isUpdate) {
+            res = await this.put(`devices/${devEUI}/activate`, dto, "");
+        } else {
+            res = await this.post(`devices/${devEUI}/activate`, dto);
+        }
         if (res.status != 200) {
             this.logger.warn(
                 `Could not ABP activate Chirpstack Device using body: ${JSON.stringify(
@@ -118,7 +124,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     async activateDeviceWithOTAA(
         deviceEUI: string,
-        nwkKey: string
+        nwkKey: string,
+        isUpdate: boolean
     ): Promise<boolean> {
         // http://localhost:8080/api/devices/0011223344557188/keys
         // {"deviceKeys":{"nwkKey":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","devEUI":"0011223344557188"}}
@@ -129,7 +136,12 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
                 devEUI: deviceEUI,
             },
         };
-        const res = await this.post(`devices/${deviceEUI}/keys`, dto);
+        let res;
+        if (isUpdate) {
+            res = await this.put(`devices/${deviceEUI}/keys`, dto, "");
+        } else {
+            res = await this.post(`devices/${deviceEUI}/keys`, dto);
+        }
         if (res.status != 200) {
             this.logger.warn(
                 `Could not activate Chirpstack Device using body: ${JSON.stringify(

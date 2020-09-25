@@ -145,7 +145,8 @@ export class IoTDeviceService {
 
         const mappedIotDevice = await this.mapDtoToIoTDevice(
             createIoTDeviceDto,
-            iotDevice
+            iotDevice,
+            false
         );
 
         const entityManager = getManager();
@@ -162,7 +163,8 @@ export class IoTDeviceService {
 
         const mappedIoTDevice = await this.mapDtoToIoTDevice(
             updateDto,
-            existingIoTDevice
+            existingIoTDevice,
+            true
         );
 
         const res = this.iotDeviceRepository.save(mappedIoTDevice);
@@ -176,7 +178,8 @@ export class IoTDeviceService {
 
     private async mapDtoToIoTDevice(
         createIoTDeviceDto: CreateIoTDeviceDto,
-        iotDevice: IoTDevice
+        iotDevice: IoTDevice,
+        isUpdate: boolean
     ): Promise<IoTDevice> {
         iotDevice.name = createIoTDeviceDto.name;
 
@@ -209,7 +212,8 @@ export class IoTDeviceService {
 
         iotDevice = await this.mapChildDtoToIoTDevice(
             createIoTDeviceDto,
-            iotDevice
+            iotDevice,
+            isUpdate
         );
 
         return iotDevice;
@@ -217,11 +221,12 @@ export class IoTDeviceService {
 
     private async mapChildDtoToIoTDevice(
         dto: CreateIoTDeviceDto,
-        iotDevice: IoTDevice
+        iotDevice: IoTDevice,
+        isUpdate: boolean
     ): Promise<IoTDevice> {
         if (iotDevice.constructor.name === LoRaWANDevice.name) {
             const cast = <LoRaWANDevice>iotDevice;
-            const loraDevice = await this.mapLoRaWANDevice(dto, cast);
+            const loraDevice = await this.mapLoRaWANDevice(dto, cast, isUpdate);
 
             return <IoTDevice>loraDevice;
         } else if (iotDevice.constructor.name === SigFoxDevice.name) {
@@ -246,7 +251,8 @@ export class IoTDeviceService {
 
     private async mapLoRaWANDevice(
         dto: CreateIoTDeviceDto,
-        lorawanDevice: LoRaWANDevice
+        lorawanDevice: LoRaWANDevice,
+        isUpdate: boolean
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
 
@@ -267,7 +273,7 @@ export class IoTDeviceService {
                 chirpstackDeviceDto
             );
 
-            await this.doActivation(dto);
+            await this.doActivation(dto, isUpdate);
         } catch (err) {
             this.logger.error(err);
             throw new BadRequestException(
@@ -279,13 +285,17 @@ export class IoTDeviceService {
         return lorawanDevice;
     }
 
-    private async doActivation(dto: CreateIoTDeviceDto): Promise<void> {
+    private async doActivation(
+        dto: CreateIoTDeviceDto,
+        isUpdate: boolean
+    ): Promise<void> {
         if (dto.lorawanSettings.activationType == ActivationType.OTAA) {
             // OTAA Activate if key is provided
             if (dto.lorawanSettings.OTAAapplicationKey) {
                 await this.chirpstackDeviceService.activateDeviceWithOTAA(
                     dto.lorawanSettings.devEUI,
-                    dto.lorawanSettings.OTAAapplicationKey
+                    dto.lorawanSettings.OTAAapplicationKey,
+                    isUpdate
                 );
             } else {
                 throw new BadRequestException(ErrorCodes.MissingOTAAInfo);
@@ -304,7 +314,8 @@ export class IoTDeviceService {
                     dto.lorawanSettings.fCntUp,
                     dto.lorawanSettings.nFCntDown,
                     dto.lorawanSettings.networkSessionKey,
-                    dto.lorawanSettings.applicationSessionKey
+                    dto.lorawanSettings.applicationSessionKey,
+                    isUpdate
                 );
             } else {
                 throw new BadRequestException(ErrorCodes.MissingABPInfo);
