@@ -120,19 +120,16 @@ export class UserService {
     private mapDtoToUser(user: User, dto: UpdateUserDto): User {
         user.name = dto.name;
         user.email = dto.email;
-        user.permissions = [];
+        user.permissions = user.permissions ? user.permissions : [];
         user.active = dto.active;
 
         return user;
     }
 
     async updateUser(id: number, dto: UpdateUserDto): Promise<User> {
-        const user = await this.userRepository.findOne(
-            { id: id },
-            {
-                relations: ["permissions"],
-            }
-        );
+        const user = await this.userRepository.findOne(id, {
+            relations: ["permissions"],
+        });
 
         const mappedUser = this.mapDtoToUser(user, dto);
         if (dto.password != null && dto.password != undefined) {

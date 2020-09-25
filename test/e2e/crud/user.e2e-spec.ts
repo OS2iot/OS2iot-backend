@@ -6,6 +6,8 @@ import { Repository } from "typeorm";
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,
+    generateSavedOrganization,
+    generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
 import { UserModule } from "@modules/user.module";
@@ -34,7 +36,7 @@ describe("UserController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 AuthModule,
@@ -254,5 +256,45 @@ describe("UserController (e2e)", () => {
             userFromDb.passwordHash
         );
         expect(isPasswordCorrect).toBeTruthy();
+    });
+
+    it("(PUT) /user/:id - Update user - Preserves permissions", async () => {
+        const org = await generateSavedOrganization();
+        const orgUser = await generateSavedOrganizationAdminUser(org);
+        const before = await repository.findOne(orgUser.id, {
+            relations: ["permissions"],
+        });
+        expect(before.permissions).toHaveLength(1);
+
+        const dto: UpdateUserDto = {
+            name: `${orgUser.name} - changed2`,
+            email: orgUser.email,
+            active: true,
+            globalAdmin: false,
+        };
+
+        await request(app.getHttpServer())
+            .put(`/user/${orgUser.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: `${orgUser.name} - changed2`,
+                    email: orgUser.email,
+                    active: true,
+                });
+            });
+
+        const usersInDb: User[] = await repository.find();
+        expect(usersInDb).toHaveLength(2);
+        const userFromDb = await repository.findOne(orgUser.id, {
+            relations: ["permissions"],
+        });
+        expect(userFromDb.permissions).toHaveLength(1);
+        expect(userFromDb.permissions[0]).toMatchObject({
+            type: "OrganizationAdmin",
+        });
     });
 });
