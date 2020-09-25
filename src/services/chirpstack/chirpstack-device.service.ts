@@ -107,7 +107,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         };
         let res;
         if (isUpdate) {
-            res = await this.put(`devices/${devEUI}/activate`, dto, "");
+            res = await this.put(`devices`, dto, `${devEUI}/activate`);
         } else {
             res = await this.post(`devices/${devEUI}/activate`, dto);
         }
@@ -138,7 +138,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         };
         let res;
         if (isUpdate) {
-            res = await this.put(`devices/${deviceEUI}/keys`, dto, "");
+            res = await this.put(`devices`, dto, `${deviceEUI}/keys`);
         } else {
             res = await this.post(`devices/${deviceEUI}/keys`, dto);
         }
