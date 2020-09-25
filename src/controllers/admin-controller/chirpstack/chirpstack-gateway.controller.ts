@@ -8,12 +8,14 @@ import {
     Put,
     BadRequestException,
     Delete,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiProduces,
     ApiTags,
     ApiOperation,
     ApiBadRequestResponse,
+    ApiBearerAuth,
 } from "@nestjs/swagger";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
@@ -23,9 +25,15 @@ import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { Read, Write } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+@Write()
 export class ChirpstackGatewayController {
     constructor(private chirpstackGatewayService: ChirpstackGatewayService) {}
 
@@ -42,6 +50,7 @@ export class ChirpstackGatewayController {
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
+    @Read()
     async getAll(
         @Query() query?: ChirpstackPaginatedListDto
     ): Promise<ListAllGatewaysReponseDto> {

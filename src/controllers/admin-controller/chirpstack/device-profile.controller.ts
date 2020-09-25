@@ -11,6 +11,7 @@ import {
     Delete,
     InternalServerErrorException,
     HttpCode,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -18,6 +19,7 @@ import {
     ApiOperation,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
+    ApiBearerAuth,
 } from "@nestjs/swagger";
 
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
@@ -27,9 +29,15 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { Write, Read } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+@Write()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
@@ -67,6 +75,7 @@ export class DeviceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one DeviceProfile by id" })
     @ApiNotFoundResponse()
+    @Read()
     async findOne(@Param("id") id: string): Promise<CreateDeviceProfileDto> {
         let result = undefined;
 
@@ -88,6 +97,7 @@ export class DeviceProfileController {
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all DeviceProfile" })
+    @Read()
     async getAll(
         @Query("limit") limit: number,
         @Query("offset") offset: number

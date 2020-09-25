@@ -5,19 +5,54 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import * as request from "supertest";
+import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
+import { ConfigModule } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+} from "../test-helpers";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
     let app: INestApplication;
+    let globalAdminJwt: string;
     const testname = "e2e";
+
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [ChirpstackAdministrationModule],
+            imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
+                TypeOrmModule.forRoot({
+                    type: "postgres",
+                    host: "host.docker.internal",
+                    port: 5433,
+                    username: "os2iot",
+                    password: "toi2so",
+                    database: "os2iot-e2e",
+                    synchronize: true,
+                    logging: false,
+                    autoLoadEntities: true,
+                }),
+                AuthModule,
+                ChirpstackAdministrationModule,
+            ],
         }).compile();
         app = moduleFixture.createNestApplication();
         await app.init();
 
         serviceProfileService = moduleFixture.get("ServiceProfileService");
+    });
+
+    beforeEach(async () => {
+        // Clear data before each test
+        await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterAll(async () => {
@@ -46,6 +81,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .post("/chirpstack/service-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(data)
             .expect(201)
             .expect("Content-Type", /json/)
@@ -65,6 +101,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .get("/chirpstack/service-profiles/" + serviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -88,6 +125,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .get("/chirpstack/service-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -128,6 +166,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .put("/chirpstack/service-profiles/" + serviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(changed)
             // Assert
             // No body is sent back from Chirpstack :'(
@@ -143,6 +182,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .delete("/chirpstack/service-profiles/" + serviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {

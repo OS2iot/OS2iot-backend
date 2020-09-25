@@ -11,6 +11,7 @@ import {
     Query,
     InternalServerErrorException,
     HttpCode,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -18,6 +19,7 @@ import {
     ApiBadRequestResponse,
     ApiNotFoundResponse,
     ApiProduces,
+    ApiBearerAuth,
 } from "@nestjs/swagger";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
@@ -26,9 +28,15 @@ import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-servi
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { Write, Read } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/service-profiles")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+@Write()
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
 
@@ -70,6 +78,7 @@ export class ServiceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one ServiceProfile by id" })
     @ApiNotFoundResponse()
+    @Read()
     async findOne(@Param("id") id: string): Promise<CreateServiceProfileDto> {
         return await this.serviceProfileService.findOneServiceProfileById(id);
     }
@@ -77,6 +86,7 @@ export class ServiceProfileController {
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all ServiceProfile" })
+    @Read()
     async getAll(
         @Query("limit") limit: number,
         @Query("offset") offset: number

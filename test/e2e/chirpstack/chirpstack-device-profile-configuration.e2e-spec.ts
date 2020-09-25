@@ -5,20 +5,54 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import * as request from "supertest";
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+} from "../test-helpers";
+import configuration from "@config/configuration";
+import { AuthModule } from "@modules/auth.module";
+import { ConfigModule } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;
     let app: INestApplication;
+    let globalAdminJwt: string;
     const testname = "e2e";
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [ChirpstackAdministrationModule],
+            imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
+                TypeOrmModule.forRoot({
+                    type: "postgres",
+                    host: "host.docker.internal",
+                    port: 5433,
+                    username: "os2iot",
+                    password: "toi2so",
+                    database: "os2iot-e2e",
+                    synchronize: true,
+                    logging: false,
+                    autoLoadEntities: true,
+                }),
+                AuthModule,
+                ChirpstackAdministrationModule,
+            ],
         }).compile();
         app = moduleFixture.createNestApplication();
         await app.init();
 
         deviceProfileService = moduleFixture.get("DeviceProfileService");
+    });
+
+    beforeEach(async () => {
+        // Clear data before each test
+        await clearDatabase();
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     afterAll(async () => {
@@ -49,6 +83,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .get("/chirpstack/device-profiles/" + deviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -75,6 +110,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .get("/chirpstack/device-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -108,6 +144,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
         return await request(app.getHttpServer())
             .post("/chirpstack/device-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(input)
             .expect(400) // Missing name ...
             .expect("Content-Type", /json/)
@@ -130,6 +167,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .post("/chirpstack/device-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(data)
             .expect(201)
             .expect("Content-Type", /json/)
@@ -152,6 +190,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .put("/chirpstack/device-profiles/" + deviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(changed)
             // Assert
             // No body is sent back from Chirpstack :'(
@@ -167,6 +206,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Act
         return await request(app.getHttpServer())
             .delete("/chirpstack/device-profiles/" + deviceProfileId)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {

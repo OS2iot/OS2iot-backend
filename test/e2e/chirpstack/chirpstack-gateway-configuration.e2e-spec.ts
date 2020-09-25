@@ -5,15 +5,39 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import * as request from "supertest";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
+import { AuthModule } from "@modules/auth.module";
+import {
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+} from "../test-helpers";
+import configuration from "@config/configuration";
+import { ConfigModule } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
     let service: ChirpstackGatewayService;
     let app: INestApplication;
+    let globalAdminJwt: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [ChirpstackAdministrationModule],
+            imports: [
+                ConfigModule.forRoot({ load: [configuration] }),
+                TypeOrmModule.forRoot({
+                    type: "postgres",
+                    host: "host.docker.internal",
+                    port: 5433,
+                    username: "os2iot",
+                    password: "toi2so",
+                    database: "os2iot-e2e",
+                    synchronize: true,
+                    logging: false,
+                    autoLoadEntities: true,
+                }),
+                AuthModule,
+                ChirpstackAdministrationModule,
+            ],
         }).compile();
 
         app = moduleFixture.createNestApplication();
@@ -36,6 +60,10 @@ describe("ChirpstackGatewayController (e2e)", () => {
                 await service.deleteGateway(element.id);
             }
         });
+        // Create user (global admin)
+        const user = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(user);
     });
 
     async function createGateway(): Promise<string> {
@@ -52,6 +80,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         await request(app.getHttpServer())
             .post("/chirpstack/gateway")
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(req)
             .expect(201);
 
@@ -64,6 +93,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
         const id = await createGateway();
         return await request(app.getHttpServer())
             .get(`/chirpstack/gateway/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -76,12 +106,14 @@ describe("ChirpstackGatewayController (e2e)", () => {
     it("(GET) Get gateway by id - bad characters in id", async () => {
         return await request(app.getHttpServer())
             .get(`/chirpstack/gateway/1234567890abcdss`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(400);
     });
 
     it("(GET) Get gateway by id - bad length", async () => {
         return await request(app.getHttpServer())
             .get(`/chirpstack/gateway/123456`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(400);
     });
 
@@ -90,6 +122,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
         const id2 = await createGateway();
         return await request(app.getHttpServer())
             .get(`/chirpstack/gateway`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
@@ -114,6 +147,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         await request(app.getHttpServer())
             .put(`/chirpstack/gateway/${dto.gateway.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(200);
 
@@ -134,6 +168,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .put(`/chirpstack/gateway/${dto.gateway.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .send({
                 gateway: {
                     id: "blah",
@@ -147,6 +182,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
         return await request(app.getHttpServer())
             .delete(`/chirpstack/gateway/${id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
             .expect(200);
     });
 });
