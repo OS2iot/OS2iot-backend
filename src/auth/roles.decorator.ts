@@ -6,5 +6,4 @@ export const Read = () => SetMetadata("roles", PermissionType.Read);
 export const Write = () => SetMetadata("roles", PermissionType.Write);
 export const OrganizationAdmin = () =>
     SetMetadata("roles", PermissionType.OrganizationAdmin);
-export const GlobalAdmin = () =>
-    SetMetadata("roles", PermissionType.GlobalAdmin);
+export const GlobalAdmin = () => SetMetadata("roles", PermissionType.GlobalAdmin);

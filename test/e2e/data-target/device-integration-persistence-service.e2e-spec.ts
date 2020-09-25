@@ -53,9 +53,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         service = moduleFixture.get("DeviceIntegrationPersistenceService");
 
         // Get a reference to the repository such that we can CRUD on it.
-        receivedMessageRepository = moduleFixture.get(
-            "ReceivedMessageRepository"
-        );
+        receivedMessageRepository = moduleFixture.get("ReceivedMessageRepository");
         receivedMessageMetadataRepository = moduleFixture.get(
             "ReceivedMessageMetadataRepository"
         );

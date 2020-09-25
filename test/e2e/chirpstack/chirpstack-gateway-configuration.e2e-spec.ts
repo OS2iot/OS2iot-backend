@@ -6,10 +6,7 @@ import * as request from "supertest";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { AuthModule } from "@modules/auth.module";
-import {
-    generateSavedGlobalAdminUser,
-    generateValidJwtForUser,
-} from "../test-helpers";
+import { generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
 import configuration from "@config/configuration";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";

@@ -83,18 +83,13 @@ export function generateOrganization(name?: string): Organization {
 
     const readPermission = new ReadPermission(org.name + READ_SUFFIX, org);
     const writePermission = new WritePermission(org.name + WRITE_SUFFIX, org);
-    const adminPermission = new OrganizationAdminPermission(
-        org.name + ADMIN_SUFFIX,
-        org
-    );
+    const adminPermission = new OrganizationAdminPermission(org.name + ADMIN_SUFFIX, org);
     org.permissions = [adminPermission, writePermission, readPermission];
 
     return org;
 }
 
-export async function generateSavedOrganization(
-    name?: string
-): Promise<Organization> {
+export async function generateSavedOrganization(name?: string): Promise<Organization> {
     const org = generateOrganization(name);
     const savedOrg = await getManager().save(org);
     await getManager().save(org.permissions);
@@ -107,8 +102,7 @@ export function generateUser(permissions: Permission[]): User {
     user.email = `${user.name}@test.test`;
     user.active = true;
     // Password is 'hunter2', but saving the hash since it takes ~100 ms (by design) to generate the hash.
-    user.passwordHash =
-        "$2a$10$ypJWMZzMokzdq/gaNYsNieDTCjSCYyzpBzEtyqXDd5VVW1STbmXT2";
+    user.passwordHash = "$2a$10$ypJWMZzMokzdq/gaNYsNieDTCjSCYyzpBzEtyqXDd5VVW1STbmXT2";
     user.permissions = permissions;
 
     return user;
@@ -124,9 +118,7 @@ export async function generateSavedGlobalAdminUser(): Promise<User> {
 export async function generateSavedOrganizationAdminUser(
     org: Organization
 ): Promise<User> {
-    let orgAdmin = org.permissions.find(
-        x => x.type == PermissionType.OrganizationAdmin
-    );
+    let orgAdmin = org.permissions.find(x => x.type == PermissionType.OrganizationAdmin);
     if (!orgAdmin) {
         orgAdmin = await generateSavedOrganizationAdminPermission(org);
     }
@@ -146,9 +138,7 @@ export function generateApplication(org?: Organization): Application {
     return app;
 }
 
-export async function generateSavedApplication(
-    org?: Organization
-): Promise<Application> {
+export async function generateSavedApplication(org?: Organization): Promise<Application> {
     let app;
     if (org) {
         app = generateApplication(org);
@@ -170,9 +160,7 @@ export function generateSigfoxDevice(application: Application): SigFoxDevice {
     return sigFoxDevice;
 }
 
-export async function generateSavedSigfoxDevice(
-    app: Application
-): Promise<SigFoxDevice> {
+export async function generateSavedSigfoxDevice(app: Application): Promise<SigFoxDevice> {
     return await getManager().save(generateSigfoxDevice(app));
 }
 
@@ -193,9 +181,7 @@ export async function generateSavedIoTDevice(
     return await getManager().save(generateIoTDevice(applications));
 }
 
-export function generateLoRaWANDevice(
-    applications: Application
-): LoRaWANDevice {
+export function generateLoRaWANDevice(applications: Application): LoRaWANDevice {
     const device = new LoRaWANDevice();
     device.name = "E2E Test LoRaWAN device";
     device.application = applications;
@@ -218,9 +204,7 @@ export async function generateSavedDataTarget(
     return await getManager().save(generateDataTarget(application));
 }
 
-export function generateDataTarget(
-    application: Application
-): HttpPushDataTarget {
+export function generateDataTarget(application: Application): HttpPushDataTarget {
     const dataTarget = new HttpPushDataTarget();
     dataTarget.name = "E2E Test Http Push Data Target";
     dataTarget.url = "https://enwehrrtrqajd1m.m.pipedream.net";
@@ -497,9 +481,7 @@ export async function generateSavedPayloadDecoder(
     return await getManager().save(decoder);
 }
 
-export function generateLoRaWANRawRequestDto(
-    iotDeviceId?: number
-): RawRequestDto {
+export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDto {
     return {
         rawPayload: JSON.parse(`{
             "data": "AQEXAjEEAIsFCAcOPQ==",
@@ -546,9 +528,7 @@ export const SIGFOX_PAYLOAD = `{
                 "ack": "false"
             }`;
 
-export function generateSigfoxRawRequestDto(
-    iotDeviceId?: number
-): RawRequestDto {
+export function generateSigfoxRawRequestDto(iotDeviceId?: number): RawRequestDto {
     return {
         rawPayload: JSON.parse(SIGFOX_PAYLOAD),
         iotDeviceId: iotDeviceId || 1,
@@ -556,9 +536,7 @@ export function generateSigfoxRawRequestDto(
     };
 }
 
-export function generateRawRequestSigfoxKafkaPayload(
-    iotDeviceId?: number
-): KafkaPayload {
+export function generateRawRequestSigfoxKafkaPayload(iotDeviceId?: number): KafkaPayload {
     return {
         body: generateSigfoxRawRequestDto(iotDeviceId),
         messageId: "genericHttp1596721546",

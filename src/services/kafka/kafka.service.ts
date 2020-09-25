@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    OnModuleDestroy,
-    OnModuleInit,
-    Logger,
-} from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from "@nestjs/common";
 import {
     Consumer,
     Kafka,
@@ -79,9 +74,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                     const object = tuple[0];
                     const fn = tuple[1];
                     // bind the subscribed functions to topic
-                    const msg = JSON.parse(
-                        message.value.toString()
-                    ) as KafkaPayload;
+                    const msg = JSON.parse(message.value.toString()) as KafkaPayload;
                     await fn.apply(object, [msg]);
                 });
             },

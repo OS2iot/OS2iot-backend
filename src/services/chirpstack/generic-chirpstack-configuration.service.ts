@@ -17,8 +17,7 @@ import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network
 @Injectable()
 export class GenericChirpstackConfigurationService {
     baseUrl = `http://${
-        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME ||
-        "host.docker.internal"
+        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME || "host.docker.internal"
     }:${process.env.CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
 
     networkServer = `${
@@ -79,9 +78,7 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            Logger.error(
-                `post got error: ${JSON.stringify(err?.response?.data)}`
-            );
+            Logger.error(`post got error: ${JSON.stringify(err?.response?.data)}`);
 
             if (err?.response?.status == 400) {
                 throw new BadRequestException({
@@ -94,18 +91,12 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async put<T>(
-        endpoint: string,
-        data: T,
-        id: string
-    ): Promise<AxiosResponse> {
+    async put<T>(endpoint: string, data: T, id: string): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         const url = header.url + "/" + id;
         try {
-            const result = await this.httpService
-                .put(url, data, axiosConfig)
-                .toPromise();
+            const result = await this.httpService.put(url, data, axiosConfig).toPromise();
 
             Logger.debug(
                 `put: ${JSON.stringify(
@@ -133,9 +124,7 @@ export class GenericChirpstackConfigurationService {
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
             const url = header.url + "/" + id;
-            const result = await this.httpService
-                .get(url, axiosConfig)
-                .toPromise();
+            const result = await this.httpService.get(url, axiosConfig).toPromise();
 
             Logger.debug(
                 `get by ID from:${endpoint} resulting in ${result.status.toString()} and message: ${
@@ -155,20 +144,14 @@ export class GenericChirpstackConfigurationService {
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
             const url = header.url + "/" + id;
-            const result = await this.httpService
-                .delete(url, axiosConfig)
-                .toPromise();
+            const result = await this.httpService.delete(url, axiosConfig).toPromise();
 
             Logger.debug(
-                `delete : ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
+                `delete : ${result.status.toString()} and message: ${result.statusText}`
             );
             return result;
         } catch (err) {
-            Logger.error(
-                `Delete got error: ${JSON.stringify(err?.response?.data)}`
-            );
+            Logger.error(`Delete got error: ${JSON.stringify(err?.response?.data)}`);
             throw new InternalServerErrorException(err?.response?.data);
         }
     }
@@ -184,9 +167,7 @@ export class GenericChirpstackConfigurationService {
 
             return result.data;
         } catch (err) {
-            Logger.error(
-                `Error from Chirpstack ${JSON.stringify(err?.response?.data)}`
-            );
+            Logger.error(`Error from Chirpstack ${JSON.stringify(err?.response?.data)}`);
             if (err?.response?.status == 404) {
                 throw new NotFoundException(err?.response?.data);
             }
@@ -223,9 +204,11 @@ export class GenericChirpstackConfigurationService {
         limit?: number,
         offset?: number
     ): Promise<ListAllNetworkServerReponseDto> {
-        const res = await this.getAllWithPagination<
-            ListAllNetworkServerReponseDto
-        >("network-servers", limit, offset);
+        const res = await this.getAllWithPagination<ListAllNetworkServerReponseDto>(
+            "network-servers",
+            limit,
+            offset
+        );
         return res;
     }
 
@@ -233,9 +216,11 @@ export class GenericChirpstackConfigurationService {
         limit?: number,
         offset?: number
     ): Promise<ListAllOrganizationsReponseDto> {
-        const res = await this.getAllWithPagination<
-            ListAllOrganizationsReponseDto
-        >("organizations", limit, offset);
+        const res = await this.getAllWithPagination<ListAllOrganizationsReponseDto>(
+            "organizations",
+            limit,
+            offset
+        );
         return res;
     }
 

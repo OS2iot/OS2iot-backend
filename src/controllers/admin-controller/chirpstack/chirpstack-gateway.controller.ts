@@ -41,9 +41,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
-    async create(
-        @Body() dto: CreateGatewayDto
-    ): Promise<ChirpstackReponseStatus> {
+    async create(@Body() dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
         return await this.chirpstackGatewayService.createNewGateway(dto);
     }
 
@@ -85,10 +83,7 @@ export class ChirpstackGatewayController {
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
-        return await this.chirpstackGatewayService.modifyGateway(
-            gatewayId,
-            dto
-        );
+        return await this.chirpstackGatewayService.modifyGateway(gatewayId, dto);
     }
 
     @Delete(":gatewayId")

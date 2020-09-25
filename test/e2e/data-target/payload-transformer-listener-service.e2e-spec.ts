@@ -80,9 +80,7 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
         const iotDevice = await generateSavedIoTDevice(application);
-        const kafkaPayload = generateRawRequestLoRaWANKafkaPayload(
-            iotDevice.id
-        );
+        const kafkaPayload = generateRawRequestLoRaWANKafkaPayload(iotDevice.id);
         kafkaPayload.body.unixTimestamp = null;
         const rawPayload = (kafkaPayload.body as RawRequestDto).rawPayload;
         const payloadDecoder = await generateSavedPayloadDecoder(org);

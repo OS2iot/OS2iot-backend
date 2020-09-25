@@ -11,6 +11,7 @@ import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";
 
@@ -49,6 +50,13 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
         );
 
+        await this.findDataTargetsAndSend(iotDevice, dto);
+    }
+
+    private async findDataTargetsAndSend(
+        iotDevice: IoTDevice,
+        dto: TransformedPayloadDto
+    ) {
         // Get connections in order to only send to the dataTargets which is identified by the pair of IoTDevice and PayloadDecoder
         const connections = await this.ioTDevicePayloadDecoderDataTargetConnectionService.findAllByIoTDeviceAndPayloadDecoderId(
             iotDevice.id,
@@ -66,10 +74,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         this.sendToDataTargets(dataTargets, dto);
     }
 
-    private sendToDataTargets(
-        dataTargets: DataTarget[],
-        dto: TransformedPayloadDto
-    ) {
+    private sendToDataTargets(dataTargets: DataTarget[], dto: TransformedPayloadDto) {
         dataTargets.forEach(async target => {
             if (target.type == DataTargetType.HttpPush) {
                 try {
@@ -80,9 +85,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                     );
                 }
             } else {
-                throw new NotImplementedException(
-                    `Not implemented for: ${target.type}`
-                );
+                throw new NotImplementedException(`Not implemented for: ${target.type}`);
             }
         });
     }

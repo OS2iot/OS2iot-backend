@@ -12,12 +12,10 @@ describe("Application Controller", () => {
                 {
                     provide: ApplicationService,
                     useValue: {
-                        findAndCountWithPagination: jest
-                            .fn()
-                            .mockResolvedValue({
-                                data: [],
-                                count: 0,
-                            }),
+                        findAndCountWithPagination: jest.fn().mockResolvedValue({
+                            data: [],
+                            count: 0,
+                        }),
                     },
                 },
             ],

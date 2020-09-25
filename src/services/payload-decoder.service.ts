@@ -27,14 +27,8 @@ export class PayloadDecoderService {
         query: ListAllEntitiesDto,
         organizationIds?: number[]
     ): Promise<ListAllPayloadDecoderReponseDto> {
-        const [
-            result,
-            total,
-        ] = await this.payloadDecoderRepository.findAndCount({
-            where:
-                organizationIds != null
-                    ? { organization: In(organizationIds) }
-                    : {},
+        const [result, total] = await this.payloadDecoderRepository.findAndCount({
+            where: organizationIds != null ? { organization: In(organizationIds) } : {},
             take: query.limit,
             skip: query.offset,
             order: { id: query.sort }, // TODO: Generic sorting possible?
@@ -61,9 +55,7 @@ export class PayloadDecoderService {
         id: number,
         updateDto: UpdatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
-        const payloadDecoder = await this.payloadDecoderRepository.findOneOrFail(
-            id
-        );
+        const payloadDecoder = await this.payloadDecoderRepository.findOneOrFail(id);
 
         const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
             updateDto,
@@ -83,9 +75,7 @@ export class PayloadDecoderService {
     ) {
         newPayloadDecoder.name = createDto.name;
         try {
-            newPayloadDecoder.decodingFunction = JSON.parse(
-                createDto.decodingFunction
-            );
+            newPayloadDecoder.decodingFunction = JSON.parse(createDto.decodingFunction);
         } catch (err) {
             Logger.error("Failed to parse decodingFunction", err);
             throw new BadRequestException(ErrorCodes.BadEncoding);

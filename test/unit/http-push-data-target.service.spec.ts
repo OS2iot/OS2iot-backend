@@ -21,9 +21,7 @@ describe("DataTargetService", () => {
             ],
         }).compile();
 
-        service = module.get<HttpPushDataTargetService>(
-            HttpPushDataTargetService
-        );
+        service = module.get<HttpPushDataTargetService>(HttpPushDataTargetService);
     });
 
     it("should be defined", () => {
@@ -42,10 +40,7 @@ describe("DataTargetService", () => {
             mimeType: "application/json",
         };
 
-        const res = HttpPushDataTargetService.makeAxiosConfiguration(
-            config,
-            data
-        );
+        const res = HttpPushDataTargetService.makeAxiosConfiguration(config, data);
 
         expect(res).toMatchObject({
             timeout: 1337,

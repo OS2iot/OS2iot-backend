@@ -58,13 +58,9 @@ export class IoTDeviceController {
     ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
         let result = undefined;
         try {
-            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-                id
-            );
+            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
         } catch (err) {
-            Logger.error(
-                `Error occured during findOne: '${JSON.stringify(err)}'`
-            );
+            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
 
         if (!result) {
@@ -103,16 +99,10 @@ export class IoTDeviceController {
         const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
             id
         );
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            oldIotDevice.application.id
-        );
+        checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
         if (updateDto.applicationId !== oldIotDevice.application.id) {
             // New application
-            checkIfUserHasWriteAccessToApplication(
-                req,
-                updateDto.applicationId
-            );
+            checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
         }
 
         const application = await this.iotDeviceService.update(id, updateDto);
@@ -130,10 +120,7 @@ export class IoTDeviceController {
         const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
             id
         );
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            oldIotDevice?.application?.id
-        );
+        checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
 
         try {
             const result = await this.iotDeviceService.delete(id);

@@ -1,11 +1,4 @@
-import {
-    Controller,
-    Post,
-    Request,
-    UseGuards,
-    Get,
-    Body,
-} from "@nestjs/common";
+import { Controller, Post, Request, UseGuards, Get, Body } from "@nestjs/common";
 import {
     ApiOperation,
     ApiBearerAuth,
@@ -58,9 +51,7 @@ export class AuthController {
     })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    async getProfile(
-        @Request() req: AuthenticatedRequest
-    ): Promise<JwtPayloadDto> {
+    async getProfile(@Request() req: AuthenticatedRequest): Promise<JwtPayloadDto> {
         return {
             sub: req.user.userId,
             username: req.user.username,
@@ -77,9 +68,7 @@ export class AuthController {
     async getInfoAboutCurrentUser(
         @Request() req: AuthenticatedRequest
     ): Promise<CurrentUserInfoDto> {
-        const user = await this.userService.findOneWithOrganizations(
-            req.user.userId
-        );
+        const user = await this.userService.findOneWithOrganizations(req.user.userId);
         const orgs = await this.getAllowedOrganisations(req, user);
         return {
             user: user,

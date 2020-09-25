@@ -49,22 +49,32 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         });
         // otherwise create default
         if (!applicationId) {
-            applicationId = await this.createApplication({
-                application: {
-                    name: `${
-                        this.defaultApplicationName
-                    }-${dto.device.serviceProfileID.toLowerCase()}`.substring(
-                        0,
-                        50
-                    ),
-                    description: this.DEFAULT_DESCRIPTION,
-                    organizationID: organizationID,
-                    serviceProfileID: dto.device.serviceProfileID,
-                },
-            });
+            applicationId = await this.createDefaultApplication(
+                applicationId,
+                dto,
+                organizationID
+            );
         }
 
         return +applicationId;
+    }
+
+    private async createDefaultApplication(
+        applicationId: any,
+        dto: CreateChirpstackDeviceDto,
+        organizationID: string
+    ) {
+        applicationId = await this.createApplication({
+            application: {
+                name: `${
+                    this.defaultApplicationName
+                }-${dto.device.serviceProfileID.toLowerCase()}`.substring(0, 50),
+                description: this.DEFAULT_DESCRIPTION,
+                organizationID: organizationID,
+                serviceProfileID: dto.device.serviceProfileID,
+            },
+        });
+        return applicationId;
     }
 
     async makeCreateChirpstackDeviceDto(
@@ -93,6 +103,35 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         applicationSessionKey: string,
         isUpdate: boolean
     ): Promise<boolean> {
+        const { res, dto } = await this.createOrUpdateABPActivation(
+            devAddr,
+            networkSessionKey,
+            applicationSessionKey,
+            fCntUp,
+            nFCntDown,
+            devEUI,
+            isUpdate
+        );
+        if (res.status != 200) {
+            this.logger.warn(
+                `Could not ABP activate Chirpstack Device using body: ${JSON.stringify(
+                    dto
+                )}`
+            );
+            return false;
+        }
+        return res.status == 200;
+    }
+
+    private async createOrUpdateABPActivation(
+        devAddr: string,
+        networkSessionKey: string,
+        applicationSessionKey: string,
+        fCntUp: number,
+        nFCntDown: number,
+        devEUI: string,
+        isUpdate: boolean
+    ) {
         const dto = {
             deviceActivation: {
                 devAddr: devAddr,
@@ -111,15 +150,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         } else {
             res = await this.post(`devices/${devEUI}/activate`, dto);
         }
-        if (res.status != 200) {
-            this.logger.warn(
-                `Could not ABP activate Chirpstack Device using body: ${JSON.stringify(
-                    dto
-                )}`
-            );
-            return false;
-        }
-        return res.status == 200;
+        return { res, dto };
     }
 
     async activateDeviceWithOTAA(
@@ -144,18 +175,14 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
         if (res.status != 200) {
             this.logger.warn(
-                `Could not activate Chirpstack Device using body: ${JSON.stringify(
-                    dto
-                )}`
+                `Could not activate Chirpstack Device using body: ${JSON.stringify(dto)}`
             );
             return false;
         }
         return res.status == 200;
     }
 
-    async createOrUpdateDevice(
-        dto: CreateChirpstackDeviceDto
-    ): Promise<boolean> {
+    async createOrUpdateDevice(dto: CreateChirpstackDeviceDto): Promise<boolean> {
         let res;
         if (await this.isDeviceAlreadyCreated(dto.device.devEUI)) {
             res = await this.put(`devices`, dto, dto.device.devEUI);
@@ -165,9 +192,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
         if (res.status != 200) {
             this.logger.warn(
-                `Could not create Chirpstack Device using body: ${JSON.stringify(
-                    dto
-                )}`
+                `Could not create Chirpstack Device using body: ${JSON.stringify(dto)}`
             );
 
             return false;
@@ -184,12 +209,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         );
     }
 
-    async getChirpstackDevice(
-        id: string
-    ): Promise<ChirpstackDeviceContentsDto> {
-        const res = await this.get<ChirpstackSingleDeviceResponseDto>(
-            `devices/${id}`
-        );
+    async getChirpstackDevice(id: string): Promise<ChirpstackDeviceContentsDto> {
+        const res = await this.get<ChirpstackSingleDeviceResponseDto>(`devices/${id}`);
         return res.device;
     }
 
@@ -222,11 +243,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return alreadyExists;
     }
 
-    private async getAllChirpstackDevices(): Promise<
-        ChirpstackDeviceContentsDto[]
-    > {
-        return (await this.get<ListAllDevicesResponseDto>("devices?limit=1000"))
-            .result;
+    private async getAllChirpstackDevices(): Promise<ChirpstackDeviceContentsDto[]> {
+        return (await this.get<ListAllDevicesResponseDto>("devices?limit=1000")).result;
     }
 
     private async createApplication(

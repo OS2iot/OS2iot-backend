@@ -75,9 +75,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
         globalAdminJwt = generateValidJwtForUser(user);
 
         organisation = await generateSavedOrganization();
-        const nonAdminUser = await generateSavedOrganizationAdminUser(
-            organisation
-        );
+        const nonAdminUser = await generateSavedOrganizationAdminUser(organisation);
         orgAdminJwt = generateValidJwtForUser(nonAdminUser);
     });
 
@@ -427,12 +425,12 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                         id: dataTarget.id,
                     },
                 });
-                expect(
-                    response.body.iotDevices.map((x: any) => x.id)
-                ).toContainEqual(iotDevice.id);
-                expect(
-                    response.body.iotDevices.map((x: any) => x.id)
-                ).toContainEqual(loraDevice.id);
+                expect(response.body.iotDevices.map((x: any) => x.id)).toContainEqual(
+                    iotDevice.id
+                );
+                expect(response.body.iotDevices.map((x: any) => x.id)).toContainEqual(
+                    loraDevice.id
+                );
             });
     });
 

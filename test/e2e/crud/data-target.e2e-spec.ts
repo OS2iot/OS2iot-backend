@@ -71,9 +71,7 @@ describe("DataTargetController (e2e)", () => {
         await clearDatabase();
     });
 
-    const createDataTarget = async (
-        applications: Application[]
-    ): Promise<DataTarget> => {
+    const createDataTarget = async (applications: Application[]): Promise<DataTarget> => {
         const dataTarget = new HttpPushDataTarget();
         dataTarget.name = "my data target";
         dataTarget.url = "http://example.com";

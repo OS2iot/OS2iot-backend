@@ -131,13 +131,9 @@ describe("IoTDeviceController (e2e)", () => {
                 });
                 expect(response.body.receivedMessagesMetadata).toHaveLength(2);
                 expect(
-                    Date.parse(
-                        response.body.receivedMessagesMetadata[0].sentTime
-                    )
+                    Date.parse(response.body.receivedMessagesMetadata[0].sentTime)
                 ).toBeGreaterThanOrEqual(
-                    Date.parse(
-                        response.body.receivedMessagesMetadata[1].sentTime
-                    )
+                    Date.parse(response.body.receivedMessagesMetadata[1].sentTime)
                 );
             });
     });

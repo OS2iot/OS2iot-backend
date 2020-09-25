@@ -20,9 +20,7 @@ describe("HttpPushDataTargetService (e2e)", () => {
         app = moduleFixture.createNestApplication();
         await app.init();
 
-        httpPushDataTargetService = moduleFixture.get(
-            "HttpPushDataTargetService"
-        );
+        httpPushDataTargetService = moduleFixture.get("HttpPushDataTargetService");
     });
 
     // This test verifies that the functionality works by calling it directly to pipedream.

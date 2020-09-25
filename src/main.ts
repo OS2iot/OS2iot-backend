@@ -18,8 +18,6 @@ async function bootstrap() {
 
     const url = await app.getUrl();
     Logger.log(`Swagger on: ${url}${config.SWAGGER_PREFIX}`);
-    Logger.log(
-        `Application started on: ${url}${config.CURRENT_VERSION_PREFIX}`
-    );
+    Logger.log(`Application started on: ${url}${config.CURRENT_VERSION_PREFIX}`);
 }
 void bootstrap();

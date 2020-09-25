@@ -9,19 +9,11 @@ import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private usersService: UserService,
-        private jwtService: JwtService
-    ) {}
+    constructor(private usersService: UserService, private jwtService: JwtService) {}
     private readonly logger = new Logger(AuthService.name);
 
-    async validateUser(
-        username: string,
-        password: string
-    ): Promise<UserResponseDto> {
-        const user = await this.usersService.findOneUserByEmailWithPassword(
-            username
-        );
+    async validateUser(username: string, password: string): Promise<UserResponseDto> {
+        const user = await this.usersService.findOneUserByEmailWithPassword(username);
         if (user) {
             if (!user.active) {
                 throw new UnauthorizedException(ErrorCodes.UserInactive);
@@ -34,9 +26,7 @@ export class AuthService {
                 const { passwordHash, ...result } = user;
                 return result;
             } else {
-                this.logger.warn(
-                    `Login with user: '${username}' used wrong password`
-                );
+                this.logger.warn(`Login with user: '${username}' used wrong password`);
             }
         } else {
             this.logger.warn(`Login with non-existing user: '${username}'`);

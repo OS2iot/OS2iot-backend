@@ -17,17 +17,13 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         @InjectRepository(ReceivedMessage)
         private receivedMessageRepository: Repository<ReceivedMessage>,
         @InjectRepository(ReceivedMessageMetadata)
-        private receivedMessageMetadataRepository: Repository<
-            ReceivedMessageMetadata
-        >,
+        private receivedMessageMetadataRepository: Repository<ReceivedMessageMetadata>,
         private ioTDeviceService: IoTDeviceService
     ) {
         super();
     }
 
-    private readonly logger = new Logger(
-        DeviceIntegrationPersistenceService.name
-    );
+    private readonly logger = new Logger(DeviceIntegrationPersistenceService.name);
 
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence");
@@ -40,13 +36,9 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         const dto: RawRequestDto = payload.body;
         let relatedIoTDevice;
         try {
-            relatedIoTDevice = await this.ioTDeviceService.findOne(
-                dto.iotDeviceId
-            );
+            relatedIoTDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
         } catch (err) {
-            this.logger.error(
-                `Could not find IoTDevice by ID: ${dto.iotDeviceId}`
-            );
+            this.logger.error(`Could not find IoTDevice by ID: ${dto.iotDeviceId}`);
             return;
         }
 
@@ -61,9 +53,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         dto: RawRequestDto,
         relatedIoTDevice: IoTDevice
     ): Promise<void> {
-        let existingMessage = await this.findExistingRecevedMessage(
-            relatedIoTDevice
-        );
+        let existingMessage = await this.findExistingRecevedMessage(relatedIoTDevice);
 
         if (existingMessage) {
             this.logger.debug(
@@ -80,8 +70,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
         await this.receivedMessageRepository.save(mappedMessage);
         this.logger.debug(
-            "Saved ReceivedMessage for device with id: " +
-                mappedMessage.device.id
+            "Saved ReceivedMessage for device with id: " + mappedMessage.device.id
         );
     }
 
@@ -131,20 +120,16 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         await this.deleteOldMetadata(relatedIoTDevice);
     }
 
-    private async deleteOldMetadata(
-        relatedIoTDevice: IoTDevice
-    ): Promise<void> {
+    private async deleteOldMetadata(relatedIoTDevice: IoTDevice): Promise<void> {
         const countToKeep: number = +process.env.METADATA_SAVED_COUNT || 10;
         // Find the oldest item to be kept.
-        const newestToDelete = await this.receivedMessageMetadataRepository.find(
-            {
-                where: { device: { id: relatedIoTDevice.id } },
-                skip: countToKeep,
-                order: {
-                    sentTime: "DESC",
-                },
-            }
-        );
+        const newestToDelete = await this.receivedMessageMetadataRepository.find({
+            where: { device: { id: relatedIoTDevice.id } },
+            skip: countToKeep,
+            order: {
+                sentTime: "DESC",
+            },
+        });
 
         if (newestToDelete.length == 0) {
             this.logger.debug("We don't need to delete any metadata");
@@ -152,6 +137,13 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         }
 
         // Delete all older than X
+        await this.doDeleteOldMetadata(relatedIoTDevice, newestToDelete);
+    }
+
+    private async doDeleteOldMetadata(
+        relatedIoTDevice: IoTDevice,
+        newestToDelete: ReceivedMessageMetadata[]
+    ) {
         const result = await this.receivedMessageMetadataRepository
             .createQueryBuilder("received_message_metadata")
             .delete()

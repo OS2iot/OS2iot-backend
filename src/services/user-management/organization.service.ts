@@ -41,10 +41,7 @@ export class OrganizationService {
         }
     }
 
-    async update(
-        id: number,
-        dto: UpdateOrganizationDto
-    ): Promise<Organization> {
+    async update(id: number, dto: UpdateOrganizationDto): Promise<Organization> {
         const org = await this.findById(id);
         org.name = dto.name;
 
@@ -81,11 +78,7 @@ export class OrganizationService {
 
     async findById(organizationId: number): Promise<Organization> {
         return await this.organizationRepository.findOneOrFail(organizationId, {
-            relations: [
-                "permissions",
-                "applications",
-                "applications.iotDevices",
-            ],
+            relations: ["permissions", "applications", "applications.iotDevices"],
         });
     }
 

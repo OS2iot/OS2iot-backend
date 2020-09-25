@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    BadRequestException,
-    forwardRef,
-    Inject,
-} from "@nestjs/common";
+import { Injectable, BadRequestException, forwardRef, Inject } from "@nestjs/common";
 import { Organization } from "@entities/organization.entity";
 import { Permission } from "@entities/permission.entity";
 import { getManager, Repository, In } from "typeorm";
@@ -44,17 +39,9 @@ export class PermissionService {
     WRITE_SUFFIX = " - Write";
     ADMIN_SUFFIX = " - OrganizationAdmin";
 
-    async createDefaultPermissions(
-        org: Organization
-    ): Promise<OrganizationPermission[]> {
-        const readPermission = new ReadPermission(
-            org.name + this.READ_SUFFIX,
-            org
-        );
-        const writePermission = new WritePermission(
-            org.name + this.WRITE_SUFFIX,
-            org
-        );
+    async createDefaultPermissions(org: Organization): Promise<OrganizationPermission[]> {
+        const readPermission = new ReadPermission(org.name + this.READ_SUFFIX, org);
+        const writePermission = new WritePermission(org.name + this.WRITE_SUFFIX, org);
         const adminPermission = new OrganizationAdminPermission(
             org.name + this.ADMIN_SUFFIX,
             org
@@ -105,26 +92,17 @@ export class PermissionService {
         return await getManager().save(permission);
     }
 
-    async addUsersToPermission(
-        permission: Permission,
-        users: User[]
-    ): Promise<void> {
+    async addUsersToPermission(permission: Permission, users: User[]): Promise<void> {
         users.forEach(x => {
             x.permissions = _.union(x.permissions, [permission]);
         });
     }
 
-    async removeUserFromPermission(
-        permission: Permission,
-        user: User
-    ): Promise<void> {
+    async removeUserFromPermission(permission: Permission, user: User): Promise<void> {
         user.permissions = user.permissions.filter(x => x.id != permission.id);
     }
 
-    async updatePermission(
-        id: number,
-        dto: UpdatePermissionDto
-    ): Promise<Permission> {
+    async updatePermission(id: number, dto: UpdatePermissionDto): Promise<Permission> {
         const permission = await getManager().findOne(Permission, {
             where: { id: id },
             relations: ["organization", "users", "applications"],
@@ -151,9 +129,7 @@ export class PermissionService {
                 dto.applicationIds
             );
         }
-        permission.users = await this.userService.findManyUsersByIds(
-            dto.userIds
-        );
+        permission.users = await this.userService.findManyUsersByIds(dto.userIds);
     }
 
     private async setApplicationsOnPermission(
@@ -184,13 +160,10 @@ export class PermissionService {
     async getAllPermissionsInOrganizations(
         orgs: number[]
     ): Promise<ListAllPermissionsReponseDto> {
-        const [data, count] = await getManager().findAndCount(
-            OrganizationPermission,
-            {
-                where: { organization: In(orgs) },
-                relations: ["organization", "users"],
-            }
-        );
+        const [data, count] = await getManager().findAndCount(OrganizationPermission, {
+            where: { organization: In(orgs) },
+            relations: ["organization", "users"],
+        });
 
         return {
             data: data,
@@ -205,9 +178,7 @@ export class PermissionService {
         });
     }
 
-    async findPermissionsForUser(
-        userId: number
-    ): Promise<PermissionMinimalDto[]> {
+    async findPermissionsForUser(userId: number): Promise<PermissionMinimalDto[]> {
         return await this.permissionReposity
             .createQueryBuilder("permission")
             .leftJoin("permission.users", "user")
@@ -222,9 +193,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-    async findPermissionGroupedByLevelForUser(
-        userId: number
-    ): Promise<UserPermissions> {
+    async findPermissionGroupedByLevelForUser(userId: number): Promise<UserPermissions> {
         const permissions = await this.findPermissionsForUser(userId);
 
         const res = new UserPermissions();
@@ -246,10 +215,7 @@ export class PermissionService {
         return res;
     }
 
-    private addOrUpdate(
-        permissions: Map<number, number[]>,
-        p: PermissionMinimalDto
-    ) {
+    private addOrUpdate(permissions: Map<number, number[]>, p: PermissionMinimalDto) {
         if (!permissions.has(p.organization_id)) {
             permissions.set(p.organization_id, []);
         }

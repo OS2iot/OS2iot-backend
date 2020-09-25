@@ -37,23 +37,6 @@ export class IoTDeviceService {
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
-    /*
-    async findAndCountWithPagination(
-        query?: ListAllIoTDevicesDto
-    ): Promise<ListAllIoTDevicesReponseDto> {
-        const [result, total] = await this.iotDeviceRepository.findAndCount({
-            where: {},
-            take: query.offset,
-            skip: query.offset,
-        });
-
-        return {
-            data: result,
-            count: total,
-        };
-    }
-    */
-
     async findOne(id: number): Promise<IoTDevice> {
         return await this.iotDeviceRepository.findOneOrFail(id, {
             relations: ["application"],
@@ -74,7 +57,22 @@ export class IoTDeviceService {
     ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
         // Therefore we use the QueryBuilder ...
-        const iotDevice = await this.iotDeviceRepository
+        const iotDevice = await this.queryDatabaseForIoTDevice(id);
+
+        if (iotDevice == null) {
+            throw new NotFoundException();
+        }
+
+        if (iotDevice.type == IoTDeviceType.LoRaWAN) {
+            // Add more suplimental info about LoRaWAN devices.
+            return await this.enrichLoRaWANDevice(iotDevice);
+        }
+
+        return iotDevice;
+    }
+
+    private async queryDatabaseForIoTDevice(id: number) {
+        return await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
             .where("iot_device.id = :id", { id: id })
             .innerJoinAndSelect(
@@ -89,35 +87,24 @@ export class IoTDeviceService {
             )
             .orderBy('metadata."sentTime"', "DESC")
             .getOne();
-
-        if (iotDevice == null) {
-            throw new NotFoundException();
-        }
-
-        if (iotDevice.type == IoTDeviceType.LoRaWAN) {
-            // Add more suplimental info about LoRaWAN devices.
-            const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
-            loraDevice.lorawanSettings = await this.chirpstackDeviceService.getChirpstackDevice(
-                loraDevice.deviceEUI
-            );
-            const keys = await this.chirpstackDeviceService.getKeys(
-                loraDevice.deviceEUI
-            );
-            loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
-            const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
-                loraDevice.lorawanSettings.applicationID
-            );
-            loraDevice.lorawanSettings.serviceProfileID =
-                csAppliation.application.serviceProfileID;
-            return loraDevice;
-        }
-
-        return iotDevice;
     }
 
-    async findGenericHttpDeviceByApiKey(
-        key: string
-    ): Promise<GenericHTTPDevice> {
+    private async enrichLoRaWANDevice(iotDevice: IoTDevice) {
+        const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
+        loraDevice.lorawanSettings = await this.chirpstackDeviceService.getChirpstackDevice(
+            loraDevice.deviceEUI
+        );
+        const keys = await this.chirpstackDeviceService.getKeys(loraDevice.deviceEUI);
+        loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+        const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
+            loraDevice.lorawanSettings.applicationID
+        );
+        loraDevice.lorawanSettings.serviceProfileID =
+            csAppliation.application.serviceProfileID;
+        return loraDevice;
+    }
+
+    async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {
         return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
     }
 
@@ -131,9 +118,7 @@ export class IoTDeviceService {
         });
     }
 
-    async findLoRaWANDeviceByDeviceEUI(
-        deviceEUI: string
-    ): Promise<LoRaWANDevice> {
+    async findLoRaWANDeviceByDeviceEUI(deviceEUI: string): Promise<LoRaWANDevice> {
         return await this.loRaWANDeviceRepository.findOne({
             deviceEUI: deviceEUI.toUpperCase(),
         });
@@ -153,13 +138,8 @@ export class IoTDeviceService {
         return entityManager.save(mappedIotDevice);
     }
 
-    async update(
-        id: number,
-        updateDto: UpdateIoTDeviceDto
-    ): Promise<IoTDevice> {
-        const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(
-            id
-        );
+    async update(id: number, updateDto: UpdateIoTDeviceDto): Promise<IoTDevice> {
+        const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(id);
 
         const mappedIoTDevice = await this.mapDtoToIoTDevice(
             updateDto,
@@ -183,24 +163,12 @@ export class IoTDeviceService {
     ): Promise<IoTDevice> {
         iotDevice.name = createIoTDeviceDto.name;
 
-        if (createIoTDeviceDto.applicationId != null) {
-            iotDevice.application = await this.applicationService.findOneWithoutRelations(
-                createIoTDeviceDto.applicationId
-            );
-        } else {
-            iotDevice.application = null;
-        }
+        await this.setApplication(createIoTDeviceDto, iotDevice);
 
-        if (
-            createIoTDeviceDto.longitude != null &&
-            createIoTDeviceDto.latitude != null
-        ) {
+        if (createIoTDeviceDto.longitude != null && createIoTDeviceDto.latitude != null) {
             iotDevice.location = {
                 type: "Point",
-                coordinates: [
-                    createIoTDeviceDto.longitude,
-                    createIoTDeviceDto.latitude,
-                ],
+                coordinates: [createIoTDeviceDto.longitude, createIoTDeviceDto.latitude],
             } as Point;
         } else {
             iotDevice.location = null;
@@ -217,6 +185,19 @@ export class IoTDeviceService {
         );
 
         return iotDevice;
+    }
+
+    private async setApplication(
+        createIoTDeviceDto: CreateIoTDeviceDto,
+        iotDevice: IoTDevice
+    ) {
+        if (createIoTDeviceDto.applicationId != null) {
+            iotDevice.application = await this.applicationService.findOneWithoutRelations(
+                createIoTDeviceDto.applicationId
+            );
+        } else {
+            iotDevice.application = null;
+        }
     }
 
     private async mapChildDtoToIoTDevice(
@@ -269,17 +250,12 @@ export class IoTDeviceService {
             lorawanDevice.chirpstackApplicationId = applicationId;
             chirpstackDeviceDto.device.applicationID = applicationId.toString();
 
-            await this.chirpstackDeviceService.createOrUpdateDevice(
-                chirpstackDeviceDto
-            );
+            await this.chirpstackDeviceService.createOrUpdateDevice(chirpstackDeviceDto);
 
             await this.doActivation(dto, isUpdate);
         } catch (err) {
             this.logger.error(err);
-            throw new BadRequestException(
-                "Could not create device in Chirpstack",
-                err
-            );
+            throw new BadRequestException("Could not create device in Chirpstack", err);
         }
 
         return lorawanDevice;
@@ -291,35 +267,43 @@ export class IoTDeviceService {
     ): Promise<void> {
         if (dto.lorawanSettings.activationType == ActivationType.OTAA) {
             // OTAA Activate if key is provided
-            if (dto.lorawanSettings.OTAAapplicationKey) {
-                await this.chirpstackDeviceService.activateDeviceWithOTAA(
-                    dto.lorawanSettings.devEUI,
-                    dto.lorawanSettings.OTAAapplicationKey,
-                    isUpdate
-                );
-            } else {
-                throw new BadRequestException(ErrorCodes.MissingOTAAInfo);
-            }
+            await this.doActivationByOTAA(dto, isUpdate);
         } else if (dto.lorawanSettings.activationType == ActivationType.ABP) {
-            if (
-                dto.lorawanSettings.devAddr &&
-                dto.lorawanSettings.fCntUp != null &&
-                dto.lorawanSettings.nFCntDown != null &&
-                dto.lorawanSettings.networkSessionKey &&
-                dto.lorawanSettings.applicationSessionKey
-            ) {
-                await this.chirpstackDeviceService.activateDeviceWithABP(
-                    dto.lorawanSettings.devEUI,
-                    dto.lorawanSettings.devAddr,
-                    dto.lorawanSettings.fCntUp,
-                    dto.lorawanSettings.nFCntDown,
-                    dto.lorawanSettings.networkSessionKey,
-                    dto.lorawanSettings.applicationSessionKey,
-                    isUpdate
-                );
-            } else {
-                throw new BadRequestException(ErrorCodes.MissingABPInfo);
-            }
+            await this.doActivationByABP(dto, isUpdate);
+        }
+    }
+
+    private async doActivationByOTAA(dto: CreateIoTDeviceDto, isUpdate: boolean) {
+        if (dto.lorawanSettings.OTAAapplicationKey) {
+            await this.chirpstackDeviceService.activateDeviceWithOTAA(
+                dto.lorawanSettings.devEUI,
+                dto.lorawanSettings.OTAAapplicationKey,
+                isUpdate
+            );
+        } else {
+            throw new BadRequestException(ErrorCodes.MissingOTAAInfo);
+        }
+    }
+
+    private async doActivationByABP(dto: CreateIoTDeviceDto, isUpdate: boolean) {
+        if (
+            dto.lorawanSettings.devAddr &&
+            dto.lorawanSettings.fCntUp != null &&
+            dto.lorawanSettings.nFCntDown != null &&
+            dto.lorawanSettings.networkSessionKey &&
+            dto.lorawanSettings.applicationSessionKey
+        ) {
+            await this.chirpstackDeviceService.activateDeviceWithABP(
+                dto.lorawanSettings.devEUI,
+                dto.lorawanSettings.devAddr,
+                dto.lorawanSettings.fCntUp,
+                dto.lorawanSettings.nFCntDown,
+                dto.lorawanSettings.networkSessionKey,
+                dto.lorawanSettings.applicationSessionKey,
+                isUpdate
+            );
+        } else {
+            throw new BadRequestException(ErrorCodes.MissingABPInfo);
         }
     }
 }

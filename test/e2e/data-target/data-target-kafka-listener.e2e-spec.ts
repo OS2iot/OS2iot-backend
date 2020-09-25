@@ -74,13 +74,10 @@ describe("DataTargetKafkaListener (e2e)", () => {
         await clearDatabase();
     });
 
-    const createDataTarget = async (
-        applications: Application[]
-    ): Promise<DataTarget> => {
+    const createDataTarget = async (applications: Application[]): Promise<DataTarget> => {
         const dataTarget = new HttpPushDataTarget();
         dataTarget.name = "my data target";
-        dataTarget.url =
-            "https://70c14f17cfee3252ccb8238425810bb6.m.pipedream.net";
+        dataTarget.url = "https://70c14f17cfee3252ccb8238425810bb6.m.pipedream.net";
         dataTarget.application = applications[0];
         // @Hack: to call beforeInsert (private)
         (dataTarget as any).beforeInsert();
@@ -89,9 +86,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
         return await manager.save(dataTarget);
     };
 
-    const createIoTDevice = async (
-        applications: Application[]
-    ): Promise<IoTDevice> => {
+    const createIoTDevice = async (applications: Application[]): Promise<IoTDevice> => {
         const device = new GenericHTTPDevice();
         device.name = "HTTP device";
         device.application = applications[0];

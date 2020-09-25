@@ -61,17 +61,13 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     });
 
     afterEach(async () => {
-        await serviceProfileService
-            .findAllServiceProfiles(1000, 0)
-            .then(response => {
-                response.result.forEach(async serviceProfile => {
-                    if (serviceProfile.name.startsWith(testname)) {
-                        await serviceProfileService.deleteServiceProfile(
-                            serviceProfile.id
-                        );
-                    }
-                });
+        await serviceProfileService.findAllServiceProfiles(1000, 0).then(response => {
+            response.result.forEach(async serviceProfile => {
+                if (serviceProfile.name.startsWith(testname)) {
+                    await serviceProfileService.deleteServiceProfile(serviceProfile.id);
+                }
             });
+        });
     });
 
     it("(POST) /chirpstack/service-profiles/ - OK", async () => {
@@ -155,9 +151,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     it("(PUT) /chirpstack/service-profiles/:id - OK", async () => {
         // Arrange
         const original: CreateServiceProfileDto = await createServiceProfileData();
-        const result = await serviceProfileService.createServiceProfile(
-            original
-        );
+        const result = await serviceProfileService.createServiceProfile(original);
         const serviceProfileId = result.data.id;
 
         const changed = original;
@@ -193,9 +187,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             });
     });
 
-    async function createServiceProfileData(): Promise<
-        CreateServiceProfileDto
-    > {
+    async function createServiceProfileData(): Promise<CreateServiceProfileDto> {
         const serviceProfileDto: ServiceProfileDto = {
             name: testname,
             prAllowed: true,

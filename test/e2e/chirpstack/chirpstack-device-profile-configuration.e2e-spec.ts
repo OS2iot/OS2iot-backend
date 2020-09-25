@@ -61,17 +61,13 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     });
 
     afterEach(async () => {
-        await deviceProfileService
-            .findAllDeviceProfiles(1000, 0)
-            .then(response => {
-                response.result.forEach(async deviceProfile => {
-                    if (deviceProfile.name.startsWith(testname)) {
-                        await deviceProfileService.deleteDeviceProfile(
-                            deviceProfile.id
-                        );
-                    }
-                });
+        await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
+            response.result.forEach(async deviceProfile => {
+                if (deviceProfile.name.startsWith(testname)) {
+                    await deviceProfileService.deleteDeviceProfile(deviceProfile.id);
+                }
             });
+        });
     });
 
     it("(GET) /chirpstack/device-profiles/:id - OK", async () => {
@@ -99,9 +95,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     it("(GET) /chirpstack/device-profiles/ - OK", async () => {
         // Arrange
         const original: CreateDeviceProfileDto = await createDeviceProfileData();
-        const result1 = await deviceProfileService.createDeviceProfile(
-            original
-        );
+        const result1 = await deviceProfileService.createDeviceProfile(original);
 
         const changed = original;
         changed.deviceProfile.name = `${testname}-changed`;

@@ -56,15 +56,10 @@ export class DataTargetController {
         @Query() query?: ListAllDataTargetsDto
     ): Promise<ListAllDataTargetsReponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
-            return await this.dataTargetService.findAndCountAllWithPagination(
-                query
-            );
+            return await this.dataTargetService.findAndCountAllWithPagination(query);
         } else {
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-            if (
-                query.applicationId &&
-                !allowed.some(x => x === query.applicationId)
-            ) {
+            if (query.applicationId && !allowed.some(x => x === query.applicationId)) {
                 throw new UnauthorizedException();
             }
 
@@ -83,10 +78,7 @@ export class DataTargetController {
     ): Promise<DataTarget> {
         try {
             const dataTarget = await this.dataTargetService.findOne(id);
-            checkIfUserHasReadAccessToApplication(
-                req,
-                dataTarget.application.id
-            );
+            checkIfUserHasReadAccessToApplication(req, dataTarget.application.id);
             return dataTarget;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -100,10 +92,7 @@ export class DataTargetController {
         @Req() req: AuthenticatedRequest,
         @Body() createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            createDataTargetDto.applicationId
-        );
+        checkIfUserHasWriteAccessToApplication(req, createDataTargetDto.applicationId);
         return await this.dataTargetService.create(createDataTargetDto);
     }
 
@@ -117,15 +106,9 @@ export class DataTargetController {
         @Body() updateDto: UpdateDataTargetDto
     ): Promise<DataTarget> {
         const oldDataTarget = await this.dataTargetService.findOne(id);
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            oldDataTarget.application.id
-        );
+        checkIfUserHasWriteAccessToApplication(req, oldDataTarget.application.id);
         if (oldDataTarget.application.id != updateDto.applicationId) {
-            checkIfUserHasWriteAccessToApplication(
-                req,
-                updateDto.applicationId
-            );
+            checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
         }
 
         const dataTarget = await this.dataTargetService.update(id, updateDto);

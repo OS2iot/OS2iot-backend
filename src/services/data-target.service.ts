@@ -1,5 +1,11 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
-import { Repository, getManager, DeleteResult, getConnection } from "typeorm";
+import {
+    Repository,
+    getManager,
+    DeleteResult,
+    getConnection,
+    SelectQueryBuilder,
+} from "typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
@@ -33,21 +39,7 @@ export class DataTargetService {
             .orderBy(query.orderOn, "ASC");
 
         // Only apply applicationId filter, if one is given.
-        if (query.applicationId) {
-            queryBuilder = queryBuilder.where(
-                "datatarget.application = :appId",
-                {
-                    appId: query.applicationId,
-                }
-            );
-        } else if (applicationIds) {
-            queryBuilder = queryBuilder.where(
-                '"application"."id" IN (:...allowedApplications)',
-                {
-                    allowedApplications: applicationIds,
-                }
-            );
-        }
+        queryBuilder = this.filterByApplication(query, queryBuilder, applicationIds);
 
         const [result, total] = await queryBuilder.getManyAndCount();
 
@@ -57,23 +49,39 @@ export class DataTargetService {
         };
     }
 
+    private filterByApplication(
+        query: ListAllDataTargetsDto,
+        queryBuilder: SelectQueryBuilder<DataTarget>,
+        applicationIds: number[]
+    ) {
+        if (query.applicationId) {
+            queryBuilder = queryBuilder.where("datatarget.application = :appId", {
+                appId: query.applicationId,
+            });
+        } else if (applicationIds) {
+            queryBuilder = queryBuilder.where(
+                '"application"."id" IN (:...allowedApplications)',
+                {
+                    allowedApplications: applicationIds,
+                }
+            );
+        }
+        return queryBuilder;
+    }
+
     async findOne(id: number): Promise<DataTarget> {
         return await this.dataTargetRepository.findOneOrFail(id, {
             relations: ["application"],
         });
     }
 
-    async findDataTargetsByApplicationId(
-        applicationId: number
-    ): Promise<DataTarget[]> {
+    async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
         return await this.dataTargetRepository.find({
             application: { id: applicationId },
         });
     }
 
-    async create(
-        createDataTargetDto: CreateDataTargetDto
-    ): Promise<DataTarget> {
+    async create(createDataTargetDto: CreateDataTargetDto): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
         const dataTarget = this.createDataTargetByDto(childType);
 

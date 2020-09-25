@@ -1,11 +1,4 @@
-import {
-    Entity,
-    ManyToOne,
-    JoinColumn,
-    Index,
-    ManyToMany,
-    JoinTable,
-} from "typeorm";
+import { Entity, ManyToOne, JoinColumn, Index, ManyToMany, JoinTable } from "typeorm";
 import { DbBaseEntity } from "@entities//base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";

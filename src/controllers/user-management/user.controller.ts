@@ -65,9 +65,7 @@ export class UserController {
         } catch (err) {
             if (
                 err instanceof QueryFailedError &&
-                err.message.startsWith(
-                    "duplicate key value violates unique constraint"
-                )
+                err.message.startsWith("duplicate key value violates unique constraint")
             ) {
                 throw new BadRequestException(ErrorCodes.UserAlreadyExists);
             }
@@ -89,25 +87,18 @@ export class UserController {
         }
         // Don't leak the passwordHash
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { passwordHash, ...user } = await this.userService.updateUser(
-            id,
-            dto
-        );
+        const { passwordHash, ...user } = await this.userService.updateUser(id, dto);
 
         return user;
     }
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
-    async find(
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<UserResponseDto> {
+    async find(@Param("id", new ParseIntPipe()) id: number): Promise<UserResponseDto> {
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.findOne(
-                id
-            );
+            const { passwordHash, ...user } = await this.userService.findOne(id);
 
             return user;
         } catch (err) {

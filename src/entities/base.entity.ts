@@ -1,8 +1,4 @@
-import {
-    CreateDateColumn,
-    UpdateDateColumn,
-    PrimaryGeneratedColumn,
-} from "typeorm";
+import { CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from "typeorm";
 
 /**
  * This class contains all the values which are stored by default on all entities.

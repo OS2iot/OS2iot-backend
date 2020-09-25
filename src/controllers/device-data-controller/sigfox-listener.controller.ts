@@ -38,6 +38,20 @@ export class SigFoxListenerController {
             );
             throw new BadRequestException();
         }
+        const iotDevice = await this.findSigFoxDevice(data);
+
+        const dataAsString = JSON.stringify(data);
+        await this.receiveDataService.sendToKafka(
+            iotDevice,
+            dataAsString,
+            IoTDeviceType.SigFox.toString(),
+            data.time
+        );
+
+        return;
+    }
+
+    private async findSigFoxDevice(data: SigFoxCallbackDto) {
         const iotDevice = await this.iotDeviceService.findSigFoxDeviceByDeviceIdAndDeviceTypeId(
             data.deviceId,
             data.deviceTypeId
@@ -49,15 +63,6 @@ export class SigFoxListenerController {
             );
             throw new NotFoundException();
         }
-
-        const dataAsString = JSON.stringify(data);
-        await this.receiveDataService.sendToKafka(
-            iotDevice,
-            dataAsString,
-            IoTDeviceType.SigFox.toString(),
-            data.time
-        );
-
-        return;
+        return iotDevice;
     }
 }

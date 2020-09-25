@@ -84,10 +84,7 @@ describe("SigFoxListenerController (e2e)", () => {
 
         // Act
         await request(app.getHttpServer())
-            .post(
-                "/sigfox-callback/data/uplink?apiKey=" +
-                    sigfoxDevice.deviceTypeId
-            )
+            .post("/sigfox-callback/data/uplink?apiKey=" + sigfoxDevice.deviceTypeId)
             .send(payload)
             .expect(204);
 

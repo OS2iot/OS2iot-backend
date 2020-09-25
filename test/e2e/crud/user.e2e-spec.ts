@@ -85,9 +85,7 @@ describe("UserController (e2e)", () => {
                 ]);
                 // Ensure that passwords / passwordHashes are not leaked.
                 expect(response.body.data[0]).not.toHaveProperty("password");
-                expect(response.body.data[0]).not.toHaveProperty(
-                    "passwordHash"
-                );
+                expect(response.body.data[0]).not.toHaveProperty("passwordHash");
             });
     });
 
@@ -162,10 +160,7 @@ describe("UserController (e2e)", () => {
         const user = await repository.findOne(userId, {
             select: ["passwordHash"],
         });
-        const isPasswordCorrect = await bcrypt.compare(
-            dto.password,
-            user.passwordHash
-        );
+        const isPasswordCorrect = await bcrypt.compare(dto.password, user.passwordHash);
         expect(isPasswordCorrect).toBeTruthy();
     });
     it("(POST) /user/ - Create user - fail, not unique email", async () => {

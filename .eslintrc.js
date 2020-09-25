@@ -25,4 +25,12 @@ module.exports = {
         "max-lines-per-function": ["error", 60],
         "max-lines-per-function": ["warn", 30],
     },
+    overrides: [
+        {
+            files: ["test/**/*.ts"],
+            rules: {
+                "max-lines-per-function": "off",
+            },
+        },
+    ],
 };

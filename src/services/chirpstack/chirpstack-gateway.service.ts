@@ -26,9 +26,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         super(internalHttpService);
     }
 
-    async createNewGateway(
-        dto: CreateGatewayDto
-    ): Promise<ChirpstackReponseStatus> {
+    async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
         dto = await this.updateDto(dto);
 
         const result = await this.post("gateways", dto);
@@ -86,14 +84,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             };
         } catch (err) {
             Logger.error(
-                `Got error from Chirpstack: ${JSON.stringify(
-                    err?.response?.data
-                )}`
+                `Got error from Chirpstack: ${JSON.stringify(err?.response?.data)}`
             );
             return {
                 success: false,
-                chirpstackError: err?.response
-                    ?.data as ChirpstackErrorResponseDto,
+                chirpstackError: err?.response?.data as ChirpstackErrorResponseDto,
             };
         }
     }

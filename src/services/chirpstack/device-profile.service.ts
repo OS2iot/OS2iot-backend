@@ -30,16 +30,16 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         limit?: number,
         offset?: number
     ): Promise<ListAllDeviceProfilesReponseDto> {
-        const result = await this.getAllWithPagination<
-            ListAllDeviceProfilesReponseDto
-        >("device-profiles", limit, offset);
+        const result = await this.getAllWithPagination<ListAllDeviceProfilesReponseDto>(
+            "device-profiles",
+            limit,
+            offset
+        );
 
         return result;
     }
 
-    public async findOneDeviceProfileById(
-        id: string
-    ): Promise<CreateDeviceProfileDto> {
+    public async findOneDeviceProfileById(id: string): Promise<CreateDeviceProfileDto> {
         const result: CreateDeviceProfileDto = await this.getOneById(
             "device-profiles",
             id
@@ -47,9 +47,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return result;
     }
 
-    public async updateDto(
-        dto: CreateDeviceProfileDto
-    ): Promise<CreateDeviceProfileDto> {
+    public async updateDto(dto: CreateDeviceProfileDto): Promise<CreateDeviceProfileDto> {
         dto.deviceProfile.networkServerID = await this.getDefaultNetworkServerId();
         dto.deviceProfile.organizationID = await this.getDefaultOrganizationId();
 

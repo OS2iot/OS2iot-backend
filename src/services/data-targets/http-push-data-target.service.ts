@@ -60,20 +60,15 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
             config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
         ) {
-            if (
-                config.authorizationType ===
-                AuthorizationType.HTTP_BASIC_AUTHORIZATION
-            ) {
+            if (config.authorizationType === AuthorizationType.HTTP_BASIC_AUTHORIZATION) {
                 axiosConfig.auth = {
                     username: config.username,
                     password: config.password,
                 };
             } else if (
-                config.authorizationType ===
-                AuthorizationType.HEADER_BASED_AUTHORIZATION
+                config.authorizationType === AuthorizationType.HEADER_BASED_AUTHORIZATION
             ) {
-                axiosConfig.headers["Authorization"] =
-                    config.authorizationHeader;
+                axiosConfig.headers["Authorization"] = config.authorizationHeader;
             }
         }
         return axiosConfig;

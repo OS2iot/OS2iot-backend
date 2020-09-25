@@ -3,17 +3,14 @@ import { ApiProperty, PickType } from "@nestjs/swagger";
 import { ChirpstackDeviceContentsDto } from "./chirpstack/chirpstack-device-contents.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
-export class CreateLoRaWANSettingsDto extends PickType(
-    ChirpstackDeviceContentsDto,
-    [
-        "devEUI",
-        "deviceProfileID",
-        "deviceProfileID",
-        "serviceProfileID",
-        "skipFCntCheck",
-        "isDisabled",
-    ]
-) {
+export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsDto, [
+    "devEUI",
+    "deviceProfileID",
+    "deviceProfileID",
+    "serviceProfileID",
+    "skipFCntCheck",
+    "isDisabled",
+]) {
     @ApiProperty({ required: true })
     activationType: ActivationType;
 

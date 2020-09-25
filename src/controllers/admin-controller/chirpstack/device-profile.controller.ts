@@ -48,9 +48,7 @@ export class DeviceProfileController {
     async create(
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
-        const result = await this.deviceProfileService.createDeviceProfile(
-            createDto
-        );
+        const result = await this.deviceProfileService.createDeviceProfile(createDto);
         return result.data;
     }
 
@@ -80,13 +78,9 @@ export class DeviceProfileController {
         let result = undefined;
 
         try {
-            result = await this.deviceProfileService.findOneDeviceProfileById(
-                id
-            );
+            result = await this.deviceProfileService.findOneDeviceProfileById(id);
         } catch (err) {
-            Logger.error(
-                `Error occured during get/:id : '${JSON.stringify(err)}'`
-            );
+            Logger.error(`Error occured during get/:id : '${JSON.stringify(err)}'`);
         }
         if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -111,9 +105,7 @@ export class DeviceProfileController {
             );
         } catch (err) {
             Logger.error(
-                `Error occured during Find all: '${JSON.stringify(
-                    err?.response?.data
-                )}'`
+                `Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`
             );
         }
         return result;
@@ -128,9 +120,7 @@ export class DeviceProfileController {
             result = await this.deviceProfileService.deleteDeviceProfile(id);
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(
-                    err?.response?.data
-                )}'`
+                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
         }
 

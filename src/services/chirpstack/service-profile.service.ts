@@ -32,16 +32,16 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
         limit?: number,
         offset?: number
     ): Promise<ListAllServiceProfilesReponseDto> {
-        const res = await this.getAllWithPagination<
-            ListAllServiceProfilesReponseDto
-        >("service-profiles", limit, offset);
+        const res = await this.getAllWithPagination<ListAllServiceProfilesReponseDto>(
+            "service-profiles",
+            limit,
+            offset
+        );
 
         return res;
     }
 
-    public async findOneServiceProfileById(
-        id: string
-    ): Promise<CreateServiceProfileDto> {
+    public async findOneServiceProfileById(id: string): Promise<CreateServiceProfileDto> {
         const result: CreateServiceProfileDto = await this.getOneById(
             "service-profiles",
             id

@@ -71,10 +71,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
             return await this.service.findAndCountWithPagination(query);
         } else {
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-            return await this.service.findAndCountWithPagination(
-                query,
-                allowed
-            );
+            return await this.service.findAndCountWithPagination(query, allowed);
         }
     }
 
@@ -154,10 +151,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Body()
         createDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-        await this.checkUserHasWriteAccessToAllIotDevices(
-            createDto.iotDeviceIds,
-            req
-        );
+        await this.checkUserHasWriteAccessToAllIotDevices(createDto.iotDeviceIds, req);
         return await this.service.create(createDto);
     }
 
@@ -188,15 +182,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         const newIotDevice = await this.iotDeviceService.findOne(
             updateDto.iotDeviceIds[0]
         );
-        checkIfUserHasWriteAccessToApplication(
-            req,
-            newIotDevice.application.id
-        );
+        checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
         const oldConnection = await this.service.findOne(id);
-        await this.checkUserHasWriteAccessToAllIotDevices(
-            updateDto.iotDeviceIds,
-            req
-        );
+        await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
         const oldIds = oldConnection.iotDevices.map(x => x.id);
         if (updateDto.iotDeviceIds != oldIds) {
             await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);

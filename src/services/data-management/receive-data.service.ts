@@ -20,8 +20,7 @@ export class ReceiveDataService {
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
         // We cannot generically know when it was sent by the device, "now" is accurate enough
-        dto.unixTimestamp =
-            timestamp != null ? timestamp : new Date().valueOf();
+        dto.unixTimestamp = timestamp != null ? timestamp : new Date().valueOf();
 
         const payload: KafkaPayload = {
             messageId: `${type}${new Date().valueOf()}`,

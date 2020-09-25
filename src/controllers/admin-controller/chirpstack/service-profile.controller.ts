@@ -47,9 +47,7 @@ export class ServiceProfileController {
     async create(
         @Body() createDto: CreateServiceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
-        const res = await this.serviceProfileService.createServiceProfile(
-            createDto
-        );
+        const res = await this.serviceProfileService.createServiceProfile(createDto);
         return res.data;
     }
 
@@ -109,9 +107,7 @@ export class ServiceProfileController {
             result = await this.serviceProfileService.deleteServiceProfile(id);
         } catch (err) {
             Logger.error(
-                `Error occured during delete: '${JSON.stringify(
-                    err?.response?.data
-                )}'`
+                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
         }
 

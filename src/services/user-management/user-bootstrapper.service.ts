@@ -14,12 +14,8 @@ export class UserBootstrapperService implements OnApplicationBootstrap {
     GLOBAL_ADMIN_DEFAULT_PASSWORD = "hunter2";
 
     async onApplicationBootstrap(): Promise<void> {
-        if (
-            await this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)
-        ) {
-            this.logger.debug(
-                "GlobalAdmin user already exists. Won't create a new one."
-            );
+        if (await this.userService.isEmailUsedByAUser(this.GLOBAL_ADMIN_EMAIL)) {
+            this.logger.debug("GlobalAdmin user already exists. Won't create a new one.");
             return;
         }
 

@@ -1,8 +1,4 @@
-import {
-    Injectable,
-    OnModuleInit,
-    InternalServerErrorException,
-} from "@nestjs/common";
+import { Injectable, OnModuleInit, InternalServerErrorException } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
 import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
@@ -19,9 +15,7 @@ export class ChirpstackSetupNetworkServerService
         // await this.bootstrapChirpstackNetworkServerConfiguration();
     }
 
-    public async bootstrapChirpstackNetworkServerConfiguration(): Promise<
-        void
-    > {
+    public async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
         const networkServers = await this.getNetworkServers(100, 0);
         const alreadyCreated = networkServers.result.some(networkServer => {
             return networkServer.name == this.networkServerName;
@@ -36,9 +30,7 @@ export class ChirpstackSetupNetworkServerService
         }
     }
 
-    public async postNetworkServer(
-        data: CreateNetworkServerDto
-    ): Promise<AxiosResponse> {
+    public async postNetworkServer(data: CreateNetworkServerDto): Promise<AxiosResponse> {
         return await this.post("network-servers", data);
     }
 

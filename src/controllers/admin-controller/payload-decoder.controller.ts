@@ -61,9 +61,7 @@ export class PayloadDecoderController {
         try {
             result = await this.payloadDecoderService.findOne(id);
         } catch (err) {
-            Logger.error(
-                `Error occured during findOne: '${JSON.stringify(err)}'`
-            );
+            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
 
         if (!result) {
@@ -113,9 +111,7 @@ export class PayloadDecoderController {
         checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
 
         // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.create(
-            createDto
-        );
+        const payloadDecoder = await this.payloadDecoderService.create(createDto);
         return payloadDecoder;
     }
 
@@ -132,16 +128,10 @@ export class PayloadDecoderController {
         checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
         const oldDecoder = await this.payloadDecoderService.findOne(id);
         if (oldDecoder?.organization?.id) {
-            checkIfUserHasWriteAccessToOrganization(
-                req,
-                oldDecoder.organization.id
-            );
+            checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
         }
         // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.update(
-            id,
-            updateDto
-        );
+        const payloadDecoder = await this.payloadDecoderService.update(id, updateDto);
 
         return payloadDecoder;
     }
@@ -157,10 +147,7 @@ export class PayloadDecoderController {
         try {
             const oldDecoder = await this.payloadDecoderService.findOne(id);
             if (oldDecoder?.organization?.id) {
-                checkIfUserHasWriteAccessToOrganization(
-                    req,
-                    oldDecoder.organization.id
-                );
+                checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
             }
 
             const result = await this.payloadDecoderService.delete(id);

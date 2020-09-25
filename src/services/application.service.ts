@@ -60,9 +60,7 @@ export class ApplicationService {
         return await this.applicationRepository.find({ id: In(ids) });
     }
 
-    async create(
-        createApplicationDto: CreateApplicationDto
-    ): Promise<Application> {
+    async create(createApplicationDto: CreateApplicationDto): Promise<Application> {
         const application = new Application();
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
@@ -79,10 +77,9 @@ export class ApplicationService {
         id: number,
         updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
-        const existingApplication = await this.applicationRepository.findOneOrFail(
-            id,
-            { relations: ["iotDevices", "dataTargets"] }
-        );
+        const existingApplication = await this.applicationRepository.findOneOrFail(id, {
+            relations: ["iotDevices", "dataTargets"],
+        });
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
             updateApplicationDto,

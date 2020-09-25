@@ -75,6 +75,13 @@ export class ApplicationController {
             );
         }
 
+        return await this.getApplicationsForNonGlobalAdmin(req, query);
+    }
+
+    private async getApplicationsForNonGlobalAdmin(
+        req: AuthenticatedRequest,
+        query: ListAllApplicationsDto
+    ) {
         const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
         if (query?.organizationId) {
             checkIfUserHasReadAccessToOrganization(req, query.organizationId);
@@ -129,9 +136,7 @@ export class ApplicationController {
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
-        const application = this.applicationService.create(
-            createApplicationDto
-        );
+        const application = this.applicationService.create(createApplicationDto);
         return application;
     }
 
@@ -146,13 +151,12 @@ export class ApplicationController {
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
         checkIfUserHasWriteAccessToApplication(req, id);
-
-        const isValid = await this.applicationService.isNameValidAndNotUsed(
-            updateApplicationDto?.name,
-            id
-        );
-
-        if (!isValid) {
+        if (
+            !(await this.applicationService.isNameValidAndNotUsed(
+                updateApplicationDto?.name,
+                id
+            ))
+        ) {
             Logger.error(
                 `Tried to change an application with name: '${updateApplicationDto.name}'`
             );

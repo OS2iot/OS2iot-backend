@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    CanActivate,
-    ExecutionContext,
-    Logger,
-} from "@nestjs/common";
+import { Injectable, CanActivate, ExecutionContext, Logger } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthenticatedUser } from "@dto/internal/authenticated-user";
@@ -15,10 +10,7 @@ export class RolesGuard implements CanActivate {
     private readonly logger = new Logger(RolesGuard.name);
 
     canActivate(context: ExecutionContext): boolean {
-        const roleRequired = this.reflector.get<string>(
-            "roles",
-            context.getHandler()
-        );
+        const roleRequired = this.reflector.get<string>("roles", context.getHandler());
         if (!roleRequired) {
             return true;
         }
@@ -34,10 +26,7 @@ export class RolesGuard implements CanActivate {
         } else if (roleRequired == PermissionType.OrganizationAdmin) {
             return this.hasOrganizationAdminAccess(user);
         } else if (roleRequired == PermissionType.Write) {
-            return (
-                this.hasOrganizationAdminAccess(user) ||
-                this.hasWriteAccess(user)
-            );
+            return this.hasOrganizationAdminAccess(user) || this.hasWriteAccess(user);
         } else if (roleRequired == PermissionType.Read) {
             return (
                 this.hasOrganizationAdminAccess(user) ||

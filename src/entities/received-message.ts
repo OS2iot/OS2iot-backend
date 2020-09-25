@@ -15,8 +15,7 @@ export class ReceivedMessage extends DbBaseEntity {
     rawData: JSON;
 
     @Column({
-        comment:
-            "Time reported by device (if possible, otherwise time received)",
+        comment: "Time reported by device (if possible, otherwise time received)",
     })
     sentTime: Date;
 }

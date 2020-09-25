@@ -32,18 +32,7 @@ export class ReceiveDataController {
         @Query("apiKey") apiKey: string,
         @Body() data: ReceiveDataDto
     ): Promise<void> {
-        const iotDevice = await this.iotDeviceService.findGenericHttpDeviceByApiKey(
-            apiKey
-        );
-
-        if (!iotDevice) {
-            const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
-            Logger.error(
-                "No device has been registered by the following API key " +
-                    apiKey
-            );
-            throw exception;
-        }
+        const iotDevice = await this.checkIfDeviceIsValid(apiKey);
 
         // @HACK: Convert the 'data' back to a string.
         // NestJS / BodyParser always converts the input to an object for us.
@@ -55,5 +44,20 @@ export class ReceiveDataController {
         );
 
         return;
+    }
+
+    private async checkIfDeviceIsValid(apiKey: string) {
+        const iotDevice = await this.iotDeviceService.findGenericHttpDeviceByApiKey(
+            apiKey
+        );
+
+        if (!iotDevice) {
+            const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
+            Logger.error(
+                "No device has been registered by the following API key " + apiKey
+            );
+            throw exception;
+        }
+        return iotDevice;
     }
 }

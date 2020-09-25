@@ -14,8 +14,7 @@ export class ReceivedMessageMetadata extends DbBaseEntity {
     device: IoTDevice;
 
     @Column({
-        comment:
-            "Time reported by device (if possible, otherwise time received)",
+        comment: "Time reported by device (if possible, otherwise time received)",
     })
     sentTime: Date;
 

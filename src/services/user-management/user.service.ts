@@ -90,10 +90,9 @@ export class UserService {
 
         if (dto.globalAdmin) {
             const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-            await this.permissionService.addUsersToPermission(
-                globalAdminPermission,
-                [mappedUser]
-            );
+            await this.permissionService.addUsersToPermission(globalAdminPermission, [
+                mappedUser,
+            ]);
         }
 
         return await this.userRepository.save(mappedUser, { reload: true });
@@ -111,9 +110,7 @@ export class UserService {
 
     private checkPassword(password: string) {
         if (password.length < 6) {
-            throw new BadRequestException(
-                ErrorCodes.PasswordNotMetRequirements
-            );
+            throw new BadRequestException(ErrorCodes.PasswordNotMetRequirements);
         }
     }
 
@@ -139,18 +136,19 @@ export class UserService {
             await this.setPasswordHash(mappedUser, dto.password);
         }
 
+        await this.updateGlobalAdminStatusIfNeeded(dto, mappedUser);
+
+        return await this.userRepository.save(mappedUser);
+    }
+
+    private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
         if (dto.globalAdmin) {
             const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
             // Don't do anything if the user already is global admin.
-            if (
-                !mappedUser.permissions.some(
-                    x => x.id == globalAdminPermission.id
-                )
-            ) {
-                await this.permissionService.addUsersToPermission(
-                    globalAdminPermission,
-                    [mappedUser]
-                );
+            if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
+                await this.permissionService.addUsersToPermission(globalAdminPermission, [
+                    mappedUser,
+                ]);
             }
         } else {
             const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
@@ -159,8 +157,6 @@ export class UserService {
                 mappedUser
             );
         }
-
-        return await this.userRepository.save(mappedUser);
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
