@@ -1,31 +1,12 @@
-import { Application } from "@entities/application.entity";
-import { DataTarget } from "@entities/data-target.entity";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { IoTDeviceModule } from "@modules/iot-device.module";
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
+
 import { SigFoxListenerController } from "@device-data-controller/sigfox-listener.controller";
 import { ReceiveDataModule } from "@modules/receive-data.module";
+import { SharedModule } from "@modules/shared.module";
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            IoTDevice,
-            GenericHTTPDevice,
-            LoRaWANDevice,
-            Application,
-            DataTarget,
-            ReceivedMessage,
-            ReceivedMessageMetadata,
-        ]),
-        IoTDeviceModule,
-        ReceiveDataModule,
-    ],
-    exports: [TypeOrmModule],
+    imports: [SharedModule, IoTDeviceModule, ReceiveDataModule],
     controllers: [SigFoxListenerController],
 })
 export class SigFoxListenerModule {}
