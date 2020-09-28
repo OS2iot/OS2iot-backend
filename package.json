@@ -71,7 +71,7 @@
         "@typescript-eslint/parser": "3.10.1",
         "eslint": "^7.9.0",
         "eslint-config-prettier": "^6.10.0",
-        "eslint-plugin-import": "^2.22.0",
+        "eslint-plugin-import": "^2.22.1",
         "jest": "26.4.2",
         "jest-module-name-mapper": "^0.1.5",
         "prettier": "^2.1.2",
