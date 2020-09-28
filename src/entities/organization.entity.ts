@@ -5,6 +5,8 @@ import { DbBaseEntity } from "@entities/base.entity";
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Permission } from "@entities/permission.entity";
+import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
+import { SigFoxGroup } from "./sigfox-group.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -35,4 +37,11 @@ export class Organization extends DbBaseEntity {
         { onDelete: "CASCADE", nullable: true }
     )
     payloadDecoders?: PayloadDecoder[];
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @OneToMany(type => SigFoxGroup, sigfoxGroup => sigfoxGroup.belongsTo, {
+        onDelete: "CASCADE",
+        nullable: true,
+    })
+    sigfoxGroups: SigFoxGroup[];
 }
