@@ -12,7 +12,7 @@ import {
     Req,
     ParseIntPipe,
 } from "@nestjs/common";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import {
@@ -37,7 +37,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasWriteAccessToApplication } from "@helpers/security-helper";
-import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 
 @ApiTags("IoT-Device, PayloadDecoder and DataTarget Connection")
 @Controller("iot-device-payload-decoder-data-target-connection")

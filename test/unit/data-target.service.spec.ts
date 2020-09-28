@@ -1,9 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { DataTargetService } from "@services/data-target.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { DataTarget } from "@entities/data-target.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
-import { ApplicationService } from "@services/application.service";
+import { ApplicationService } from "@services/device-management/application.service";
 
 describe("DataTargetService", () => {
     let service: DataTargetService;

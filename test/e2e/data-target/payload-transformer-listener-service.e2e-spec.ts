@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { KafkaModule } from "@modules/kafka.module";
-import { PayloadDecoderListenerService } from "@services/payload-decoder-listener.service";
+import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
 import {
     generateRawRequestLoRaWANKafkaPayload,
     clearDatabase,
@@ -15,7 +15,7 @@ import {
 } from "../test-helpers";
 import { KafkaMessage, Consumer } from "kafkajs";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
+import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import { ConfigModule } from "@nestjs/config";

@@ -10,9 +10,9 @@ import {
     generateValidJwtForUser,
     generateSavedOrganization,
 } from "../test-helpers";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { PayloadDecoderModule } from "@modules/payload-decoder.module";
+import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ConfigModule } from "@nestjs/config";

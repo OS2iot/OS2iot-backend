@@ -12,7 +12,7 @@ import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-respons
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
-import { ApplicationService } from "@services/application.service";
+import { ApplicationService } from "@services/device-management/application.service";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";

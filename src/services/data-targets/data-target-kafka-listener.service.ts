@@ -4,13 +4,13 @@ import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { IoTDeviceService } from "@services/iot-device.service";
-import { DataTargetService } from "@services/data-target.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { IoTDevice } from "@entities/iot-device.entity";
 
 const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";

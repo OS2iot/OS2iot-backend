@@ -7,10 +7,10 @@ import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { VM, VMScript } from "vm2";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { KafkaService } from "./kafka/kafka.service";
+import { KafkaService } from "../kafka/kafka.service";
 import { RecordMetadata } from "kafkajs";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {

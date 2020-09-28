@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { DataTargetController } from "@admin-controller/data-target.controller";
-import { DataTargetService } from "@services/data-target.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
 
 describe("DataTarget Controller", () => {

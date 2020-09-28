@@ -10,13 +10,13 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { DataTarget } from "@entities/data-target.entity";
-import { DataTargetModule } from "@modules/data-target.module";
+import { DataTargetModule } from "@modules/device-management/data-target.module";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("DataTargetController (e2e)", () => {
     let app: INestApplication;

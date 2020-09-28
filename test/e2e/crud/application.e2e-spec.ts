@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ApplicationModule } from "@modules/application.module";
+import { ApplicationModule } from "@modules/device-management/application.module";
 import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
 import {
@@ -16,7 +16,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { CreateApplicationDto } from "@entities/dto/create-application.dto";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;

@@ -10,8 +10,8 @@ import {
     generateSavedOrganizationAdminUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
-import { AuthModule } from "@modules/auth.module";
-import { PermissionModule } from "@modules/permission.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { PermissionModule } from "@modules/user-management/permission.module";
 import * as request from "supertest";
 import { PermissionType } from "@enum/permission-type.enum";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
@@ -19,7 +19,7 @@ import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto"
 import { ReadPermission } from "@entities/read-permission.entity";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
-import { OrganizationApplicationPermission } from "../../../src/entities/organization-application-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;

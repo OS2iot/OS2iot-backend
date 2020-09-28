@@ -15,7 +15,7 @@ import { Point } from "geojson";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ReceivedMessage } from "@entities/received-message";
-import { IoTDevicePayloadDecoderDataTargetConnection } from "./iot-device-payload-decoder-data-target-connection.entity";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 @Entity("iot_device")
 @TableInheritance({

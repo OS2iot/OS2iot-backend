@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import { DataTargetSenderModule } from "@modules/data-target-sender.module";
+import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { SendStatus } from "@enum/send-status.enum";

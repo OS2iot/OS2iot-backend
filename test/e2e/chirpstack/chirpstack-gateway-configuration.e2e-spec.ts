@@ -5,7 +5,7 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import * as request from "supertest";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 import { generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
 import configuration from "@config/configuration";
 import { ConfigModule } from "@nestjs/config";

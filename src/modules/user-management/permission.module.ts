@@ -1,11 +1,11 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { PermissionService } from "@services/user-management/permission.service";
 import { PermissionController } from "@user-management-controller/permission.controller";
-import { ApplicationModule } from "./application.module";
-import { OrganizationModule } from "./organization.module";
+import { ApplicationModule } from "@modules/device-management/application.module";
+import { OrganizationModule } from "@modules/user-management/organization.module";
 import { SharedModule } from "@modules/shared.module";
 
-import { UserModule } from "./user.module";
+import { UserModule } from "@modules/user-management/user.module";
 
 @Module({
     imports: [

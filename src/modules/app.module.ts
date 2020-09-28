@@ -1,24 +1,24 @@
 import { Module, HttpModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ApplicationModule } from "@modules/application.module";
-import { IoTDeviceModule } from "@modules/iot-device.module";
+import { ApplicationModule } from "@modules/device-management/application.module";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { DataTargetModule } from "@modules/data-target.module";
-import { DataTargetSenderModule } from "@modules/data-target-sender.module";
-import { ReceiveDataModule } from "@modules/receive-data.module";
+import { DataTargetModule } from "@modules/device-management/data-target.module";
+import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
+import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { KafkaModule } from "@modules/kafka.module";
-import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
-import { PayloadDecoderModule } from "@modules/payload-decoder.module";
+import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
+import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
 import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
-import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/iot-device-payload-decoder-data-target-connection.module";
-import { PayloadDecoderKafkaModule } from "@modules/payload-decoder-kafka.module";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
+import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
 import { DefaultModule } from "@modules/default.module";
-import { AuthModule } from "./auth.module";
-import { OrganizationModule } from "./organization.module";
-import { PermissionModule } from "./permission.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { OrganizationModule } from "@modules/user-management/organization.module";
+import { PermissionModule } from "@modules/user-management/permission.module";
 import configuration from "@config/configuration";
-import { SigFoxListenerModule } from "./device-integrations/sigfox-listener.module";
+import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
 
 @Module({
     imports: [

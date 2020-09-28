@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToMany, JoinTable, Unique } from "typeorm";
 import { DbBaseEntity } from "@entities/base.entity";
-import { Permission } from "./permission.entity";
+import { Permission } from "@entities/permission.entity";
 
 @Entity("user")
 @Unique(["email"])

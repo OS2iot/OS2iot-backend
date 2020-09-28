@@ -23,7 +23,7 @@ import {
     ApiForbiddenResponse,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";

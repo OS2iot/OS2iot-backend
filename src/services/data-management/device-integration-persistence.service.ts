@@ -8,7 +8,7 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { IoTDevice } from "@entities/iot-device.entity";
 
 @Injectable()

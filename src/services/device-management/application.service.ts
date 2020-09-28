@@ -6,7 +6,7 @@ import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
-import { OrganizationService } from "./user-management/organization.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @Injectable()
 export class ApplicationService {

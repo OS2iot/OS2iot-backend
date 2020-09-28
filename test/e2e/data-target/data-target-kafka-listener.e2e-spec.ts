@@ -5,7 +5,7 @@ import { Repository, getManager } from "typeorm";
 import { Application } from "@entities/application.entity";
 import { clearDatabase } from "../test-helpers";
 import { KafkaModule } from "@modules/kafka.module";
-import { DataTargetKafkaModule } from "@modules/data-target-kafka.module";
+import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";

@@ -1,4 +1,4 @@
-import { Permission } from "./permission.entity";
+import { Permission } from "@entities/permission.entity";
 import { ChildEntity } from "typeorm";
 import { PermissionType } from "@enum/permission-type.enum";
 
@@ -9,3 +9,4 @@ export class GlobalAdminPermission extends Permission {
         this.type = PermissionType.GlobalAdmin;
     }
 }
+

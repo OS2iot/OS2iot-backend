@@ -7,7 +7,6 @@ import { OrganizationAdminPermission } from "@entities/organization-admin-permis
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationService } from "./organization.service";
 import * as _ from "lodash";
 import { UserService } from "./user.service";
 import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
@@ -19,8 +18,9 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
-import { OrganizationApplicationPermission } from "../../entities/organization-application-permission.entity";
-import { ApplicationService } from "../application.service";
+import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { ApplicationService } from "@services/device-management/application.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @Injectable()
 export class PermissionService {

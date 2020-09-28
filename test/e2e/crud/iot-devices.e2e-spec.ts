@@ -3,7 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository, getManager } from "typeorm";
-import { IoTDeviceModule } from "@modules/iot-device.module";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import {
     clearDatabase,
@@ -14,7 +14,7 @@ import { Application } from "@entities/application.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;

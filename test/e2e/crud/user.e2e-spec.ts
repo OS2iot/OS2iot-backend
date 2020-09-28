@@ -10,9 +10,9 @@ import {
     generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
-import { UserModule } from "@modules/user.module";
+import { UserModule } from "@modules/user-management/user.module";
 import { User } from "@entities/user.entity";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 import * as bcrypt from "bcryptjs";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { ConfigModule } from "@nestjs/config";

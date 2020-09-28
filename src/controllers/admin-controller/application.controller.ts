@@ -25,7 +25,7 @@ import {
     ApiForbiddenResponse,
 } from "@nestjs/swagger";
 import { Application } from "@entities/application.entity";
-import { ApplicationService } from "@services/application.service";
+import { ApplicationService } from "@services/device-management/application.service";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";

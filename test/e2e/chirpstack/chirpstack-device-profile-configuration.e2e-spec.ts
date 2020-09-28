@@ -11,7 +11,7 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 

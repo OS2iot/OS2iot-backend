@@ -6,7 +6,7 @@ import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import * as request from "supertest";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import {

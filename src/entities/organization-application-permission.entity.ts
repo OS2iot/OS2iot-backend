@@ -1,6 +1,6 @@
 import { ChildEntity, ManyToMany } from "typeorm";
 import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationPermission } from "./organizion-permission.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { Application } from "@entities/application.entity";
 import { Organization } from "@entities/organization.entity";
 

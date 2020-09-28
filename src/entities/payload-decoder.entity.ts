@@ -1,6 +1,6 @@
 import { DbBaseEntity } from "@entities/base.entity";
 import { Column, Entity, ManyToOne } from "typeorm";
-import { Organization } from "./organization.entity";
+import { Organization } from "@entities/organization.entity";
 
 @Entity("payload_decoder")
 export class PayloadDecoder extends DbBaseEntity {

@@ -9,7 +9,7 @@ import {
     Query,
 } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { BadRequestException } from "@nestjs/common";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { IoTDeviceType } from "@enum/device-type.enum";

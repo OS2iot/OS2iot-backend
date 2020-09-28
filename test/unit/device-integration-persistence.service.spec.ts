@@ -3,11 +3,11 @@ import { DeviceIntegrationPersistenceService } from "@services/data-management/d
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { IoTDeviceService } from "@services/iot-device.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Application } from "@entities/application.entity";
-import { ApplicationService } from "@services/application.service";
+import { ApplicationService } from "@services/device-management/application.service";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import {

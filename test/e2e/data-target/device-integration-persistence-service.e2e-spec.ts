@@ -15,7 +15,7 @@ import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
-import { AuthModule } from "@modules/auth.module";
+import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("DeviceIntegrationPersistenceService (e2e)", () => {
     let app: INestApplication;

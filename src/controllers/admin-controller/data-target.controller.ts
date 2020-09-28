@@ -27,7 +27,7 @@ import { DataTarget } from "@entities/data-target.entity";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { DataTargetService } from "@services/data-target.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";

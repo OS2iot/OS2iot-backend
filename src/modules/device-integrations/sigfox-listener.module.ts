@@ -1,8 +1,8 @@
-import { IoTDeviceModule } from "@modules/iot-device.module";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { Module } from "@nestjs/common";
 
 import { SigFoxListenerController } from "@device-data-controller/sigfox-listener.controller";
-import { ReceiveDataModule } from "@modules/receive-data.module";
+import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { SharedModule } from "@modules/shared.module";
 
 @Module({

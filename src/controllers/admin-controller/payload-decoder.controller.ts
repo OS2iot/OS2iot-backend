@@ -25,7 +25,7 @@ import {
 } from "@nestjs/swagger";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { PayloadDecoderService } from "@services/payload-decoder.service";
+import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
