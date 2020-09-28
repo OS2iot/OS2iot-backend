@@ -14,6 +14,7 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
 
     protected readonly logger = new Logger(HttpPushDataTargetService.name);
 
+    // eslint-disable-next-line max-lines-per-function
     async send(
         config: HttpPushDataTargetConfiguration,
         data: HttpPushDataTargetData

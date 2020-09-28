@@ -137,14 +137,21 @@ export class DataTargetService {
             throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
+        this.setAuthorizationHeader(dataTargetDto, dataTarget);
+
+        return dataTarget;
+    }
+
+    private setAuthorizationHeader(
+        dataTargetDto: CreateDataTargetDto,
+        dataTarget: DataTarget
+    ) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
             (dataTarget as HttpPushDataTarget).url = dataTargetDto.url;
             (dataTarget as HttpPushDataTarget).timeout = dataTargetDto.timeout;
             (dataTarget as HttpPushDataTarget).authorizationHeader =
                 dataTargetDto.authorizationHeader;
         }
-
-        return dataTarget;
     }
 
     private createDataTargetByDto<T extends DataTarget>(childDataTargetType: {

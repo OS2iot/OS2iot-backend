@@ -80,14 +80,18 @@ export class GenericChirpstackConfigurationService {
         } catch (err) {
             Logger.error(`post got error: ${JSON.stringify(err?.response?.data)}`);
 
-            if (err?.response?.status == 400) {
-                throw new BadRequestException({
-                    success: false,
-                    chirpstackError: err?.response?.data,
-                });
-            }
+            this.throwBadRequestIf400(err);
 
             throw err;
+        }
+    }
+
+    private throwBadRequestIf400(err: any) {
+        if (err?.response?.status == 400) {
+            throw new BadRequestException({
+                success: false,
+                chirpstackError: err?.response?.data,
+            });
         }
     }
 
@@ -108,12 +112,7 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            if (err?.response?.status == 400) {
-                throw new BadRequestException({
-                    success: false,
-                    chirpstackError: err?.response?.data,
-                });
-            }
+            this.throwBadRequestIf400(err);
             Logger.error(`Put got error: `);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
