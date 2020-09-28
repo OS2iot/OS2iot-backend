@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne } from "typeorm";
+import { Column, Entity, OneToOne, JoinColumn } from 'typeorm';
 
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
@@ -10,6 +10,7 @@ export class ReceivedMessage extends DbBaseEntity {
         type => IoTDevice,
         device => device.latestReceivedMessage
     )
+    @JoinColumn()
     device: IoTDevice;
 
     @Column({ type: "jsonb" })

@@ -27,10 +27,10 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
         `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
+            `DELETE FROM "received_message"; \n` +
             `DELETE FROM "iot_device"; \n` +
             `DELETE FROM "application"; \n` +
             `DELETE FROM "data_target"; \n` +
-            `DELETE FROM "received_message"; \n` +
             `DELETE FROM "received_message_metadata";  \n` +
             `DELETE FROM "payload_decoder";  \n` +
             `DELETE FROM "user_permissions_permission";  \n` +

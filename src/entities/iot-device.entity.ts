@@ -3,7 +3,6 @@ import { Point } from "geojson";
 import {
     Column,
     Entity,
-    JoinColumn,
     ManyToMany,
     ManyToOne,
     OneToMany,
@@ -63,7 +62,6 @@ export abstract class IoTDevice extends DbBaseEntity {
         type => ReceivedMessage,
         latestReceivedMessage => latestReceivedMessage.device
     )
-    @JoinColumn()
     latestReceivedMessage: ReceivedMessage;
 
     @OneToMany(
