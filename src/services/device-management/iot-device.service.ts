@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Point } from "geojson";
-import { DeleteResult, In, Repository, getManager } from "typeorm";
+import { DeleteResult, Repository, getManager } from "typeorm";
 
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
@@ -85,6 +85,11 @@ export class IoTDeviceService {
                 "iot_device.receivedMessagesMetadata",
                 "metadata",
                 'metadata."deviceId" = iot_device.id'
+            )
+            .leftJoinAndSelect(
+                "iot_device.latestReceivedMessage",
+                "receivedMessage",
+                '"receivedMessage"."deviceId" = iot_device.id'
             )
             .orderBy('metadata."sentTime"', "DESC")
             .getOne();

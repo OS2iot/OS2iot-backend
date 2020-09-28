@@ -115,25 +115,29 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         }
 
         // Assert
-        const allMessages = await receivedMessageRepository.find({relations: ["device"]});
+        const allMessages = await receivedMessageRepository.find({
+            relations: ["device"],
+        });
         expect(allMessages).toHaveLength(1);
         Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
         expect(allMessages[0]).toMatchObject({
             sentTime: new Date(11000),
             rawData: kafkaPayload.body.rawPayload,
             device: {
-                id: iotDevice.id
-            }
+                id: iotDevice.id,
+            },
         });
 
-        const allMetadata = await receivedMessageMetadataRepository.find({relations: ["device"]});
+        const allMetadata = await receivedMessageMetadataRepository.find({
+            relations: ["device"],
+        });
         expect(allMetadata).toHaveLength(10);
         Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
         expect(allMetadata[0]).toMatchObject({
             sentTime: new Date(2000),
             device: {
-                id: iotDevice.id
-            }
+                id: iotDevice.id,
+            },
         });
     }, 30000);
 });

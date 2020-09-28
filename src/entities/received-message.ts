@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn } from "typeorm";
 
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
