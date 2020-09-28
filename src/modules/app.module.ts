@@ -20,6 +20,7 @@ import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
+import { SigFoxAdministrationModule } from "./device-integrations/sigfox-administration.module";
 
 @Module({
     imports: [
@@ -69,6 +70,7 @@ import { PermissionModule } from "@modules/user-management/permission.module";
         OrganizationModule,
         PermissionModule,
         SigFoxListenerModule,
+        SigFoxAdministrationModule,
     ],
     controllers: [],
     providers: [],

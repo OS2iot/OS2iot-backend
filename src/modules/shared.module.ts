@@ -21,6 +21,7 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { User } from "@entities/user.entity";
 import { WritePermission } from "@entities/write-permission.entity";
+import { SigFoxGroup } from "@entities/sigfox-group.entity";
 
 @Module({
     imports: [
@@ -43,6 +44,7 @@ import { WritePermission } from "@entities/write-permission.entity";
             ReceivedMessage,
             ReceivedMessageMetadata,
             SigFoxDevice,
+            SigFoxGroup,
             User,
             WritePermission,
         ]),
