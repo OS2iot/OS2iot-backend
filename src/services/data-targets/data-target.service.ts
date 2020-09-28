@@ -1,22 +1,23 @@
-import { Injectable, BadRequestException, Logger } from "@nestjs/common";
-import {
-    Repository,
-    getManager,
-    DeleteResult,
-    getConnection,
-    SelectQueryBuilder,
-} from "typeorm";
-import { DataTarget } from "@entities/data-target.entity";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
+import {
+    DeleteResult,
+    Repository,
+    SelectQueryBuilder,
+    getConnection,
+    getManager,
+} from "typeorm";
+
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
-import { ApplicationService } from "@services/device-management/application.service";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
+import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
+import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
+import { DataTarget } from "@entities/data-target.entity";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
+import { DataTargetType } from "@enum/data-target-type.enum";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { ApplicationService } from "@services/device-management/application.service";
 
 @Injectable()
 export class DataTargetService {

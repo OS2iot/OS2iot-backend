@@ -1,10 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { KafkaService } from "@services/kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
+
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { RecordMetadata } from "kafkajs";
+import { KafkaService } from "@services/kafka/kafka.service";
 
 @Injectable()
 export class ReceiveDataService {

@@ -1,6 +1,7 @@
-import { Entity, Column, OneToOne } from "typeorm";
-import { IoTDevice } from "@entities/iot-device.entity";
+import { Column, Entity, OneToOne } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 @Entity("received_message")
 export class ReceivedMessage extends DbBaseEntity {

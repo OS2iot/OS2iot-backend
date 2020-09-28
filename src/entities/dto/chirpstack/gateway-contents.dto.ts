@@ -1,16 +1,17 @@
-import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
-import {
-    IsString,
-    MinLength,
-    MaxLength,
-    IsOptional,
-    Matches,
-    ValidateNested,
-    IsJSON,
-} from "class-validator";
-import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
-import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
+import {
+    IsJSON,
+    IsOptional,
+    IsString,
+    Matches,
+    MaxLength,
+    MinLength,
+    ValidateNested,
+} from "class-validator";
+
+import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
+import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 
 export class GatewayContentsDto {
     @ApiProperty({

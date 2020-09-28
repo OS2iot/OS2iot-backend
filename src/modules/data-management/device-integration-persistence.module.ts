@@ -1,8 +1,8 @@
-import { Module, HttpModule } from "@nestjs/common";
+import { HttpModule, Module } from "@nestjs/common";
 
-import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { SharedModule } from "@modules/shared.module";
+import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
 
 @Module({
     imports: [SharedModule, IoTDeviceModule, HttpModule],

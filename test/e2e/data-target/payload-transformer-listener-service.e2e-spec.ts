@@ -1,25 +1,27 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { KafkaModule } from "@modules/kafka.module";
-import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
-import {
-    generateRawRequestLoRaWANKafkaPayload,
-    clearDatabase,
-    generateSavedApplication,
-    generateSavedIoTDevice,
-    generateSavedPayloadDecoder,
-    generateSavedDataTarget,
-    generateSavedConnection,
-    generateSavedOrganization,
-} from "../test-helpers";
-import { KafkaMessage, Consumer } from "kafkajs";
+import { Consumer, KafkaMessage } from "kafkajs";
+
+import configuration from "@config/configuration";
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { KafkaModule } from "@modules/kafka.module";
+import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
+
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
+import {
+    clearDatabase,
+    generateRawRequestLoRaWANKafkaPayload,
+    generateSavedApplication,
+    generateSavedConnection,
+    generateSavedDataTarget,
+    generateSavedIoTDevice,
+    generateSavedOrganization,
+    generateSavedPayloadDecoder,
+} from "../test-helpers";
 
 describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
     let app: INestApplication;

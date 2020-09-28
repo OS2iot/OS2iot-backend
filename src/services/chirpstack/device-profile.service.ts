@@ -1,8 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { AxiosResponse } from "axios";
+
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
-import { AxiosResponse } from "axios";
+
+import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {

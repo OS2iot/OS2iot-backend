@@ -1,15 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
+    IsOptional,
     IsString,
-    MinLength,
+    Max,
     MaxLength,
     Min,
-    Max,
-    IsOptional,
+    MinLength,
     ValidateNested,
 } from "class-validator";
-import { Type } from "class-transformer";
+
 import { IoTDeviceType } from "@enum/device-type.enum";
+
 import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
 

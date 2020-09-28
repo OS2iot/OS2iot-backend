@@ -1,18 +1,20 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
-import { AuthModule } from "@modules/user-management/auth.module";
-import { PassportModule } from "@nestjs/passport";
+import { ConfigModule } from "@nestjs/config";
 import { JwtModule, JwtService } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+import { Test, TestingModule } from "@nestjs/testing";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
+
+import configuration from "@config/configuration";
+import { LoginDto } from "@dto/login.dto";
+import { AuthModule } from "@modules/user-management/auth.module";
+
 import {
-    generateSavedGlobalAdminUser,
     clearDatabase,
+    generateSavedGlobalAdminUser,
     generateSavedOrganization,
 } from "./test-helpers";
-import { LoginDto } from "@dto/login.dto";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
 
 describe("AuthController (e2e)", () => {
     let app: INestApplication;

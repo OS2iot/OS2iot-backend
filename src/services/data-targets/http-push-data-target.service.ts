@@ -1,10 +1,11 @@
-import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
-import { Injectable, HttpService, Logger } from "@nestjs/common";
+import { HttpService, Injectable, Logger } from "@nestjs/common";
 import { AxiosRequestConfig } from "axios";
+
 import { AuthorizationType } from "@enum/authorization-type.enum";
+import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
-import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
+import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
 
 @Injectable()
 export class HttpPushDataTargetService extends BaseDataTargetService {

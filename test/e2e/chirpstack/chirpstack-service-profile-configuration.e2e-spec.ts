@@ -1,14 +1,16 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { INestApplication } from "@nestjs/common";
-import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
+
+import configuration from "@config/configuration";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
-import * as request from "supertest";
-import configuration from "@config/configuration";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { AuthModule } from "@modules/user-management/auth.module";
-import { ConfigModule } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,

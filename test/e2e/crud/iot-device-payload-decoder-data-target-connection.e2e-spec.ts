@@ -1,28 +1,30 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
 import { Repository } from "typeorm";
+
+import configuration from "@config/configuration";
+import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { Organization } from "@entities/organization.entity";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+
 import {
     clearDatabase,
-    generateSavedPayloadDecoder,
-    generateSavedConnection,
-    generateSavedIoTDevice,
     generateSavedApplication,
+    generateSavedConnection,
     generateSavedDataTarget,
     generateSavedGlobalAdminUser,
-    generateValidJwtForUser,
+    generateSavedIoTDevice,
+    generateSavedLoRaWANDevice,
     generateSavedOrganization,
     generateSavedOrganizationAdminUser,
-    generateSavedLoRaWANDevice,
+    generateSavedPayloadDecoder,
+    generateValidJwtForUser,
 } from "../test-helpers";
-import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
-import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
-import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { AuthModule } from "@modules/user-management/auth.module";
-import { Organization } from "@entities/organization.entity";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;

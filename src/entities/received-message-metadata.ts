@@ -1,4 +1,5 @@
-import { Entity, Column, ManyToOne, Index } from "typeorm";
+import { Column, Entity, Index, ManyToOne } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 

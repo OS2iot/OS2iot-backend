@@ -1,7 +1,8 @@
-import { IoTDevice } from "@entities/iot-device.entity";
-import { Column, ChildEntity, BeforeInsert } from "typeorm";
-import { IoTDeviceType } from "@enum/device-type.enum";
 import { Length } from "class-validator";
+import { BeforeInsert, ChildEntity, Column } from "typeorm";
+
+import { IoTDevice } from "@entities/iot-device.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @ChildEntity(IoTDeviceType.LoRaWAN)
 export class LoRaWANDevice extends IoTDevice {

@@ -1,24 +1,25 @@
-import { Module, HttpModule } from "@nestjs/common";
+import { HttpModule, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ApplicationModule } from "@modules/device-management/application.module";
-import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
-import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
-import { DataTargetModule } from "@modules/device-management/data-target.module";
-import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
-import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
-import { KafkaModule } from "@modules/kafka.module";
-import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
-import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
-import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
-import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
+
+import configuration from "@config/configuration";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
+import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
+import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
 import { DefaultModule } from "@modules/default.module";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
+import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
+import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
+import { ApplicationModule } from "@modules/device-management/application.module";
+import { DataTargetModule } from "@modules/device-management/data-target.module";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
+import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
+import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
-import configuration from "@config/configuration";
-import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
 
 @Module({
     imports: [

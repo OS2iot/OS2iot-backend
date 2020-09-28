@@ -1,5 +1,5 @@
-import { Matches, IsString, IsOptional, MaxLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
 
 export class CreateSigFoxSettingsDto {
     @ApiProperty({ required: true })

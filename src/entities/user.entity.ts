@@ -1,4 +1,5 @@
-import { Entity, Column, ManyToMany, JoinTable, Unique } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, Unique } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
 import { Permission } from "@entities/permission.entity";
 

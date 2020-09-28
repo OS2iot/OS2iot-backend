@@ -1,7 +1,8 @@
-import { Entity, TableInheritance, Column, ManyToOne } from "typeorm";
+import { Column, Entity, ManyToOne, TableInheritance } from "typeorm";
+
+import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
-import { Application } from "@entities/application.entity";
 
 @Entity("data_target")
 @TableInheritance({

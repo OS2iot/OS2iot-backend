@@ -1,10 +1,11 @@
 import {
-    INestApplication,
-    ValidationPipe,
-    Logger,
     BadRequestException,
+    INestApplication,
+    Logger,
+    ValidationPipe,
 } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+
 import { AppModule } from "@modules/app.module";
 
 export async function setupNestJs(config: {

@@ -1,7 +1,8 @@
 import { ChildEntity } from "typeorm";
-import { PermissionType } from "@enum/permission-type.enum";
+
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
+import { PermissionType } from "@enum/permission-type.enum";
 
 @ChildEntity(PermissionType.Write)
 export class WritePermission extends OrganizationApplicationPermission {

@@ -1,22 +1,24 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ApplicationModule } from "@modules/device-management/application.module";
+import * as request from "supertest";
 import { Repository, getManager } from "typeorm";
+
+import configuration from "@config/configuration";
 import { Application } from "@entities/application.entity";
+import { CreateApplicationDto } from "@entities/dto/create-application.dto";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { ApplicationModule } from "@modules/device-management/application.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+
 import {
     clearDatabase,
-    generateSavedGlobalAdminUser,
-    generateValidJwtForUser,
-    generateSavedOrganization,
     generateSavedApplication,
+    generateSavedGlobalAdminUser,
+    generateSavedOrganization,
+    generateValidJwtForUser,
 } from "../test-helpers";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { CreateApplicationDto } from "@entities/dto/create-application.dto";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;

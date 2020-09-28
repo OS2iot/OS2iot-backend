@@ -1,17 +1,18 @@
 import {
-    Entity,
     Column,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
     OneToMany,
     Unique,
-    ManyToOne,
-    ManyToMany,
-    JoinTable,
 } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTarget } from "@entities/data-target.entity";
-import { Organization } from "@entities/organization.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { Organization } from "@entities/organization.entity";
 
 @Entity("application")
 @Unique(["name"])

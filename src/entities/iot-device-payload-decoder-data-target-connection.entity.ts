@@ -1,8 +1,9 @@
-import { Entity, ManyToOne, JoinColumn, Index, ManyToMany, JoinTable } from "typeorm";
+import { Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne } from "typeorm";
+
 import { DbBaseEntity } from "@entities//base.entity";
+import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { DataTarget } from "@entities/data-target.entity";
 
 /**
  * I hate this name, but not sure what else to call this join-table.-

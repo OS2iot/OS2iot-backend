@@ -1,19 +1,20 @@
-import { Injectable, HttpService, Logger } from "@nestjs/common";
-import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-device.dto";
-import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
-import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
-import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
-import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
-import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
-import { ChirpstackSingleDeviceResponseDto } from "@dto/chirpstack/chirpstack-single-device-response.dto";
-import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
+import { HttpService, Injectable, Logger } from "@nestjs/common";
+
 import { ChirpstackDeviceActivationDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import {
     ChirpstackDeviceKeysContentDto,
     ChirpstackDeviceKeysResponseDto,
 } from "@dto/chirpstack/chirpstack-device-keys-response.dto";
+import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
+import { ChirpstackSingleDeviceResponseDto } from "@dto/chirpstack/chirpstack-single-device-response.dto";
+import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
+import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-device.dto";
+import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {

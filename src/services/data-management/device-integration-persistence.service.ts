@@ -1,15 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { IoTDevice } from "@entities/iot-device.entity";
 
 @Injectable()
 export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {

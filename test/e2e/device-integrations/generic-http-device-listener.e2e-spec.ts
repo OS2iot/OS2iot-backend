@@ -1,18 +1,20 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { Repository, getManager } from "typeorm";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { clearDatabase } from "../test-helpers";
-import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
-import { Application } from "@entities/application.entity";
-import { KafkaModule } from "@modules/kafka.module";
-import { KafkaMessage, Consumer } from "kafkajs";
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Consumer, KafkaMessage } from "kafkajs";
+import * as request from "supertest";
+import { Repository, getManager } from "typeorm";
+
 import configuration from "@config/configuration";
+import { Application } from "@entities/application.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
+import { KafkaModule } from "@modules/kafka.module";
+
+import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { clearDatabase } from "../test-helpers";
 
 describe("ReceiveDataController (e2e)", () => {
     let app: INestApplication;

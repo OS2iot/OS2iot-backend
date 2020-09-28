@@ -1,21 +1,22 @@
-import {
-    Column,
-    ManyToOne,
-    Entity,
-    TableInheritance,
-    OneToMany,
-    OneToOne,
-    JoinColumn,
-    ManyToMany,
-} from "typeorm";
-import { DbBaseEntity } from "@entities/base.entity";
-import { Application } from "@entities/application.entity";
 import { Length } from "class-validator";
 import { Point } from "geojson";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { ReceivedMessage } from "@entities/received-message";
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    OneToOne,
+    TableInheritance,
+} from "typeorm";
+
+import { Application } from "@entities/application.entity";
+import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Entity("iot_device")
 @TableInheritance({

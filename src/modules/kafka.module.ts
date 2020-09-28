@@ -1,7 +1,8 @@
 import { DynamicModule, Global, Module } from "@nestjs/common";
-import { KafkaService } from "@services/kafka/kafka.service";
-import { KafkaConfig } from "@services/kafka/kafka.message";
+
 import { KafkaController } from "@device-data-controller/kafka.controller";
+import { KafkaConfig } from "@services/kafka/kafka.message";
+import { KafkaService } from "@services/kafka/kafka.service";
 
 @Global()
 @Module({ controllers: [KafkaController] })

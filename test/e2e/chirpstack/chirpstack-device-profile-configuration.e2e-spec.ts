@@ -1,19 +1,21 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { INestApplication } from "@nestjs/common";
-import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
+
+import configuration from "@config/configuration";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
-import * as request from "supertest";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
-import configuration from "@config/configuration";
-import { AuthModule } from "@modules/user-management/auth.module";
-import { ConfigModule } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
 
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;

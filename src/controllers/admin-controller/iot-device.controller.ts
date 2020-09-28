@@ -1,43 +1,44 @@
 import {
-    Controller,
-    Post,
-    Header,
-    Body,
-    Get,
-    Param,
-    NotFoundException,
-    Put,
-    Delete,
     BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Header,
     Logger,
-    UseGuards,
-    Req,
+    NotFoundException,
+    Param,
     ParseIntPipe,
+    Post,
+    Put,
+    Req,
+    UseGuards,
 } from "@nestjs/common";
 import {
-    ApiTags,
-    ApiOperation,
     ApiBadRequestResponse,
-    ApiNotFoundResponse,
     ApiBearerAuth,
     ApiForbiddenResponse,
+    ApiNotFoundResponse,
+    ApiOperation,
+    ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
+
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { Read } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     checkIfUserHasReadAccessToApplication,
     checkIfUserHasWriteAccessToApplication,
 } from "@helpers/security-helper";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { RolesGuard } from "@auth/roles.guard";
-import { Read } from "@auth/roles.decorator";
-import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")

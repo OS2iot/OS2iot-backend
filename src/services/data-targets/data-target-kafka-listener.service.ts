@@ -1,17 +1,18 @@
 import { Injectable, Logger, NotImplementedException } from "@nestjs/common";
-import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
-import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
-import { KafkaPayload } from "@services/kafka/kafka.message";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
+
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { DataTargetService } from "@services/data-targets/data-target.service";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import { DataTarget } from "@entities/data-target.entity";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { DataTargetType } from "@enum/data-target-type.enum";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { DataTargetService } from "@services/data-targets/data-target.service";
+import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
+import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
+import { KafkaPayload } from "@services/kafka/kafka.message";
 
 const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";
 

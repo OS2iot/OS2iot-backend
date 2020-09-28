@@ -1,10 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { AxiosResponse } from "axios";
+
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
 import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
-
-import { AxiosResponse } from "axios";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
+
+import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 
 @Injectable()
 export class ServiceProfileService extends GenericChirpstackConfigurationService {

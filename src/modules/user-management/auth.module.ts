@@ -1,15 +1,16 @@
-import { forwardRef, Module } from "@nestjs/common";
-import { UserModule } from "@modules/user-management/user.module";
-import { PassportModule } from "@nestjs/passport";
-import { JwtModule } from "@nestjs/jwt";
-import { PermissionModule } from "@modules/user-management/permission.module";
-import { AuthService } from "@services/user-management/auth.service";
-import { LocalStrategy } from "@auth/local.strategy";
-import { JwtStrategy } from "@auth/jwt.strategy";
-import { AuthController } from "@user-management-controller/auth.controller";
+import { Module, forwardRef } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+
+import { JwtStrategy } from "@auth/jwt.strategy";
+import { LocalStrategy } from "@auth/local.strategy";
 import configuration from "@config/configuration";
 import { OrganizationModule } from "@modules/user-management/organization.module";
+import { PermissionModule } from "@modules/user-management/permission.module";
+import { UserModule } from "@modules/user-management/user.module";
+import { AuthService } from "@services/user-management/auth.service";
+import { AuthController } from "@user-management-controller/auth.controller";
 
 @Module({
     imports: [

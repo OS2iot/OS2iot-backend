@@ -1,37 +1,38 @@
 import {
-    Controller,
-    Post,
-    Body,
     BadRequestException,
-    InternalServerErrorException,
-    UseGuards,
+    Body,
+    Controller,
     Get,
-    Put,
-    Param,
+    InternalServerErrorException,
     NotFoundException,
+    Param,
     ParseIntPipe,
+    Post,
+    Put,
     Req,
+    UseGuards,
 } from "@nestjs/common";
-import { UserService } from "@services/user-management/user.service";
+import { Logger } from "@nestjs/common";
 import {
-    ApiOperation,
-    ApiTags,
     ApiBearerAuth,
     ApiForbiddenResponse,
+    ApiOperation,
+    ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { UserResponseDto } from "@dto/user-response.dto";
 import { QueryFailedError } from "typeorm";
-import { Logger } from "@nestjs/common";
-import { ErrorCodes } from "@entities/enum/error-codes.enum";
+
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
-import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { UserService } from "@services/user-management/user.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

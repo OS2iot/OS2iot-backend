@@ -1,27 +1,28 @@
-import { Controller, Post, Request, UseGuards, Get, Body } from "@nestjs/common";
+import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
 import {
-    ApiOperation,
     ApiBearerAuth,
+    ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { AuthService } from "@services/user-management/auth.service";
-import { LocalAuthGuard } from "@auth/local-auth.guard";
-import {
-    AuthenticatedRequestLocalStrategy,
-    AuthenticatedRequest,
-} from "@dto/internal/authenticated-request";
-import { LoginDto } from "@dto/login.dto";
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
-import { UserService } from "@services/user-management/user.service";
-import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
-import { OrganizationService } from "@services/user-management/organization.service";
 import * as _ from "lodash";
-import { User } from "@entities/user.entity";
-import { Organization } from "@entities/organization.entity";
+
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { LocalAuthGuard } from "@auth/local-auth.guard";
 import { CurrentUserInfoDto } from "@dto/current-user-info.dto";
+import {
+    AuthenticatedRequest,
+    AuthenticatedRequestLocalStrategy,
+} from "@dto/internal/authenticated-request";
+import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
+import { LoginDto } from "@dto/login.dto";
+import { Organization } from "@entities/organization.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { User } from "@entities/user.entity";
+import { PermissionType } from "@enum/permission-type.enum";
+import { AuthService } from "@services/user-management/auth.service";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { UserService } from "@services/user-management/user.service";
 
 @ApiTags("Auth")
 @Controller("auth")

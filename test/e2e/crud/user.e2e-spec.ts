@@ -1,8 +1,17 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import * as bcrypt from "bcryptjs";
+import * as request from "supertest";
 import { Repository } from "typeorm";
+
+import configuration from "@config/configuration";
+import { UpdateUserDto } from "@dto/user-management/update-user.dto";
+import { User } from "@entities/user.entity";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { UserModule } from "@modules/user-management/user.module";
+
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,
@@ -10,13 +19,6 @@ import {
     generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
-import { UserModule } from "@modules/user-management/user.module";
-import { User } from "@entities/user.entity";
-import { AuthModule } from "@modules/user-management/auth.module";
-import * as bcrypt from "bcryptjs";
-import { UpdateUserDto } from "@dto/user-management/update-user.dto";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
 
 describe("UserController (e2e)", () => {
     let app: INestApplication;

@@ -1,21 +1,23 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, Logger } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+
+import configuration from "@config/configuration";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
+import { KafkaModule } from "@modules/kafka.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
+
 import {
     clearDatabase,
     generateRawRequestSigfoxKafkaPayload,
     generateSavedApplication,
     generateSavedIoTDevice,
 } from "../test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
-import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
-import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("DeviceIntegrationPersistenceService (e2e)", () => {
     let app: INestApplication;

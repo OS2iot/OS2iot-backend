@@ -1,5 +1,5 @@
-import { IsUUID, IsString, IsOptional, Matches } from "class-validator";
-import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsString, IsUUID, Matches } from "class-validator";
 
 export class ChirpstackDeviceContentsDto {
     @ApiHideProperty()

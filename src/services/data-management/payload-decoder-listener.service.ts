@@ -1,16 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
-import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
-import { KafkaPayload } from "@services/kafka/kafka.message";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { VM, VMScript } from "vm2";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { KafkaService } from "../kafka/kafka.service";
 import { RecordMetadata } from "kafkajs";
+import { VM, VMScript } from "vm2";
+
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
+import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
+import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
+import { KafkaPayload } from "@services/kafka/kafka.message";
+
+import { KafkaService } from "../kafka/kafka.service";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {

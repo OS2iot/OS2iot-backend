@@ -1,22 +1,24 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
 import { Repository } from "typeorm";
-import {
-    clearDatabase,
-    generateSavedPayloadDecoder,
-    generateSavedGlobalAdminUser,
-    generateValidJwtForUser,
-    generateSavedOrganization,
-} from "../test-helpers";
-import { AuthModule } from "@modules/user-management/auth.module";
-import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
+
+import configuration from "@config/configuration";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateSavedOrganization,
+    generateSavedPayloadDecoder,
+    generateValidJwtForUser,
+} from "../test-helpers";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;

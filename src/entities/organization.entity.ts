@@ -1,9 +1,10 @@
-import { Entity, Column, OneToMany, Unique } from "typeorm";
-import { DbBaseEntity } from "@entities/base.entity";
+import { Column, Entity, OneToMany, Unique } from "typeorm";
+
 import { Application } from "@entities/application.entity";
-import { Permission } from "@entities/permission.entity";
+import { DbBaseEntity } from "@entities/base.entity";
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { Permission } from "@entities/permission.entity";
 
 @Entity("organization")
 @Unique(["name"])

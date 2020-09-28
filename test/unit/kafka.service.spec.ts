@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+
 import { KafkaService } from "@services/kafka/kafka.service";
 
 describe("KafkaService", () => {

@@ -1,6 +1,7 @@
-import { PermissionType } from "@entities/enum/permission-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNumber, IsString, Length } from "class-validator";
+
+import { PermissionType } from "@entities/enum/permission-type.enum";
 
 export class CreatePermissionDto {
     @ApiProperty({

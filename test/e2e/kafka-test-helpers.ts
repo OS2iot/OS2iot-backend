@@ -1,6 +1,7 @@
-import { KafkaMessage, Consumer, Kafka } from "kafkajs";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { Logger } from "@nestjs/common";
+import { Consumer, Kafka, KafkaMessage } from "kafkajs";
+
+import { KafkaTopic } from "@enum/kafka-topic.enum";
 
 export async function waitForEvents(
     kafkaMessages: [string, KafkaMessage][],

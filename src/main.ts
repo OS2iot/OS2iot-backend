@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
-import { setupSwagger } from "@loaders/swagger";
+
 import { setupNestJs } from "@loaders/nestjs";
+import { setupSwagger } from "@loaders/swagger";
 
 async function bootstrap() {
     const config = {

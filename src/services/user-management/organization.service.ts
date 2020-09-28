@@ -1,19 +1,21 @@
 import {
+    BadRequestException,
+    Inject,
     Injectable,
     Logger,
-    Inject,
     forwardRef,
-    BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Organization } from "@entities/organization.entity";
-import { Repository, In } from "typeorm";
-import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
-import { PermissionService } from "./permission.service";
+import { In, Repository } from "typeorm";
+
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
+import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
+import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
+import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
+
+import { PermissionService } from "./permission.service";
 
 @Injectable()
 export class OrganizationService {

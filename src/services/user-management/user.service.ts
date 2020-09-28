@@ -1,22 +1,24 @@
 import {
     BadRequestException,
-    forwardRef,
     Inject,
     Injectable,
     Logger,
+    forwardRef,
 } from "@nestjs/common";
-import { User } from "@entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import * as bcrypt from "bcryptjs";
-import { Permission } from "@entities/permission.entity";
+import { map } from "lodash";
+import { Repository } from "typeorm";
+
+import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
-import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
-import { PermissionService } from "./permission.service";
+import { Permission } from "@entities/permission.entity";
+import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { map } from "lodash";
+
+import { PermissionService } from "./permission.service";
 
 @Injectable()
 export class UserService {

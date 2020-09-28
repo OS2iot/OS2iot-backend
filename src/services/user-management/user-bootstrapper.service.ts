@@ -1,4 +1,5 @@
 import { Inject, Logger, OnApplicationBootstrap } from "@nestjs/common";
+
 import { UserService } from "./user.service";
 
 export class UserBootstrapperService implements OnApplicationBootstrap {

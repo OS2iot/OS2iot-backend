@@ -1,7 +1,9 @@
-import { Matches, IsString, IsOptional, Length } from "class-validator";
 import { ApiProperty, PickType } from "@nestjs/swagger";
-import { ChirpstackDeviceContentsDto } from "./chirpstack/chirpstack-device-contents.dto";
+import { IsOptional, IsString, Length, Matches } from "class-validator";
+
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
+
+import { ChirpstackDeviceContentsDto } from "./chirpstack/chirpstack-device-contents.dto";
 
 export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsDto, [
     "devEUI",

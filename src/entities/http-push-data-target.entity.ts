@@ -1,8 +1,10 @@
-import { Column, ChildEntity, BeforeInsert } from "typeorm";
+import { BeforeInsert, ChildEntity, Column } from "typeorm";
+
 import { DataTarget } from "@entities/data-target.entity";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { HttpPushDataTargetConfiguration } from "./interfaces/http-push-data-target-configuration.interface";
 import { AuthorizationType } from "@enum/authorization-type.enum";
+import { DataTargetType } from "@enum/data-target-type.enum";
+
+import { HttpPushDataTargetConfiguration } from "./interfaces/http-push-data-target-configuration.interface";
 
 @ChildEntity(DataTargetType.HttpPush)
 export class HttpPushDataTarget extends DataTarget {

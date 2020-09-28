@@ -1,43 +1,44 @@
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    Put,
-    Param,
-    Header,
+    Controller,
     Delete,
+    Get,
+    Header,
     NotFoundException,
-    Query,
-    UseGuards,
-    Req,
+    Param,
     ParseIntPipe,
+    Post,
+    Put,
+    Query,
+    Req,
+    UseGuards,
 } from "@nestjs/common";
+import { UnauthorizedException } from "@nestjs/common";
 import {
-    ApiTags,
-    ApiOperation,
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiForbiddenResponse,
+    ApiOperation,
+    ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
-import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { DataTarget } from "@entities/data-target.entity";
-import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
-import { DataTargetService } from "@services/data-targets/data-target.service";
-import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
+
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { RolesGuard } from "@auth/roles.guard";
 import { Read } from "@auth/roles.decorator";
+import { RolesGuard } from "@auth/roles.guard";
+import { CreateDataTargetDto } from "@dto/create-data-target.dto";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { UnauthorizedException } from "@nestjs/common";
+import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
+import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
+import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
+import { DataTarget } from "@entities/data-target.entity";
+import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     checkIfUserHasReadAccessToApplication,
     checkIfUserHasWriteAccessToApplication,
 } from "@helpers/security-helper";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 
 @ApiTags("Data Target")
 @Controller("data-target")

@@ -1,25 +1,26 @@
 import {
-    Injectable,
     BadRequestException,
+    Injectable,
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { IoTDevice } from "@entities/iot-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DeleteResult, getManager, In } from "typeorm";
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { iotDeviceTypeMap } from "@enum/device-type-mapping";
-import { ApplicationService } from "@services/device-management/application.service";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Point } from "geojson";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { ActivationType } from "@enum/lorawan-activation-type.enum";
-import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { IoTDeviceType } from "@enum/device-type.enum";
+import { DeleteResult, In, Repository, getManager } from "typeorm";
+
+import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { iotDeviceTypeMap } from "@enum/device-type-mapping";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { ApplicationService } from "@services/device-management/application.service";
 
 @Injectable()
 export class IoTDeviceService {

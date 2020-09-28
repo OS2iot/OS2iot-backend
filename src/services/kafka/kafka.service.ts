@@ -1,14 +1,15 @@
-import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import {
     Consumer,
     Kafka,
+    KafkaMessage,
     Producer,
     RecordMetadata,
-    KafkaMessage,
     logLevel,
 } from "kafkajs";
-import { KafkaConfig, KafkaPayload } from "./kafka.message";
+
 import { SUBSCRIBER_COMBINED_REF_MAP } from "./kafka.decorator";
+import { KafkaConfig, KafkaPayload } from "./kafka.message";
 
 /**
  * Based on: https://github.com/rajeshkumarbehura/ts-nestjs-kafka /

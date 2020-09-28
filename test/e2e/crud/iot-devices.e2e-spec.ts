@@ -1,20 +1,22 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
 import { Repository, getManager } from "typeorm";
-import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
+
+import configuration from "@config/configuration";
+import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
+import { AuthModule } from "@modules/user-management/auth.module";
+
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
-import { Application } from "@entities/application.entity";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { AuthModule } from "@modules/user-management/auth.module";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;

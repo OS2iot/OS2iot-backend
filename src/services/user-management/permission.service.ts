@@ -1,26 +1,28 @@
-import { Injectable, BadRequestException, forwardRef, Inject } from "@nestjs/common";
-import { Organization } from "@entities/organization.entity";
-import { Permission } from "@entities/permission.entity";
-import { getManager, Repository, In } from "typeorm";
-import { ReadPermission } from "@entities/read-permission.entity";
-import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
-import { WritePermission } from "@entities/write-permission.entity";
-import { PermissionType } from "@enum/permission-type.enum";
-import * as _ from "lodash";
-import { UserService } from "./user.service";
-import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
+import { BadRequestException, Inject, Injectable, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UserPermissions } from "@dto/permission-organization-application.dto";
-import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { User } from "@entities/user.entity";
+import * as _ from "lodash";
+import { In, Repository, getManager } from "typeorm";
+
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
+import { UserPermissions } from "@dto/permission-organization-application.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
+import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { Organization } from "@entities/organization.entity";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { Permission } from "@entities/permission.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
+import { User } from "@entities/user.entity";
+import { WritePermission } from "@entities/write-permission.entity";
+import { PermissionType } from "@enum/permission-type.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+
+import { UserService } from "./user.service";
 
 @Injectable()
 export class PermissionService {

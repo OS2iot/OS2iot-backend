@@ -1,24 +1,26 @@
+import { HttpService, INestApplication } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication, HttpService } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Repository, getManager } from "typeorm";
-import { Application } from "@entities/application.entity";
-import { clearDatabase } from "../test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
-import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { DataTarget } from "@entities/data-target.entity";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { KafkaService } from "@services/kafka/kafka.service";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { KafkaPayload } from "@services/kafka/kafka.message";
-import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { RecordMetadata } from "kafkajs";
 import { of } from "rxjs";
-import { AxiosResponse, AxiosRequestConfig } from "axios";
-import { ConfigModule } from "@nestjs/config";
+import { Repository, getManager } from "typeorm";
+
 import configuration from "@config/configuration";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { Application } from "@entities/application.entity";
+import { DataTarget } from "@entities/data-target.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
+import { KafkaModule } from "@modules/kafka.module";
+import { KafkaPayload } from "@services/kafka/kafka.message";
+import { KafkaService } from "@services/kafka/kafka.service";
+
+import { clearDatabase } from "../test-helpers";
 
 describe("DataTargetKafkaListener (e2e)", () => {
     let app: INestApplication;

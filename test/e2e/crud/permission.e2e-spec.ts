@@ -1,25 +1,27 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
 import { getManager } from "typeorm";
+
+import configuration from "@config/configuration";
+import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
+import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
+import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { ReadPermission } from "@entities/read-permission.entity";
+import { User } from "@entities/user.entity";
+import { PermissionType } from "@enum/permission-type.enum";
+import { AuthModule } from "@modules/user-management/auth.module";
+import { PermissionModule } from "@modules/user-management/permission.module";
+
 import {
     clearDatabase,
     generateSavedGlobalAdminUser,
-    generateValidJwtForUser,
     generateSavedOrganization,
     generateSavedOrganizationAdminUser,
+    generateValidJwtForUser,
 } from "../test-helpers";
-import { User } from "@entities/user.entity";
-import { AuthModule } from "@modules/user-management/auth.module";
-import { PermissionModule } from "@modules/user-management/permission.module";
-import * as request from "supertest";
-import { PermissionType } from "@enum/permission-type.enum";
-import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
-import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { ReadPermission } from "@entities/read-permission.entity";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;

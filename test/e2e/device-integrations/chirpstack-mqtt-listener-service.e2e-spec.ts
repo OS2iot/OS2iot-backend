@@ -1,19 +1,21 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { Consumer, KafkaMessage } from "kafkajs";
+
+import configuration from "@config/configuration";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
+import { KafkaModule } from "@modules/kafka.module";
+import { ChirpstackMQTTListenerService } from "@services/data-management/chirpstack-mqtt-listener.service";
+
+import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import {
     clearDatabase,
     generateSavedApplication,
     generateSavedLoRaWANDevice,
 } from "../test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
-import { ChirpstackMQTTListenerService } from "@services/data-management/chirpstack-mqtt-listener.service";
-import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
-import { Consumer, KafkaMessage } from "kafkajs";
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
 
 describe("ChirpstackMQTTListenerService (e2e)", () => {
     let app: INestApplication;

@@ -1,10 +1,11 @@
-import { Module, HttpModule } from "@nestjs/common";
-import { ReceiveDataService } from "@services/data-management/receive-data.service";
+import { HttpModule, Module } from "@nestjs/common";
+
+import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ApplicationModule } from "@modules/device-management/application.module";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
-import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 import { SharedModule } from "@modules/shared.module";
+import { ReceiveDataService } from "@services/data-management/receive-data.service";
 
 @Module({
     imports: [

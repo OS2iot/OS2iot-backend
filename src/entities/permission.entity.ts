@@ -1,6 +1,7 @@
+import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
 import { User } from "@entities/user.entity";
-import { ManyToMany, Entity, TableInheritance, Column } from "typeorm";
 import { PermissionType } from "@enum/permission-type.enum";
 
 @Entity()

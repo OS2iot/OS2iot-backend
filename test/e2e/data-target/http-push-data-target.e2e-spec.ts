@@ -1,12 +1,13 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
-import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import { Test, TestingModule } from "@nestjs/testing";
+
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { SendStatus } from "@enum/send-status.enum";
+import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
-import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
+import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.module";
+import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 
 describe("HttpPushDataTargetService (e2e)", () => {
     let app: INestApplication;

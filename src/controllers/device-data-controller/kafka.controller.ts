@@ -1,12 +1,13 @@
 /* eslint-disable max-lines-per-function */
-import { Controller, Post, Logger, HttpCode, Param, ParseIntPipe } from "@nestjs/common";
+import { Controller, HttpCode, Logger, Param, ParseIntPipe, Post } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { KafkaService } from "@services/kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
+
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { RecordMetadata } from "kafkajs";
-import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { KafkaService } from "@services/kafka/kafka.service";
 
 /**
  * This controller is intented to be used to send Kafka messages, mostly for testing.

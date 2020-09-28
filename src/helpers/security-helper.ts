@@ -1,6 +1,7 @@
-import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { ForbiddenException } from "@nestjs/common";
 import * as _ from "lodash";
+
+import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 
 export function checkIfUserHasWriteAccessToApplication(
     req: AuthenticatedRequest,

@@ -1,22 +1,24 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { Consumer, KafkaMessage } from "kafkajs";
+import * as request from "supertest";
+
+import configuration from "@config/configuration";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
+import { KafkaModule } from "@modules/kafka.module";
+
+import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import {
+    SIGFOX_PAYLOAD,
+    SIGFOX_PAYLOAD_2,
     clearDatabase,
     generateSavedApplication,
     generateSavedOrganization,
     generateSavedSigfoxDevice,
-    SIGFOX_PAYLOAD,
-    SIGFOX_PAYLOAD_2,
 } from "../test-helpers";
-import { KafkaModule } from "@modules/kafka.module";
-import { KafkaMessage, Consumer } from "kafkajs";
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
-import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
 
 describe("SigFoxListenerController (e2e)", () => {
     let app: INestApplication;

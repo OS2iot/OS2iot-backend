@@ -1,4 +1,5 @@
 import { OnModuleInit } from "@nestjs/common";
+
 import { SUBSCRIBER_COMBINED_REF_MAP } from "./kafka.decorator";
 
 export abstract class AbstractKafkaConsumer implements OnModuleInit {

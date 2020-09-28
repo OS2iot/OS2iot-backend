@@ -1,38 +1,39 @@
 import {
-    Controller,
-    Logger,
     Body,
-    Post,
-    UseGuards,
-    Req,
-    Put,
-    Param,
-    Get,
+    Controller,
     Delete,
+    Get,
+    Logger,
     NotFoundException,
+    Param,
     ParseIntPipe,
+    Post,
+    Put,
+    Req,
+    UseGuards,
 } from "@nestjs/common";
-import { OrganizationService } from "@services/user-management/organization.service";
-import { Organization } from "@entities/organization.entity";
 import {
-    ApiOperation,
-    ApiTags,
     ApiBearerAuth,
     ApiForbiddenResponse,
-    ApiUnauthorizedResponse,
     ApiNotFoundResponse,
+    ApiOperation,
+    ApiTags,
+    ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
+
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { GlobalAdmin } from "@auth/roles.decorator";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
-import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
-import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
+import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
+import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
+import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

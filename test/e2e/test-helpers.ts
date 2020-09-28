@@ -1,27 +1,28 @@
+import { JwtService } from "@nestjs/jwt";
 import { getManager } from "typeorm";
-import { Application } from "@entities/application.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+
+import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { KafkaPayload } from "@services/kafka/kafka.message";
-import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
-import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { Application } from "@entities/application.entity";
 import { DataTarget } from "@entities/data-target.entity";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { User } from "@entities/user.entity";
-import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { Permission } from "@entities/permission.entity";
-import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
-import { JwtService } from "@nestjs/jwt";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { Organization } from "@entities/organization.entity";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { Permission } from "@entities/permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
-import { WritePermission } from "@entities/write-permission.entity";
-import { PermissionType } from "@enum/permission-type.enum";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { User } from "@entities/user.entity";
+import { WritePermission } from "@entities/write-permission.entity";
+import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { PermissionType } from "@enum/permission-type.enum";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import { KafkaPayload } from "@services/kafka/kafka.message";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(

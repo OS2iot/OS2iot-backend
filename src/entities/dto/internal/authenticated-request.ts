@@ -1,5 +1,6 @@
-import { AuthenticatedUser } from "./authenticated-user";
 import { User } from "@entities/user.entity";
+
+import { AuthenticatedUser } from "./authenticated-user";
 
 export type AuthenticatedRequest = {
     user: AuthenticatedUser;

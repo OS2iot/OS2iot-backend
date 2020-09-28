@@ -1,28 +1,30 @@
+import { HttpService } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
-import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
+
+import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { Application } from "@entities/application.entity";
-import { ApplicationService } from "@services/device-management/application.service";
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import {
-    generateSigfoxRawRequestDto,
-    generateIoTDevice,
-    generateApplication,
-} from "../e2e/test-helpers";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { HttpService } from "@nestjs/common";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationService } from "@services/user-management/organization.service";
 import { Permission } from "@entities/permission.entity";
-import { User } from "@entities/user.entity";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { User } from "@entities/user.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
+import { ApplicationService } from "@services/device-management/application.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { OrganizationService } from "@services/user-management/organization.service";
+
+import {
+    generateApplication,
+    generateIoTDevice,
+    generateSigfoxRawRequestDto,
+} from "../e2e/test-helpers";
 
 describe("DeviceIntegrationPersistenceService", () => {
     let service: DeviceIntegrationPersistenceService;

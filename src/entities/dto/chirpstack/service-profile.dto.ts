@@ -1,4 +1,4 @@
-import { ApiProperty, ApiHideProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { IsString, Length, MaxLength } from "class-validator";
 
 export class ServiceProfileDto {

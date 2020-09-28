@@ -1,13 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { DataTargetType } from "@enum/data-target-type.enum";
 import {
-    IsString,
-    MinLength,
-    MaxLength,
     IsNumber,
-    Min,
     IsOptional,
+    IsString,
+    MaxLength,
+    Min,
+    MinLength,
 } from "class-validator";
+
+import { DataTargetType } from "@enum/data-target-type.enum";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })

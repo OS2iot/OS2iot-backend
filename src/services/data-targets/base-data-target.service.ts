@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
-import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
+
 import { SendStatus } from "@enum/send-status.enum";
+import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 
 /**
  * This class exposes general functionality used for the DataTarget

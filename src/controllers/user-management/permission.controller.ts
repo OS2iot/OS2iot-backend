@@ -1,39 +1,40 @@
 import {
-    Controller,
-    Post,
     Body,
-    Put,
-    Param,
-    UseGuards,
-    Get,
-    Req,
-    ForbiddenException,
+    Controller,
     Delete,
+    ForbiddenException,
+    Get,
     NotFoundException,
+    Param,
     ParseIntPipe,
+    Post,
+    Put,
+    Req,
+    UseGuards,
 } from "@nestjs/common";
-import { PermissionService } from "@services/user-management/permission.service";
+import { BadRequestException } from "@nestjs/common";
 import {
-    ApiOperation,
-    ApiTags,
     ApiBearerAuth,
     ApiForbiddenResponse,
-    ApiUnauthorizedResponse,
     ApiNotFoundResponse,
+    ApiOperation,
+    ApiTags,
+    ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { Permission } from "@entities/permission.entity";
-import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
-import { PermissionType } from "@enum/permission-type.enum";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
-import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
+
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { RolesGuard } from "@auth/roles.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
-import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
+import { RolesGuard } from "@auth/roles.guard";
+import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
-import { BadRequestException } from "@nestjs/common";
+import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
+import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
+import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
+import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { Permission } from "@entities/permission.entity";
+import { PermissionType } from "@enum/permission-type.enum";
+import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import { PermissionService } from "@services/user-management/permission.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

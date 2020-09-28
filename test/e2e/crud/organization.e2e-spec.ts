@@ -1,10 +1,11 @@
-import {
-    clearDatabase,
-    generateSavedGlobalAdminUser,
-    generateSavedOrganization,
-    generateSavedOrganizationAdminUser,
-    generateValidJwtForUser,
-} from "../test-helpers";
+import { INestApplication } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import * as request from "supertest";
+import { Repository } from "typeorm";
+
+import configuration from "@config/configuration";
 import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
@@ -13,13 +14,14 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
-import { INestApplication } from "@nestjs/common";
-import { Test, TestingModule } from "@nestjs/testing";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import * as request from "supertest";
-import { Repository } from "typeorm";
-import { ConfigModule } from "@nestjs/config";
-import configuration from "@config/configuration";
+
+import {
+    clearDatabase,
+    generateSavedGlobalAdminUser,
+    generateSavedOrganization,
+    generateSavedOrganizationAdminUser,
+    generateValidJwtForUser,
+} from "../test-helpers";
 
 describe("OrganizationController (e2e)", () => {
     let app: INestApplication;
