@@ -12,6 +12,7 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 
 import { generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
+import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
@@ -99,6 +100,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
                 expect(response.body.gateway).toMatchObject({
                     id: id,
                 });
+                expect(response.body.stats).toHaveLength(30);
             });
     });
 

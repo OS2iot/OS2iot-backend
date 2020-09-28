@@ -13,20 +13,21 @@ import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
+import { GatewayStatsResponseDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
-
-import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
     constructor(
-        private internalHttpService: HttpService,
+        internalHttpService: HttpService,
         private chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
     ) {
         super(internalHttpService);
     }
+    GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
 
     async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
         dto = await this.updateDto(dto);
@@ -55,6 +56,8 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                 `gateways/${gatewayId}`
             );
 
+            result.stats = (await this.getGatewayStats(gatewayId)).result;
+
             return result;
         } catch (err) {
             Logger.error(
@@ -67,6 +70,18 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             }
             throw new InternalServerErrorException(err?.response?.data);
         }
+    }
+
+    private async getGatewayStats(gatewayId: string): Promise<GatewayStatsResponseDto> {
+        const now = new Date();
+        const to_time = now.toISOString();
+        const from_time = new Date(
+            new Date().setDate(now.getDate() - this.GATEWAY_STATS_INTERVAL_IN_DAYS)
+        ).toISOString();
+
+        return await this.get<GatewayStatsResponseDto>(
+            `gateways/${gatewayId}/stats?interval=DAY&startTimestamp=${from_time}&endTimestamp=${to_time}`
+        );
     }
 
     async modifyGateway(
