@@ -8,4 +8,5 @@ module.exports = {
     bracketSpacing: true,
     arrowParens: "avoid",
     endOfLine: "auto",
+    plugins: ["prettier-plugin-sorted"]
 };
