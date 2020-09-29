@@ -125,8 +125,9 @@ export class IoTDeviceService {
     }
 
     async findLoRaWANDeviceByDeviceEUI(deviceEUI: string): Promise<LoRaWANDevice> {
+        // TODO: Fix potentiel SQL injection.
         return await this.loRaWANDeviceRepository.findOne({
-            deviceEUI: deviceEUI.toUpperCase(),
+            where: `"deviceEUI" ILIKE '${deviceEUI}'`,
         });
     }
 
