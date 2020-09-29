@@ -22,8 +22,8 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { OrganizationAdmin } from "@auth/roles.decorator";
 import { GlobalAdmin } from "@auth/roles.decorator";
+import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
@@ -92,7 +92,7 @@ export class OrganizationController {
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, id);
         try {
-            return await this.organizationService.findById(id);
+            return await this.organizationService.findByIdWithRelations(id);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }

@@ -82,7 +82,7 @@ export class PayloadDecoderService {
             throw new BadRequestException(ErrorCodes.BadEncoding);
         }
         try {
-            newPayloadDecoder.organization = await this.organizationService.findById(
+            newPayloadDecoder.organization = await this.organizationService.findByIdWithRelations(
                 createDto.organizationId
             );
         } catch (err) {

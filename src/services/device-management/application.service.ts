@@ -119,7 +119,7 @@ export class ApplicationService {
     ): Promise<Application> {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
-        application.belongsTo = await this.organizationService.findById(
+        application.belongsTo = await this.organizationService.findByIdWithRelations(
             applicationDto.organizationId
         );
 

@@ -68,7 +68,7 @@ export class PermissionService {
 
     async createNewPermission(dto: CreatePermissionDto): Promise<Permission> {
         let permission;
-        const org: Organization = await this.organizationService.findById(
+        const org: Organization = await this.organizationService.findByIdWithRelations(
             dto.organizationId
         );
 

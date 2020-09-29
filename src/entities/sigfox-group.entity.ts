@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne } from "typeorm";
+
 import { DbBaseEntity } from "@entities/base.entity";
 import { Organization } from "@entities/organization.entity";
 
@@ -13,6 +14,6 @@ export class SigFoxGroup extends DbBaseEntity {
     @Column({ nullable: false })
     username: string;
 
-    @Column({ nullable: false })
+    @Column({ nullable: false, select: false })
     password: string;
 }

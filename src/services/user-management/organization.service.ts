@@ -44,7 +44,7 @@ export class OrganizationService {
     }
 
     async update(id: number, dto: UpdateOrganizationDto): Promise<Organization> {
-        const org = await this.findById(id);
+        const org = await this.findByIdWithRelations(id);
         org.name = dto.name;
 
         return await this.organizationRepository.save(org);
@@ -79,6 +79,10 @@ export class OrganizationService {
     }
 
     async findById(organizationId: number): Promise<Organization> {
+        return await this.organizationRepository.findOneOrFail(organizationId);
+    }
+
+    async findByIdWithRelations(organizationId: number): Promise<Organization> {
         return await this.organizationRepository.findOneOrFail(organizationId, {
             relations: ["permissions", "applications", "applications.iotDevices"],
         });
