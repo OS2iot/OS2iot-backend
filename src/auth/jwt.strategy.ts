@@ -24,8 +24,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     async validate(payload: JwtPayloadDto): Promise<AuthenticatedUser> {
         // Does the user still exist?
-        const user = await this.userService.findOne(payload.sub);
-        if (!user) {
+        const exists = await this.userService.exists(payload.sub);
+        if (!exists) {
             throw new UnauthorizedException();
         }
 

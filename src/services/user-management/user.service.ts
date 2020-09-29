@@ -61,6 +61,16 @@ export class UserService {
         });
     }
 
+    async exists(id: number): Promise<boolean> {
+        return (
+            (await this.userRepository.count({
+                where: {
+                    id: id,
+                },
+            })) > 0
+        );
+    }
+
     async findOneWithOrganizations(id: number): Promise<User> {
         return await this.userRepository.findOne(id, {
             relations: ["permissions", "permissions.organization"],
