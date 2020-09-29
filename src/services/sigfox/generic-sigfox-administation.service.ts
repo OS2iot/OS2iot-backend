@@ -1,5 +1,7 @@
+import { SigFoxApiUsersResponseDto } from "@dto/sigfox/external/sigfox-api-groups-response.dto";
+import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { HttpService, Injectable, Logger } from "@nestjs/common";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig } from "axios";
 
 @Injectable()
 export class GenericSigfoxAdministationService {
@@ -10,9 +12,9 @@ export class GenericSigfoxAdministationService {
 
     private readonly logger = new Logger(GenericSigfoxAdministationService.name);
 
-    async get<T>(path: string): Promise<T> {
+    async get<T>(path: string, sigfoxGroup: SigFoxGroup): Promise<T> {
         const url = this.generateUrl(path);
-        const config = await this.generateAxiosConfig();
+        const config = await this.generateAxiosConfig(sigfoxGroup);
 
         this.logger.debug(`GET to '${path}'`);
         const result = await this.httpService.get(url, config).toPromise();
@@ -22,15 +24,29 @@ export class GenericSigfoxAdministationService {
         return await result.data;
     }
 
+    async testConnection(sigfoxGroup: SigFoxGroup): Promise<boolean> {
+        try {
+            const apiUsers = await this.get<SigFoxApiUsersResponseDto>(
+                "api-users",
+                sigfoxGroup
+            );
+            return apiUsers.data.length > 0;
+        } catch (err) {
+            if (err?.response?.status === 401) {
+                return false;
+            }
+        }
+    }
+
     private async generateAxiosConfig(
-        organizationId?: number
+        sigfoxGroup: SigFoxGroup
     ): Promise<AxiosRequestConfig> {
         const axiosConfig: AxiosRequestConfig = {
             timeout: this.TIMEOUT_IN_MS,
             headers: { "Content-Type": "application/json" },
             auth: {
-                username: "5f2d1069e833d903621ff237",
-                password: "210104d1578b7a7b75f3eb2d0adf770f",
+                username: sigfoxGroup.username,
+                password: sigfoxGroup.password,
             },
         };
 
