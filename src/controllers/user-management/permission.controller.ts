@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import {
     Body,
     Controller,
@@ -12,7 +13,6 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import { BadRequestException } from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,

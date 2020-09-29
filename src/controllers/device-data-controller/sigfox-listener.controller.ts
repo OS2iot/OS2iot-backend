@@ -8,7 +8,6 @@ import {
     Post,
     Query,
 } from "@nestjs/common";
-import { BadRequestException } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { SigFoxCallbackDto } from "@dto/sigfox/sigfox-callback.dto";

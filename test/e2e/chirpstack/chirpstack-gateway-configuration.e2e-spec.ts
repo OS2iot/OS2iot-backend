@@ -6,13 +6,13 @@ import * as request from "supertest";
 
 import configuration from "@config/configuration";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
+import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 
 import { generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
-import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {

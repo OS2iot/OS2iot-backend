@@ -102,8 +102,8 @@ export class SigfoxGroupController {
             throw new NotFoundException();
         }
         checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
-        const updatedSigfoxGroup = await this.service.update(group, dto)
+        const updatedSigfoxGroup = await this.service.update(group, dto);
 
-        return updatedSigfoxGroup
+        return updatedSigfoxGroup;
     }
 }
