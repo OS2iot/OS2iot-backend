@@ -49,7 +49,10 @@ export class SigFoxGroupService {
         return this.mapAndSave(sigfoxGroup, query);
     }
 
-    async update(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
+    async update(
+        sigfoxGroup: SigFoxGroup,
+        query: UpdateSigFoxGroupRequestDto
+    ): Promise<SigFoxGroup> {
         return this.mapAndSave(sigfoxGroup, query);
     }
 

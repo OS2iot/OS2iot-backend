@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import { Client } from "mqtt";
 import * as mqtt from "mqtt";
+import { Client } from "mqtt";
 
 import { ChirpstackMQTTMessageDto } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";

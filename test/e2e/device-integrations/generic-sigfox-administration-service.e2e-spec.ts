@@ -1,8 +1,8 @@
-import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
 import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
 
 describe("GenericSigfoxAdministationService (e2e)", () => {
