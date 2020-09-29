@@ -104,6 +104,7 @@ describe("DeviceIntegrationPersistenceService", () => {
         updatedAt: new Date(),
         applications: [],
         permissions: [],
+        sigfoxGroups: [],
     };
 
     const iotDevice: IoTDevice = {

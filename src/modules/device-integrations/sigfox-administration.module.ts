@@ -6,5 +6,6 @@ import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigf
 @Module({
     imports: [SharedModule, HttpModule],
     providers: [GenericSigfoxAdministationService],
+    exports: [GenericSigfoxAdministationService],
 })
 export class SigFoxAdministrationModule {}

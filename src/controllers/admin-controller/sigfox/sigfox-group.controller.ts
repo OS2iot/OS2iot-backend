@@ -33,6 +33,8 @@ import {
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
+import { SigFoxTestResponse } from "@dto/sigfox/internal/sigfox-test-response.dto";
+import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
 
 @ApiTags("SigFox")
 @Controller("sigfox-group")
@@ -41,7 +43,11 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 @Read()
 @ApiForbiddenResponse()
 export class SigfoxGroupController {
-    constructor(private service: SigFoxGroupService) {}
+    constructor(
+        private service: SigFoxGroupService,
+
+        private sigfoxApiService: GenericSigfoxAdministationService
+    ) {}
 
     @Get()
     @ApiProduces("application/json")
@@ -105,5 +111,21 @@ export class SigfoxGroupController {
         const updatedSigfoxGroup = await this.service.update(group, dto);
 
         return updatedSigfoxGroup;
+    }
+
+    @Post("test-connection")
+    async testConnection(
+        @Req() req: AuthenticatedRequest,
+        @Body() dto: CreateSigFoxGroupRequestDto
+    ): Promise<SigFoxTestResponse> {
+        checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
+
+        const group = new SigFoxGroup();
+        group.username = dto.username;
+        group.password = dto.password;
+
+        return {
+            status: await this.sigfoxApiService.testConnection(group),
+        };
     }
 }

@@ -39,6 +39,13 @@ export class SigFoxGroupService {
         });
     }
 
+    async findOneWithPassword(id: number): Promise<SigFoxGroup> {
+        return await this.repository.findOneOrFail(id, {
+            relations: ["belongsTo"],
+            select: ["username", "password"],
+        });
+    }
+
     async create(query: CreateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
         const sigfoxGroup = new SigFoxGroup();
 

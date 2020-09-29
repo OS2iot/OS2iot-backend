@@ -23,6 +23,7 @@ import { PermissionModule } from "@modules/user-management/permission.module";
 
 import { SigFoxAdministrationModule } from "./device-integrations/sigfox-administration.module";
 import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
+import { SigfoxDeviceTypeModule } from "./device-integrations/sigfox-device-type.module";
 
 @Module({
     imports: [
@@ -74,6 +75,7 @@ import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
         SigFoxListenerModule,
         SigFoxAdministrationModule,
         SigFoxGroupModule,
+        SigfoxDeviceTypeModule,
     ],
     controllers: [],
     providers: [],

@@ -35,7 +35,7 @@ describe("ChirpstackMQTTListenerService (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 KafkaModule.register({
