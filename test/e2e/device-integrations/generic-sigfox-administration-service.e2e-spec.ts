@@ -36,7 +36,7 @@ describe("GenericSigfoxAdministationService (e2e)", () => {
 
         sigfoxGroup = new SigFoxGroup();
         sigfoxGroup.username = "5f2d1069e833d903621ff237";
-        sigfoxGroup.password = "210104d1578b7a7b75f3eb2d0adf770f";
+        sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
     });
 
     afterAll(async () => {

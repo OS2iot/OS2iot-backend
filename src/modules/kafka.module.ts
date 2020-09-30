@@ -6,7 +6,7 @@ import { KafkaService } from "@services/kafka/kafka.service";
 import { ChirpstackMqttListenerModule } from "./device-integrations/chirpstack-mqtt-listener.module";
 
 @Global()
-@Module({ controllers: [KafkaController], imports: [ChirpstackMqttListenerModule] })
+@Module({ controllers: [KafkaController] })
 export class KafkaModule {
     static register(kafkaConfig: KafkaConfig): DynamicModule {
         return {
