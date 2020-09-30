@@ -20,10 +20,10 @@ import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
-
-import { SigFoxAdministrationModule } from "./device-integrations/sigfox-administration.module";
-import { SigfoxDeviceTypeModule } from "./device-integrations/sigfox-device-type.module";
-import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
+import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
+import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
+import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
+import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
 
 @Module({
     imports: [
@@ -76,6 +76,7 @@ import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
         SigFoxAdministrationModule,
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
+        SigfoxContractModule,
     ],
     controllers: [],
     providers: [],
