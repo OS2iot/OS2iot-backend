@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -7,6 +7,7 @@ import { ListAllSigFoxGroupReponseDto } from "@dto/sigfox/internal/list-all-sigf
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class SigFoxGroupService {
@@ -48,10 +49,13 @@ export class SigFoxGroupService {
 
     async create(query: CreateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
         const sigfoxGroup = new SigFoxGroup();
-
-        sigfoxGroup.belongsTo = await this.organizationService.findById(
-            query.organizationId
-        );
+        try {
+            sigfoxGroup.belongsTo = await this.organizationService.findById(
+                query.organizationId
+            );
+        } catch (err) {
+            throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
+        }
 
         return this.mapAndSave(sigfoxGroup, query);
     }

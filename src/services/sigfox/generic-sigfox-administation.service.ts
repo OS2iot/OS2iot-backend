@@ -41,17 +41,6 @@ export class GenericSigfoxAdministationService {
         return await this.doRequest<T>(path, sigfoxGroup, "DELETE");
     }
 
-    async getContractInfos(
-        sigfoxGroup: SigFoxGroup
-    ): Promise<SigFoxApiContractInfosContent[]> {
-        const res = await this.get<SigFoxApiContractInfosResponseDto>(
-            "contract-infos",
-            sigfoxGroup
-        );
-
-        return res.data;
-    }
-
     async testConnection(sigfoxGroup: SigFoxGroup): Promise<boolean> {
         try {
             const apiUsers = await this.get<SigFoxApiUsersResponseDto>(
