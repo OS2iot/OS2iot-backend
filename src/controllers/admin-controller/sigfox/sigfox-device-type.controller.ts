@@ -1,28 +1,39 @@
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read } from "@auth/roles.decorator";
+import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
 import { SigFoxApiDeviceTypeContent } from "@dto/sigfox/external/sigfox-api-device-type-response.dto";
+import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-reference.dto";
+import { UpdateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-type-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
+import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     checkIfUserHasReadAccessToOrganization,
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
+    Logger,
     Param,
     ParseIntPipe,
     Post,
+    Put,
     Query,
     Req,
+    UnauthorizedException,
     UseGuards,
 } from "@nestjs/common";
 import {
+    ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
+    ApiNoContentResponse,
+    ApiOkResponse,
     ApiOperation,
     ApiProduces,
     ApiTags,
@@ -43,6 +54,8 @@ export class SigfoxDeviceTypeController {
         private usersService: SigfoxApiUsersService,
         private sigfoxGroupService: SigFoxGroupService
     ) {}
+
+    private readonly logger = new Logger(SigfoxDeviceTypeController.name);
 
     @Get()
     @ApiProduces("application/json")
@@ -77,16 +90,35 @@ export class SigfoxDeviceTypeController {
     }
 
     @Post()
+    @Write()
+    @ApiCreatedResponse()
+    @ApiBadRequestResponse()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateSigFoxApiDeviceTypeRequestDto,
         @Query("groupId", new ParseIntPipe()) groupId: number
-    ) {
+    ): Promise<SigFoxApiIdReferenceDto> {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
         checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+        return await this.service.create(group, dto);
+    }
 
-        return;
+    @Put(":id")
+    @Write()
+    @ApiNoContentResponse()
+    @ApiBadRequestResponse()
+    async update(
+        @Req() req: AuthenticatedRequest,
+        @Param("id") id: string,
+        @Body() dto: UpdateSigFoxApiDeviceTypeRequestDto,
+        @Query("groupId", new ParseIntPipe()) groupId: number
+    ): Promise<void> {
+        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
+            groupId
+        );
+        checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+        await this.service.update(group, id, dto);
     }
 }

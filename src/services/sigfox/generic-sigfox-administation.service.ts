@@ -1,7 +1,18 @@
+import {
+    SigFoxApiContractInfosContent,
+    SigFoxApiContractInfosResponseDto,
+} from "@dto/sigfox/external/sigfox-api-contract-infos-response.dto";
 import { SigFoxApiUsersResponseDto } from "@dto/sigfox/external/sigfox-api-groups-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { HttpService, Injectable, Logger } from "@nestjs/common";
-import { AxiosRequestConfig } from "axios";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import {
+    BadRequestException,
+    HttpService,
+    Injectable,
+    Logger,
+    UnauthorizedException,
+} from "@nestjs/common";
+import { AxiosRequestConfig, Method } from "axios";
 
 @Injectable()
 export class GenericSigfoxAdministationService {
@@ -13,15 +24,32 @@ export class GenericSigfoxAdministationService {
     private readonly logger = new Logger(GenericSigfoxAdministationService.name);
 
     async get<T>(path: string, sigfoxGroup: SigFoxGroup): Promise<T> {
-        const url = this.generateUrl(path);
-        const config = await this.generateAxiosConfig(sigfoxGroup);
+        return await this.doRequest<T>(path, sigfoxGroup, "GET");
+    }
 
-        this.logger.debug(`GET to '${path}'`);
-        const result = await this.httpService.get(url, config).toPromise();
-        this.logger.debug(
-            `GET to '${path}' got status: '${result.status} ${result.statusText}'`
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    async post<T>(path: string, dto: any, sigfoxGroup: SigFoxGroup): Promise<T> {
+        return await this.doRequest<T>(path, sigfoxGroup, "POST", dto);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    async put<T>(path: string, dto: any, sigfoxGroup: SigFoxGroup): Promise<T> {
+        return await this.doRequest<T>(path, sigfoxGroup, "PUT", dto);
+    }
+
+    async delete<T>(path: string, sigfoxGroup: SigFoxGroup): Promise<T> {
+        return await this.doRequest<T>(path, sigfoxGroup, "DELETE");
+    }
+
+    async getContractInfos(
+        sigfoxGroup: SigFoxGroup
+    ): Promise<SigFoxApiContractInfosContent[]> {
+        const res = await this.get<SigFoxApiContractInfosResponseDto>(
+            "contract-infos",
+            sigfoxGroup
         );
-        return await result.data;
+
+        return res.data;
     }
 
     async testConnection(sigfoxGroup: SigFoxGroup): Promise<boolean> {
@@ -38,9 +66,43 @@ export class GenericSigfoxAdministationService {
         }
     }
 
+    private async doRequest<T>(
+        path: string,
+        sigfoxGroup: SigFoxGroup,
+        method: Method,
+        dto?: any
+    ): Promise<T> {
+        const config = await this.generateAxiosConfig(sigfoxGroup, method, path, dto);
+        try {
+            const result = await this.httpService.request(config).toPromise();
+            this.logger.debug(
+                `${method} '${path}' got status: '${result.status} ${result.statusText}' `
+            );
+            return result.data;
+        } catch (err) {
+            const response = err?.response;
+            if (response?.status == 401) {
+                throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
+            }
+
+            if (response?.status == 400) {
+                throw new BadRequestException(response?.data);
+            }
+
+            this.logger.error(
+                `Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`
+            );
+            throw err;
+        }
+    }
+
     private async generateAxiosConfig(
-        sigfoxGroup: SigFoxGroup
+        sigfoxGroup: SigFoxGroup,
+        method: Method,
+        path: string,
+        dto?: any
     ): Promise<AxiosRequestConfig> {
+        const url = this.generateUrl(path);
         const axiosConfig: AxiosRequestConfig = {
             timeout: this.TIMEOUT_IN_MS,
             headers: { "Content-Type": "application/json" },
@@ -48,7 +110,15 @@ export class GenericSigfoxAdministationService {
                 username: sigfoxGroup.username,
                 password: sigfoxGroup.password,
             },
+            method: method,
+            url: url,
         };
+        if (dto) {
+            axiosConfig.data = dto;
+        }
+        this.logger.debug(
+            `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
+        );
 
         return axiosConfig;
     }

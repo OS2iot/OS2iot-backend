@@ -81,7 +81,7 @@ export class SigfoxGroupController {
 
     @Post()
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "List all SigFox Groups" })
+    @ApiOperation({ summary: "Create a SigFox Group connection" })
     @Write()
     async create(
         @Req() req: AuthenticatedRequest,

@@ -15,4 +15,5 @@ export enum ErrorCodes {
     UserInactive = "MESSAGE.USER-INACTIVE",
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION",
     PasswordNotMetRequirements = "MESSAGE.PASSWORD-DOES-NOT-MEET-REQUIREMENTS",
+    SIGFOX_BAD_LOGIN = "MESSAGE.SIGFOX_BAD_LOGIN",
 }

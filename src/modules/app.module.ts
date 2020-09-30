@@ -22,8 +22,8 @@ import { OrganizationModule } from "@modules/user-management/organization.module
 import { PermissionModule } from "@modules/user-management/permission.module";
 
 import { SigFoxAdministrationModule } from "./device-integrations/sigfox-administration.module";
-import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
 import { SigfoxDeviceTypeModule } from "./device-integrations/sigfox-device-type.module";
+import { SigFoxGroupModule } from "./device-integrations/sigfox-group.module";
 
 @Module({
     imports: [
@@ -41,7 +41,7 @@ import { SigfoxDeviceTypeModule } from "./device-integrations/sigfox-device-type
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
                 synchronize: true,
-                logging: false,
+                logging: true,
                 autoLoadEntities: true,
                 retryAttempts: 0,
                 maxQueryExecutionTime: 200, // Log queries slower than 200 ms
