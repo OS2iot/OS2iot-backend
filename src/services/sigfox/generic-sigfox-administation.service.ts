@@ -80,6 +80,9 @@ export class GenericSigfoxAdministationService {
             );
             return result.data;
         } catch (err) {
+            this.logger.warn(
+                `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
+            );
             const response = err?.response;
             if (response?.status == 401) {
                 throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
@@ -116,9 +119,6 @@ export class GenericSigfoxAdministationService {
         if (dto) {
             axiosConfig.data = dto;
         }
-        this.logger.debug(
-            `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
-        );
 
         return axiosConfig;
     }

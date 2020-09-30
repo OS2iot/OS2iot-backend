@@ -2,9 +2,9 @@ import { SigfoxDeviceTypeController } from "@admin-controller/sigfox/sigfox-devi
 import { AuthModule } from "@modules/user-management/auth.module";
 import { Module } from "@nestjs/common";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
-import { SigFoxAdministrationModule } from "./sigfox-administration.module";
-import { SigFoxGroupModule } from "./sigfox-group.module";
-import { SigFoxUsersModule } from "./sigfox-users.module";
+import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
+import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
+import { SigFoxUsersModule } from "@modules/device-integrations/sigfox-users.module";
 
 @Module({
     imports: [

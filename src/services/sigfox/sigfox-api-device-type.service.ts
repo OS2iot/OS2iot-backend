@@ -56,6 +56,11 @@ export class SigFoxApiDeviceTypeService {
         await this.genericService.put(URL, dto, group);
     }
 
+    async delete(group: SigFoxGroup, id: string): Promise<void> {
+        const url = `${this.URL_BASE}/${id}`;
+        await this.genericService.delete(url, group);
+    }
+
     private async setForUpdate(
         dto: CreateSigFoxApiDeviceTypeRequestDto,
         group: SigFoxGroup,

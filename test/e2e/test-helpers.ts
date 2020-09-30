@@ -23,6 +23,7 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { KafkaPayload } from "@services/kafka/kafka.message";
+import { SigFoxGroup } from "@entities/sigfox-group.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -37,8 +38,21 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "application_permissions_permission";  \n` +
             `DELETE FROM "user";  \n` +
             `DELETE FROM "permission";  \n` +
-            `DELETE FROM "organization";  \n`
+            `DELETE FROM "organization";  \n` +
+            `DELETE FROM "sigfox_group";  \n`
     );
+}
+
+export async function generateSavedSigFoxGroup(org: Organization): Promise<SigFoxGroup> {
+    return await getManager().save(generateSigFoxGroup(org));
+}
+
+export function generateSigFoxGroup(org: Organization): SigFoxGroup {
+    const sigfoxGroup = new SigFoxGroup();
+    sigfoxGroup.username = "5f2d1069e833d903621ff237";
+    sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
+    sigfoxGroup.belongsTo = org;
+    return sigfoxGroup;
 }
 
 export function generateValidJwtForUser(user: User): string {
@@ -573,7 +587,7 @@ export async function getNetworkServerId(
     return id;
 }
 
-function randomMacAddress(): string {
+export function randomMacAddress(): string {
     const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
     return n.padStart(16, "0");
 }
