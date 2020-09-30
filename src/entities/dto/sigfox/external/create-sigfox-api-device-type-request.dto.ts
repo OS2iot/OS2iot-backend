@@ -11,38 +11,37 @@ export class CreateSigFoxApiDeviceTypeRequestDto {
     @ApiProperty({ required: true })
     contractId: string;
 
-    @ApiPropertyOptional()
-    @IsOptional()
+    @ApiProperty({ required: true })
     @MaxLength(300)
     description: string;
 
     @ApiPropertyOptional()
-    keepAlive: number;
+    keepAlive?: number;
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsEmail()
-    alertEmail: string;
+    alertEmail?: string;
 
     /* This is required, but is set by the backend. */
     @ApiHideProperty()
-    groupId: string;
+    groupId?: string;
 
     @ApiHideProperty()
-    automaticRenewal: boolean;
+    automaticRenewal?: boolean;
 
     @ApiHideProperty()
-    geolocPayloadConfigId: string;
+    geolocPayloadConfigId?: string;
 
     @ApiHideProperty()
-    downlinkMode: SigFoxDownlinkMode;
+    downlinkMode?: SigFoxDownlinkMode;
 
     @ApiHideProperty()
-    downlinkDataString: string;
+    downlinkDataString?: string;
 
     @ApiHideProperty()
-    payloadType: SigFoxPayloadType;
+    payloadType?: SigFoxPayloadType;
 
     @ApiHideProperty()
-    payloadConfig: string;
+    payloadConfig?: string;
 }

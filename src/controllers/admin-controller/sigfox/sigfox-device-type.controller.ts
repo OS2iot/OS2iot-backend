@@ -3,7 +3,10 @@ import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
-import { SigFoxApiDeviceTypeContent } from "@dto/sigfox/external/sigfox-api-device-type-response.dto";
+import {
+    SigFoxApiDeviceTypeContent,
+    SigFoxApiDeviceTypeResponse,
+} from "@dto/sigfox/external/sigfox-api-device-type-response.dto";
 import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-reference.dto";
 import { UpdateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-type-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
@@ -63,11 +66,11 @@ export class SigfoxDeviceTypeController {
     async getAll(
         @Req() req: AuthenticatedRequest,
         @Query("groupId", new ParseIntPipe()) groupId: number
-    ): Promise<any> {
+    ): Promise<SigFoxApiDeviceTypeResponse> {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
-        checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
+        checkIfUserHasReadAccessToOrganization(req, group?.belongsTo?.id);
         const sigFoxApiGroup = await this.usersService.getByUserId(group.username, group);
 
         return await this.service.getAllByGroupIds(group, [sigFoxApiGroup.group.id]);

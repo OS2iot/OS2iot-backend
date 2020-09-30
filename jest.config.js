@@ -3,8 +3,7 @@ module.exports = {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     moduleNameMapper: {
         "^@services/(.*)": "<rootDir>//src/services/$1",
-        "^@admin-controller/(.*)":
-            "<rootDir>//src/controllers/admin-controller/$1",
+        "^@admin-controller/(.*)": "<rootDir>//src/controllers/admin-controller/$1",
         "^@device-data-controller/(.*)":
             "<rootDir>//src/controllers/device-data-controller/$1",
         "^@user-management-controller/(.*)":
@@ -21,7 +20,7 @@ module.exports = {
     },
     moduleFileExtensions: ["js", "json", "ts"],
     rootDir: "./",
-    testMatch: ["<rootDir>/test/unit/**/*.spec.{ts,js}"],
+    testMatch: ["<rootDir>/test/**/*spec.{ts,js}"],
     transform: {
         "^.+\\.(t|j)s$": "ts-jest",
     },
