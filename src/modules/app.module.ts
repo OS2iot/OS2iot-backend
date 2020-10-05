@@ -24,6 +24,7 @@ import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-
 import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
+import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
 
 @Module({
     imports: [
@@ -77,6 +78,7 @@ import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contra
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
         SigfoxContractModule,
+        SigfoxDeviceModule,
     ],
     controllers: [],
     providers: [],
