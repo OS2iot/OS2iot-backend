@@ -35,7 +35,7 @@ export class SigFoxListenerController {
     ): Promise<void> {
         if (apiKey != data?.deviceTypeId) {
             this.logger.error(
-                `ApiKey(${apiKey}) did not match DeviceTypeId(${data?.deviceTypeId}`
+                `ApiKey(${apiKey}) did not match DeviceTypeId(${data?.deviceTypeId})`
             );
             throw new BadRequestException();
         }

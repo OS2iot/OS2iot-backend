@@ -1,4 +1,4 @@
-import { SigFoxApiUsersContent } from "@dto/sigfox/external/sigfox-api-groups-response.dto";
+import { SigFoxApiUsersContent } from "@dto/sigfox/external/sigfox-api-users-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { Injectable } from "@nestjs/common";
 import { GenericSigfoxAdministationService } from "./generic-sigfox-administation.service";

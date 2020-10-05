@@ -14,7 +14,7 @@ export class ChirpstackSetupNetworkServerService
     networkServerName = "OS2iot";
 
     async onModuleInit(): Promise<void> {
-        // await this.bootstrapChirpstackNetworkServerConfiguration();
+        await this.bootstrapChirpstackNetworkServerConfiguration();
     }
 
     public async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
