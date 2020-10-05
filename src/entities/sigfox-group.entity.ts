@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne } from "typeorm";
 
 import { DbBaseEntity } from "@entities/base.entity";
 import { Organization } from "@entities/organization.entity";
+import { SigFoxApiGroupsContent } from "@dto/sigfox/external/sigfox-api-groups-response.dto";
 
 @Entity("sigfox_group")
 export class SigFoxGroup extends DbBaseEntity {
@@ -16,4 +17,6 @@ export class SigFoxGroup extends DbBaseEntity {
 
     @Column({ nullable: false, select: false })
     password: string;
+
+    sigFoxGroupData?: SigFoxApiGroupsContent;
 }

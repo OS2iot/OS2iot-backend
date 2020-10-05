@@ -20,6 +20,7 @@ import {
     Body,
     Controller,
     Get,
+    HttpCode,
     Logger,
     Param,
     ParseIntPipe,
@@ -70,7 +71,7 @@ export class SigfoxDeviceTypeController {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
-        checkIfUserHasReadAccessToOrganization(req, group?.belongsTo?.id);
+        checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
         const sigFoxApiGroup = await this.usersService.getByUserId(group.username, group);
 
         return await this.service.getAllByGroupIds(group, [sigFoxApiGroup.group.id]);
@@ -112,6 +113,7 @@ export class SigfoxDeviceTypeController {
     @Write()
     @ApiNoContentResponse()
     @ApiBadRequestResponse()
+    @HttpCode(204)
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string,

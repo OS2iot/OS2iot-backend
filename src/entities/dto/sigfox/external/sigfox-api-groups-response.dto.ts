@@ -1,15 +1,28 @@
-import { SigFoxApiIdReferenceDto } from "./sigfox-api-id-reference.dto";
-
-export interface SigFoxApiUsersResponseDto {
-    data: SigFoxApiUsersContent[];
+export interface Path {
+    id: string;
+    name: string;
 }
 
-export interface SigFoxApiUsersContent {
+export interface SigFoxApiGroupsContent {
     id: string;
-    group: SigFoxApiIdReferenceDto;
     name: string;
+    description: string;
+    type: number;
     timezone: string;
-    creationTime: any;
-    profiles: SigFoxApiIdReferenceDto[];
-    accessToken: string;
+    nameCI: string;
+    path: Path[];
+    currentPrototypeCount: number;
+    createdBy: string;
+    creationTime: number;
+    leaf: boolean;
+    actions: string[];
+}
+
+export interface Paging {
+    next: string;
+}
+
+export interface SigFoxApiGroupsResponse {
+    data: SigFoxApiGroupsContent[];
+    paging: Paging;
 }

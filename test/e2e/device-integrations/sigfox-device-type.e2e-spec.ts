@@ -28,6 +28,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
     let sigFoxGroup: SigFoxGroup;
     let globalAdminJwt: string;
     const contractId = "5f51dce1e833d917cdf9fe93";
+    const SENSE_IT_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
     let service: SigFoxApiDeviceTypeService;
     let usersService: SigfoxApiUsersService;
 
@@ -88,7 +89,24 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
                 // Assert
                 expect(
                     response.body.data.map((x: SigFoxApiDeviceTypeContent) => x.id)
-                ).toContainEqual("5e74c318aa8aec41f9cc6b8d");
+                ).toContainEqual(SENSE_IT_TYPE_ID);
+            });
+    });
+
+    it("(GET) /sigfox-device-type/:id - OK", async () => {
+        // Arrange
+
+        // Act
+        return await request(app.getHttpServer())
+            .get(`/sigfox-device-type/${SENSE_IT_TYPE_ID}?groupId=${sigFoxGroup.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .then(response => {
+                // Assert
+                expect(response.body).toMatchObject({
+                    id: SENSE_IT_TYPE_ID,
+                });
             });
     });
 
@@ -112,6 +130,26 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
                     id: expect.any(String),
                 });
             });
+    });
+
+    it("(PUT) /sigfox-device-type - OK", async () => {
+        // Arrange
+        const dto: CreateSigFoxApiDeviceTypeRequestDto = {
+            contractId: contractId,
+            name: `${NAME_PREFIX} - PUT - ${randomMacAddress()}`,
+            description: "Created by E2E test",
+        };
+        const oldDeviceType = await service.create(sigFoxGroup, dto);
+        const newDto = dto;
+        newDto.description = "Changed by PUT";
+
+        // Act
+        return await request(app.getHttpServer())
+            .put(`/sigfox-device-type/${oldDeviceType.id}?groupId=${sigFoxGroup.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            // Assert
+            .expect(204);
     });
 });
 

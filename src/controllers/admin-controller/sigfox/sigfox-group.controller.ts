@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Get,
+    HttpCode,
     NotFoundException,
     Param,
     ParseIntPipe,
@@ -13,7 +14,9 @@ import {
 } from "@nestjs/common";
 import {
     ApiBearerAuth,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
+    ApiOkResponse,
     ApiOperation,
     ApiProduces,
     ApiTags,
@@ -82,6 +85,7 @@ export class SigfoxGroupController {
     @Post()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a SigFox Group connection" })
+    @ApiCreatedResponse()
     @Write()
     async create(
         @Req() req: AuthenticatedRequest,
@@ -114,6 +118,8 @@ export class SigfoxGroupController {
     }
 
     @Post("test-connection")
+    @ApiOkResponse()
+    @HttpCode(200)
     async testConnection(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateSigFoxGroupRequestDto

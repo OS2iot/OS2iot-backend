@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import {
+    BadRequestException,
+    Inject,
+    Injectable,
+    Logger,
+    UnauthorizedException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -8,6 +14,8 @@ import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
+import { GenericSigfoxAdministationService } from "./generic-sigfox-administation.service";
 
 @Injectable()
 export class SigFoxGroupService {
@@ -15,8 +23,12 @@ export class SigFoxGroupService {
         @InjectRepository(SigFoxGroup)
         private repository: Repository<SigFoxGroup>,
         @Inject(OrganizationService)
-        private organizationService: OrganizationService
+        private organizationService: OrganizationService,
+        private sigfoxApiGroupService: SigfoxApiGroupService,
+        private genericSigfoxAdministationService: GenericSigfoxAdministationService
     ) {}
+
+    private readonly logger = new Logger(SigFoxGroupService.name);
 
     async findAll(organizationId: number): Promise<ListAllSigFoxGroupReponseDto> {
         const [data, count] = await this.repository.findAndCount({
@@ -25,8 +37,11 @@ export class SigFoxGroupService {
                     id: organizationId,
                 },
             },
+            select: ["username", "password"],
             relations: ["belongsTo"],
         });
+
+        await this.addSigFoxDataToAllGroups(data);
 
         return {
             data: data,
@@ -34,10 +49,38 @@ export class SigFoxGroupService {
         };
     }
 
+    private async addSigFoxDataToAllGroups(data: SigFoxGroup[]) {
+        await Promise.all(data.map(async x => await this.addSigFoxDataToGroup(x)));
+    }
+
+    private async addSigFoxDataToGroup(group: SigFoxGroup) {
+        // if password was not included, then include it now.
+        if (group.password == null) {
+            group = await this.findOneWithPassword(group.id);
+        }
+        let apiGroupResponse;
+        try {
+            apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
+        } catch (err) {
+            this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
+            group.sigFoxGroupData = null;
+            return group;
+        }
+        if (apiGroupResponse.data.length > 1) {
+            this.logger.warn(`API user ${group.id} has access to more than one group`);
+        }
+        const firstGroup = apiGroupResponse.data[0];
+        group.sigFoxGroupData = firstGroup;
+        // remove password again ...
+        group.password = undefined;
+    }
+
     async findOne(id: number): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail(id, {
-            relations: ["belongsTo"],
-        });
+        const res = await this.findOneWithPassword(id);
+
+        await this.addSigFoxDataToAllGroups([res]);
+
+        return res;
     }
 
     async findOneWithPassword(id: number): Promise<SigFoxGroup> {
@@ -57,14 +100,18 @@ export class SigFoxGroupService {
             throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
         }
 
-        return this.mapAndSave(sigfoxGroup, query);
+        const res = await this.mapAndSave(sigfoxGroup, query);
+        await this.addSigFoxDataToAllGroups([res]);
+        return res;
     }
 
     async update(
         sigfoxGroup: SigFoxGroup,
         query: UpdateSigFoxGroupRequestDto
     ): Promise<SigFoxGroup> {
-        return this.mapAndSave(sigfoxGroup, query);
+        const res = await this.mapAndSave(sigfoxGroup, query);
+        await this.addSigFoxDataToAllGroups([res]);
+        return res;
     }
 
     private async mapAndSave(
@@ -73,6 +120,11 @@ export class SigFoxGroupService {
     ): Promise<SigFoxGroup> {
         sigfoxGroup.username = query.username;
         sigfoxGroup.password = query.password;
+
+        // Test that new credentials are good.
+        if (!(await this.genericSigfoxAdministationService.testConnection(sigfoxGroup))) {
+            throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
+        }
 
         return await this.repository.save(sigfoxGroup);
     }

@@ -24,6 +24,7 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
+import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -591,3 +592,29 @@ export function randomMacAddress(): string {
     const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
     return n.padStart(16, "0");
 }
+
+export async function makeCreateGatewayDto(
+    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
+): Promise<CreateGatewayDto> {
+    const mac = randomMacAddress();
+    const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
+    // Logger.log(mac);
+    const request: CreateGatewayDto = {
+        gateway: {
+            id: mac,
+            location: {
+                latitude: 12.34,
+                longitude: 43.21,
+            },
+            discoveryEnabled: false,
+            name: `${gatewayNamePrefix}-${mac}`,
+            description: "E2E test description",
+            networkServerID: networkServerId,
+            organizationID: "1",
+            tagsString: '{ "asdf": "abcd" }',
+        },
+    };
+    return request;
+}
+
+export const gatewayNamePrefix = "E2E-test";

@@ -51,7 +51,6 @@ export class SigFoxApiDeviceTypeService {
         id: string,
         dto: CreateSigFoxApiDeviceTypeRequestDto
     ): Promise<void> {
-        await this.setForUpdate(dto, group, id);
         const URL = `${this.URL_BASE}/${id}`;
         await this.genericService.put(URL, dto, group);
     }
@@ -59,17 +58,6 @@ export class SigFoxApiDeviceTypeService {
     async delete(group: SigFoxGroup, id: string): Promise<void> {
         const url = `${this.URL_BASE}/${id}`;
         await this.genericService.delete(url, group);
-    }
-
-    private async setForUpdate(
-        dto: CreateSigFoxApiDeviceTypeRequestDto,
-        group: SigFoxGroup,
-        id: string
-    ) {
-        // const existing = await this.getById(group, id);
-        // await this.setDefaults(dto, group);
-        // Ensure that the value of authomaticRenewal is preserved.
-        // dto.automaticRenewal = existing.automaticRenewal;
     }
 
     private async setDefaults(

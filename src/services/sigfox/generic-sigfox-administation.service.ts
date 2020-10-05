@@ -1,8 +1,4 @@
-import {
-    SigFoxApiContractInfosContent,
-    SigFoxApiContractInfosResponseDto,
-} from "@dto/sigfox/external/sigfox-api-contract-infos-response.dto";
-import { SigFoxApiUsersResponseDto } from "@dto/sigfox/external/sigfox-api-groups-response.dto";
+import { SigFoxApiUsersResponseDto } from "@dto/sigfox/external/sigfox-api-users-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
@@ -49,9 +45,7 @@ export class GenericSigfoxAdministationService {
             );
             return apiUsers.data.length > 0;
         } catch (err) {
-            if (err?.response?.status === 401) {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -69,23 +63,27 @@ export class GenericSigfoxAdministationService {
             );
             return result.data;
         } catch (err) {
-            this.logger.warn(
-                `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
-            );
-            const response = err?.response;
-            if (response?.status == 401) {
-                throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
-            }
-
-            if (response?.status == 400) {
-                throw new BadRequestException(response?.data);
-            }
-
-            this.logger.error(
-                `Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`
-            );
-            throw err;
+            this.handleError<T>(method, path, dto, err);
         }
+    }
+
+    private handleError<T>(method: string, path: string, dto: any, err: any) {
+        this.logger.warn(
+            `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
+        );
+        const response = err?.response;
+        if (response?.status == 401) {
+            throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
+        }
+
+        if (response?.status == 400) {
+            throw new BadRequestException(response?.data);
+        }
+
+        this.logger.error(
+            `Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`
+        );
+        throw err;
     }
 
     private async generateAxiosConfig(

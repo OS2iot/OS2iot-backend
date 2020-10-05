@@ -6,17 +6,23 @@ import * as request from "supertest";
 
 import configuration from "@config/configuration";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 
-import { generateSavedGlobalAdminUser, generateValidJwtForUser } from "../test-helpers";
+import {
+    gatewayNamePrefix,
+    generateSavedGlobalAdminUser,
+    generateValidJwtForUser,
+    makeCreateGatewayDto,
+} from "../test-helpers";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
     let service: ChirpstackGatewayService;
+    let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     let globalAdminJwt: string;
 
@@ -44,6 +50,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
         await app.init();
 
         service = moduleFixture.get("ChirpstackGatewayService");
+        chirpstackSetupNetworkServerService = moduleFixture.get(
+            "ChirpstackSetupNetworkServerService"
+        );
     });
 
     afterAll(async () => {
@@ -55,7 +64,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
         // Delete all gateways created in E2E tests:
         const existing = await service.listAllPaginated(1000, 0);
         existing.result.forEach(async element => {
-            if (element.name.startsWith(namePrefix)) {
+            if (element.name.startsWith(gatewayNamePrefix)) {
                 Logger.debug(`Found ${element.name}, deleting.`);
                 await service.deleteGateway(element.id);
             }
@@ -71,12 +80,14 @@ describe("ChirpstackGatewayController (e2e)", () => {
     }
 
     async function createGatewayReturnDto(): Promise<CreateGatewayDto> {
-        const dto = makeCreateGatewayDto();
+        const dto = await makeCreateGatewayDto(chirpstackSetupNetworkServerService);
         await service.createNewGateway(dto);
         return dto;
     }
     it("(POST) Create new Gateway", async () => {
-        const req: CreateGatewayDto = makeCreateGatewayDto();
+        const req: CreateGatewayDto = await makeCreateGatewayDto(
+            chirpstackSetupNetworkServerService
+        );
 
         await request(app.getHttpServer())
             .post("/chirpstack/gateway")
@@ -144,7 +155,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
     it("(PUT) Change gateway", async () => {
         const dto = await createGatewayReturnDto();
 
-        dto.gateway.name = `${namePrefix}-ChangedName-PUT`;
+        dto.gateway.name = `${gatewayNamePrefix}-ChangedName-PUT`;
 
         await request(app.getHttpServer())
             .put(`/chirpstack/gateway/${dto.gateway.id}`)
@@ -165,7 +176,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
     it("(PUT) Change gateway - Bad DTO", async () => {
         const dto = await createGatewayReturnDto();
 
-        dto.gateway.name = `${namePrefix}-ChangedName-PUT`;
+        dto.gateway.name = `${gatewayNamePrefix}-ChangedName-PUT`;
 
         return await request(app.getHttpServer())
             .put(`/chirpstack/gateway/${dto.gateway.id}`)
@@ -187,32 +198,3 @@ describe("ChirpstackGatewayController (e2e)", () => {
             .expect(200);
     });
 });
-
-const namePrefix = "E2E-test";
-
-function randomMacAddress(): string {
-    const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
-    return n.padStart(16, "0");
-}
-
-function makeCreateGatewayDto() {
-    const mac = randomMacAddress();
-    const networkServerId = "2";
-    // Logger.log(mac);
-    const request: CreateGatewayDto = {
-        gateway: {
-            id: mac,
-            location: {
-                latitude: 12.34,
-                longitude: 43.21,
-            },
-            discoveryEnabled: false,
-            name: `${namePrefix}-${mac}`,
-            description: "E2E test description",
-            networkServerID: networkServerId,
-            organizationID: "1",
-            tagsString: '{ "asdf": "abcd" }',
-        },
-    };
-    return request;
-}
