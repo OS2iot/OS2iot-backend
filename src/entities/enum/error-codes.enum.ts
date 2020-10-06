@@ -16,4 +16,5 @@ export enum ErrorCodes {
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION",
     PasswordNotMetRequirements = "MESSAGE.PASSWORD-DOES-NOT-MEET-REQUIREMENTS",
     SIGFOX_BAD_LOGIN = "MESSAGE.SIGFOX_BAD_LOGIN",
+    GatewayIdNotAllowedInUpdate = "MESSAGE.GATEWAY_ID_NOT_ALLOWED_IN_UPDATE",
 }

@@ -154,32 +154,33 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
     it("(PUT) Change gateway", async () => {
         const dto = await createGatewayReturnDto();
+        const originalId = dto.gateway.id;
+        dto.gateway.id = undefined;
 
         dto.gateway.name = `${gatewayNamePrefix}-ChangedName-PUT`;
 
         await request(app.getHttpServer())
-            .put(`/chirpstack/gateway/${dto.gateway.id}`)
+            .put(`/chirpstack/gateway/${originalId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(200);
 
         // Check that it was changed.
-        const changedGateway: SingleGatewayResponseDto = await service.getOne(
-            dto.gateway.id
-        );
+        const changedGateway: SingleGatewayResponseDto = await service.getOne(originalId);
         expect(changedGateway?.gateway).toMatchObject({
-            id: dto.gateway.id,
+            id: originalId,
             name: dto.gateway.name,
         });
     });
 
     it("(PUT) Change gateway - Bad DTO", async () => {
         const dto = await createGatewayReturnDto();
-
+        const originalId = dto.gateway.id;
+        dto.gateway.id = undefined;
         dto.gateway.name = `${gatewayNamePrefix}-ChangedName-PUT`;
 
         return await request(app.getHttpServer())
-            .put(`/chirpstack/gateway/${dto.gateway.id}`)
+            .put(`/chirpstack/gateway/${originalId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send({
                 gateway: {
@@ -187,6 +188,22 @@ describe("ChirpstackGatewayController (e2e)", () => {
                 },
             })
             .expect(400);
+    });
+
+    it("(PUT) Change gateway - ID not allowed in update", async () => {
+        const dto = await createGatewayReturnDto();
+        const originalId = dto.gateway.id;
+
+        await request(app.getHttpServer())
+            .put(`/chirpstack/gateway/${originalId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(400)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: "MESSAGE.GATEWAY_ID_NOT_ALLOWED_IN_UPDATE",
+                });
+            });
     });
 
     it("(DELETE) Delete gateway", async () => {

@@ -84,6 +84,9 @@ export class ChirpstackGatewayController {
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
     ): Promise<ChirpstackReponseStatus> {
+        if (dto.gateway.id) {
+            throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
+        }
         return await this.chirpstackGatewayService.modifyGateway(gatewayId, dto);
     }
 
