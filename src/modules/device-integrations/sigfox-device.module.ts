@@ -4,6 +4,7 @@ import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigFoxUsersModule } from "@modules/device-integrations/sigfox-users.module";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
+import { SigFoxApiDeviceController } from "@admin-controller/sigfox/sigfox-api-device.controller";
 
 @Module({
     imports: [
@@ -12,7 +13,7 @@ import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.servi
         SigFoxAdministrationModule,
         SigFoxUsersModule,
     ],
-    controllers: [],
+    controllers: [SigFoxApiDeviceController],
     providers: [SigFoxApiDeviceService],
     exports: [SigFoxApiDeviceService],
 })
