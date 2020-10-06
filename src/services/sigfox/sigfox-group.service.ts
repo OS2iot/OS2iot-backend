@@ -41,7 +41,7 @@ export class SigFoxGroupService {
             relations: ["belongsTo"],
         });
 
-        await this.addSigFoxDataToAllGroups(data);
+        await this.addSigFoxDataToAllGroupsAndSave(data);
 
         return {
             data: data,
@@ -49,11 +49,11 @@ export class SigFoxGroupService {
         };
     }
 
-    private async addSigFoxDataToAllGroups(data: SigFoxGroup[]) {
-        await Promise.all(data.map(async x => await this.addSigFoxDataToGroup(x)));
+    private async addSigFoxDataToAllGroupsAndSave(data: SigFoxGroup[]) {
+        await Promise.all(data.map(async x => await this.addSigFoxDataToGroupAndSave(x)));
     }
 
-    private async addSigFoxDataToGroup(group: SigFoxGroup) {
+    private async addSigFoxDataToGroupAndSave(group: SigFoxGroup) {
         // if password was not included, then include it now.
         if (group.password == null) {
             group = await this.findOneWithPassword(group.id);
@@ -71,6 +71,8 @@ export class SigFoxGroupService {
         }
         const firstGroup = apiGroupResponse.data[0];
         group.sigFoxGroupData = firstGroup;
+        group.sigFoxGroupId = group.sigFoxGroupData.id;
+        await this.repository.save(group);
         // remove password again ...
         group.password = undefined;
     }
@@ -78,7 +80,7 @@ export class SigFoxGroupService {
     async findOne(id: number): Promise<SigFoxGroup> {
         const res = await this.findOneWithPassword(id);
 
-        await this.addSigFoxDataToAllGroups([res]);
+        await this.addSigFoxDataToAllGroupsAndSave([res]);
 
         return res;
     }
@@ -87,6 +89,14 @@ export class SigFoxGroupService {
         return await this.repository.findOneOrFail(id, {
             relations: ["belongsTo"],
             select: ["username", "password"],
+        });
+    }
+
+    async findOneByGroupId(groupId: string): Promise<SigFoxGroup> {
+        return await this.repository.findOneOrFail({
+            where: { sigFoxGroupId: groupId },
+            relations: ["belongsTo"],
+            select: ["id", "username", "password", "sigFoxGroupId"],
         });
     }
 
@@ -100,8 +110,8 @@ export class SigFoxGroupService {
             throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
         }
 
-        const res = await this.mapAndSave(sigfoxGroup, query);
-        await this.addSigFoxDataToAllGroups([res]);
+        const res = await this.map(sigfoxGroup, query);
+        await this.addSigFoxDataToAllGroupsAndSave([res]);
         return res;
     }
 
@@ -109,12 +119,12 @@ export class SigFoxGroupService {
         sigfoxGroup: SigFoxGroup,
         query: UpdateSigFoxGroupRequestDto
     ): Promise<SigFoxGroup> {
-        const res = await this.mapAndSave(sigfoxGroup, query);
-        await this.addSigFoxDataToAllGroups([res]);
+        const res = await this.map(sigfoxGroup, query);
+        await this.addSigFoxDataToAllGroupsAndSave([res]);
         return res;
     }
 
-    private async mapAndSave(
+    private async map(
         sigfoxGroup: SigFoxGroup,
         query: UpdateSigFoxGroupRequestDto
     ): Promise<SigFoxGroup> {
@@ -126,6 +136,6 @@ export class SigFoxGroupService {
             throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
         }
 
-        return await this.repository.save(sigfoxGroup);
+        return sigfoxGroup;
     }
 }

@@ -5,9 +5,17 @@ import { ChirpstackAdministrationModule } from "@modules/device-integrations/chi
 import { ApplicationModule } from "@modules/device-management/application.module";
 import { SharedModule } from "@modules/shared.module";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
+import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 
 @Module({
-    imports: [SharedModule, ChirpstackAdministrationModule, ApplicationModule],
+    imports: [
+        SharedModule,
+        ChirpstackAdministrationModule,
+        ApplicationModule,
+        SigfoxDeviceModule,
+        SigFoxGroupModule,
+    ],
     exports: [IoTDeviceService],
     controllers: [IoTDeviceController],
     providers: [IoTDeviceService],

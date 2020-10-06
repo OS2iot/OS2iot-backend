@@ -1,4 +1,3 @@
-import { SigfoxDeviceTypeController } from "@admin-controller/sigfox/sigfox-device-type.controller";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { Module } from "@nestjs/common";
 import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";

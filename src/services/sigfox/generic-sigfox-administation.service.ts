@@ -9,32 +9,57 @@ import {
     UnauthorizedException,
 } from "@nestjs/common";
 import { AxiosRequestConfig, Method } from "axios";
+import { ISetupCache, setupCache } from "axios-cache-adapter";
 
 @Injectable()
 export class GenericSigfoxAdministationService {
-    constructor(private httpService: HttpService) {}
+    constructor(private httpService: HttpService) {
+        this.cache = setupCache({
+            maxAge: 5 * 60 * 1000, // 5 minutes
+        });
+    }
+    private cache: ISetupCache;
 
     BASE_URL = "https://api.sigfox.com/v2/";
     TIMEOUT_IN_MS = 30000;
 
     private readonly logger = new Logger(GenericSigfoxAdministationService.name);
 
-    async get<T>(path: string, sigfoxGroup: SigFoxGroup): Promise<T> {
-        return await this.doRequest<T>(path, sigfoxGroup, "GET");
+    async get<T>(path: string, sigfoxGroup: SigFoxGroup, useCache?: boolean): Promise<T> {
+        return await this.doRequest<T>({
+            path: path,
+            sigfoxGroup: sigfoxGroup,
+            method: "GET",
+            useCache,
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     async post<T>(path: string, dto: any, sigfoxGroup: SigFoxGroup): Promise<T> {
-        return await this.doRequest<T>(path, sigfoxGroup, "POST", dto);
+        return await this.doRequest<T>({
+            path: path,
+            sigfoxGroup: sigfoxGroup,
+            method: "POST",
+            dto,
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     async put<T>(path: string, dto: any, sigfoxGroup: SigFoxGroup): Promise<T> {
-        return await this.doRequest<T>(path, sigfoxGroup, "PUT", dto);
+        return await this.doRequest<T>({
+            path: path,
+            sigfoxGroup: sigfoxGroup,
+            method: "PUT",
+            dto,
+        });
     }
 
     async delete<T>(path: string, sigfoxGroup: SigFoxGroup): Promise<T> {
-        return await this.doRequest<T>(path, sigfoxGroup, "DELETE");
+        return await this.doRequest<T>({
+            path: path,
+            sigfoxGroup: sigfoxGroup,
+            method: "DELETE",
+        });
     }
 
     async testConnection(sigfoxGroup: SigFoxGroup): Promise<boolean> {
@@ -49,13 +74,20 @@ export class GenericSigfoxAdministationService {
         }
     }
 
-    private async doRequest<T>(
-        path: string,
-        sigfoxGroup: SigFoxGroup,
-        method: Method,
-        dto?: any
-    ): Promise<T> {
-        const config = await this.generateAxiosConfig(sigfoxGroup, method, path, dto);
+    private async doRequest<T>({
+        path,
+        sigfoxGroup,
+        method,
+        dto = {},
+        useCache = false,
+    }: RequestParameters): Promise<T> {
+        const config = await this.generateAxiosConfig(
+            sigfoxGroup,
+            method,
+            path,
+            dto,
+            useCache
+        );
         try {
             const result = await this.httpService.request(config).toPromise();
             this.logger.debug(
@@ -77,7 +109,15 @@ export class GenericSigfoxAdministationService {
         }
 
         if (response?.status == 400) {
-            throw new BadRequestException(response?.data);
+            this.logger.error(
+                `Error from SigFox: ${JSON.stringify(response?.data?.errors)}`
+            );
+            throw new BadRequestException(response?.data?.errors);
+        }
+
+        if (response?.status == 429) {
+            this.logger.error("Too many requsts to SigFox");
+            throw err;
         }
 
         this.logger.error(
@@ -90,7 +130,8 @@ export class GenericSigfoxAdministationService {
         sigfoxGroup: SigFoxGroup,
         method: Method,
         path: string,
-        dto?: any
+        dto?: any,
+        useCache?: boolean
     ): Promise<AxiosRequestConfig> {
         const url = this.generateUrl(path);
         const axiosConfig: AxiosRequestConfig = {
@@ -106,6 +147,9 @@ export class GenericSigfoxAdministationService {
         if (dto) {
             axiosConfig.data = dto;
         }
+        if (useCache) {
+            axiosConfig.adapter = this.cache.adapter;
+        }
 
         return axiosConfig;
     }
@@ -113,4 +157,12 @@ export class GenericSigfoxAdministationService {
     private generateUrl(path: string): string {
         return `${this.BASE_URL}${path}`;
     }
+}
+
+interface RequestParameters {
+    path: string;
+    sigfoxGroup: SigFoxGroup;
+    method: Method;
+    dto?: any;
+    useCache?: boolean;
 }

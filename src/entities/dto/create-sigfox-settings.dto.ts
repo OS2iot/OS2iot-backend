@@ -9,9 +9,29 @@ export class CreateSigFoxSettingsDto {
     deviceId: string;
 
     @ApiProperty({ required: false })
-    @IsString()
     @IsOptional()
+    @IsString()
     @MaxLength(24)
     @Matches(/[0-9A-Fa-f]{1,24}/)
     deviceTypeId?: string;
+
+    @ApiProperty({ required: false })
+    groupId: number;
+
+    @ApiProperty({ required: false })
+    alreadyRegistered: boolean;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    @Matches(/[0-9A-Fa-f]+/)
+    pac?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    endProductCertificate?: string;
+
+    @ApiProperty({ required: false })
+    prototype?: boolean;
 }

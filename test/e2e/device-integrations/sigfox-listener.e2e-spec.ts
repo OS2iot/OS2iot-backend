@@ -12,7 +12,6 @@ import { KafkaModule } from "@modules/kafka.module";
 
 import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
 import {
-    SIGFOX_PAYLOAD,
     SIGFOX_PAYLOAD_2,
     clearDatabase,
     generateSavedApplication,
