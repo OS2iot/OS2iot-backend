@@ -39,6 +39,7 @@ import {
     checkIfUserHasWriteAccessToApplication,
 } from "@helpers/security-helper";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -56,10 +57,15 @@ export class IoTDeviceController {
     async findOne(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
+    ): Promise<
+        IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto
+    > {
         let result = undefined;
         try {
-            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
+            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(
+                id,
+                true
+            );
         } catch (err) {
             Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
@@ -98,7 +104,8 @@ export class IoTDeviceController {
     ): Promise<IoTDevice> {
         // Old application
         const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-            id
+            id,
+            false
         );
         checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
         if (updateDto.applicationId !== oldIotDevice.application.id) {
@@ -119,7 +126,8 @@ export class IoTDeviceController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-            id
+            id,
+            false
         );
         checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
 

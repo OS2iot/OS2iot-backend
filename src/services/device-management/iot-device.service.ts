@@ -26,6 +26,7 @@ import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.servi
 import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
+import { SigFoxGroup } from "@entities/sigfox-group.entity";
 
 @Injectable()
 export class IoTDeviceService {
@@ -61,7 +62,8 @@ export class IoTDeviceService {
     }
 
     async findOneWithApplicationAndMetadata(
-        id: number
+        id: number,
+        enrich?: boolean
     ): Promise<
         IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto
     > {
@@ -72,13 +74,14 @@ export class IoTDeviceService {
         if (iotDevice == null) {
             throw new NotFoundException();
         }
-
-        if (iotDevice.type == IoTDeviceType.LoRaWAN) {
-            // Add more suplimental info about LoRaWAN devices.
-            return await this.enrichLoRaWANDevice(iotDevice);
-        } else if (iotDevice.type == IoTDeviceType.SigFox) {
-            // Add more info about SigFox devices
-            return await this.enrichSigFoxDevice(iotDevice);
+        if (enrich) {
+            if (iotDevice.type == IoTDeviceType.LoRaWAN) {
+                // Add more suplimental info about LoRaWAN devices.
+                return await this.enrichLoRaWANDevice(iotDevice);
+            } else if (iotDevice.type == IoTDeviceType.SigFox) {
+                // Add more info about SigFox devices
+                return await this.enrichSigFoxDevice(iotDevice);
+            }
         }
 
         return iotDevice;
@@ -93,20 +96,30 @@ export class IoTDeviceService {
             sigFoxDevice.groupId
         );
 
+        const thisDevice = await this.getDataFromSigFoxAboutDevice(
+            sigFoxGroup,
+            sigFoxDevice
+        );
+        sigFoxDevice.sigFoxSettings = thisDevice;
+
+        return sigFoxDevice;
+    }
+
+    /**
+     * Avoid calling the endpoint /devices/:id at SigFox
+     * https://support.sigfox.com/docs/api-rate-limiting
+     */
+    private async getDataFromSigFoxAboutDevice(
+        sigFoxGroup: SigFoxGroup,
+        sigFoxDevice: SigFoxDeviceWithBackendDataDto
+    ) {
         const allDevices = await this.sigFoxApiDeviceService.getAllByGroupIds(
             sigFoxGroup,
             [sigFoxDevice.groupId]
         );
 
         const thisDevice = allDevices.data.find(x => x.id == sigFoxDevice.deviceId);
-        sigFoxDevice.sigFoxSettings = thisDevice;
-
-        // sigFoxDevice.sigFoxSettings = await this.sigFoxApiDeviceService.getById(
-        //     sigFoxGroup,
-        //     sigFoxDevice.deviceId
-        // );
-
-        return sigFoxDevice;
+        return thisDevice;
     }
 
     private async queryDatabaseForIoTDevice(id: number) {
