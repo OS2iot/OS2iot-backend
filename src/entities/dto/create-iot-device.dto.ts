@@ -48,27 +48,27 @@ export class CreateIoTDeviceDto {
     @MaxLength(1024)
     @IsOptional()
     @IsString()
-    commentOnLocation: string;
+    commentOnLocation?: string;
 
     @ApiProperty({ required: false })
     @MaxLength(1024)
     @IsOptional()
     @IsString()
-    comment: string;
+    comment?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    metadata: JSON;
+    metadata?: JSON;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @ValidateNested({ each: true })
     @Type(() => CreateLoRaWANSettingsDto)
-    lorawanSettings: CreateLoRaWANSettingsDto;
+    lorawanSettings?: CreateLoRaWANSettingsDto;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @ValidateNested({ each: true })
     @Type(() => CreateSigFoxSettingsDto)
-    sigfoxSettings: CreateSigFoxSettingsDto;
+    sigfoxSettings?: CreateSigFoxSettingsDto;
 }

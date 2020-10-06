@@ -14,9 +14,18 @@ import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
+    generateApplication,
+    generateSavedApplication,
     generateSavedGlobalAdminUser,
+    generateSavedOrganization,
+    generateSavedSigfoxDevice,
+    generateSavedSigFoxGroup,
     generateValidJwtForUser,
+    SIGFOX_DEVICE_ID,
+    SIGFOX_DEVICE_TYPE_ID,
 } from "../test-helpers";
+import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -310,5 +319,63 @@ describe("IoTDeviceController (e2e)", () => {
         const [res, count] = await repository.findAndCount();
         expect(res.length).toBe(1);
         expect(count).toBe(1);
+    });
+
+    it("(GET) /iot-device/:id - SigFox device", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const sigFoxGroup = await generateSavedSigFoxGroup(org);
+        const sigFoxDevice = await generateSavedSigfoxDevice(application);
+
+        // Act
+        return await request(app.getHttpServer())
+            .get("/iot-device/" + sigFoxDevice.id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // console.log(response.body);
+                expect(response.body).toMatchObject({
+                    name: sigFoxDevice.name,
+                    sigFoxSettings: {
+                        id: sigFoxDevice.deviceId,
+                    },
+                });
+            });
+    });
+
+    it("(POST) /iot-device/:id - SigFox device - Create connection", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const sigFoxGroup = await generateSavedSigFoxGroup(org);
+        const dto: CreateIoTDeviceDto = {
+            name: "E2E sigfox",
+            applicationId: application.id,
+            type: IoTDeviceType.SigFox,
+            longitude: 12.34,
+            latitude: 56.78,
+            sigfoxSettings: {
+                deviceId: SIGFOX_DEVICE_ID,
+                deviceTypeId: SIGFOX_DEVICE_TYPE_ID,
+                alreadyRegistered: true,
+                groupId: sigFoxGroup.id,
+            },
+        };
+
+        // Act
+        await request(app.getHttpServer())
+            .post("/iot-device/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "E2E sigfox",
+                });
+            });
     });
 });

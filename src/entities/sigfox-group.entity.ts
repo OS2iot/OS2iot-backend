@@ -18,5 +18,8 @@ export class SigFoxGroup extends DbBaseEntity {
     @Column({ nullable: false, select: false })
     password: string;
 
+    @Column({ nullable: false })
+    sigFoxGroupId: string;
+
     sigFoxGroupData?: SigFoxApiGroupsContent;
 }

@@ -21,6 +21,11 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ApplicationService } from "@services/device-management/application.service";
+import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
+import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
+import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
+import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
+import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -34,7 +39,9 @@ export class IoTDeviceService {
         @InjectRepository(LoRaWANDevice)
         private loRaWANDeviceRepository: Repository<LoRaWANDevice>,
         private applicationService: ApplicationService,
-        private chirpstackDeviceService: ChirpstackDeviceService
+        private chirpstackDeviceService: ChirpstackDeviceService,
+        private sigFoxApiDeviceService: SigFoxApiDeviceService,
+        private sigFoxGroupService: SigFoxGroupService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -55,7 +62,9 @@ export class IoTDeviceService {
 
     async findOneWithApplicationAndMetadata(
         id: number
-    ): Promise<IoTDevice | LoRaWANDeviceWithChirpstackDataDto> {
+    ): Promise<
+        IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto
+    > {
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
         // Therefore we use the QueryBuilder ...
         const iotDevice = await this.queryDatabaseForIoTDevice(id);
@@ -67,9 +76,37 @@ export class IoTDeviceService {
         if (iotDevice.type == IoTDeviceType.LoRaWAN) {
             // Add more suplimental info about LoRaWAN devices.
             return await this.enrichLoRaWANDevice(iotDevice);
+        } else if (iotDevice.type == IoTDeviceType.SigFox) {
+            // Add more info about SigFox devices
+            return await this.enrichSigFoxDevice(iotDevice);
         }
 
         return iotDevice;
+    }
+
+    async enrichSigFoxDevice(
+        iotDevice: IoTDevice
+    ): Promise<SigFoxDeviceWithBackendDataDto> {
+        const sigFoxDevice = iotDevice as SigFoxDeviceWithBackendDataDto;
+
+        const sigFoxGroup = await this.sigFoxGroupService.findOneByGroupId(
+            sigFoxDevice.groupId
+        );
+
+        const allDevices = await this.sigFoxApiDeviceService.getAllByGroupIds(
+            sigFoxGroup,
+            [sigFoxDevice.groupId]
+        );
+
+        const thisDevice = allDevices.data.find(x => x.id == sigFoxDevice.deviceId);
+        sigFoxDevice.sigFoxSettings = thisDevice;
+
+        // sigFoxDevice.sigFoxSettings = await this.sigFoxApiDeviceService.getById(
+        //     sigFoxGroup,
+        //     sigFoxDevice.deviceId
+        // );
+
+        return sigFoxDevice;
     }
 
     private async queryDatabaseForIoTDevice(id: number) {
@@ -234,7 +271,43 @@ export class IoTDeviceService {
         cast.deviceId = dto?.sigfoxSettings?.deviceId;
         cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
 
+        if (dto?.sigfoxSettings?.alreadyRegistered == false) {
+            // Create device in sigfox backend
+            const res = await this.createInSigfoxBackend(dto, cast);
+            cast.deviceId = res.id;
+        }
+
         return cast;
+    }
+
+    private async createInSigfoxBackend(dto: CreateIoTDeviceDto, cast: SigFoxDevice) {
+        const sigFoxDto: CreateSigFoxApiDeviceRequestDto = {
+            id: dto.sigfoxSettings.deviceId,
+            name: dto.name,
+            pac: dto.sigfoxSettings.pac,
+            deviceTypeId: dto.sigfoxSettings.deviceTypeId,
+            activable: true,
+            automaticRenewal: true,
+            lat: dto.latitude,
+            lng: dto.longitude,
+            prototype: dto.sigfoxSettings.prototype,
+        };
+
+        if (!sigFoxDto.prototype) {
+            sigFoxDto.productCertificate = {
+                key: dto.sigfoxSettings.endProductCertificate,
+            };
+        }
+
+        const sigfoxGroup = await this.sigFoxGroupService.findOneWithPassword(
+            dto.sigfoxSettings.groupId
+        );
+        try {
+            return await this.sigFoxApiDeviceService.create(sigfoxGroup, sigFoxDto);
+        } catch (err) {
+            this.logger.error(`Error creating sigfox device`);
+            throw err;
+        }
     }
 
     private async mapLoRaWANDevice(
