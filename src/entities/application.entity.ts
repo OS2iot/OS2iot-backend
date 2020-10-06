@@ -20,7 +20,7 @@ export class Application extends DbBaseEntity {
     @Column()
     name: string;
 
-    @Column()
+    @Column({ nullable: true })
     description: string;
 
     @OneToMany(
