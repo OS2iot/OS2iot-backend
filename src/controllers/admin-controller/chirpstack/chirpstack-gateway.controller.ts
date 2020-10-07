@@ -4,6 +4,7 @@ import {
     Controller,
     Delete,
     Get,
+    InternalServerErrorException,
     Param,
     Post,
     Put,
@@ -43,7 +44,15 @@ export class ChirpstackGatewayController {
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
     async create(@Body() dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
-        return await this.chirpstackGatewayService.createNewGateway(dto);
+        try {
+            return await this.chirpstackGatewayService.createNewGateway(dto);
+        } catch (err) {
+            if (err?.response?.data?.message == "object already exists") {
+                throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
+            }
+
+            throw new InternalServerErrorException(err);
+        }
     }
 
     @Get()
