@@ -5,7 +5,7 @@ import {
     ValidationPipe,
 } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-
+import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
 
 export async function setupNestJs(config: {
@@ -24,6 +24,7 @@ export async function setupNestJs(config: {
         })
     );
     app.enableCors();
+    app.use(compression());
 
     Logger.log(
         `Kafka: ${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
