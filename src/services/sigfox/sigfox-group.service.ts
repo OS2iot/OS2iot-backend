@@ -142,7 +142,7 @@ export class SigFoxGroupService {
 
         // Test that new credentials are good.
         if (!(await this.genericSigfoxAdministationService.testConnection(sigfoxGroup))) {
-            throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
+            throw new UnauthorizedException(ErrorCodes.SigFoxBadLogin);
         }
 
         return sigfoxGroup;

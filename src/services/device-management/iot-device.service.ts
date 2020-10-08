@@ -292,11 +292,7 @@ export class IoTDeviceService {
             dto.sigfoxSettings.groupId
         );
 
-        if (dto?.sigfoxSettings?.connectToExistingDeviceInBackend == false) {
-            // Create device in sigfox backend
-            const res = await this.createInSigfoxBackend(dto, sigfoxGroup);
-            cast.deviceId = res.id;
-        }
+        await this.checkOrCreateSigFoxDevice(dto, sigfoxGroup, cast);
 
         if (isUpdate) {
             // Edit
@@ -309,6 +305,27 @@ export class IoTDeviceService {
         );
 
         return cast;
+    }
+
+    private async checkOrCreateSigFoxDevice(
+        dto: CreateIoTDeviceDto,
+        sigfoxGroup: SigFoxGroup,
+        cast: SigFoxDevice
+    ) {
+        if (dto?.sigfoxSettings?.connectToExistingDeviceInBackend == false) {
+            // Create device in sigfox backend
+            const res = await this.createInSigfoxBackend(dto, sigfoxGroup);
+            cast.deviceId = res.id;
+        } else {
+            // Ensure that the device exists
+            try {
+                await this.sigFoxApiDeviceService.getById(sigfoxGroup, cast.deviceId);
+            } catch (err) {
+                throw new BadRequestException(
+                    ErrorCodes.DeviceDoesNotExistInSigFoxForGroup
+                );
+            }
+        }
     }
 
     private async editInSigFoxBackend(

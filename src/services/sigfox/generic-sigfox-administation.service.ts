@@ -108,7 +108,7 @@ export class GenericSigfoxAdministationService {
         );
         const response = err?.response;
         if (response?.status == 401) {
-            throw new UnauthorizedException(ErrorCodes.SIGFOX_BAD_LOGIN);
+            throw new UnauthorizedException(ErrorCodes.SigFoxBadLogin);
         }
 
         if (response?.status == 400) {
