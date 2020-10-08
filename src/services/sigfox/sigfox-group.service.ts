@@ -87,10 +87,17 @@ export class SigFoxGroupService {
         return res;
     }
 
+    async findOneForPermissionCheck(id: number): Promise<SigFoxGroup> {
+        return await this.repository.findOneOrFail(id, {
+            relations: ["belongsTo"],
+            select: ["username", "sigFoxGroupId", "id"],
+        });
+    }
+
     async findOneWithPassword(id: number): Promise<SigFoxGroup> {
         return await this.repository.findOneOrFail(id, {
             relations: ["belongsTo"],
-            select: ["username", "password", "sigFoxGroupId"],
+            select: ["username", "password", "sigFoxGroupId", "id"],
         });
     }
 
