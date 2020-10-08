@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
@@ -38,6 +39,7 @@ import {
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { SigFoxTestResponse } from "@dto/sigfox/internal/sigfox-test-response.dto";
 import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @ApiTags("SigFox")
 @Controller("sigfox-group")
@@ -51,6 +53,7 @@ export class SigfoxGroupController {
 
         private sigfoxApiService: GenericSigfoxAdministationService
     ) {}
+    DUPLICATE_KEY_ERROR = "duplicate key value violates unique constraint";
 
     @Get()
     @ApiProduces("application/json")
@@ -93,7 +96,16 @@ export class SigfoxGroupController {
     ): Promise<SigFoxGroup> {
         checkIfUserHasWriteAccessToOrganization(req, query.organizationId);
 
-        return await this.service.create(query);
+        try {
+            return await this.service.create(query);
+        } catch (err) {
+            if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
+                throw new BadRequestException(
+                    ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
+                );
+            }
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -107,14 +119,21 @@ export class SigfoxGroupController {
     ): Promise<SigFoxGroup> {
         let group: SigFoxGroup;
         try {
-            group = await this.service.findOne(id);
+            group = await this.service.findOneForPermissionCheck(id);
         } catch (err) {
             throw new NotFoundException();
         }
         checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
-        const updatedSigfoxGroup = await this.service.update(group, dto);
-
-        return updatedSigfoxGroup;
+        try {
+            return await this.service.update(group, dto);
+        } catch (err) {
+            if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
+                throw new BadRequestException(
+                    ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
+                );
+            }
+            throw err;
+        }
     }
 
     @Post("test-connection")
