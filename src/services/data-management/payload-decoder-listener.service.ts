@@ -13,6 +13,8 @@ import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 
 import { KafkaService } from "../kafka/kafka.service";
+import * as _ from "lodash";
+import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
@@ -42,7 +44,16 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             `Found ${connections.count} connections for IoT-Device ${dto.iotDeviceId}`
         );
 
-        connections.data.forEach(async connection => {
+        // Find Unique payloadDecoders
+        await this.doTransformationsAndSend(connections, dto);
+    }
+
+    private async doTransformationsAndSend(
+        connections: ListAllConnectionsReponseDto,
+        dto: RawRequestDto
+    ) {
+        const uniqueCombinations = _.uniqBy(connections.data, x => x.payloadDecoder?.id);
+        uniqueCombinations.forEach(async connection => {
             try {
                 const iotDevice = connection.iotDevices.find(
                     x => x.id == dto.iotDeviceId

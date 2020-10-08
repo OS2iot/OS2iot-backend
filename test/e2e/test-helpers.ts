@@ -197,6 +197,23 @@ export async function generateSavedIoTDevice(
     return await getManager().save(generateIoTDevice(applications));
 }
 
+export function generateHttpDevice(applications: Application): GenericHTTPDevice {
+    const device = new GenericHTTPDevice();
+    device.name = "E2E Test GENERIC HTTP device";
+    device.application = applications;
+    device.apiKey = "DUMMY-API-KEY";
+    device.metadata = JSON.parse('{"some_key": "a_value"}');
+    device.id = 1;
+
+    return device;
+}
+
+export async function generateSavedHttpDevice(
+    applications: Application
+): Promise<GenericHTTPDevice> {
+    return await getManager().save(generateHttpDevice(applications));
+}
+
 export function generateLoRaWANDevice(applications: Application): LoRaWANDevice {
     const device = new LoRaWANDevice();
     device.name = "E2E Test LoRaWAN device";
@@ -215,15 +232,19 @@ export async function generateSavedLoRaWANDevice(
 }
 
 export async function generateSavedDataTarget(
-    application: Application
+    application: Application,
+    url?: string
 ): Promise<HttpPushDataTarget> {
-    return await getManager().save(generateDataTarget(application));
+    return await getManager().save(generateDataTarget(application, url));
 }
 
-export function generateDataTarget(application: Application): HttpPushDataTarget {
+export function generateDataTarget(
+    application: Application,
+    url?: string
+): HttpPushDataTarget {
     const dataTarget = new HttpPushDataTarget();
     dataTarget.name = "E2E Test Http Push Data Target";
-    dataTarget.url = "https://enwehrrtrqajd1m.m.pipedream.net";
+    dataTarget.url = url ? url :  "https://enwehrrtrqajd1m.m.pipedream.net";
     dataTarget.application = application;
     dataTarget.timeout = 30000;
 
