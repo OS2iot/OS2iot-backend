@@ -8,6 +8,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
+import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
 
 @Module({
     imports: [
@@ -20,6 +21,6 @@ import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-devi
     ],
     exports: [IoTDeviceService],
     controllers: [IoTDeviceController],
-    providers: [IoTDeviceService],
+    providers: [IoTDeviceService, PeriodicSigFoxCleanupService],
 })
 export class IoTDeviceModule {}

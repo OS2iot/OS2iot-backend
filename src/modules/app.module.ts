@@ -25,6 +25,7 @@ import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-devi
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
     imports: [
@@ -57,6 +58,7 @@ import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.m
             ],
             groupId: process.env.KAFKA_GROUPID || "os2iot-backend",
         }),
+        ScheduleModule.forRoot(),
         HttpModule,
         ApplicationModule,
         IoTDeviceModule,

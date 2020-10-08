@@ -192,6 +192,7 @@ export async function generateSavedApplication(org?: Organization): Promise<Appl
 }
 
 export const SIGFOX_DEVICE_ID = "B445A9";
+export const SIGFOX_DEVICE_ID_2 = "B443A5";
 export const SIGFOX_DEVICE_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
 export function generateSigfoxDevice(application: Application): SigFoxDevice {
     const sigFoxDevice = new SigFoxDevice();

@@ -64,7 +64,7 @@ export class SigfoxGroupController {
         @Query() query: SigFoxGetAllRequestDto
     ): Promise<ListAllSigFoxGroupReponseDto> {
         checkIfUserHasReadAccessToOrganization(req, query.organizationId);
-        return await this.service.findAll(query.organizationId);
+        return await this.service.findAllForOrganization(query.organizationId);
     }
 
     @Get(":id")

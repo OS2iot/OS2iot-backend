@@ -5,6 +5,7 @@ import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.mod
 import { SigFoxUsersModule } from "@modules/device-integrations/sigfox-users.module";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxApiDeviceController } from "@admin-controller/sigfox/sigfox-api-device.controller";
+import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
 
 @Module({
     imports: [
