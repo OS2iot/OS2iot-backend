@@ -301,7 +301,7 @@ export class IoTDeviceService {
 
         await this.sigFoxApiDeviceTypeService.addOrUpdateCallback(
             sigfoxGroup,
-            dto.sigfoxSettings.deviceTypeId
+            cast.deviceTypeId
         );
 
         return cast;
@@ -319,7 +319,12 @@ export class IoTDeviceService {
         } else {
             // Ensure that the device exists
             try {
-                await this.sigFoxApiDeviceService.getById(sigfoxGroup, cast.deviceId);
+                const res = await this.sigFoxApiDeviceService.getById(
+                    sigfoxGroup,
+                    cast.deviceId
+                );
+                cast.deviceId = res.id;
+                cast.deviceTypeId = res.deviceType.id;
             } catch (err) {
                 throw new BadRequestException(
                     ErrorCodes.DeviceDoesNotExistInSigFoxForGroup
