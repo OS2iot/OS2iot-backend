@@ -25,6 +25,8 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
+import { SigFoxApiSingleDeviceResponseDto } from "@dto/sigfox/external/sigfox-api-single-device-response.dto";
+import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -44,6 +46,29 @@ export async function clearDatabase(): Promise<void> {
     );
 }
 
+export function generateSigfoxDeviceFromData(
+    application: Application,
+    backendDevice: SigFoxApiDeviceContent
+): SigFoxDevice {
+    const sigFoxDevice = new SigFoxDevice();
+    sigFoxDevice.name = "E2E Test SigFox Device";
+    sigFoxDevice.application = application;
+    sigFoxDevice.deviceId = backendDevice.id;
+    sigFoxDevice.deviceTypeId = backendDevice.deviceType.id;
+    sigFoxDevice.groupId = backendDevice.group.id;
+    sigFoxDevice.metadata = JSON.parse('""');
+
+    return sigFoxDevice;
+}
+
+export async function generateSavedSigfoxDeviceFromData(
+    application: Application,
+    backendDevice: SigFoxApiDeviceContent
+): Promise<SigFoxDevice> {
+    const device = generateSigfoxDeviceFromData(application, backendDevice);
+    return await getManager().save(device);
+}
+
 export async function generateSavedSigFoxGroup(org: Organization): Promise<SigFoxGroup> {
     return await getManager().save(generateSigFoxGroup(org));
 }
@@ -52,6 +77,7 @@ export function generateSigFoxGroup(org: Organization): SigFoxGroup {
     const sigfoxGroup = new SigFoxGroup();
     sigfoxGroup.username = "5f2d1069e833d903621ff237";
     sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
+    sigfoxGroup.sigFoxGroupId = "5e74c24476600f14bab7e0bd";
     sigfoxGroup.belongsTo = org;
     return sigfoxGroup;
 }
@@ -165,12 +191,15 @@ export async function generateSavedApplication(org?: Organization): Promise<Appl
     return await getManager().save(app);
 }
 
+export const SIGFOX_DEVICE_ID = "B445A9";
+export const SIGFOX_DEVICE_ID_2 = "B443A5";
+export const SIGFOX_DEVICE_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
 export function generateSigfoxDevice(application: Application): SigFoxDevice {
     const sigFoxDevice = new SigFoxDevice();
     sigFoxDevice.name = "E2E Test SigFox Device";
     sigFoxDevice.application = application;
-    sigFoxDevice.deviceId = "B443A5";
-    sigFoxDevice.deviceTypeId = "5e74c318aa8aec41f9cc6b8d";
+    sigFoxDevice.deviceId = SIGFOX_DEVICE_ID;
+    sigFoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
     sigFoxDevice.metadata = JSON.parse('""');
 
     return sigFoxDevice;
@@ -542,8 +571,8 @@ export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDt
 
 export const SIGFOX_PAYLOAD_2 = `{
   "time": 1600674364,
-  "deviceTypeId": "5e74c318aa8aec41f9cc6b8d",
-  "deviceId": "B443A5",
+  "deviceTypeId": "${SIGFOX_DEVICE_TYPE_ID}",
+  "deviceId": "${SIGFOX_DEVICE_ID}",
   "snr": 6.00,
   "rssi": -128.00,
   "station": "93CF",
@@ -552,18 +581,15 @@ export const SIGFOX_PAYLOAD_2 = `{
   }`;
 
 export const SIGFOX_PAYLOAD = `{
-                "data": "c6099764",
-                "sigfoxId": "B445A9",
-                "time": "1596721546",
-                "snr": "12.53",
-                "rssi": "-123.00",
-                "avgSnr": "null",
-                "station": "37FF",
-                "seqNumber": "1",
-                "latStation": "null",
-                "lngStation": "null",
-                "ack": "false"
-            }`;
+  "time": 1602167366,
+  "deviceTypeId": "${SIGFOX_DEVICE_TYPE_ID}",
+  "deviceId": "${SIGFOX_DEVICE_ID}",
+  "snr": 13.00,
+  "rssi": -119.00,
+  "station": "2406",
+  "data": "be099471",
+  "seqNumber": 486
+}`;
 
 export function generateSigfoxRawRequestDto(iotDeviceId?: number): RawRequestDto {
     return {

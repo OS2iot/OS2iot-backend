@@ -18,6 +18,7 @@ import {
     generateSavedApplication,
     generateSavedOrganization,
     generateSavedSigfoxDevice,
+    SIGFOX_PAYLOAD,
 } from "../test-helpers";
 
 describe("SigFoxListenerController (e2e)", () => {
@@ -72,7 +73,7 @@ describe("SigFoxListenerController (e2e)", () => {
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
         const sigfoxDevice = await generateSavedSigfoxDevice(application);
-        const payload = JSON.parse(SIGFOX_PAYLOAD_2);
+        const payload = JSON.parse(SIGFOX_PAYLOAD);
 
         // Store all the messages sent to kafka
         const kafkaMessages: [string, KafkaMessage][] = [];
@@ -100,7 +101,7 @@ describe("SigFoxListenerController (e2e)", () => {
             return JSON.parse(x[1].value.toString("utf8")).body;
         });
         expect(payloads).toHaveLength(1);
-    });
+    }, 10000);
 
     it("(POST) /receive-data/  receive data from unregistered edge device (Test invalid API key)- expected 403- fobbidden", async () => {
         return await request(app.getHttpServer())

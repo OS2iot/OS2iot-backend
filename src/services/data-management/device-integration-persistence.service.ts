@@ -169,7 +169,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         const newMetadata = new ReceivedMessageMetadata();
         newMetadata.device = relatedIoTDevice;
         newMetadata.sentTime = dto.unixTimestamp
-            ? new Date(dto.unixTimestamp)
+            ? new Date(dto.unixTimestamp * 1000)
             : new Date();
 
         return newMetadata;

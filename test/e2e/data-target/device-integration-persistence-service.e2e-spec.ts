@@ -17,6 +17,7 @@ import {
     generateRawRequestSigfoxKafkaPayload,
     generateSavedApplication,
     generateSavedIoTDevice,
+    generateSavedSigfoxDevice,
 } from "../test-helpers";
 
 describe("DeviceIntegrationPersistenceService (e2e)", () => {
@@ -140,4 +141,27 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
             },
         });
     }, 30000);
+    
+    it("Test rawRequestListener - SigFoxDevice and Payload", async () => {
+        // Arrange
+        const application = await generateSavedApplication();
+        const iotDevice = await generateSavedSigfoxDevice(application);
+        const kafkaPayload = generateRawRequestSigfoxKafkaPayload(iotDevice.id);
+
+        // Act
+        await service.rawRequestListener(kafkaPayload);
+
+        // Assert
+        const allMessages = await receivedMessageRepository.find();
+        expect(allMessages).toHaveLength(1);
+        Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
+        expect(allMessages[0]).toMatchObject({
+            rawData: kafkaPayload.body.rawPayload,
+        });
+
+        const allMetadata = await receivedMessageMetadataRepository.find();
+        expect(allMetadata).toHaveLength(1);
+        Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
+        expect(allMetadata[0]).toHaveProperty("sentTime");
+    });
 });
