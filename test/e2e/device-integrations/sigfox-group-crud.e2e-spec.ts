@@ -216,7 +216,7 @@ describe("SigfoxGroupController (e2e)", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "MESSAGE.SIGFOX_BAD_LOGIN",
+                    message: "MESSAGE.SIGFOX-BAD-LOGIN",
                     statusCode: 401,
                 });
                 expect(response.body).not.toHaveProperty("password");
@@ -275,7 +275,7 @@ describe("SigfoxGroupController (e2e)", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "MESSAGE.SIGFOX_BAD_LOGIN",
+                    message: "MESSAGE.SIGFOX-BAD-LOGIN",
                     statusCode: 401,
                 });
             });

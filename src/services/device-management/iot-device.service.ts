@@ -327,7 +327,7 @@ export class IoTDeviceService {
         } else {
             // Ensure that the device exists
             try {
-                const res = await this.sigFoxApiDeviceService.getById(
+                const res = await this.sigFoxApiDeviceService.getByIdSimple(
                     sigfoxGroup,
                     cast.deviceId
                 );

@@ -201,7 +201,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
             .expect(400)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "MESSAGE.GATEWAY_ID_NOT_ALLOWED_IN_UPDATE",
+                    message: "MESSAGE.GATEWAY-ID-NOT-ALLOWED-IN-UPDATE",
                 });
             });
     });

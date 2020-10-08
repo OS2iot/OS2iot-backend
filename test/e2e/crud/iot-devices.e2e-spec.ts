@@ -368,7 +368,6 @@ describe("IoTDeviceController (e2e)", () => {
             latitude: 56.78,
             sigfoxSettings: {
                 deviceId: SIGFOX_DEVICE_ID,
-                deviceTypeId: SIGFOX_DEVICE_TYPE_ID,
                 connectToExistingDeviceInBackend: true,
                 groupId: sigFoxGroup.id,
             },
