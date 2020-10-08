@@ -37,10 +37,12 @@ export class SigFoxGroupService {
                     id: organizationId,
                 },
             },
-            select: ["username", "password"],
+            select: ["username", "password", "id"],
             relations: ["belongsTo"],
         });
 
+        // TODO: Find a better way to do this
+        //  - Deduplicate lookups at least.
         await this.addSigFoxDataToAllGroupsAndSave(data);
 
         return {
