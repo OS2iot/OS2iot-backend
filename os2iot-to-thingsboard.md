@@ -83,7 +83,7 @@ Note: humidity has a funny rounding because this is javascript!
 -   Type: "HTTP"'
 -   Enable debug mode for now
 -   Uplink data converter: Select the one made above.
--   Copy "Http endpoint URL" (e.g. http://13.93.68.3/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f)
+-   Copy "Http endpoint URL" (e.g. https://IoT-dataplatform.aarhuskommune.dk/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f)
 
 ## Step three: Test if the integration is setup correctly
 
@@ -92,7 +92,7 @@ Note: humidity has a funny rounding because this is javascript!
 -   Example using CURL in bash:
 
     ```sh
-    curl -v -d '{ "relative_humidity_percent": 0.55, "temperature_celcius": 23 }' -H 'Content-Type:application/json' "http://13.93.68.3/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f"
+    curl -v -d '{ "relative_humidity_percent": 0.55, "temperature_celcius": 23 }' -H 'Content-Type:application/json' "https://IoT-dataplatform.aarhuskommune.dk/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f"
     ```
 
     -   Should give: `< HTTP/1.1 204` (no content)

@@ -52,7 +52,7 @@ describe("HttpPushDataTargetService (e2e)", () => {
         // Arrange
         const config: HttpPushDataTargetConfiguration = {
             url:
-                "http://13.93.68.3/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f",
+                "https://IoT-dataplatform.aarhuskommune.dk/api/v1/integrations/http/e1a7a88c42fa43dfe6204a9443a7554f",
             timeout: 30000,
             authorizationType: AuthorizationType.NO_AUTHORIZATION,
         };
