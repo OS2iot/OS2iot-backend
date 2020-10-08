@@ -55,6 +55,10 @@ export class IoTDeviceService {
         });
     }
 
+    async findAllSigFoxDevices(): Promise<SigFoxDevice[]> {
+        return await this.sigFoxRepository.find();
+    }
+
     async findManyByIds(iotDeviceIds: number[]): Promise<IoTDevice[]> {
         if (iotDeviceIds == null || iotDeviceIds?.length == 0) {
             return [];
@@ -214,6 +218,10 @@ export class IoTDeviceService {
 
     async delete(id: number): Promise<DeleteResult> {
         return this.iotDeviceRepository.delete(id);
+    }
+
+    async deleteMany(ids: number[]): Promise<DeleteResult> {
+        return this.iotDeviceRepository.delete(ids);
     }
 
     private async mapDtoToIoTDevice(

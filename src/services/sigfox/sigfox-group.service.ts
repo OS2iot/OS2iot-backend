@@ -30,7 +30,15 @@ export class SigFoxGroupService {
 
     private readonly logger = new Logger(SigFoxGroupService.name);
 
-    async findAll(organizationId: number): Promise<ListAllSigFoxGroupReponseDto> {
+    async findAll(): Promise<SigFoxGroup[]> {
+        return await this.repository.find({
+            select: ["username", "password"],
+        });
+    }
+
+    async findAllForOrganization(
+        organizationId: number
+    ): Promise<ListAllSigFoxGroupReponseDto> {
         const [data, count] = await this.repository.findAndCount({
             where: {
                 belongsTo: {
