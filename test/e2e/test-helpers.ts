@@ -25,6 +25,8 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
+import { SigFoxApiSingleDeviceResponseDto } from "@dto/sigfox/external/sigfox-api-single-device-response.dto";
+import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -42,6 +44,29 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "organization";  \n` +
             `DELETE FROM "sigfox_group";  \n`
     );
+}
+
+export function generateSigfoxDeviceFromData(
+    application: Application,
+    backendDevice: SigFoxApiDeviceContent
+): SigFoxDevice {
+    const sigFoxDevice = new SigFoxDevice();
+    sigFoxDevice.name = "E2E Test SigFox Device";
+    sigFoxDevice.application = application;
+    sigFoxDevice.deviceId = backendDevice.id;
+    sigFoxDevice.deviceTypeId = backendDevice.deviceType.id;
+    sigFoxDevice.groupId = backendDevice.group.id;
+    sigFoxDevice.metadata = JSON.parse('""');
+
+    return sigFoxDevice;
+}
+
+export async function generateSavedSigfoxDeviceFromData(
+    application: Application,
+    backendDevice: SigFoxApiDeviceContent
+): Promise<SigFoxDevice> {
+    const device = generateSigfoxDeviceFromData(application, backendDevice);
+    return await getManager().save(device);
 }
 
 export async function generateSavedSigFoxGroup(org: Organization): Promise<SigFoxGroup> {

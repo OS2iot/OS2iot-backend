@@ -5,9 +5,12 @@ import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-t
 import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigFoxUsersModule } from "@modules/device-integrations/sigfox-users.module";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 @Module({
     imports: [
+        ConfigModule.forRoot({ load: [configuration] }),
         AuthModule,
         SigFoxGroupModule,
         SigFoxAdministrationModule,

@@ -76,6 +76,15 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
         await app.close();
     });
 
+    it("service - addOrUpdateCallback", async () => {
+        // Arrange
+
+        // Act
+        await service.addOrUpdateCallback(sigFoxGroup, SIGFOX_DEVICE_TYPE_ID);
+
+        // Assert
+    });
+
     it("(GET) /sigfox-device-type - OK", async () => {
         // Arrange
 
