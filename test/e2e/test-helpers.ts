@@ -581,18 +581,15 @@ export const SIGFOX_PAYLOAD_2 = `{
   }`;
 
 export const SIGFOX_PAYLOAD = `{
-                "data": "c6099764",
-                "sigfoxId": "${SIGFOX_DEVICE_ID}",
-                "time": "1596721546",
-                "snr": "12.53",
-                "rssi": "-123.00",
-                "avgSnr": "null",
-                "station": "37FF",
-                "seqNumber": "1",
-                "latStation": "null",
-                "lngStation": "null",
-                "ack": "false"
-            }`;
+  "time": 1602167366,
+  "deviceTypeId": "${SIGFOX_DEVICE_TYPE_ID}",
+  "deviceId": "${SIGFOX_DEVICE_ID}",
+  "snr": 13.00,
+  "rssi": -119.00,
+  "station": "2406",
+  "data": "be099471",
+  "seqNumber": 486
+}`;
 
 export function generateSigfoxRawRequestDto(iotDeviceId?: number): RawRequestDto {
     return {
