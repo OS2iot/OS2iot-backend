@@ -16,7 +16,8 @@ export enum ErrorCodes {
     UserInactive = "MESSAGE.USER-INACTIVE",
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION",
     PasswordNotMetRequirements = "MESSAGE.PASSWORD-DOES-NOT-MEET-REQUIREMENTS",
-    SIGFOX_BAD_LOGIN = "MESSAGE.SIGFOX_BAD_LOGIN",
-    GatewayIdNotAllowedInUpdate = "MESSAGE.GATEWAY_ID_NOT_ALLOWED_IN_UPDATE",
+    SigFoxBadLogin = "MESSAGE.SIGFOX-BAD-LOGIN",
+    GatewayIdNotAllowedInUpdate = "MESSAGE.GATEWAY-ID-NOT-ALLOWED-IN-UPDATE",
     GroupCanOnlyBeCreatedOncePrOrganization = "MESSAGE.GROUP-CAN-ONLY-BE-CREATED-ONCE-PR-ORGANIZATION",
+    DeviceDoesNotExistInSigFoxForGroup = "MESSAGE.DEVICE-DOES-NOT-EXIST-IN-SIGFOX-FOR-GROUP",
 }
