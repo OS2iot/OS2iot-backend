@@ -1,5 +1,9 @@
 import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
-import { SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { SigFoxApiBulkTransferRequestDto } from "@dto/sigfox/external/sigfox-api-bulk-transfer-request.dto";
+import {
+    SigFoxApiDeviceContent,
+    SigFoxApiDeviceResponse,
+} from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-reference.dto";
 import { SigFoxApiSingleDeviceResponseDto } from "@dto/sigfox/external/sigfox-api-single-device-response.dto";
 import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
@@ -20,10 +24,18 @@ export class SigFoxApiDeviceService {
         groupIds?: string[]
     ): Promise<SigFoxApiDeviceResponse> {
         let url = this.URL_BASE;
-        if (groupIds.length > 0) {
+        if (groupIds?.length > 0) {
             url += "?groupIds=" + groupIds.join(",");
         }
         return await this.genericService.get(url, sigfoxGroup);
+    }
+
+    async getByIdSimple(
+        sigfoxGroup: SigFoxGroup,
+        id: string
+    ): Promise<SigFoxApiDeviceContent> {
+        const devices = await this.getAllByGroupIds(sigfoxGroup);
+        return devices.data.find(x => x.id == id);
     }
 
     async getById(
@@ -52,11 +64,30 @@ export class SigFoxApiDeviceService {
 
     async delete(group: SigFoxGroup, id: string): Promise<void> {
         const deleteUrl = `${this.URL_BASE}/${id}`;
-        
+
         // To delete a sigfox device, first unsubscribe, then delete
         await this.unsubscribe(group, id);
 
         await this.genericService.delete(deleteUrl, group);
+    }
+
+    async changeDeviceType(
+        group: SigFoxGroup,
+        id: string,
+        newDeviceType: string
+    ): Promise<void> {
+        const dto: SigFoxApiBulkTransferRequestDto = {
+            deviceTypeId: newDeviceType,
+            data: [
+                {
+                    id: id,
+                    keepHistory: true,
+                    activable: true,
+                },
+            ],
+        };
+
+        await this.genericService.post(`${this.URL_BASE}/bulk/transfer`, dto, group);
     }
 
     private async unsubscribe(group: SigFoxGroup, id: string) {

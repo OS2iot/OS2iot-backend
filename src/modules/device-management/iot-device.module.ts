@@ -7,6 +7,7 @@ import { SharedModule } from "@modules/shared.module";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
 import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
+import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.mod
         ApplicationModule,
         SigfoxDeviceModule,
         SigFoxGroupModule,
+        SigfoxDeviceTypeModule,
     ],
     exports: [IoTDeviceService],
     controllers: [IoTDeviceController],

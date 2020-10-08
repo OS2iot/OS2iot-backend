@@ -17,5 +17,9 @@ export default (): any => {
             secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
             expiresIn: process.env.JWT_EXPIRESIN || "9h",
         },
+        backend: {
+            baseurl:
+                process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
+        },
     };
 };

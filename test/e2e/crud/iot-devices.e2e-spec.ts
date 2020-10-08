@@ -19,19 +19,26 @@ import {
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
     generateSavedSigfoxDevice,
+    generateSavedSigfoxDeviceFromData,
     generateSavedSigFoxGroup,
+    generateSigfoxDevice,
     generateValidJwtForUser,
     SIGFOX_DEVICE_ID,
     SIGFOX_DEVICE_TYPE_ID,
 } from "../test-helpers";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
+import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<GenericHTTPDevice>;
     let applicationRepository: Repository<Application>;
     let globalAdminJwt: string;
+    let service: IoTDeviceService;
+    let sigFoxApiDeviceService: SigFoxApiDeviceService;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -59,6 +66,8 @@ describe("IoTDeviceController (e2e)", () => {
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("GenericHTTPDeviceRepository");
         applicationRepository = moduleFixture.get("ApplicationRepository");
+        service = moduleFixture.get("IoTDeviceService");
+        sigFoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
     });
 
     afterAll(async () => {
@@ -360,7 +369,7 @@ describe("IoTDeviceController (e2e)", () => {
             sigfoxSettings: {
                 deviceId: SIGFOX_DEVICE_ID,
                 deviceTypeId: SIGFOX_DEVICE_TYPE_ID,
-                alreadyRegistered: true,
+                connectToExistingDeviceInBackend: true,
                 groupId: sigFoxGroup.id,
             },
         };
@@ -375,6 +384,49 @@ describe("IoTDeviceController (e2e)", () => {
             .then(response => {
                 expect(response.body).toMatchObject({
                     name: "E2E sigfox",
+                });
+            });
+    });
+
+    it("(PUT) /iot-device/:id - SigFox device - Change name", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const sigFoxGroup = await generateSavedSigFoxGroup(org);
+        // get device from sigfox backend and make a sigfoxdevice that represents it.
+        const backendDevice = await sigFoxApiDeviceService.getByIdSimple(
+            sigFoxGroup,
+            SIGFOX_DEVICE_ID
+        );
+        const device = await generateSavedSigfoxDeviceFromData(
+            application,
+            backendDevice
+        );
+
+        const dto: UpdateIoTDeviceDto = {
+            name: device.name + " - e2e",
+            applicationId: device.application.id,
+            type: device.type,
+            longitude: backendDevice.location.lng,
+            latitude: backendDevice.location.lat,
+            sigfoxSettings: {
+                deviceId: device.deviceId,
+                deviceTypeId: device.deviceTypeId,
+                connectToExistingDeviceInBackend: true,
+                groupId: sigFoxGroup.id,
+            },
+        };
+        // Act
+        await request(app.getHttpServer())
+            .put("/iot-device/" + device.id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            // Assert
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: device.name + " - e2e",
                 });
             });
     });

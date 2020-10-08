@@ -3,11 +3,14 @@ import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     BadRequestException,
+    HttpException,
     HttpService,
+    HttpStatus,
     Injectable,
     Logger,
     UnauthorizedException,
 } from "@nestjs/common";
+import { ApiTooManyRequestsResponse } from "@nestjs/swagger";
 import { AxiosRequestConfig, Method } from "axios";
 import { ISetupCache, setupCache } from "axios-cache-adapter";
 
@@ -115,15 +118,28 @@ export class GenericSigfoxAdministationService {
             throw new BadRequestException(response?.data?.errors);
         }
 
-        if (response?.status == 429) {
-            this.logger.error("Too many requsts to SigFox");
-            throw err;
-        }
+        this.handleSigFox429<T>(response);
 
         this.logger.error(
             `Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`
         );
         throw err;
+    }
+
+    private handleSigFox429<T>(response: any) {
+        if (response?.status == 429) {
+            this.logger.error(
+                `Request to '${response.request.method} ${response.request.path}' got 'Too many requsts' ...`
+            );
+            throw new HttpException(
+                {
+                    statusCode: HttpStatus.TOO_MANY_REQUESTS,
+                    error: "Too Many Requests",
+                    message: "SigFox requests are limited. " + response.data.message,
+                },
+                429
+            );
+        }
     }
 
     private async generateAxiosConfig(
