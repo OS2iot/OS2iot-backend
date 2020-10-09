@@ -50,15 +50,15 @@ export function generateSigfoxDeviceFromData(
     application: Application,
     backendDevice: SigFoxApiDeviceContent
 ): SigFoxDevice {
-    const sigFoxDevice = new SigFoxDevice();
-    sigFoxDevice.name = "E2E Test SigFox Device";
-    sigFoxDevice.application = application;
-    sigFoxDevice.deviceId = backendDevice.id;
-    sigFoxDevice.deviceTypeId = backendDevice.deviceType.id;
-    sigFoxDevice.groupId = backendDevice.group.id;
-    sigFoxDevice.metadata = JSON.parse('""');
+    const sigfoxDevice = new SigFoxDevice();
+    sigfoxDevice.name = "E2E Test SigFox Device";
+    sigfoxDevice.application = application;
+    sigfoxDevice.deviceId = backendDevice.id;
+    sigfoxDevice.deviceTypeId = backendDevice.deviceType.id;
+    sigfoxDevice.groupId = backendDevice.group.id;
+    sigfoxDevice.metadata = JSON.parse('""');
 
-    return sigFoxDevice;
+    return sigfoxDevice;
 }
 
 export async function generateSavedSigfoxDeviceFromData(
@@ -77,7 +77,7 @@ export function generateSigFoxGroup(org: Organization): SigFoxGroup {
     const sigfoxGroup = new SigFoxGroup();
     sigfoxGroup.username = "5f2d1069e833d903621ff237";
     sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
-    sigfoxGroup.sigFoxGroupId = "5e74c24476600f14bab7e0bd";
+    sigfoxGroup.sigfoxGroupId = "5e74c24476600f14bab7e0bd";
     sigfoxGroup.belongsTo = org;
     return sigfoxGroup;
 }
@@ -204,14 +204,14 @@ export const SIGFOX_DEVICE_ID = "B445A9";
 export const SIGFOX_DEVICE_ID_2 = "B443A5";
 export const SIGFOX_DEVICE_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
 export function generateSigfoxDevice(application: Application): SigFoxDevice {
-    const sigFoxDevice = new SigFoxDevice();
-    sigFoxDevice.name = "E2E Test SigFox Device";
-    sigFoxDevice.application = application;
-    sigFoxDevice.deviceId = SIGFOX_DEVICE_ID;
-    sigFoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
-    sigFoxDevice.metadata = JSON.parse('""');
+    const sigfoxDevice = new SigFoxDevice();
+    sigfoxDevice.name = "E2E Test SigFox Device";
+    sigfoxDevice.application = application;
+    sigfoxDevice.deviceId = SIGFOX_DEVICE_ID;
+    sigfoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
+    sigfoxDevice.metadata = JSON.parse('""');
 
-    return sigFoxDevice;
+    return sigfoxDevice;
 }
 
 export async function generateSavedSigfoxDevice(app: Application): Promise<SigFoxDevice> {

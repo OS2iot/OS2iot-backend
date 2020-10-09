@@ -72,9 +72,9 @@ export class SigfoxDeviceTypeController {
             groupId
         );
         checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
-        const sigFoxApiGroup = await this.usersService.getByUserId(group.username, group);
+        const sigfoxApiGroup = await this.usersService.getByUserId(group.username, group);
 
-        return await this.service.getAllByGroupIds(group, [sigFoxApiGroup.group.id]);
+        return await this.service.getAllByGroupIds(group, [sigfoxApiGroup.group.id]);
     }
 
     @Get(":id")

@@ -113,7 +113,7 @@ describe("SigfoxGroupController (e2e)", () => {
                             belongsTo: {
                                 id: org.id,
                             },
-                            sigFoxGroupData: {
+                            sigfoxGroupData: {
                                 id: "5e74c24476600f14bab7e0bd",
                                 name: "Aarhus kommune",
                             },
@@ -142,7 +142,7 @@ describe("SigfoxGroupController (e2e)", () => {
                     belongsTo: {
                         id: org.id,
                     },
-                    sigFoxGroupData: {
+                    sigfoxGroupData: {
                         id: "5e74c24476600f14bab7e0bd",
                         name: "Aarhus kommune",
                     },
@@ -188,7 +188,7 @@ describe("SigfoxGroupController (e2e)", () => {
                     belongsTo: {
                         id: org.id,
                     },
-                    sigFoxGroupData: {
+                    sigfoxGroupData: {
                         id: "5e74c24476600f14bab7e0bd",
                         name: "Aarhus kommune",
                     },
@@ -248,7 +248,7 @@ describe("SigfoxGroupController (e2e)", () => {
                     belongsTo: {
                         id: org.id,
                     },
-                    sigFoxGroupData: {
+                    sigfoxGroupData: {
                         id: "5e74c24476600f14bab7e0bd",
                         name: "Aarhus kommune",
                     },

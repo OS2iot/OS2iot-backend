@@ -22,13 +22,13 @@ export class PeriodicSigFoxCleanupService {
     @Cron(CronExpression.EVERY_5_MINUTES)
     async cleanupDevicesRemovedFromSigFoxBackend(): Promise<void> {
         // get all sigfox devices in database
-        const sigFoxDevicesInDatabasePromise = this.iotDevicService.findAllSigFoxDevices();
+        const sigfoxDevicesInDatabasePromise = this.iotDevicService.findAllSigFoxDevices();
         // get all sigfox groups
         const flattenedSigFoxDevices = await this.getDevicesInSigFoxBackend();
-        const sigFoxDevicesInDb = await sigFoxDevicesInDatabasePromise;
+        const sigfoxDevicesInDb = await sigfoxDevicesInDatabasePromise;
         // Find all devices ONLY in database and not in sigfox backend
         const devicesToRemove = _.differenceBy(
-            sigFoxDevicesInDb,
+            sigfoxDevicesInDb,
             flattenedSigFoxDevices,
             x => {
                 return this.getId(x);
@@ -43,15 +43,15 @@ export class PeriodicSigFoxCleanupService {
     }
 
     private async getDevicesInSigFoxBackend() {
-        const sigFoxGroups = await this.sigfoxGroupService.findAll();
-        const uniqueSigFoxGroups = _.uniqBy(sigFoxGroups, x => x.username);
+        const sigfoxGroups = await this.sigfoxGroupService.findAll();
+        const uniqueSigFoxGroups = _.uniqBy(sigfoxGroups, x => x.username);
         // get all sigfox devices in sigfox backend
-        const sigFoxDevicesInBackend = await Promise.all(
+        const sigfoxDevicesInBackend = await Promise.all(
             uniqueSigFoxGroups.map(
                 async x => (await this.sigfoxApiDeviceService.getAllByGroupIds(x)).data
             )
         );
-        const flattenedSigFoxDevices = _.flatten(sigFoxDevicesInBackend);
+        const flattenedSigFoxDevices = _.flatten(sigfoxDevicesInBackend);
         return flattenedSigFoxDevices;
     }
 

@@ -130,11 +130,11 @@ export class SigFoxApiDeviceTypeService {
         dto: CreateSigFoxApiDeviceTypeRequestDto,
         sigfoxGroup: SigFoxGroup
     ) {
-        const sigFoxApiGroup = await this.usersService.getByUserId(
+        const sigfoxApiGroup = await this.usersService.getByUserId(
             sigfoxGroup.username,
             sigfoxGroup
         );
-        dto.groupId = sigFoxApiGroup.group.id;
+        dto.groupId = sigfoxApiGroup.group.id;
 
         dto.downlinkMode = SigFoxDownlinkMode.CALLBACK;
         dto.downlinkDataString = null;

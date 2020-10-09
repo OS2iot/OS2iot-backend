@@ -73,15 +73,15 @@ export class SigFoxGroupService {
             apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
         } catch (err) {
             this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
-            group.sigFoxGroupData = null;
+            group.sigfoxGroupData = null;
             return group;
         }
         if (apiGroupResponse.data.length > 1) {
             this.logger.warn(`API user ${group.id} has access to more than one group`);
         }
         const firstGroup = apiGroupResponse.data[0];
-        group.sigFoxGroupData = firstGroup;
-        group.sigFoxGroupId = group.sigFoxGroupData.id;
+        group.sigfoxGroupData = firstGroup;
+        group.sigfoxGroupId = group.sigfoxGroupData.id;
         await this.repository.save(group);
         // remove password again ...
         group.password = undefined;
@@ -98,22 +98,22 @@ export class SigFoxGroupService {
     async findOneForPermissionCheck(id: number): Promise<SigFoxGroup> {
         return await this.repository.findOneOrFail(id, {
             relations: ["belongsTo"],
-            select: ["username", "sigFoxGroupId", "id"],
+            select: ["username", "sigfoxGroupId", "id"],
         });
     }
 
     async findOneWithPassword(id: number): Promise<SigFoxGroup> {
         return await this.repository.findOneOrFail(id, {
             relations: ["belongsTo"],
-            select: ["username", "password", "sigFoxGroupId", "id"],
+            select: ["username", "password", "sigfoxGroupId", "id"],
         });
     }
 
     async findOneByGroupId(groupId: string): Promise<SigFoxGroup> {
         return await this.repository.findOneOrFail({
-            where: { sigFoxGroupId: groupId },
+            where: { sigfoxGroupId: groupId },
             relations: ["belongsTo"],
-            select: ["id", "username", "password", "sigFoxGroupId"],
+            select: ["id", "username", "password", "sigfoxGroupId"],
         });
     }
 
