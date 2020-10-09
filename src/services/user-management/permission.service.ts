@@ -203,8 +203,35 @@ export class PermissionService {
             .getRawMany();
     }
 
+    async findPermissionsForOrgAdminWithApplications(
+        userId: number
+    ): Promise<PermissionMinimalDto[]> {
+        return await this.permissionReposity
+            .createQueryBuilder("permission")
+            .leftJoin("permission.users", "user")
+            .leftJoinAndSelect("permission.organization", "organization")
+            .leftJoinAndSelect("organization.applications", "application")
+            .where("permission.type = :permType AND user.id = :id", {
+                permType: PermissionType.OrganizationAdmin,
+                id: userId,
+            })
+            .select([
+                "permission.type as permission_type",
+                "permission.organization as organization_id",
+                "application.id as application_id",
+            ])
+            .getRawMany();
+    }
+
     async findPermissionGroupedByLevelForUser(userId: number): Promise<UserPermissions> {
-        const permissions = await this.findPermissionsForUser(userId);
+        let permissions = await this.findPermissionsForUser(userId);
+        if (this.isOrganizationAdmin(permissions)) {
+            // For organization admins, we need to fetch all applications they have permissions to
+            const permissionsForOrgAdmin = await this.findPermissionsForOrgAdminWithApplications(
+                userId
+            );
+            permissions = _.union(permissions, permissionsForOrgAdmin);
+        }
 
         const res = new UserPermissions();
 
@@ -223,6 +250,12 @@ export class PermissionService {
         });
 
         return res;
+    }
+
+    private isOrganizationAdmin(permissions: PermissionMinimalDto[]) {
+        return permissions.some(
+            x => x.permission_type == PermissionType.OrganizationAdmin
+        );
     }
 
     private addOrUpdate(permissions: Map<number, number[]>, p: PermissionMinimalDto) {
