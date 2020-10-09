@@ -34,10 +34,12 @@ export class PeriodicSigFoxCleanupService {
                 return this.getId(x);
             }
         );
-        // Delete them
-        const idsToDelete = devicesToRemove.map(x => x.id);
-        this.logger.log(`Will remove devices: ${idsToDelete.join(", ")}`);
-        await this.iotDevicService.deleteMany(idsToDelete);
+        if (devicesToRemove.length > 0) {
+            // Delete them
+            const idsToDelete = devicesToRemove.map(x => x.id);
+            this.logger.log(`Will remove devices: ${idsToDelete.join(", ")}`);
+            await this.iotDevicService.deleteMany(idsToDelete);
+        }
     }
 
     private async getDevicesInSigFoxBackend() {
