@@ -33,7 +33,10 @@ import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-reque
 import { OrganizationPermission } from "@entities/organizion-permission.entity";
 import { Permission } from "@entities/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
-import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import {
+    checkIfUserHasAdminAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
+} from "@helpers/security-helper";
 import { PermissionService } from "@services/user-management/permission.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -65,7 +68,15 @@ export class PermissionController {
         @Body() dto: UpdatePermissionDto
     ): Promise<Permission> {
         const permission = await this.permissionService.getPermission(id);
-        checkIfUserHasAdminAccessToOrganization(req, permission.id);
+        if (permission.type == PermissionType.GlobalAdmin) {
+            checkIfUserIsGlobalAdmin(req);
+        } else {
+            const organizationPermission = permission as OrganizationPermission;
+            checkIfUserHasAdminAccessToOrganization(
+                req,
+                organizationPermission.organization.id
+            );
+        }
 
         return await this.permissionService.updatePermission(id, dto);
     }
@@ -77,9 +88,14 @@ export class PermissionController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const permission = await this.permissionService.getPermission(id);
-        checkIfUserHasAdminAccessToOrganization(req, permission.id);
         if (permission.type == PermissionType.GlobalAdmin) {
             throw new BadRequestException("You cannot delete GlobalAdmin");
+        } else {
+            const organizationPermission = permission as OrganizationPermission;
+            checkIfUserHasAdminAccessToOrganization(
+                req,
+                organizationPermission.organization.id
+            );
         }
 
         return await this.permissionService.deletePermission(id);

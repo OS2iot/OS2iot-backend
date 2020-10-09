@@ -217,6 +217,93 @@ describe("PermissionController (e2e)", () => {
         );
     });
 
+    it("(PUT) /permission/:id - Org admin - change permission", async () => {
+        const org = await generateSavedOrganization("E2E");
+        const userToAdd = await generateSavedOrganizationAdminUser(org);
+        const orgAdminUser = await generateSavedOrganizationAdminUser(org);
+        const jwt = generateValidJwtForUser(orgAdminUser);
+
+        const permissionToChange = org.permissions.find(
+            x => x.constructor.name == "ReadPermission"
+        );
+
+        const dto: UpdatePermissionDto = {
+            name: "E2E readers - changed",
+            userIds: [userToAdd.id],
+            applicationIds: (permissionToChange as OrganizationApplicationPermission)?.applications?.map(
+                x => x.id
+            ),
+        };
+
+        await request(app.getHttpServer())
+            .put("/permission/" + permissionToChange.id)
+            .auth(jwt, { type: "bearer" })
+            .send(dto)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: dto.name,
+                    organization: {
+                        id: org.id,
+                    },
+                });
+            });
+
+        const changedPermission = await getManager().findOne(
+            ReadPermission,
+            permissionToChange.id,
+            {
+                relations: ["users"],
+            }
+        );
+        expect(changedPermission.name).toBe(dto.name);
+        expect(changedPermission.users).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: userToAdd.id,
+                }),
+            ])
+        );
+    });
+
+    it("(DELETE) /permission/:id - Org admin - Delete a permission", async () => {
+        const org = await generateSavedOrganization("E2E");
+        const orgAdminUser = await generateSavedOrganizationAdminUser(org);
+        const jwt = generateValidJwtForUser(orgAdminUser);
+
+        const permissionToDelete = org.permissions.find(
+            x => x.constructor.name == "ReadPermission"
+        );
+
+        return await request(app.getHttpServer())
+            .delete("/permission/" + permissionToDelete.id)
+            .auth(jwt, { type: "bearer" })
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    affected: 1,
+                });
+            });
+    });
+
+    it("(DELETE) /permission/:id - Org admin - Delete a permission, not allowed", async () => {
+        const org = await generateSavedOrganization("E2E");
+        const org2 = await generateSavedOrganization("E2E-2");
+        const orgAdminUser = await generateSavedOrganizationAdminUser(org2);
+        const jwt = generateValidJwtForUser(orgAdminUser);
+
+        const permissionToDelete = org.permissions.find(
+            x => x.constructor.name == "ReadPermission"
+        );
+
+        return await request(app.getHttpServer())
+            .delete("/permission/" + permissionToDelete.id)
+            .auth(jwt, { type: "bearer" })
+            .expect(403);
+    });
+
     it("(DELETE) /permission/:id - Delete a permission", async () => {
         const org = await generateSavedOrganization("E2E");
 
