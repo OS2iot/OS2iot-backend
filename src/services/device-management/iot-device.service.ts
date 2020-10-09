@@ -316,7 +316,7 @@ export class IoTDeviceService {
             dto.sigfoxSettings.groupId
         );
 
-        await this.checkOrCreateSigFoxDevice(dto, sigfoxGroup, cast);
+        await this.createOrUpdateSigFoxDevice(dto, sigfoxGroup, cast);
 
         if (isUpdate) {
             // Edit
@@ -331,7 +331,7 @@ export class IoTDeviceService {
         return cast;
     }
 
-    private async checkOrCreateSigFoxDevice(
+    private async createOrUpdateSigFoxDevice(
         dto: CreateIoTDeviceDto,
         sigfoxGroup: SigFoxGroup,
         cast: SigFoxDevice
@@ -349,6 +349,7 @@ export class IoTDeviceService {
                 );
                 cast.deviceId = res.id;
                 cast.deviceTypeId = res.deviceType.id;
+                await this.doEditInSigFoxBackend(res, dto, sigfoxGroup, cast);
             } catch (err) {
                 throw new BadRequestException(
                     ErrorCodes.DeviceDoesNotExistInSigFoxForGroup
@@ -366,6 +367,20 @@ export class IoTDeviceService {
             sigfoxGroup,
             sigfoxDevice.deviceId
         );
+        await this.doEditInSigFoxBackend(
+            currentSigFoxSettings,
+            dto,
+            sigfoxGroup,
+            sigfoxDevice
+        );
+    }
+
+    private async doEditInSigFoxBackend(
+        currentSigFoxSettings: SigFoxApiDeviceContent,
+        dto: CreateIoTDeviceDto,
+        sigfoxGroup: SigFoxGroup,
+        sigfoxDevice: SigFoxDevice
+    ) {
         await Promise.all([
             this.updateSigFoxDevice(
                 currentSigFoxSettings,
@@ -409,7 +424,10 @@ export class IoTDeviceService {
         sigfoxGroup: SigFoxGroup,
         sigfoxDevice: SigFoxDevice
     ) {
-        if (currentSigFoxSettings.deviceType.id != dto.sigfoxSettings.deviceTypeId) {
+        if (
+            dto.sigfoxSettings.deviceTypeId != null &&
+            currentSigFoxSettings.deviceType.id != dto.sigfoxSettings.deviceTypeId
+        ) {
             this.logger.log(
                 `Changing deviceType from ${currentSigFoxSettings.deviceType.id} to ${dto.sigfoxSettings.deviceTypeId}`
             );
