@@ -1,6 +1,6 @@
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
-import { SigFoxApiDeviceContent } from "./sigfox/external/sigfox-api-device-response.dto";
+import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
 
 export class SigFoxDeviceWithBackendDataDto extends SigFoxDevice {
-    sigFoxSettings: SigFoxApiDeviceContent;
+    sigFoxSettings: CreateSigFoxSettingsDto;
 }

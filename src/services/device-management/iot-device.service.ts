@@ -29,6 +29,7 @@ import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
+import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -107,9 +108,24 @@ export class IoTDeviceService {
             sigFoxGroup,
             sigFoxDevice
         );
-        sigFoxDevice.sigFoxSettings = thisDevice;
+        sigFoxDevice.sigFoxSettings = await this.mapSigFoxBackendDataToDto(thisDevice);
 
         return sigFoxDevice;
+    }
+
+    async mapSigFoxBackendDataToDto(
+        thisDevice: SigFoxApiDeviceContent
+    ): Promise<CreateSigFoxSettingsDto> {
+        const group = await this.sigFoxGroupService.findOneByGroupId(thisDevice.group.id);
+        return {
+            deviceId: thisDevice.id,
+            deviceTypeId: thisDevice.deviceType.id,
+            groupId: group.id,
+            connectToExistingDeviceInBackend: true,
+            pac: thisDevice.pac,
+            endProductCertificate: thisDevice.productCertificate.key,
+            prototype: thisDevice.prototype,
+        };
     }
 
     /**

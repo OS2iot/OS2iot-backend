@@ -23,7 +23,7 @@ export interface SigFoxApiDeviceContent {
     creationTime: any;
     modemCertificate: SigFoxApiIdReferenceDto;
     prototype: boolean;
-    productCertificate: SigFoxApiIdReferenceDto;
+    productCertificate: SigFoxProductCertificateIdKey;
     automaticRenewal: boolean;
     automaticRenewalStatus: number;
     createdBy: string;
@@ -43,4 +43,9 @@ export interface Token {
     end: any;
     freeMessages?: number;
     freeMessagesSent?: number;
+}
+
+export interface SigFoxProductCertificateIdKey {
+    id: number;
+    key: string;
 }

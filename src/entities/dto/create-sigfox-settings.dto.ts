@@ -19,7 +19,7 @@ export class CreateSigFoxSettingsDto {
     groupId: number;
 
     @ApiProperty({ required: false })
-    connectToExistingDeviceInBackend: boolean;
+    connectToExistingDeviceInBackend?: boolean;
 
     @ApiProperty({ required: false })
     @IsOptional()
