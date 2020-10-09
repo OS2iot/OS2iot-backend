@@ -37,16 +37,16 @@ export class IoTDeviceService {
         @InjectRepository(GenericHTTPDevice)
         private genericHTTPDeviceRepository: Repository<GenericHTTPDevice>,
         @InjectRepository(SigFoxDevice)
-        private sigFoxRepository: Repository<SigFoxDevice>,
+        private sigfoxRepository: Repository<SigFoxDevice>,
         @InjectRepository(IoTDevice)
         private iotDeviceRepository: Repository<IoTDevice>,
         @InjectRepository(LoRaWANDevice)
         private loRaWANDeviceRepository: Repository<LoRaWANDevice>,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
-        private sigFoxApiDeviceService: SigFoxApiDeviceService,
-        private sigFoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
-        private sigFoxGroupService: SigFoxGroupService
+        private sigfoxApiDeviceService: SigFoxApiDeviceService,
+        private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
+        private sigfoxGroupService: SigFoxGroupService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -57,7 +57,7 @@ export class IoTDeviceService {
     }
 
     async findAllSigFoxDevices(): Promise<SigFoxDevice[]> {
-        return await this.sigFoxRepository.find();
+        return await this.sigfoxRepository.find();
     }
 
     async findManyByIds(iotDeviceIds: number[]): Promise<IoTDevice[]> {
@@ -98,25 +98,25 @@ export class IoTDeviceService {
     async enrichSigFoxDevice(
         iotDevice: IoTDevice
     ): Promise<SigFoxDeviceWithBackendDataDto> {
-        const sigFoxDevice = iotDevice as SigFoxDeviceWithBackendDataDto;
+        const sigfoxDevice = iotDevice as SigFoxDeviceWithBackendDataDto;
 
-        const sigFoxGroup = await this.sigFoxGroupService.findOneByGroupId(
-            sigFoxDevice.groupId
+        const sigfoxGroup = await this.sigfoxGroupService.findOneByGroupId(
+            sigfoxDevice.groupId
         );
 
         const thisDevice = await this.getDataFromSigFoxAboutDevice(
-            sigFoxGroup,
-            sigFoxDevice
+            sigfoxGroup,
+            sigfoxDevice
         );
-        sigFoxDevice.sigFoxSettings = await this.mapSigFoxBackendDataToDto(thisDevice);
+        sigfoxDevice.sigfoxSettings = await this.mapSigFoxBackendDataToDto(thisDevice);
 
-        return sigFoxDevice;
+        return sigfoxDevice;
     }
 
     async mapSigFoxBackendDataToDto(
         thisDevice: SigFoxApiDeviceContent
     ): Promise<CreateSigFoxSettingsDto> {
-        const group = await this.sigFoxGroupService.findOneByGroupId(thisDevice.group.id);
+        const group = await this.sigfoxGroupService.findOneByGroupId(thisDevice.group.id);
         return {
             deviceId: thisDevice.id,
             deviceTypeId: thisDevice.deviceType.id,
@@ -133,15 +133,15 @@ export class IoTDeviceService {
      * https://support.sigfox.com/docs/api-rate-limiting
      */
     private async getDataFromSigFoxAboutDevice(
-        sigFoxGroup: SigFoxGroup,
-        sigFoxDevice: SigFoxDeviceWithBackendDataDto
+        sigfoxGroup: SigFoxGroup,
+        sigfoxDevice: SigFoxDeviceWithBackendDataDto
     ) {
-        const allDevices = await this.sigFoxApiDeviceService.getAllByGroupIds(
-            sigFoxGroup,
-            [sigFoxDevice.groupId]
+        const allDevices = await this.sigfoxApiDeviceService.getAllByGroupIds(
+            sigfoxGroup,
+            [sigfoxDevice.groupId]
         );
 
-        const thisDevice = allDevices.data.find(x => x.id == sigFoxDevice.deviceId);
+        const thisDevice = allDevices.data.find(x => x.id == sigfoxDevice.deviceId);
         return thisDevice;
     }
 
@@ -191,7 +191,7 @@ export class IoTDeviceService {
         deviceId: string,
         apiKey: string
     ): Promise<SigFoxDevice> {
-        return await this.sigFoxRepository.findOne({
+        return await this.sigfoxRepository.findOne({
             deviceId: deviceId,
             deviceTypeId: apiKey,
         });
@@ -312,7 +312,7 @@ export class IoTDeviceService {
         cast.deviceId = dto?.sigfoxSettings?.deviceId;
         cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
 
-        const sigfoxGroup = await this.sigFoxGroupService.findOneWithPassword(
+        const sigfoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             dto.sigfoxSettings.groupId
         );
 
@@ -323,7 +323,7 @@ export class IoTDeviceService {
             await this.editInSigFoxBackend(dto, cast, sigfoxGroup);
         }
 
-        await this.sigFoxApiDeviceTypeService.addOrUpdateCallback(
+        await this.sigfoxApiDeviceTypeService.addOrUpdateCallback(
             sigfoxGroup,
             cast.deviceTypeId
         );
@@ -343,7 +343,7 @@ export class IoTDeviceService {
         } else {
             // Ensure that the device exists
             try {
-                const res = await this.sigFoxApiDeviceService.getByIdSimple(
+                const res = await this.sigfoxApiDeviceService.getByIdSimple(
                     sigfoxGroup,
                     cast.deviceId
                 );
@@ -362,7 +362,7 @@ export class IoTDeviceService {
         sigfoxDevice: SigFoxDevice,
         sigfoxGroup: SigFoxGroup
     ) {
-        const currentSigFoxSettings = await this.sigFoxApiDeviceService.getByIdSimple(
+        const currentSigFoxSettings = await this.sigfoxApiDeviceService.getByIdSimple(
             sigfoxGroup,
             sigfoxDevice.deviceId
         );
@@ -396,7 +396,7 @@ export class IoTDeviceService {
             name: dto.name,
         };
 
-        await this.sigFoxApiDeviceService.update(
+        await this.sigfoxApiDeviceService.update(
             sigfoxGroup,
             sigfoxDevice.deviceId,
             updateDto
@@ -413,7 +413,7 @@ export class IoTDeviceService {
             this.logger.log(
                 `Changing deviceType from ${currentSigFoxSettings.deviceType.id} to ${dto.sigfoxSettings.deviceTypeId}`
             );
-            await this.sigFoxApiDeviceService.changeDeviceType(
+            await this.sigfoxApiDeviceService.changeDeviceType(
                 sigfoxGroup,
                 sigfoxDevice.deviceId,
                 dto.sigfoxSettings.deviceTypeId
@@ -425,10 +425,10 @@ export class IoTDeviceService {
         dto: CreateIoTDeviceDto,
         sigfoxGroup: SigFoxGroup
     ) {
-        const sigFoxDto: CreateSigFoxApiDeviceRequestDto = this.mapToSigFoxDto(dto);
+        const sigfoxDto: CreateSigFoxApiDeviceRequestDto = this.mapToSigFoxDto(dto);
 
         try {
-            return await this.sigFoxApiDeviceService.create(sigfoxGroup, sigFoxDto);
+            return await this.sigfoxApiDeviceService.create(sigfoxGroup, sigfoxDto);
         } catch (err) {
             this.logger.error(`Error creating sigfox device`);
             throw err;
@@ -436,7 +436,7 @@ export class IoTDeviceService {
     }
 
     private mapToSigFoxDto(dto: CreateIoTDeviceDto) {
-        const sigFoxDto: CreateSigFoxApiDeviceRequestDto = {
+        const sigfoxDto: CreateSigFoxApiDeviceRequestDto = {
             id: dto.sigfoxSettings.deviceId,
             name: dto.name,
             pac: dto.sigfoxSettings.pac,
@@ -448,12 +448,12 @@ export class IoTDeviceService {
             prototype: dto.sigfoxSettings.prototype,
         };
 
-        if (!sigFoxDto.prototype) {
-            sigFoxDto.productCertificate = {
+        if (!sigfoxDto.prototype) {
+            sigfoxDto.productCertificate = {
                 key: dto.sigfoxSettings.endProductCertificate,
             };
         }
-        return sigFoxDto;
+        return sigfoxDto;
     }
 
     private async mapLoRaWANDevice(

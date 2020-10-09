@@ -38,7 +38,7 @@ describe("IoTDeviceController (e2e)", () => {
     let applicationRepository: Repository<Application>;
     let globalAdminJwt: string;
     let service: IoTDeviceService;
-    let sigFoxApiDeviceService: SigFoxApiDeviceService;
+    let sigfoxApiDeviceService: SigFoxApiDeviceService;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -67,7 +67,7 @@ describe("IoTDeviceController (e2e)", () => {
         repository = moduleFixture.get("GenericHTTPDeviceRepository");
         applicationRepository = moduleFixture.get("ApplicationRepository");
         service = moduleFixture.get("IoTDeviceService");
-        sigFoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
+        sigfoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
     });
 
     afterAll(async () => {
@@ -334,12 +334,12 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
-        const sigFoxGroup = await generateSavedSigFoxGroup(org);
-        const sigFoxDevice = await generateSavedSigfoxDevice(application);
+        const sigfoxGroup = await generateSavedSigFoxGroup(org);
+        const sigfoxDevice = await generateSavedSigfoxDevice(application);
 
         // Act
         return await request(app.getHttpServer())
-            .get("/iot-device/" + sigFoxDevice.id)
+            .get("/iot-device/" + sigfoxDevice.id)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -347,9 +347,9 @@ describe("IoTDeviceController (e2e)", () => {
             .then(response => {
                 // console.log(response.body);
                 expect(response.body).toMatchObject({
-                    name: sigFoxDevice.name,
-                    sigFoxSettings: {
-                        deviceId: sigFoxDevice.deviceId,
+                    name: sigfoxDevice.name,
+                    sigfoxSettings: {
+                        deviceId: sigfoxDevice.deviceId,
                         deviceTypeId: "5e74c318aa8aec41f9cc6b8d",
                         endProductCertificate: "P_0006_321A_01",
                         pac: "04FB9B9DD7F45D4E",
@@ -363,7 +363,7 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
-        const sigFoxGroup = await generateSavedSigFoxGroup(org);
+        const sigfoxGroup = await generateSavedSigFoxGroup(org);
         const dto: CreateIoTDeviceDto = {
             name: "E2E sigfox",
             applicationId: application.id,
@@ -373,7 +373,7 @@ describe("IoTDeviceController (e2e)", () => {
             sigfoxSettings: {
                 deviceId: SIGFOX_DEVICE_ID,
                 connectToExistingDeviceInBackend: true,
-                groupId: sigFoxGroup.id,
+                groupId: sigfoxGroup.id,
             },
         };
 
@@ -395,10 +395,10 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
-        const sigFoxGroup = await generateSavedSigFoxGroup(org);
+        const sigfoxGroup = await generateSavedSigFoxGroup(org);
         // get device from sigfox backend and make a sigfoxdevice that represents it.
-        const backendDevice = await sigFoxApiDeviceService.getByIdSimple(
-            sigFoxGroup,
+        const backendDevice = await sigfoxApiDeviceService.getByIdSimple(
+            sigfoxGroup,
             SIGFOX_DEVICE_ID
         );
         const device = await generateSavedSigfoxDeviceFromData(
@@ -416,7 +416,7 @@ describe("IoTDeviceController (e2e)", () => {
                 deviceId: device.deviceId,
                 deviceTypeId: device.deviceTypeId,
                 connectToExistingDeviceInBackend: true,
-                groupId: sigFoxGroup.id,
+                groupId: sigfoxGroup.id,
             },
         };
         // Act

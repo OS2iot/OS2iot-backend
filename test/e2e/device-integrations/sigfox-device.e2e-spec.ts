@@ -29,7 +29,7 @@ import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sig
 describe("SigfoxDeviceService (e2e)", () => {
     let app: INestApplication;
     let org: Organization;
-    let sigFoxGroup: SigFoxGroup;
+    let sigfoxGroup: SigFoxGroup;
     let globalAdminJwt: string;
     let service: SigFoxApiDeviceService;
     let usersService: SigfoxApiUsersService;
@@ -63,7 +63,7 @@ describe("SigfoxDeviceService (e2e)", () => {
         await clearDatabase();
 
         org = await generateSavedOrganization();
-        sigFoxGroup = await generateSavedSigFoxGroup(org);
+        sigfoxGroup = await generateSavedSigFoxGroup(org);
         // Create user (global admin)
         const user = await generateSavedGlobalAdminUser();
         // Generate store jwt
@@ -79,7 +79,7 @@ describe("SigfoxDeviceService (e2e)", () => {
     it.skip("Unsubscribe + Delete - OK", async () => {
         // Arrange
         // Act
-        await service.delete(sigFoxGroup, DEVICE_ID);
+        await service.delete(sigfoxGroup, DEVICE_ID);
         // Assert
     });
 
@@ -96,7 +96,7 @@ describe("SigfoxDeviceService (e2e)", () => {
             },
         };
         // Act
-        const res = await service.create(sigFoxGroup, dto);
+        const res = await service.create(sigfoxGroup, dto);
         // Assert
         expect(res).toMatchObject({
             id: expect.any(String),

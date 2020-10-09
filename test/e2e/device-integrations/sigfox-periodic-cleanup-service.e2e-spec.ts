@@ -25,7 +25,7 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 describe("PeriodicSigFoxCleanupService (e2e)", () => {
     let app: INestApplication;
     let service: PeriodicSigFoxCleanupService;
-    let sigFoxApiDeviceService: SigFoxApiDeviceService;
+    let sigfoxApiDeviceService: SigFoxApiDeviceService;
     let repository: Repository<SigFoxDevice>;
 
     beforeAll(async () => {
@@ -50,7 +50,7 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
 
         await app.init();
         service = moduleFixture.get("PeriodicSigFoxCleanupService");
-        sigFoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
+        sigfoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
         repository = moduleFixture.get("SigFoxDeviceRepository");
     });
 
@@ -72,11 +72,11 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
         const org = await generateSavedOrganization();
         const group = await generateSavedSigFoxGroup(org);
         const application = await generateSavedApplication(org);
-        const backendDevice1 = await sigFoxApiDeviceService.getByIdSimple(
+        const backendDevice1 = await sigfoxApiDeviceService.getByIdSimple(
             group,
             SIGFOX_DEVICE_ID
         );
-        const backendDevice2 = await sigFoxApiDeviceService.getByIdSimple(
+        const backendDevice2 = await sigfoxApiDeviceService.getByIdSimple(
             group,
             SIGFOX_DEVICE_ID_2
         );

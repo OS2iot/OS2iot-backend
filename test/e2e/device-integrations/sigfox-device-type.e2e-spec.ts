@@ -26,7 +26,7 @@ import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service
 describe("SigfoxDeviceTypeController (e2e)", () => {
     let app: INestApplication;
     let org: Organization;
-    let sigFoxGroup: SigFoxGroup;
+    let sigfoxGroup: SigFoxGroup;
     let globalAdminJwt: string;
     const contractId = "5f51dce1e833d917cdf9fe93";
     let service: SigFoxApiDeviceTypeService;
@@ -61,16 +61,16 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
         await clearDatabase();
 
         org = await generateSavedOrganization();
-        sigFoxGroup = await generateSavedSigFoxGroup(org);
+        sigfoxGroup = await generateSavedSigFoxGroup(org);
         // Create user (global admin)
         const user = await generateSavedGlobalAdminUser();
         // Generate store jwt
         globalAdminJwt = generateValidJwtForUser(user);
-        await deleteExisting(service, usersService, sigFoxGroup);
+        await deleteExisting(service, usersService, sigfoxGroup);
     });
 
     afterAll(async () => {
-        await deleteExisting(service, usersService, sigFoxGroup);
+        await deleteExisting(service, usersService, sigfoxGroup);
         await clearDatabase();
         // Ensure clean shutdown
         await app.close();
@@ -80,7 +80,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
         // Arrange
 
         // Act
-        await service.addOrUpdateCallback(sigFoxGroup, SIGFOX_DEVICE_TYPE_ID);
+        await service.addOrUpdateCallback(sigfoxGroup, SIGFOX_DEVICE_TYPE_ID);
 
         // Assert
     });
@@ -90,7 +90,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
 
         // Act
         return await request(app.getHttpServer())
-            .get(`/sigfox-device-type?groupId=${sigFoxGroup.id}`)
+            .get(`/sigfox-device-type?groupId=${sigfoxGroup.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -107,7 +107,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
 
         // Act
         return await request(app.getHttpServer())
-            .get(`/sigfox-device-type/${SIGFOX_DEVICE_TYPE_ID}?groupId=${sigFoxGroup.id}`)
+            .get(`/sigfox-device-type/${SIGFOX_DEVICE_TYPE_ID}?groupId=${sigfoxGroup.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -129,7 +129,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
 
         // Act
         return await request(app.getHttpServer())
-            .post(`/sigfox-device-type?groupId=${sigFoxGroup.id}`)
+            .post(`/sigfox-device-type?groupId=${sigfoxGroup.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(201)
@@ -148,13 +148,13 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
             name: `${NAME_PREFIX} - PUT - ${randomMacAddress()}`,
             description: "Created by E2E test",
         };
-        const oldDeviceType = await service.create(sigFoxGroup, dto);
+        const oldDeviceType = await service.create(sigfoxGroup, dto);
         const newDto = dto;
         newDto.description = "Changed by PUT";
 
         // Act
         return await request(app.getHttpServer())
-            .put(`/sigfox-device-type/${oldDeviceType.id}?groupId=${sigFoxGroup.id}`)
+            .put(`/sigfox-device-type/${oldDeviceType.id}?groupId=${sigfoxGroup.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             // Assert

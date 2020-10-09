@@ -52,6 +52,6 @@ export class SigFoxApiDeviceController {
         );
         checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
 
-        return await this.service.getAllByGroupIds(group, [group.sigFoxGroupId]);
+        return await this.service.getAllByGroupIds(group, [group.sigfoxGroupId]);
     }
 }
