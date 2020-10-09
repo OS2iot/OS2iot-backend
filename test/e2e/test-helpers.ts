@@ -169,9 +169,15 @@ export async function generateSavedOrganizationAdminUser(
     return user;
 }
 
-export function generateApplication(org?: Organization): Application {
+export async function generateSavedReadWriteUser(org: Organization): Promise<User> {
+    const writePerm = org.permissions.find(x => x.type == PermissionType.Write);
+    const readPerm = org.permissions.find(x => x.type == PermissionType.Read);
+    return await getManager().save(generateUser([writePerm, readPerm]));
+}
+
+export function generateApplication(org?: Organization, name?: string): Application {
     const app = new Application();
-    app.name = "E2E Test Application";
+    app.name = "E2E Test Application" + name;
     app.description = "E2E Test Application Description";
     app.iotDevices = [];
     app.dataTargets = [];
@@ -180,13 +186,16 @@ export function generateApplication(org?: Organization): Application {
     return app;
 }
 
-export async function generateSavedApplication(org?: Organization): Promise<Application> {
+export async function generateSavedApplication(
+    org?: Organization,
+    name?: string
+): Promise<Application> {
     let app;
     if (org) {
-        app = generateApplication(org);
+        app = generateApplication(org, name);
     } else {
         const org = await generateSavedOrganization();
-        app = generateApplication(org);
+        app = generateApplication(org, name);
     }
     return await getManager().save(app);
 }
@@ -273,7 +282,7 @@ export function generateDataTarget(
 ): HttpPushDataTarget {
     const dataTarget = new HttpPushDataTarget();
     dataTarget.name = "E2E Test Http Push Data Target";
-    dataTarget.url = url ? url :  "https://enwehrrtrqajd1m.m.pipedream.net";
+    dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
     dataTarget.application = application;
     dataTarget.timeout = 30000;
 

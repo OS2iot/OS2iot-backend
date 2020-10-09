@@ -8,6 +8,7 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -17,6 +18,54 @@ export class ApplicationService {
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService
     ) {}
+
+    async findAndCountInList(
+        query?: ListAllEntitiesDto,
+        whitelist?: number[],
+        allFromOrgs?: number[]
+    ): Promise<ListAllApplicationsReponseDto> {
+        const orgCondition =
+            allFromOrgs != null
+                ? { id: In(whitelist), belongsTo: In(allFromOrgs) }
+                : { id: In(whitelist) };
+        const [result, total] = await this.applicationRepository.findAndCount({
+            where: orgCondition,
+            take: query.limit,
+            skip: query.offset,
+            relations: ["iotDevices"],
+            order: { id: query.sort },
+        });
+
+        return {
+            data: result,
+            count: total,
+        };
+    }
+
+    async findAndCountApplicationInWhitelistOrOrganization(
+        query: ListAllApplicationsDto,
+        allowedApplications: number[],
+        organizationIds: number[]
+    ): Promise<ListAllApplicationsReponseDto> {
+        const [result, total] = await this.applicationRepository.findAndCount({
+            where:
+                organizationIds.length > 0
+                    ? [
+                          { id: In(allowedApplications) },
+                          { belongsTo: In(organizationIds) },
+                      ]
+                    : { id: In(allowedApplications) },
+            take: query.limit,
+            skip: query.offset,
+            relations: ["iotDevices"],
+            order: { id: query.sort },
+        });
+
+        return {
+            data: result,
+            count: total,
+        };
+    }
 
     async findAndCountWithPagination(
         query?: ListAllEntitiesDto,
