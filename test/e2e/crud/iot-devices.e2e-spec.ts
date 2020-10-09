@@ -349,7 +349,11 @@ describe("IoTDeviceController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     name: sigFoxDevice.name,
                     sigFoxSettings: {
-                        id: sigFoxDevice.deviceId,
+                        deviceId: sigFoxDevice.deviceId,
+                        deviceTypeId: "5e74c318aa8aec41f9cc6b8d",
+                        endProductCertificate: "P_0006_321A_01",
+                        pac: "04FB9B9DD7F45D4E",
+                        prototype: false,
                     },
                 });
             });
