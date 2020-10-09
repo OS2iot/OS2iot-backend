@@ -17,8 +17,12 @@ import {
     generateSavedApplication,
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
+    generateSavedOrganizationAdminUser,
+    generateSavedReadWriteUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { PermissionType } from "@enum/permission-type.enum";
+import { ReadPermission } from "@entities/read-permission.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -37,7 +41,7 @@ describe("ApplicationController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 AuthModule,
@@ -485,6 +489,45 @@ describe("ApplicationController (e2e)", () => {
                     description: "Tester changed",
                     iotDevices: [{ id: savedIoTDevice.id }],
                     dataTargets: [],
+                });
+            });
+    });
+
+    it("(GET) /application/ - User only allowed SOME in organization", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const app1 = await generateSavedApplication(org, "app1");
+        const app2 = await generateSavedApplication(org, "app2");
+
+        const user = await generateSavedReadWriteUser(org);
+        const readPerm = user.permissions.find(
+            x => x.type == PermissionType.Read
+        ) as ReadPermission;
+        readPerm.applications = [app1];
+        const writePerm = user.permissions.find(
+            x => x.type == PermissionType.Write
+        ) as ReadPermission;
+        writePerm.applications = [app1];
+        await getManager().save([readPerm, writePerm]);
+
+        const jwt = generateValidJwtForUser(user);
+
+        // Act
+        return request(app.getHttpServer())
+            .get("/application/")
+            .auth(jwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(1);
+                expect(response.body.data).toContainEqual({
+                    id: app1.id,
+                    name: app1.name,
+                    createdAt: expect.any(String),
+                    updatedAt: expect.any(String),
+                    iotDevices: [],
+                    description: app1.description,
                 });
             });
     });

@@ -184,8 +184,16 @@ export class PermissionService {
         return await this.permissionReposity
             .createQueryBuilder("permission")
             .leftJoin("permission.users", "user")
-            .leftJoinAndSelect("permission.organization", "organization")
-            .leftJoinAndSelect("organization.applications", "application")
+            .leftJoinAndSelect(
+                "application_permissions_permission",
+                "application_permission",
+                '"permission"."id" = "application_permission"."permissionId"'
+            )
+            .leftJoinAndSelect(
+                "application",
+                "application",
+                '"application"."id"="application_permission"."applicationId" '
+            )
             .where("user.id = :id", { id: userId })
             .select([
                 "permission.type as permission_type",

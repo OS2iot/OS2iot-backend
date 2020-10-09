@@ -83,16 +83,44 @@ export class ApplicationController {
         req: AuthenticatedRequest,
         query: ListAllApplicationsDto
     ) {
-        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
         if (query?.organizationId) {
             checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+            return await this.getApplicationsInOrganization(req, query);
         }
 
-        const applications = await this.applicationService.findAndCountWithPagination(
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
             query,
-            query.organizationId ? [query.organizationId] : allowedOrganizations
+            allowedApplications,
+            query.organizationId ? [query.organizationId] : allFromOrg
         );
         return applications;
+    }
+
+    private async getApplicationsInOrganization(
+        req: AuthenticatedRequest,
+        query: ListAllApplicationsDto
+    ) {
+        // If org admin give all
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        if (this.isOrganizationAdmin(allFromOrg, query)) {
+            return await this.applicationService.findAndCountWithPagination(query, [
+                query.organizationId,
+            ]);
+        }
+
+        // If not org admin only allowed ones
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        return await this.applicationService.findAndCountInList(
+            query,
+            allowedApplications,
+            [query.organizationId]
+        );
+    }
+
+    private isOrganizationAdmin(allFromOrg: number[], query: ListAllApplicationsDto) {
+        return allFromOrg.some(x => x === query?.organizationId);
     }
 
     @Read()
