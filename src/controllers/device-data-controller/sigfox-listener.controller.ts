@@ -54,7 +54,7 @@ export class SigFoxListenerController {
             sigfoxDevice,
             dataAsString,
             IoTDeviceType.SigFox.toString(),
-            data.time
+            data.time * 1000 // Timestamp passed must be in millis, sigfox uses seconds.
         );
 
         if (this.shouldSendDownlink(sigfoxDevice)) {
