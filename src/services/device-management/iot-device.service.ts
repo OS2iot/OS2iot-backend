@@ -335,11 +335,6 @@ export class IoTDeviceService {
 
         await this.createOrUpdateSigFoxDevice(dto, sigfoxGroup, cast);
 
-        if (isUpdate) {
-            // Edit
-            await this.editInSigFoxBackend(dto, cast, sigfoxGroup);
-        }
-
         await this.sigfoxApiDeviceTypeService.addOrUpdateCallback(
             sigfoxGroup,
             cast.deviceTypeId
