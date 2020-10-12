@@ -40,6 +40,8 @@ import {
 } from "@helpers/security-helper";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
+import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
+import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -49,7 +51,10 @@ import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class IoTDeviceController {
-    constructor(private iotDeviceService: IoTDeviceService) {}
+    constructor(
+        private iotDeviceService: IoTDeviceService,
+        private downlinkService: IoTDeviceDownlinkService
+    ) {}
 
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })
@@ -89,8 +94,28 @@ export class IoTDeviceController {
     ): Promise<IoTDevice> {
         checkIfUserHasWriteAccessToApplication(req, createDto.applicationId);
 
-        const application = this.iotDeviceService.create(createDto);
-        return application;
+        const device = this.iotDeviceService.create(createDto);
+        return device;
+    }
+
+    @Post(":id/downlink")
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Schedule downlink for SigFox or LoRaWAN device" })
+    @ApiBadRequestResponse()
+    async createDownlink(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number,
+        @Body() dto: CreateIoTDeviceDownlinkDto
+    ): Promise<void> {
+        const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
+        if (!device) {
+            throw new NotFoundException();
+        }
+        checkIfUserHasWriteAccessToApplication(req, id);
+
+        await this.downlinkService.createDownlink(dto, device);
+
+        return;
     }
 
     @Put(":id")
