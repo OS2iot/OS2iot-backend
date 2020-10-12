@@ -29,7 +29,7 @@ export class SigFoxApiDeviceTypeService {
     // TODO: Get these
     private OS2IOT_BACKEND_URL: string;
     private readonly OS2IOT_BACKEND_SIGFOX_CALLBACK_PATH =
-        "/api/v1/sigfox-callback/data/uplink?apiKey={deviceTypeId}";
+        "/api/v1/sigfox-callback/data/bidir?apiKey={deviceTypeId}";
     private readonly CALLBACK_BODY_TEMPLATE = `{
     "time": {time},
     "deviceTypeId": "{deviceTypeId}",
