@@ -42,6 +42,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
+import { CreateChirpstackDeviceQueueItemResponse } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -106,16 +107,14 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: CreateIoTDeviceDownlinkDto
-    ): Promise<void> {
+    ): Promise<void | CreateChirpstackDeviceQueueItemResponse> {
         const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
         if (!device) {
             throw new NotFoundException();
         }
         checkIfUserHasWriteAccessToApplication(req, id);
 
-        await this.downlinkService.createDownlink(dto, device);
-
-        return;
+        return await this.downlinkService.createDownlink(dto, device);
     }
 
     @Put(":id")
