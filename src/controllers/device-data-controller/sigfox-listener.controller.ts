@@ -35,7 +35,7 @@ export class SigFoxListenerController {
 
     private readonly logger = new Logger(SigFoxListenerController.name);
 
-    @Post("data/uplink")
+    @Post("data/bidir")
     @ApiOperation({ summary: "SigFox data callback endpoint." })
     @ApiOkResponse()
     @ApiNoContentResponse()

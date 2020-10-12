@@ -68,7 +68,7 @@ describe("SigFoxListenerController (e2e)", () => {
         }
     }, 30000);
 
-    it("(POST) /sigfox-callback/data/uplink - Receive data from Sigfox backend", async () => {
+    it("(POST) /sigfox-callback/data/bidir - Receive data from Sigfox backend", async () => {
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
         const sigfoxDevice = await generateSavedSigfoxDevice(application);
@@ -86,7 +86,7 @@ describe("SigFoxListenerController (e2e)", () => {
 
         // Act
         await request(app.getHttpServer())
-            .post("/sigfox-callback/data/uplink?apiKey=" + sigfoxDevice.deviceTypeId)
+            .post("/sigfox-callback/data/bidir?apiKey=" + sigfoxDevice.deviceTypeId)
             .send(payload)
             .expect(204);
 
@@ -104,7 +104,7 @@ describe("SigFoxListenerController (e2e)", () => {
 
     it("(POST) /receive-data/  receive data from unregistered edge device (Test invalid API key)- expected 403- fobbidden", async () => {
         return await request(app.getHttpServer())
-            .post("/sigfox-callback/data/uplink?apiKey=" + "invalidKey")
+            .post("/sigfox-callback/data/bidir?apiKey=" + "invalidKey")
             .send(SIGFOX_PAYLOAD_2)
             .expect(400);
     });
