@@ -10,6 +10,7 @@ import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.mod
 import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
 import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
+import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 
 @Module({
     imports: [

@@ -15,6 +15,10 @@ import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-al
 import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
+import {
+    CreateChirpstackDeviceQueueItemDto,
+    CreateChirpstackDeviceQueueItemResponse,
+} from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -93,6 +97,16 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         csDto.skipFCntCheck = dto.skipFCntCheck;
 
         return { device: csDto };
+    }
+
+    async createDownlink(
+        dto: CreateChirpstackDeviceQueueItemDto
+    ): Promise<CreateChirpstackDeviceQueueItemResponse> {
+        const res = await this.post<CreateChirpstackDeviceQueueItemDto>(
+            `${this.baseUrl}/api/devices/${dto.deviceQueueItem.devEUI}/queue`,
+            dto
+        );
+        return res.data;
     }
 
     async activateDeviceWithABP(
