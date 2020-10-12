@@ -103,7 +103,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         dto: CreateChirpstackDeviceQueueItemDto
     ): Promise<CreateChirpstackDeviceQueueItemResponse> {
         const res = await this.post<CreateChirpstackDeviceQueueItemDto>(
-            `${this.baseUrl}/api/devices/${dto.deviceQueueItem.devEUI}/queue`,
+            `devices/${dto.deviceQueueItem.devEUI}/queue`,
             dto
         );
         return res.data;

@@ -88,20 +88,27 @@ export class IoTDeviceDownlinkService {
         try {
             return this.chirpstackDeviceService.createDownlink(csDto);
         } catch (err) {
-            this.logger.error(
-                `Error while trying to create downlink i chirpstack. DTO: '${JSON.stringify(
-                    csDto
-                )}'. Error: '${JSON.stringify(err?.data)}'`
-            );
-            if (err.status == 400) {
-                throw new BadRequestException(
-                    "Error 400 from Chirpstack" + JSON.stringify(err?.data)
-                );
-            }
-            throw new InternalServerErrorException(
-                "Could not send to chirpstack, try again later."
+            this.handleErrorsFromChirpstack(csDto, err);
+        }
+    }
+
+    private handleErrorsFromChirpstack(
+        csDto: CreateChirpstackDeviceQueueItemDto,
+        err: any
+    ) {
+        this.logger.error(
+            `Error while trying to create downlink i chirpstack. DTO: '${JSON.stringify(
+                csDto
+            )}'. Error: '${JSON.stringify(err?.data)}'`
+        );
+        if (err.status == 400) {
+            throw new BadRequestException(
+                "Error 400 from Chirpstack" + JSON.stringify(err?.data)
             );
         }
+        throw new InternalServerErrorException(
+            "Could not send to chirpstack, try again later."
+        );
     }
 
     private hexBytesToBase64(hexBytes: string): string {
