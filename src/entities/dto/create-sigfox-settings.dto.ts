@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
 
 export class CreateSigFoxSettingsDto {
@@ -15,8 +15,14 @@ export class CreateSigFoxSettingsDto {
     @Matches(/[0-9A-Fa-f]{1,24}/)
     deviceTypeId?: string;
 
+    @ApiHideProperty()
+    deviceTypeName: string;
+
     @ApiProperty({ required: false })
     groupId: number;
+
+    @ApiHideProperty()
+    groupName: string;
 
     @ApiProperty({ required: false })
     connectToExistingDeviceInBackend?: boolean;

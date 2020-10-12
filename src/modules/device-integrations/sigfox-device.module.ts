@@ -6,6 +6,7 @@ import { SigFoxUsersModule } from "@modules/device-integrations/sigfox-users.mod
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxApiDeviceController } from "@admin-controller/sigfox/sigfox-api-device.controller";
 import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
+import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 
 @Module({
     imports: [
@@ -15,7 +16,7 @@ import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-c
         SigFoxUsersModule,
     ],
     controllers: [SigFoxApiDeviceController],
-    providers: [SigFoxApiDeviceService],
-    exports: [SigFoxApiDeviceService],
+    providers: [SigFoxApiDeviceService, SigfoxApiGroupService],
+    exports: [SigFoxApiDeviceService, SigfoxApiGroupService],
 })
 export class SigfoxDeviceModule {}

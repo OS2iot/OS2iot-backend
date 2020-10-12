@@ -108,19 +108,24 @@ export class IoTDeviceService {
             sigfoxGroup,
             sigfoxDevice
         );
-        sigfoxDevice.sigfoxSettings = await this.mapSigFoxBackendDataToDto(thisDevice);
+        sigfoxDevice.sigfoxSettings = await this.mapSigFoxBackendDataToDto(
+            thisDevice,
+            sigfoxGroup
+        );
 
         return sigfoxDevice;
     }
 
     async mapSigFoxBackendDataToDto(
-        thisDevice: SigFoxApiDeviceContent
+        thisDevice: SigFoxApiDeviceContent,
+        sigfoxGroup: SigFoxGroup
     ): Promise<CreateSigFoxSettingsDto> {
-        const group = await this.sigfoxGroupService.findOneByGroupId(thisDevice.group.id);
         return {
             deviceId: thisDevice.id,
             deviceTypeId: thisDevice.deviceType.id,
-            groupId: group.id,
+            deviceTypeName: thisDevice.deviceType.name,
+            groupId: sigfoxGroup.id,
+            groupName: thisDevice.group.name,
             connectToExistingDeviceInBackend: true,
             pac: thisDevice.pac,
             endProductCertificate: thisDevice.productCertificate.key,
