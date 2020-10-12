@@ -223,6 +223,18 @@ export class IoTDeviceService {
         return entityManager.save(mappedIotDevice);
     }
 
+    async save(iotDevice: IoTDevice): Promise<IoTDevice> {
+        return await this.iotDeviceRepository.save(iotDevice);
+    }
+
+    async removeDownlink(sigfoxDevice: SigFoxDevice): Promise<SigFoxDevice> {
+        this.logger.log(
+            `Removing downlink from device(${sigfoxDevice.id}) sigfoxId(${sigfoxDevice.deviceId})`
+        );
+        sigfoxDevice.downlinkPayload = null;
+        return await this.iotDeviceRepository.save(sigfoxDevice);
+    }
+
     async update(id: number, updateDto: UpdateIoTDeviceDto): Promise<IoTDevice> {
         const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(id);
 

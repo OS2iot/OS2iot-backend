@@ -17,6 +17,9 @@ export class SigFoxDevice extends IoTDevice {
     @Column({ nullable: true, default: "5e74c24476600f14bab7e0bd" })
     groupId: string;
 
+    @Column({ nullable: true })
+    downlinkPayload: string;
+
     @BeforeInsert()
     private beforeInsert() {
         this.type = IoTDeviceType.SigFox;

@@ -20,4 +20,6 @@ export enum ErrorCodes {
     GatewayIdNotAllowedInUpdate = "MESSAGE.GATEWAY-ID-NOT-ALLOWED-IN-UPDATE",
     GroupCanOnlyBeCreatedOncePrOrganization = "MESSAGE.GROUP-CAN-ONLY-BE-CREATED-ONCE-PR-ORGANIZATION",
     DeviceDoesNotExistInSigFoxForGroup = "MESSAGE.DEVICE-DOES-NOT-EXIST-IN-SIGFOX-FOR-GROUP",
+    DownlinkNotSupportedForDeviceType = "MESSAGE.DOWNLINK-NOT-SUPPORTED-FOR-DEVICE-TYPE",
+    DownlinkLengthWrongForSigfox = "MESSAGE.DOWNLINK-LENGTH-WRONG-FOR-SIGFOX",
 }

@@ -1,6 +1,9 @@
 import { CreateSigFoxApiCallbackRequestDto } from "@dto/sigfox/external/create-sigfox-api-callback-request.dto";
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
-import { SigFoxApiCallbacksResponseDto } from "@dto/sigfox/external/sigfox-api-callbacks-response.dto";
+import {
+    SigFoxApiCallbackContent,
+    SigFoxApiCallbacksResponseDto,
+} from "@dto/sigfox/external/sigfox-api-callbacks-response.dto";
 import {
     SigFoxApiDeviceTypeContent,
     SigFoxApiDeviceTypeResponse,
@@ -38,8 +41,13 @@ export class SigFoxApiDeviceTypeService {
     "seqNumber": {seqNumber}
 }`;
     private readonly CALLBACK_CONTENT_TYPE = "application/json";
-
     private readonly URL_BASE = "device-types";
+    private readonly CALLBACK_CHANNEL = "URL";
+    private readonly CALLBACK_TYPE = 0; // Data
+    private readonly CALLBACK_SUBTYPE = 3; // BIDIR
+    private readonly CALLBACK_HTTP_METHOD = "POST";
+    private readonly CALLBACK_SEND_SNI = true;
+    private readonly CALLBACK_ENABLED = true;
 
     async getAllByGroupIds(
         sigfoxGroup: SigFoxGroup,
@@ -82,8 +90,8 @@ export class SigFoxApiDeviceTypeService {
         await this.genericService.delete(url, group);
     }
 
-    async addOrUpdateCallback(group: SigFoxGroup, id: string): Promise<void> {
-        const url = `${this.URL_BASE}/${id}/callbacks`;
+    async addOrUpdateCallback(group: SigFoxGroup, deviceTypeId: string): Promise<void> {
+        const url = `${this.URL_BASE}/${deviceTypeId}/callbacks`;
         const response = await this.genericService.get<SigFoxApiCallbacksResponseDto>(
             url,
             group
@@ -92,35 +100,57 @@ export class SigFoxApiDeviceTypeService {
             x.url.startsWith(this.OS2IOT_BACKEND_URL)
         );
         const dto: CreateSigFoxApiCallbackRequestDto = this.makeDto();
+        let callbackId = callback.id;
 
         if (callback) {
             // Callback exists, make sure it's OK
-            if (
-                callback.enabled == false ||
-                callback.sendSni == false ||
-                callback.bodyTemplate != this.CALLBACK_BODY_TEMPLATE ||
-                callback.channel != "URL" ||
-                callback.callbackSubtype != 2 ||
-                callback.httpMethod != "POST" ||
-                callback.contentType != this.CALLBACK_CONTENT_TYPE
-            ) {
+            if (this.isCallbackNotOk(callback)) {
                 await this.genericService.put(`${url}/${callback.id}`, dto, group);
             }
         } else {
-            await this.genericService.post(url, dto, group);
+            callbackId = (
+                await this.genericService.post<SigFoxApiIdReferenceDto>(url, dto, group)
+            ).id;
         }
+
+        // set active downlink to this
+        await this.setActiveDownlinkCallback(group, deviceTypeId, callbackId);
+    }
+
+    private isCallbackNotOk(callback: SigFoxApiCallbackContent) {
+        return (
+            callback.enabled != this.CALLBACK_ENABLED ||
+            callback.sendSni != this.CALLBACK_SEND_SNI ||
+            callback.bodyTemplate != this.CALLBACK_BODY_TEMPLATE ||
+            callback.channel != this.CALLBACK_CHANNEL ||
+            callback.callbackSubtype != this.CALLBACK_SUBTYPE ||
+            callback.httpMethod != this.CALLBACK_HTTP_METHOD ||
+            callback.contentType != this.CALLBACK_CONTENT_TYPE
+        );
+    }
+
+    private async setActiveDownlinkCallback(
+        group: SigFoxGroup,
+        deviceTypeId: string,
+        callbackId: string
+    ) {
+        await this.genericService.put(
+            `${this.URL_BASE}/${deviceTypeId}/callbacks/${callbackId}/downlink`,
+            {},
+            group
+        );
     }
 
     private makeDto(): CreateSigFoxApiCallbackRequestDto {
         return {
-            channel: "URL",
-            callbackType: 0,
-            callbackSubtype: 2,
+            channel: this.CALLBACK_CHANNEL,
+            callbackType: this.CALLBACK_TYPE,
+            callbackSubtype: this.CALLBACK_SUBTYPE,
             payloadConfig: "",
-            enabled: true,
+            enabled: this.CALLBACK_ENABLED,
             url: this.OS2IOT_BACKEND_URL + this.OS2IOT_BACKEND_SIGFOX_CALLBACK_PATH,
-            httpMethod: "POST",
-            sendSni: true,
+            httpMethod: this.CALLBACK_HTTP_METHOD,
+            sendSni: this.CALLBACK_SEND_SNI,
             bodyTemplate: this.CALLBACK_BODY_TEMPLATE,
             contentType: this.CALLBACK_CONTENT_TYPE,
         };
