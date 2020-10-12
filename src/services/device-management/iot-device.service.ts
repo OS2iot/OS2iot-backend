@@ -30,6 +30,7 @@ import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sig
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
+import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 
 @Injectable()
 export class IoTDeviceService {
@@ -46,7 +47,8 @@ export class IoTDeviceService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
-        private sigfoxGroupService: SigFoxGroupService
+        private sigfoxGroupService: SigFoxGroupService,
+        private sigfoxApiGroupService: SigfoxApiGroupService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
