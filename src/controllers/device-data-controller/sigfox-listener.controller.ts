@@ -59,7 +59,7 @@ export class SigFoxListenerController {
 
         if (this.shouldSendDownlink(sigfoxDevice)) {
             const payload = await this.doDownlink(sigfoxDevice);
-            return res.status(200).send(JSON.stringify(payload));
+            return res.status(200).json(payload);
         }
 
         return res.status(204).send();

@@ -16,13 +16,13 @@ export class CreateSigFoxSettingsDto {
     deviceTypeId?: string;
 
     @ApiHideProperty()
-    deviceTypeName: string;
+    deviceTypeName?: string;
 
     @ApiProperty({ required: false })
     groupId: number;
 
     @ApiHideProperty()
-    groupName: string;
+    groupName?: string;
 
     @ApiProperty({ required: false })
     connectToExistingDeviceInBackend?: boolean;
