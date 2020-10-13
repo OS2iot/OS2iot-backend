@@ -19,6 +19,7 @@ import {
     generateSavedSigfoxDevice,
     SIGFOX_PAYLOAD,
 } from "../test-helpers";
+import { getManager } from "typeorm";
 
 describe("SigFoxListenerController (e2e)", () => {
     let app: INestApplication;
@@ -99,7 +100,7 @@ describe("SigFoxListenerController (e2e)", () => {
         const payloads = kafkaMessages.map(x => {
             return JSON.parse(x[1].value.toString("utf8")).body;
         });
-        expect(payloads).toHaveLength(1);
+        expect(payloads.length).toBeGreaterThanOrEqual(1);
     }, 10000);
 
     it("(POST) /receive-data/  receive data from unregistered edge device (Test invalid API key)- expected 403- fobbidden", async () => {
@@ -108,4 +109,46 @@ describe("SigFoxListenerController (e2e)", () => {
             .send(SIGFOX_PAYLOAD_2)
             .expect(400);
     });
+
+    it("(POST) /sigfox-callback/data/bidir - Receive data from Sigfox backend - and send downlink", async () => {
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const sigfoxDevice = await generateSavedSigfoxDevice(application);
+        sigfoxDevice.downlinkPayload = "001e19028f101272";
+        await getManager().save(sigfoxDevice);
+        const payload = JSON.parse(SIGFOX_PAYLOAD);
+
+        // Store all the messages sent to kafka
+        const kafkaMessages: [string, KafkaMessage][] = [];
+
+        // Setup kafkaListener to see if it is sent correctly.
+        consumer = await setupKafkaListener(
+            consumer,
+            kafkaMessages,
+            KafkaTopic.RAW_REQUEST
+        );
+
+        // Act
+        await request(app.getHttpServer())
+            .post("/sigfox-callback/data/bidir?apiKey=" + sigfoxDevice.deviceTypeId)
+            .send(payload)
+            .expect(200)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    B445A9: {
+                        downlinkData: sigfoxDevice.downlinkPayload,
+                    },
+                });
+            });
+        // Sleep a bit until the message is processed (to avoid race-condition)
+        await waitForEvents(kafkaMessages, 1);
+
+        // Assert
+
+        // Pull out the payloads passed along after transforming
+        const payloads = kafkaMessages.map(x => {
+            return JSON.parse(x[1].value.toString("utf8")).body;
+        });
+        expect(payloads).toHaveLength(1);
+    }, 10000);
 });

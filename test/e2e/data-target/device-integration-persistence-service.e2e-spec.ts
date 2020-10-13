@@ -135,7 +135,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         expect(allMetadata).toHaveLength(10);
         Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
         expect(allMetadata[0]).toMatchObject({
-            sentTime: new Date(2000000),
+            sentTime: new Date(2000),
             device: {
                 id: iotDevice.id,
             },
