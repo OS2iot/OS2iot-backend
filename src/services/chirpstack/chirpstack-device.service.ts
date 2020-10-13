@@ -254,6 +254,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     async getChirpstackDevice(id: string): Promise<ChirpstackDeviceContentsDto> {
         const res = await this.get<ChirpstackSingleDeviceResponseDto>(`devices/${id}`);
+        res.device.deviceStatusBattery = res.deviceStatusBattery;
+        res.device.deviceStatusMargin = res.deviceStatusMargin;
         return res.device;
     }
 

@@ -40,4 +40,9 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiProperty({ required: false, default: {} })
     OTAAapplicationKey: string;
+
+    @ApiHideProperty()
+    deviceStatusBattery: number;
+    @ApiHideProperty()
+    deviceStatusMargin: number;
 }
