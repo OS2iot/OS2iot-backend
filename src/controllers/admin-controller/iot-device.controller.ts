@@ -43,6 +43,10 @@ import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { CreateChirpstackDeviceQueueItemResponse } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { ChirstackDeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -54,7 +58,8 @@ import { CreateChirpstackDeviceQueueItemResponse } from "@dto/chirpstack/create-
 export class IoTDeviceController {
     constructor(
         private iotDeviceService: IoTDeviceService,
-        private downlinkService: IoTDeviceDownlinkService
+        private downlinkService: IoTDeviceDownlinkService,
+        private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
 
     @Get(":id")
@@ -83,6 +88,35 @@ export class IoTDeviceController {
         checkIfUserHasReadAccessToApplication(req, result.application.id);
 
         return result;
+    }
+
+    @Get(":id/downlink")
+    @ApiOperation({ summary: "Get downlink queue for a LoRaWAN device" })
+    async findDownlinkQueue(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<ChirstackDeviceDownlinkQueueResponseDto> {
+        let device = undefined;
+        try {
+            device = await this.iotDeviceService.findOneWithApplicationAndMetadata(
+                id,
+                true
+            );
+        } catch (err) {
+            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+        }
+
+        if (!device) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+        checkIfUserHasReadAccessToApplication(req, device.application.id);
+        if (device.type != IoTDeviceType.LoRaWAN) {
+            throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWAN);
+        }
+
+        return this.chirpstackDeviceService.getDownlinkQueue(
+            (device as LoRaWANDevice).deviceEUI
+        );
     }
 
     @Post()

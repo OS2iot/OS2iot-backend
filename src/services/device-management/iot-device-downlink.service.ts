@@ -86,7 +86,7 @@ export class IoTDeviceDownlinkService {
         };
 
         try {
-            return this.chirpstackDeviceService.createDownlink(csDto);
+            return this.chirpstackDeviceService.overwriteDownlink(csDto);
         } catch (err) {
             this.handleErrorsFromChirpstack(csDto, err);
         }

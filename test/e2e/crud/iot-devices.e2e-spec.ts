@@ -33,6 +33,9 @@ import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.servi
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { domainToASCII } from "url";
+import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
+import { response } from "express";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -495,6 +498,47 @@ describe("IoTDeviceController (e2e)", () => {
             .send(dto)
             // Assert
             .expect(404);
+    });
+
+    it("(GET) /iot-device/:id/downlink - LORAWAN device", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const lorawanDevice = await generateSavedLoRaWANDevice(application);
+        const csDto: CreateChirpstackDeviceQueueItemDto = {
+            deviceQueueItem: {
+                confirmed: true,
+                data: "PgoUAAAARhcAAAAC",
+                devEUI: lorawanDevice.deviceEUI,
+                fPort: 6,
+            },
+        };
+        // clear queue
+        await chirpstackDeviceService.deleteDownlinkQueue(lorawanDevice.deviceEUI);
+        await chirpstackDeviceService.overwriteDownlink(csDto);
+
+        // Act
+        await request(app.getHttpServer())
+            .get(`/iot-device/${lorawanDevice.id}/downlink`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            // Assert
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    deviceQueueItems: [
+                        {
+                            devEUI: lorawanDevice.deviceEUI.toLocaleLowerCase(),
+                            confirmed: true,
+                            fCnt: expect.any(Number),
+                            fPort: 6,
+                            data: "PgoUAAAARhcAAAAC",
+                        },
+                    ],
+                    totalCount: 1,
+                });
+            });
     });
 
     it("(POST) /iot-device/:id/downlink - SigFox device - OK", async () => {

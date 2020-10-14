@@ -140,11 +140,11 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async delete<T>(endpoint: string, id: string): Promise<AxiosResponse> {
+    async delete<T>(endpoint: string, id?: string): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
         try {
-            const url = header.url + "/" + id;
+            const url = header.url + (id != undefined ? "/" + id : "");
             const result = await this.httpService.delete(url, axiosConfig).toPromise();
 
             Logger.debug(

@@ -19,6 +19,7 @@ import {
     CreateChirpstackDeviceQueueItemDto,
     CreateChirpstackDeviceQueueItemResponse,
 } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
+import { ChirstackDeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -99,14 +100,28 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return { device: csDto };
     }
 
-    async createDownlink(
+    async overwriteDownlink(
         dto: CreateChirpstackDeviceQueueItemDto
     ): Promise<CreateChirpstackDeviceQueueItemResponse> {
+        await this.deleteDownlinkQueue(dto.deviceQueueItem.devEUI);
         const res = await this.post<CreateChirpstackDeviceQueueItemDto>(
             `devices/${dto.deviceQueueItem.devEUI}/queue`,
             dto
         );
         return res.data;
+    }
+
+    async getDownlinkQueue(
+        deviceEUI: string
+    ): Promise<ChirstackDeviceDownlinkQueueResponseDto> {
+        const res = await this.get<ChirstackDeviceDownlinkQueueResponseDto>(
+            `devices/${deviceEUI}/queue`
+        );
+        return res;
+    }
+
+    async deleteDownlinkQueue(deviceEUI: string): Promise<void> {
+        await this.delete(`devices/${deviceEUI}/queue`);
     }
 
     async activateDeviceWithABP(
