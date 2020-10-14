@@ -341,6 +341,7 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
+        await generateSavedSigFoxGroup(org);
         const sigfoxDevice = await generateSavedSigfoxDevice(application);
 
         // Act
