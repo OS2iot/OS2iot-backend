@@ -7,14 +7,18 @@ import {
 import { NestFactory } from "@nestjs/core";
 import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
+import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapter";
 
-export async function setupNestJs(config: {
-    NEST_PORT: number;
-    API_PREFIX: string;
-    CURRENT_VERSION_PREFIX: string;
-    SWAGGER_PREFIX: string;
-}): Promise<INestApplication> {
-    const app = await NestFactory.create(AppModule);
+export async function setupNestJs(
+    config: {
+        NEST_PORT: number;
+        API_PREFIX: string;
+        CURRENT_VERSION_PREFIX: string;
+        SWAGGER_PREFIX: string;
+    },
+    server: any
+): Promise<INestApplication> {
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(
         new ValidationPipe({

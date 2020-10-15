@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
+import {
+    Body,
+    Controller,
+    Get,
+    Post,
+    Req,
+    Res,
+    UseGuards,
+    Request,
+    Logger,
+} from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiOperation,
@@ -23,6 +33,8 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { AuthService } from "@services/user-management/auth.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UserService } from "@services/user-management/user.service";
+import { KombitAuthGuard } from "@auth/kombit-auth.guard";
+import { Request as expressRequest, Response } from "express";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -32,6 +44,28 @@ export class AuthController {
         private userService: UserService,
         private organisationService: OrganizationService
     ) {}
+
+    @Get("kombit/login")
+    @ApiOperation({ summary: "Initiate login with Kombit adgangsstyring" })
+    @UseGuards(KombitAuthGuard)
+    async kombitLogin(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
+        return res.status(401).send("<h1>Login Failure</h1>");
+    }
+
+    @Post("kombit/login/callback")
+    @ApiOperation({ summary: "Login callback from Kombit adgangsstyring" })
+    @UseGuards(KombitAuthGuard)
+    async kombitLoginCallback(@Req() req: any, @Res() res: any): Promise<any> {
+        // TODO: this
+        Logger.log(req.body);
+    }
+
+    @Post("kombit/logout/callback")
+    @ApiOperation({ summary: "Logout callback from Kombit adgangsstyring" })
+    async kombitLogoutCallback(@Req() req: any, @Res() res: any): Promise<any> {
+        // TODO: this
+        Logger.log(req.body);
+    }
 
     @Post("login")
     @ApiOperation({ summary: "Login using username and password" })

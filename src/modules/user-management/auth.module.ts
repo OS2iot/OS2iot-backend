@@ -11,6 +11,7 @@ import { PermissionModule } from "@modules/user-management/permission.module";
 import { UserModule } from "@modules/user-management/user.module";
 import { AuthService } from "@services/user-management/auth.service";
 import { AuthController } from "@user-management-controller/auth.controller";
+import { KombitStrategy } from "@auth/kombit.strategy";
 
 @Module({
     imports: [
@@ -30,7 +31,7 @@ import { AuthController } from "@user-management-controller/auth.controller";
         forwardRef(() => PermissionModule),
         forwardRef(() => OrganizationModule),
     ],
-    providers: [AuthService, LocalStrategy, JwtStrategy],
+    providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy],
     exports: [AuthService],
     controllers: [AuthController],
 })
