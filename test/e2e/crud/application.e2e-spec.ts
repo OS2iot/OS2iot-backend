@@ -41,7 +41,7 @@ describe("ApplicationController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: true,
+                    logging: false,
                     autoLoadEntities: true,
                 }),
                 AuthModule,

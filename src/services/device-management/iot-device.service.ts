@@ -34,6 +34,7 @@ import {
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -179,17 +180,47 @@ export class IoTDeviceService {
 
     private async enrichLoRaWANDevice(iotDevice: IoTDevice) {
         const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
-        loraDevice.lorawanSettings = await this.chirpstackDeviceService.getChirpstackDevice(
+        loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
+        await this.mapActivationAndKeys(loraDevice);
+        const csData = await this.chirpstackDeviceService.getChirpstackDevice(
             loraDevice.deviceEUI
         );
-        const keys = await this.chirpstackDeviceService.getKeys(loraDevice.deviceEUI);
-        loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+        loraDevice.lorawanSettings.devEUI = csData.devEUI;
+        loraDevice.lorawanSettings.deviceProfileID = csData.deviceProfileID;
+        loraDevice.lorawanSettings.serviceProfileID = csData.serviceProfileID;
+        loraDevice.lorawanSettings.skipFCntCheck = csData.skipFCntCheck;
+        loraDevice.lorawanSettings.isDisabled = csData.isDisabled;
+
         const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
-            loraDevice.lorawanSettings.applicationID
+            csData.applicationID
         );
         loraDevice.lorawanSettings.serviceProfileID =
             csAppliation.application.serviceProfileID;
         return loraDevice;
+    }
+
+    private async mapActivationAndKeys(loraDevice: LoRaWANDeviceWithChirpstackDataDto) {
+        const keys = await this.chirpstackDeviceService.getKeys(loraDevice.deviceEUI);
+        if (keys.nwkKey) {
+            // OTAA
+            loraDevice.lorawanSettings.activationType = ActivationType.OTAA;
+            loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+        } else {
+            const activation = await this.chirpstackDeviceService.getActivation(
+                loraDevice.deviceEUI
+            );
+            if (activation.devAddr != null) {
+                // ABP
+                loraDevice.lorawanSettings.activationType = ActivationType.ABP;
+                loraDevice.lorawanSettings.devAddr = activation.devAddr;
+                loraDevice.lorawanSettings.fCntUp = activation.fCntUp;
+                loraDevice.lorawanSettings.nFCntDown = activation.nFCntDown;
+                loraDevice.lorawanSettings.networkSessionKey = activation.nwkSEncKey;
+                loraDevice.lorawanSettings.applicationSessionKey = activation.appSKey;
+            } else {
+                loraDevice.lorawanSettings.activationType = ActivationType.NONE;
+            }
+        }
     }
 
     async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {

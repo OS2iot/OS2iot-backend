@@ -8,7 +8,6 @@ import { ChirpstackDeviceContentsDto } from "./chirpstack/chirpstack-device-cont
 export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsDto, [
     "devEUI",
     "deviceProfileID",
-    "deviceProfileID",
     "serviceProfileID",
     "skipFCntCheck",
     "isDisabled",

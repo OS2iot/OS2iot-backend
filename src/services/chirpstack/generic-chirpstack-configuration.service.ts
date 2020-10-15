@@ -168,7 +168,11 @@ export class GenericChirpstackConfigurationService {
 
             return result.data;
         } catch (err) {
-            Logger.error(`Error from Chirpstack ${JSON.stringify(err?.response?.data)}`);
+            Logger.error(
+                `GET '${header.url}' failed with error (${
+                    err?.response?.status
+                }): '${JSON.stringify(err?.response?.data)}'`
+            );
             if (err?.response?.status == 404) {
                 throw new NotFoundException(err?.response?.data);
             }
