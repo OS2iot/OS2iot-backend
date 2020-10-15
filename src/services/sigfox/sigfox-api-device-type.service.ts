@@ -100,13 +100,14 @@ export class SigFoxApiDeviceTypeService {
             x.url.startsWith(this.OS2IOT_BACKEND_URL)
         );
         const dto: CreateSigFoxApiCallbackRequestDto = this.makeDto();
-        let callbackId = callback.id;
+        let callbackId;
 
         if (callback) {
             // Callback exists, make sure it's OK
             if (this.isCallbackNotOk(callback)) {
                 await this.genericService.put(`${url}/${callback.id}`, dto, group);
             }
+            callbackId = callback.id;            
         } else {
             callbackId = (
                 await this.genericService.post<SigFoxApiIdReferenceDto>(url, dto, group)

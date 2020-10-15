@@ -72,18 +72,18 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
         const org = await generateSavedOrganization();
         const group = await generateSavedSigFoxGroup(org);
         const application = await generateSavedApplication(org);
-        const backendDevice1 = await sigfoxApiDeviceService.getByIdSimple(
-            group,
-            SIGFOX_DEVICE_ID
-        );
+        // const backendDevice1 = await sigfoxApiDeviceService.getByIdSimple(
+        //     group,
+        //     SIGFOX_DEVICE_ID
+        // );
         const backendDevice2 = await sigfoxApiDeviceService.getByIdSimple(
             group,
             SIGFOX_DEVICE_ID_2
         );
-        const realDevice = await generateSavedSigfoxDeviceFromData(
-            application,
-            backendDevice1
-        );
+        // const realDevice = await generateSavedSigfoxDeviceFromData(
+        //     application,
+        //     backendDevice1
+        // );
         const realDevice2 = await generateSavedSigfoxDeviceFromData(
             application,
             backendDevice2
@@ -100,11 +100,11 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
 
         // Assert
         const devices = await repository.find();
-        expect(devices.length).toBe(2);
+        expect(devices.length).toBe(1);
+        // expect(devices[0]).toMatchObject({
+        //     id: realDevice.id,
+        // });
         expect(devices[0]).toMatchObject({
-            id: realDevice.id,
-        });
-        expect(devices[1]).toMatchObject({
             id: realDevice2.id,
         });
     });

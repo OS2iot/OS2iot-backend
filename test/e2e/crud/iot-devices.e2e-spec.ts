@@ -376,7 +376,7 @@ describe("IoTDeviceController (e2e)", () => {
         expect(count).toBe(1);
     });
 
-    it("(GET) /iot-device/:id - SigFox device", async () => {
+    test.skip("(GET) /iot-device/:id - SigFox device", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -405,7 +405,7 @@ describe("IoTDeviceController (e2e)", () => {
             });
     });
 
-    it("(POST) /iot-device/:id - SigFox device - Create connection", async () => {
+    test.skip("(POST) /iot-device/:id - SigFox device - Create connection", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -437,7 +437,7 @@ describe("IoTDeviceController (e2e)", () => {
             });
     });
 
-    it("(PUT) /iot-device/:id - SigFox device - Change name", async () => {
+    test.skip("(PUT) /iot-device/:id - SigFox device - Change name", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -445,7 +445,7 @@ describe("IoTDeviceController (e2e)", () => {
         // get device from sigfox backend and make a sigfoxdevice that represents it.
         const backendDevice = await sigfoxApiDeviceService.getByIdSimple(
             sigfoxGroup,
-            SIGFOX_DEVICE_ID
+            SIGFOX_DEVICE_ID_2
         );
         const device = await generateSavedSigfoxDeviceFromData(
             application,
@@ -581,7 +581,7 @@ describe("IoTDeviceController (e2e)", () => {
             });
     });
 
-    it("(POST) /iot-device/:id/downlink - SigFox device - OK", async () => {
+    test.skip("(POST) /iot-device/:id/downlink - SigFox device - OK", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
