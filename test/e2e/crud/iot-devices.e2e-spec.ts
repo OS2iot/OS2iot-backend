@@ -16,6 +16,7 @@ import {
     clearDatabase,
     generateSavedApplication,
     generateSavedGlobalAdminUser,
+    generateSavedHttpDevice,
     generateSavedLoRaWANDevice,
     generateSavedOrganization,
     generateSavedSigfoxDevice,
@@ -24,6 +25,7 @@ import {
     generateSigfoxDevice,
     generateValidJwtForUser,
     SIGFOX_DEVICE_ID,
+    SIGFOX_DEVICE_ID_2,
 } from "../test-helpers";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -36,6 +38,7 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { domainToASCII } from "url";
 import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { response } from "express";
+import { ReceivedMessage } from "@entities/received-message";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -291,6 +294,42 @@ describe("IoTDeviceController (e2e)", () => {
 
         await request(app.getHttpServer())
             .delete("/iot-device/" + iotDeviceId)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({ affected: 1 });
+            });
+
+        const [res, count] = await repository.findAndCount();
+        expect(res.length).toBe(0);
+        expect(count).toBe(0);
+    });
+
+    it("(DELETE) /iot-device/:id - with receivedData", async () => {
+        // Arrnge
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const iotDevice = await generateSavedHttpDevice(application);
+
+        const now = new Date();
+        const metadata = new ReceivedMessageMetadata();
+        metadata.sentTime = new Date(now.valueOf() - 10);
+        metadata.device = iotDevice;
+        const metadata2 = new ReceivedMessageMetadata();
+        metadata2.sentTime = new Date(now.valueOf() - 24 * 60 * 60);
+        metadata2.device = iotDevice;
+        await getManager().save([metadata, metadata2]);
+
+        const receviedMessage = new ReceivedMessage();
+        receviedMessage.device = iotDevice;
+        receviedMessage.rawData = JSON.parse(`{"asdf":1234}`);
+        receviedMessage.sentTime = new Date(now.valueOf() - 10);
+        await getManager().save(receviedMessage);
+
+        await request(app.getHttpServer())
+            .delete("/iot-device/" + iotDevice.id)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)

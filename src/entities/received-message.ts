@@ -8,7 +8,8 @@ export class ReceivedMessage extends DbBaseEntity {
     @OneToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => IoTDevice,
-        device => device.latestReceivedMessage
+        device => device.latestReceivedMessage,
+        { onDelete: "CASCADE" }
     )
     @JoinColumn()
     device: IoTDevice;

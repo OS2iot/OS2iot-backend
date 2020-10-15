@@ -60,7 +60,8 @@ export abstract class IoTDevice extends DbBaseEntity {
     @OneToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         type => ReceivedMessage,
-        latestReceivedMessage => latestReceivedMessage.device
+        latestReceivedMessage => latestReceivedMessage.device,
+        { onDelete: "CASCADE" }
     )
     latestReceivedMessage: ReceivedMessage;
 
