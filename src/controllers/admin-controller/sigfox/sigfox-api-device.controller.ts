@@ -5,15 +5,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { checkIfUserHasReadAccessToOrganization } from "@helpers/security-helper";
-import {
-    Controller,
-    Get,
-    Logger,
-    ParseIntPipe,
-    Query,
-    Req,
-    UseGuards,
-} from "@nestjs/common";
+import { Controller, Get, ParseIntPipe, Query, Req, UseGuards } from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -21,8 +13,7 @@ import {
     ApiProduces,
     ApiTags,
 } from "@nestjs/swagger";
-import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
-import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 
 @ApiTags("SigFox")
@@ -33,16 +24,13 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 @ApiForbiddenResponse()
 export class SigFoxApiDeviceController {
     constructor(
-        private service: SigFoxApiDeviceService,
-        private usersService: SigfoxApiUsersService,
-        private sigfoxGroupService: SigFoxGroupService
+        private sigfoxGroupService: SigFoxGroupService,
+        private iotDeviceService: IoTDeviceService
     ) {}
-
-    private readonly logger = new Logger(SigFoxApiDeviceController.name);
 
     @Get()
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "List all SigFox Devices for a SigFox Group" })
+    @ApiOperation({ summary: "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT" })
     async getAll(
         @Req() req: AuthenticatedRequest,
         @Query("groupId", new ParseIntPipe()) groupId: number
@@ -52,6 +40,6 @@ export class SigFoxApiDeviceController {
         );
         checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
 
-        return await this.service.getAllByGroupIds(group, [group.sigfoxGroupId]);
+        return await this.iotDeviceService.getAllSigfoxDevicesByGroup(group, true);
     }
 }

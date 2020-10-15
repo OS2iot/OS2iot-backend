@@ -1,10 +1,8 @@
-import * as request from "supertest";
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
 import { Organization } from "@entities/organization.entity";
 import {
     clearDatabase,
@@ -12,15 +10,11 @@ import {
     generateSavedOrganization,
     generateSavedSigFoxGroup,
     generateValidJwtForUser,
-    randomMacAddress,
     SIGFOX_DEVICE_TYPE_ID,
 } from "../test-helpers";
 import configuration from "@config/configuration";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { ConfigModule } from "@nestjs/config";
-import { SigFoxApiDeviceTypeContent } from "@dto/sigfox/external/sigfox-api-device-type-response.dto";
-import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
-import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";

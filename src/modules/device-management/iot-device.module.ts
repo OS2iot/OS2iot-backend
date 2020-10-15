@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
@@ -16,9 +16,9 @@ import { IoTDeviceDownlinkService } from "@services/device-management/iot-device
         SharedModule,
         ChirpstackAdministrationModule,
         ApplicationModule,
-        SigfoxDeviceModule,
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
+        forwardRef(() => SigfoxDeviceModule),
     ],
     exports: [IoTDeviceService],
     controllers: [IoTDeviceController],

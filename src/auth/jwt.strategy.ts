@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
@@ -26,6 +26,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         // Does the user still exist?
         const exists = await this.userService.exists(payload.sub);
         if (!exists) {
+            Logger.warn(
+                `Authorization for user with id: ${payload.sub} failed, since they no longer exists`
+            );
             throw new UnauthorizedException();
         }
 

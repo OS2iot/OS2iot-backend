@@ -27,7 +27,10 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
-import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import {
+    SigFoxApiDeviceContent,
+    SigFoxApiDeviceResponse,
+} from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
@@ -47,8 +50,7 @@ export class IoTDeviceService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
-        private sigfoxGroupService: SigFoxGroupService,
-        private sigfoxApiGroupService: SigfoxApiGroupService
+        private sigfoxGroupService: SigFoxGroupService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -387,6 +389,29 @@ export class IoTDeviceService {
             sigfoxGroup,
             sigfoxDevice
         );
+    }
+
+    async getAllSigfoxDevicesByGroup(
+        group: SigFoxGroup,
+        removeExisting: boolean
+    ): Promise<SigFoxApiDeviceResponse> {
+        const devices = await this.sigfoxApiDeviceService.getAllByGroupIds(group, [
+            group.sigfoxGroupId,
+        ]);
+
+        if (removeExisting) {
+            const sigfoxDeviceIdsInUse = await this.sigfoxRepository.find({
+                select: ["deviceId"],
+            });
+            const filtered = devices.data.filter(x => {
+                return !sigfoxDeviceIdsInUse.some(y => y.deviceId == x.id);
+            });
+            return {
+                data: filtered,
+            };
+        }
+
+        return devices;
     }
 
     private async doEditInSigFoxBackend(
