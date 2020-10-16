@@ -118,7 +118,7 @@ export class IoTDeviceController {
         } else if (device.type == IoTDeviceType.SigFox) {
             return this.iotDeviceService.getDownlinkForSigfox(device as SigFoxDevice);
         } else {
-            throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWAN);
+            throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
         }
     }
 

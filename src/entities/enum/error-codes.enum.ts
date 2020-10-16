@@ -22,6 +22,6 @@ export enum ErrorCodes {
     DeviceDoesNotExistInSigFoxForGroup = "MESSAGE.DEVICE-DOES-NOT-EXIST-IN-SIGFOX-FOR-GROUP",
     DownlinkNotSupportedForDeviceType = "MESSAGE.DOWNLINK-NOT-SUPPORTED-FOR-DEVICE-TYPE",
     DownlinkLengthWrongForSigfox = "MESSAGE.DOWNLINK-LENGTH-WRONG-FOR-SIGFOX",
-    OnlyAllowedForLoRaWAN = "MESSAGE.ONLY-ALLOWED-FOR-LORAWAN",
+    OnlyAllowedForLoRaWANAndSigfox = "MESSAGE.ONLY-ALLOWED-FOR-LORAWAN-AND-SIGFOX",
     DeviceIsNotActivatedInChirpstack = "MESSAGE.DEVICE-IS-NOT-ACTIVATED-IN-CHIRPSTACK"
 }
