@@ -1,4 +1,4 @@
-import { HttpService, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, HttpService, Injectable, Logger } from "@nestjs/common";
 
 import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceActivationDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
@@ -20,6 +20,7 @@ import {
     CreateChirpstackDeviceQueueItemResponse,
 } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ChirstackDeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -104,11 +105,23 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         dto: CreateChirpstackDeviceQueueItemDto
     ): Promise<CreateChirpstackDeviceQueueItemResponse> {
         await this.deleteDownlinkQueue(dto.deviceQueueItem.devEUI);
-        const res = await this.post<CreateChirpstackDeviceQueueItemDto>(
-            `devices/${dto.deviceQueueItem.devEUI}/queue`,
-            dto
-        );
-        return res.data;
+        try {
+            const res = await this.post<CreateChirpstackDeviceQueueItemDto>(
+                `devices/${dto.deviceQueueItem.devEUI}/queue`,
+                dto
+            );
+            return res.data;
+        } catch (err) {
+            const fcntError =
+                "enqueue downlink payload error: get next downlink fcnt for deveui error";
+            if (err?.response?.data?.error?.startsWith(fcntError)) {
+                throw new BadRequestException(
+                    ErrorCodes.DeviceIsNotActivatedInChirpstack
+                );
+            }
+
+            throw err;
+        }
     }
 
     async getDownlinkQueue(
