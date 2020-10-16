@@ -19,7 +19,7 @@ import {
     CreateChirpstackDeviceQueueItemDto,
     CreateChirpstackDeviceQueueItemResponse,
 } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
-import { ChirstackDeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
@@ -126,8 +126,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     async getDownlinkQueue(
         deviceEUI: string
-    ): Promise<ChirstackDeviceDownlinkQueueResponseDto> {
-        const res = await this.get<ChirstackDeviceDownlinkQueueResponseDto>(
+    ): Promise<DeviceDownlinkQueueResponseDto> {
+        const res = await this.get<DeviceDownlinkQueueResponseDto>(
             `devices/${deviceEUI}/queue`
         );
         return res;

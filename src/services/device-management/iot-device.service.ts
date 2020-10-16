@@ -35,6 +35,7 @@ import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-t
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
+import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -268,6 +269,25 @@ export class IoTDeviceService {
         );
         sigfoxDevice.downlinkPayload = null;
         return await this.iotDeviceRepository.save(sigfoxDevice);
+    }
+
+    async getDownlinkForSigfox(
+        device: SigFoxDevice
+    ): Promise<DeviceDownlinkQueueResponseDto> {
+        if (device.downlinkPayload != null) {
+            return {
+                totalCount: 1,
+                deviceQueueItems: [
+                    {
+                        data: device.downlinkPayload,
+                    },
+                ],
+            };
+        }
+        return {
+            totalCount: 0,
+            deviceQueueItems: [],
+        };
     }
 
     async update(id: number, updateDto: UpdateIoTDeviceDto): Promise<IoTDevice> {

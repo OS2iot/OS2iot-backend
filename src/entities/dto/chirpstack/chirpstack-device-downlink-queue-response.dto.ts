@@ -1,13 +1,13 @@
 export interface DeviceQueueItem {
-    devEUI: string;
-    confirmed: boolean;
-    fCnt: number;
-    fPort: number;
+    devEUI?: string;
+    confirmed?: boolean;
+    fCnt?: number;
+    fPort?: number;
     data: string;
-    jsonObject: string;
+    jsonObject?: string;
 }
 
-export interface ChirstackDeviceDownlinkQueueResponseDto {
+export interface DeviceDownlinkQueueResponseDto {
     deviceQueueItems: DeviceQueueItem[];
     totalCount: number;
 }

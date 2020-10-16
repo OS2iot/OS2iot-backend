@@ -44,9 +44,10 @@ import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto"
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { CreateChirpstackDeviceQueueItemResponse } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { ChirstackDeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -95,7 +96,7 @@ export class IoTDeviceController {
     async findDownlinkQueue(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<ChirstackDeviceDownlinkQueueResponseDto> {
+    ): Promise<DeviceDownlinkQueueResponseDto> {
         let device = undefined;
         try {
             device = await this.iotDeviceService.findOneWithApplicationAndMetadata(
@@ -110,13 +111,15 @@ export class IoTDeviceController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
         checkIfUserHasReadAccessToApplication(req, device.application.id);
-        if (device.type != IoTDeviceType.LoRaWAN) {
+        if (device.type == IoTDeviceType.LoRaWAN) {
+            return this.chirpstackDeviceService.getDownlinkQueue(
+                (device as LoRaWANDevice).deviceEUI
+            );
+        } else if (device.type == IoTDeviceType.SigFox) {
+            return this.iotDeviceService.getDownlinkForSigfox(device as SigFoxDevice);
+        } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWAN);
         }
-
-        return this.chirpstackDeviceService.getDownlinkQueue(
-            (device as LoRaWANDevice).deviceEUI
-        );
     }
 
     @Post()
