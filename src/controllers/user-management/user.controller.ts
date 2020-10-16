@@ -6,9 +6,11 @@ import {
     InternalServerErrorException,
     NotFoundException,
     Param,
+    ParseBoolPipe,
     ParseIntPipe,
     Post,
     Put,
+    Query,
     Req,
     UseGuards,
 } from "@nestjs/common";
@@ -95,11 +97,19 @@ export class UserController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
-    async find(@Param("id", new ParseIntPipe()) id: number): Promise<UserResponseDto> {
+    async find(
+        @Param("id", new ParseIntPipe()) id: number,
+        @Query("extendedInfo", new ParseBoolPipe()) extendedInfo: boolean
+    ): Promise<UserResponseDto> {
+        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.findOne(id);
+            const { passwordHash, ...user } = await this.userService.findOne(
+                id,
+                getExtendedInfo,
+                getExtendedInfo
+            );
 
             return user;
         } catch (err) {

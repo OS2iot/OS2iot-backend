@@ -55,9 +55,21 @@ export class UserService {
         );
     }
 
-    async findOne(id: number): Promise<User> {
+    async findOne(
+        id: number,
+        getPermissionOrganisationInfo = false,
+        getPermissionUsersInfo = false
+    ): Promise<User> {
+        const relations = ["permissions"];
+        if (getPermissionOrganisationInfo) {
+            relations.push("permissions.organization");
+        }
+        if (getPermissionUsersInfo) {
+            relations.push("permissions.users");
+        }
+
         return await this.userRepository.findOne(id, {
-            relations: ["permissions"],
+            relations: relations,
         });
     }
 
