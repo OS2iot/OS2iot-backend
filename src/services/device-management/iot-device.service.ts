@@ -398,6 +398,9 @@ export class IoTDeviceService {
                 cast.deviceTypeId = res.deviceType.id;
                 await this.doEditInSigFoxBackend(res, dto, sigfoxGroup, cast);
             } catch (err) {
+                if (err?.status == 429) {
+                    throw err;
+                }
                 throw new BadRequestException(
                     ErrorCodes.DeviceDoesNotExistInSigFoxForGroup
                 );
