@@ -6,9 +6,6 @@ export class SigFoxCallbackDto {
     time: number;
     deviceTypeId: string;
     deviceId: string;
-    snr: number;
-    rssi: number;
-    station: string;
     data: string;
     seqNumber: number;
 
@@ -16,4 +13,11 @@ export class SigFoxCallbackDto {
     longPolling?: boolean;
     // Only included in BIDIR
     ack?: boolean;
+
+    // these are not available for all contracts "Condition: for devices with contract option NETWORK METADATA"
+    // https://support.sigfox.com/docs/bidir
+    // We cannot assume they'll exists
+    snr?: number;
+    rssi?: number;
+    station?: string;
 }

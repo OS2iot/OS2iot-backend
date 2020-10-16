@@ -34,9 +34,6 @@ export class SigFoxApiDeviceTypeService {
     "time": {time},
     "deviceTypeId": "{deviceTypeId}",
     "deviceId": "{device}",
-    "snr": {snr},
-    "rssi": {rssi},
-    "station": "{station}",
     "data": "{data}",
     "seqNumber": {seqNumber}
 }`;
