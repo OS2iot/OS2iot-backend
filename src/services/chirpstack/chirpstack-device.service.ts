@@ -21,6 +21,7 @@ import {
 } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { ChirpstackManyDeviceResponseDto } from "@dto/chirpstack/chirpstack-many-device-response";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -124,9 +125,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async getDownlinkQueue(
-        deviceEUI: string
-    ): Promise<DeviceDownlinkQueueResponseDto> {
+    async getDownlinkQueue(deviceEUI: string): Promise<DeviceDownlinkQueueResponseDto> {
         const res = await this.get<DeviceDownlinkQueueResponseDto>(
             `devices/${deviceEUI}/queue`
         );
@@ -164,6 +163,12 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             return false;
         }
         return res.status == 200;
+    }
+
+    async getAllDevicesStatus(): Promise<ChirpstackManyDeviceResponseDto> {
+        return await this.get<ChirpstackManyDeviceResponseDto>(
+            `devices?limit=10000&offset=0`
+        );
     }
 
     private async createOrUpdateABPActivation(

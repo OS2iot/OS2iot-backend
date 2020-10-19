@@ -191,6 +191,8 @@ export class IoTDeviceService {
         loraDevice.lorawanSettings.serviceProfileID = csData.serviceProfileID;
         loraDevice.lorawanSettings.skipFCntCheck = csData.skipFCntCheck;
         loraDevice.lorawanSettings.isDisabled = csData.isDisabled;
+        loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
+        loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
 
         const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
             csData.applicationID

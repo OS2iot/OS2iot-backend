@@ -4,9 +4,14 @@ import { ApplicationController } from "@admin-controller/application.controller"
 import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { ApplicationService } from "@services/device-management/application.service";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
-    imports: [SharedModule, forwardRef(() => OrganizationModule)],
+    imports: [
+        SharedModule,
+        forwardRef(() => OrganizationModule),
+        ChirpstackAdministrationModule,
+    ],
     exports: [ApplicationService],
     controllers: [ApplicationController],
     providers: [ApplicationService],

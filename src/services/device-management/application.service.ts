@@ -9,6 +9,11 @@ import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -16,7 +21,8 @@ export class ApplicationService {
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
-        private organizationService: OrganizationService
+        private organizationService: OrganizationService,
+        private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
 
     async findAndCountInList(
@@ -93,13 +99,37 @@ export class ApplicationService {
     }
 
     async findOne(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id, {
+        const app = await this.applicationRepository.findOneOrFail(id, {
             relations: [
                 "iotDevices",
                 "dataTargets",
                 "iotDevices.receivedMessagesMetadata",
                 "belongsTo",
             ],
+        });
+        if (app.iotDevices.some(x => x.type == IoTDeviceType.LoRaWAN)) {
+            await this.matchWithChirpstackStatusData(app);
+        }
+
+        return app;
+    }
+
+    private async matchWithChirpstackStatusData(app: Application) {
+        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus();
+        app.iotDevices.forEach(x => {
+            if (x.type == IoTDeviceType.LoRaWAN) {
+                const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
+                const matchingDevice = allFromChirpstack.result.find(
+                    cs => cs.devEUI == loraDevice.deviceEUI
+                );
+                if (matchingDevice) {
+                    loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
+                    loraDevice.lorawanSettings.deviceStatusBattery =
+                        matchingDevice.deviceStatusBattery;
+                    loraDevice.lorawanSettings.deviceStatusMargin =
+                        matchingDevice.deviceStatusMargin;
+                }
+            }
         });
     }
 

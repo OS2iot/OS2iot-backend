@@ -11,6 +11,8 @@ export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsD
     "serviceProfileID",
     "skipFCntCheck",
     "isDisabled",
+    "deviceStatusBattery",
+    "deviceStatusMargin",
 ]) {
     @ApiProperty({ required: true })
     activationType: ActivationType;
