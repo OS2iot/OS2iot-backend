@@ -17,17 +17,27 @@ import {
     generateSavedApplication,
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
-    generateSavedOrganizationAdminUser,
     generateSavedReadWriteUser,
     generateValidJwtForUser,
+    randomMacAddress,
 } from "../test-helpers";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ReadPermission } from "@entities/read-permission.entity";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<Application>;
     let globalAdminJwt: string;
+    let iotDeviceService: IoTDeviceService;
+    let deviceProfileService: DeviceProfileService;
+    let serviceProfileService: ServiceProfileService;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -46,6 +56,8 @@ describe("ApplicationController (e2e)", () => {
                 }),
                 AuthModule,
                 ApplicationModule,
+                ChirpstackAdministrationModule,
+                IoTDeviceModule,
             ],
         }).compile();
 
@@ -54,6 +66,10 @@ describe("ApplicationController (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("ApplicationRepository");
+
+        iotDeviceService = moduleFixture.get("IoTDeviceService");
+        deviceProfileService = moduleFixture.get("DeviceProfileService");
+        serviceProfileService = moduleFixture.get("ServiceProfileService");
     });
 
     afterAll(async () => {
@@ -497,7 +513,6 @@ describe("ApplicationController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const app1 = await generateSavedApplication(org, "app1");
-        const app2 = await generateSavedApplication(org, "app2");
 
         const user = await generateSavedReadWriteUser(org);
         const readPerm = user.permissions.find(
@@ -528,6 +543,55 @@ describe("ApplicationController (e2e)", () => {
                     updatedAt: expect.any(String),
                     iotDevices: [],
                     description: app1.description,
+                });
+            });
+    });
+
+    it("(GET) /application/:id - Includes chirpstakc battery stats", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const app1 = await generateSavedApplication(org, "app1");
+        const mac = randomMacAddress();
+        const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
+        const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
+        const device = await iotDeviceService.create({
+            name: "E2E-" + mac,
+            type: IoTDeviceType.LoRaWAN,
+            applicationId: app1.id,
+            longitude: 12,
+            latitude: 32,
+            comment: "asdf",
+            commentOnLocation: "fdsa",
+            metadata: JSON.parse("{}"),
+            lorawanSettings: {
+                activationType: ActivationType.NONE,
+                devAddr: mac,
+                devEUI: mac,
+                deviceProfileID: deviceProfile.result[0].id,
+                serviceProfileID: serviceProfile.result[0].id,
+            },
+        });
+
+        // Act
+        return request(app.getHttpServer())
+            .get("/application/" + app1.id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    id: app1.id,
+                    name: app1.name,
+                    description: app1.description,
+                });
+                expect(response.body.iotDevices[0]).toMatchObject({
+                    id: device.id,
+                    name: device.name,
+                    lorawanSettings: {
+                        deviceStatusBattery: expect.any(Number),
+                        deviceStatusMargin: expect.any(Number),
+                    },
                 });
             });
     });

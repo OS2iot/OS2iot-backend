@@ -26,11 +26,11 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiProperty({ required: false, default: false })
     @IsOptional()
-    isDisabled: boolean;
+    isDisabled?: boolean;
 
     @ApiProperty({ required: false, default: false })
     @IsOptional()
-    skipFCntCheck: boolean;
+    skipFCntCheck?: boolean;
 
     @ApiProperty({ required: false, default: {} })
     variables?: JSON;
@@ -42,7 +42,7 @@ export class ChirpstackDeviceContentsDto {
     OTAAapplicationKey: string;
 
     @ApiHideProperty()
-    deviceStatusBattery: number;
+    deviceStatusBattery?: number;
     @ApiHideProperty()
-    deviceStatusMargin: number;
+    deviceStatusMargin?: number;
 }

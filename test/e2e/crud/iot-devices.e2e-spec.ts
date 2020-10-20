@@ -22,8 +22,8 @@ import {
     generateSavedSigfoxDevice,
     generateSavedSigfoxDeviceFromData,
     generateSavedSigFoxGroup,
-    generateSigfoxDevice,
     generateValidJwtForUser,
+    randomMacAddress,
     SIGFOX_DEVICE_ID,
     SIGFOX_DEVICE_ID_2,
 } from "../test-helpers";
@@ -35,10 +35,12 @@ import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.servi
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { domainToASCII } from "url";
 import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
-import { response } from "express";
 import { ReceivedMessage } from "@entities/received-message";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -48,6 +50,9 @@ describe("IoTDeviceController (e2e)", () => {
     let service: IoTDeviceService;
     let sigfoxApiDeviceService: SigFoxApiDeviceService;
     let chirpstackDeviceService: ChirpstackDeviceService;
+    let iotDeviceService: IoTDeviceService;
+    let deviceProfileService: DeviceProfileService;
+    let serviceProfileService: ServiceProfileService;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -66,6 +71,7 @@ describe("IoTDeviceController (e2e)", () => {
                 }),
                 AuthModule,
                 IoTDeviceModule,
+                ChirpstackAdministrationModule,
             ],
         }).compile();
 
@@ -78,6 +84,10 @@ describe("IoTDeviceController (e2e)", () => {
         service = moduleFixture.get("IoTDeviceService");
         sigfoxApiDeviceService = moduleFixture.get("SigFoxApiDeviceService");
         chirpstackDeviceService = moduleFixture.get(ChirpstackDeviceService.name);
+
+        iotDeviceService = moduleFixture.get("IoTDeviceService");
+        deviceProfileService = moduleFixture.get("DeviceProfileService");
+        serviceProfileService = moduleFixture.get("ServiceProfileService");
     });
 
     afterAll(async () => {
@@ -165,6 +175,50 @@ describe("IoTDeviceController (e2e)", () => {
                 ).toBeGreaterThanOrEqual(
                     Date.parse(response.body.receivedMessagesMetadata[1].sentTime)
                 );
+            });
+    });
+
+    it("(GET) /iot-device/:id - LoRaWAN", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const app1 = await generateSavedApplication(org, "app1");
+        const mac = randomMacAddress();
+        const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
+        const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
+        const device = await iotDeviceService.create({
+            name: "E2E-" + mac,
+            type: IoTDeviceType.LoRaWAN,
+            applicationId: app1.id,
+            longitude: 12,
+            latitude: 32,
+            comment: "asdf",
+            commentOnLocation: "fdsa",
+            metadata: JSON.parse("{}"),
+            lorawanSettings: {
+                activationType: ActivationType.NONE,
+                devAddr: mac,
+                devEUI: mac,
+                deviceProfileID: deviceProfile.result[0].id,
+                serviceProfileID: serviceProfile.result[0].id,
+            },
+        });
+
+        return await request(app.getHttpServer())
+            .get("/iot-device/" + device.id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    id: device.id,
+                    name: device.name,
+                    type: IoTDeviceType.LoRaWAN,
+                    lorawanSettings: {
+                        deviceStatusBattery: expect.any(Number),
+                        deviceStatusMargin: expect.any(Number),
+                    },
+                });
             });
     });
 
@@ -585,7 +639,6 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
-        const sigfoxGroup = await generateSavedSigFoxGroup(org);
         const sigfoxDevice = await generateSavedSigfoxDevice(application);
         const dto: CreateIoTDeviceDownlinkDto = {
             data: "001e19028f101272",

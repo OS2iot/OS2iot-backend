@@ -279,10 +279,14 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     async getActivation(
         deviceId: string
     ): Promise<ChirpstackDeviceActivationContentsDto> {
-        const res = await this.get<ChirpstackDeviceActivationDto>(
-            `devices/${deviceId}/activation`
-        );
-        return res.deviceActivation;
+        try {
+            const res = await this.get<ChirpstackDeviceActivationDto>(
+                `devices/${deviceId}/activation`
+            );
+            return res.deviceActivation;
+        } catch (err) {
+            return new ChirpstackDeviceActivationContentsDto();
+        }
     }
 
     private async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {
