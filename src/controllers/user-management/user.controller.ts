@@ -99,7 +99,7 @@ export class UserController {
     @ApiOperation({ summary: "Get one user" })
     async find(
         @Param("id", new ParseIntPipe()) id: number,
-        @Query("extendedInfo", new ParseBoolPipe()) extendedInfo: boolean
+        @Query("extendedInfo") extendedInfo?: boolean
     ): Promise<UserResponseDto> {
         const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
