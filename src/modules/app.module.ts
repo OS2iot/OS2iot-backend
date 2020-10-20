@@ -26,6 +26,7 @@ import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.mod
 import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { SearchModule } from "./search.module";
 
 @Module({
     imports: [
@@ -81,6 +82,7 @@ import { ScheduleModule } from "@nestjs/schedule";
         SigfoxDeviceTypeModule,
         SigfoxContractModule,
         SigfoxDeviceModule,
+        SearchModule,
     ],
     controllers: [],
     providers: [],

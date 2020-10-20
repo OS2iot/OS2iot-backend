@@ -30,7 +30,10 @@ export class SigFoxApiDeviceController {
 
     @Get()
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT" })
+    @ApiOperation({
+        summary:
+            "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT",
+    })
     async getAll(
         @Req() req: AuthenticatedRequest,
         @Query("groupId", new ParseIntPipe()) groupId: number

@@ -25,6 +25,6 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
         DeviceProfileService,
         ChirpstackDeviceService,
     ],
-    exports: [ChirpstackDeviceService],
+    exports: [ChirpstackDeviceService, ChirpstackGatewayService],
 })
 export class ChirpstackAdministrationModule {}

@@ -25,7 +25,6 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { SigFoxApiSingleDeviceResponseDto } from "@dto/sigfox/external/sigfox-api-single-device-response.dto";
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 
 export async function clearDatabase(): Promise<void> {
@@ -203,9 +202,12 @@ export async function generateSavedApplication(
 export const SIGFOX_DEVICE_ID = "B445A9";
 export const SIGFOX_DEVICE_ID_2 = "B443A5";
 export const SIGFOX_DEVICE_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
-export function generateSigfoxDevice(application: Application): SigFoxDevice {
+export function generateSigfoxDevice(
+    application: Application,
+    nameSuffix = ""
+): SigFoxDevice {
     const sigfoxDevice = new SigFoxDevice();
-    sigfoxDevice.name = "E2E Test SigFox Device";
+    sigfoxDevice.name = "E2E Test SigFox Device" + nameSuffix;
     sigfoxDevice.application = application;
     sigfoxDevice.deviceId = SIGFOX_DEVICE_ID;
     sigfoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
@@ -214,8 +216,11 @@ export function generateSigfoxDevice(application: Application): SigFoxDevice {
     return sigfoxDevice;
 }
 
-export async function generateSavedSigfoxDevice(app: Application): Promise<SigFoxDevice> {
-    return await getManager().save(generateSigfoxDevice(app));
+export async function generateSavedSigfoxDevice(
+    app: Application,
+    nameSuffix?: string
+): Promise<SigFoxDevice> {
+    return await getManager().save(generateSigfoxDevice(app, nameSuffix));
 }
 
 export function generateIoTDevice(applications: Application): IoTDevice {
@@ -235,9 +240,12 @@ export async function generateSavedIoTDevice(
     return await getManager().save(generateIoTDevice(applications));
 }
 
-export function generateHttpDevice(applications: Application): GenericHTTPDevice {
+export function generateHttpDevice(
+    applications: Application,
+    nameSuffix = ""
+): GenericHTTPDevice {
     const device = new GenericHTTPDevice();
-    device.name = "E2E Test GENERIC HTTP device";
+    device.name = "E2E Test GENERIC HTTP device" + nameSuffix;
     device.application = applications;
     device.apiKey = "DUMMY-API-KEY";
     device.metadata = JSON.parse('{"some_key": "a_value"}');
@@ -247,14 +255,18 @@ export function generateHttpDevice(applications: Application): GenericHTTPDevice
 }
 
 export async function generateSavedHttpDevice(
-    applications: Application
+    applications: Application,
+    nameSuffix?: string
 ): Promise<GenericHTTPDevice> {
-    return await getManager().save(generateHttpDevice(applications));
+    return await getManager().save(generateHttpDevice(applications, nameSuffix));
 }
 
-export function generateLoRaWANDevice(applications: Application): LoRaWANDevice {
+export function generateLoRaWANDevice(
+    applications: Application,
+    nameSuffix = ""
+): LoRaWANDevice {
     const device = new LoRaWANDevice();
-    device.name = "E2E Test LoRaWAN device";
+    device.name = "E2E Test LoRaWAN device" + nameSuffix;
     device.application = applications;
     device.metadata = JSON.parse('{"some_key": "a_value"}');
     device.id = 1;
@@ -264,9 +276,10 @@ export function generateLoRaWANDevice(applications: Application): LoRaWANDevice 
 }
 
 export async function generateSavedLoRaWANDevice(
-    applications: Application
+    applications: Application,
+    nameSuffix?: string
 ): Promise<LoRaWANDevice> {
-    return await getManager().save(generateLoRaWANDevice(applications));
+    return await getManager().save(generateLoRaWANDevice(applications, nameSuffix));
 }
 
 export async function generateSavedDataTarget(

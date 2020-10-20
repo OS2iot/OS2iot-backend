@@ -23,5 +23,6 @@ export enum ErrorCodes {
     DownlinkNotSupportedForDeviceType = "MESSAGE.DOWNLINK-NOT-SUPPORTED-FOR-DEVICE-TYPE",
     DownlinkLengthWrongForSigfox = "MESSAGE.DOWNLINK-LENGTH-WRONG-FOR-SIGFOX",
     OnlyAllowedForLoRaWANAndSigfox = "MESSAGE.ONLY-ALLOWED-FOR-LORAWAN-AND-SIGFOX",
-    DeviceIsNotActivatedInChirpstack = "MESSAGE.DEVICE-IS-NOT-ACTIVATED-IN-CHIRPSTACK"
+    DeviceIsNotActivatedInChirpstack = "MESSAGE.DEVICE-IS-NOT-ACTIVATED-IN-CHIRPSTACK",
+    QueryMustNotBeEmpty = "MESSAGE.QUERY-MUST-NOT-BE-EMPTY",
 }

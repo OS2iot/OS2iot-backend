@@ -30,7 +30,9 @@ export class GenericChirpstackConfigurationService {
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
         if (limit != null && offset != null) {
             const headerDto: HeaderDto = {
-                url: `${this.baseUrl}/api/${endPoint}?limit=${limit}&offset=${offset}`,
+                url: `${this.baseUrl}/api/${endPoint}${
+                    endPoint.indexOf("?") >= 0 ? "&" : "?"
+                }limit=${limit}&offset=${offset}`,
                 timeout: 3000,
                 authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
                 authorizationHeader: "Bearer " + JwtToken.setupToken(),
