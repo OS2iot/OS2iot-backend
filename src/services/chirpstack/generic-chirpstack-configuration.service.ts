@@ -43,7 +43,6 @@ export class GenericChirpstackConfigurationService {
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };
-
         return headerDto;
     }
 

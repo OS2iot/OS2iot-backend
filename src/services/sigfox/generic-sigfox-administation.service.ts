@@ -112,9 +112,7 @@ export class GenericSigfoxAdministationService {
         }
 
         if (response?.status == 400) {
-            this.logger.error(
-                `Error from SigFox: ${JSON.stringify(response?.data)}`
-            );
+            this.logger.error(`Error from SigFox: ${JSON.stringify(response?.data)}`);
             throw new BadRequestException(response?.data?.errors);
         }
 

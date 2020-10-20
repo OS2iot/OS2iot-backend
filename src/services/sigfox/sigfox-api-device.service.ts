@@ -23,7 +23,9 @@ export class SigFoxApiDeviceService {
         sigfoxGroup: SigFoxGroup,
         groupIds?: string[]
     ): Promise<SigFoxApiDeviceResponse> {
-        let url = this.URL_BASE + "?fields=productCertificate(key),contract(name),group(name),deviceType(name)";
+        let url =
+            this.URL_BASE +
+            "?fields=productCertificate(key),contract(name),group(name),deviceType(name)";
         if (groupIds?.length > 0) {
             url += "&groupIds=" + groupIds.join(",");
         }

@@ -104,7 +104,7 @@ export class SigFoxApiDeviceTypeService {
             if (this.isCallbackNotOk(callback)) {
                 await this.genericService.put(`${url}/${callback.id}`, dto, group);
             }
-            callbackId = callback.id;            
+            callbackId = callback.id;
         } else {
             callbackId = (
                 await this.genericService.post<SigFoxApiIdReferenceDto>(url, dto, group)
