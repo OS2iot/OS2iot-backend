@@ -7,17 +7,23 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable } from "@nestjs/common";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { isHexadecimal, isUUID } from "class-validator";
+import * as _ from "lodash";
 import { getManager, SelectQueryBuilder } from "typeorm";
 
 @Injectable()
 export class SearchService {
     constructor(private gatewayService: ChirpstackGatewayService) {}
 
+    private readonly SEARCH_RESULT_LIMIT = 100;
+
     async findByQuery(
         req: AuthenticatedRequest,
-        query: string
+        query: string,
+        limit = this.SEARCH_RESULT_LIMIT,
+        offset = 0
     ): Promise<ListAllSearchResultsResponseDto> {
-        const trimmedQuery = query.trim();
+        const urlDecoded = decodeURIComponent(query);
+        const trimmedQuery = urlDecoded.trim();
         let results: SearchResultDto[] = [];
 
         const gateways = this.findGateways(trimmedQuery);
@@ -29,9 +35,21 @@ export class SearchService {
         results = this.addResults(await gateways, SearchResultType.Gateway, results);
 
         return {
-            data: results,
+            data: this.limitAndOrder(results, limit, offset),
             count: results.length,
         };
+    }
+
+    private limitAndOrder(
+        data: SearchResultDto[],
+        limit: number,
+        offset: number
+    ): SearchResultDto[] {
+        console.time("sort");
+        const r = _.orderBy(data, ["updatedAt"], ["desc"]);
+        const sliced = _.slice(r, offset, offset + limit);
+        console.timeEnd("sort");
+        return sliced;
     }
 
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
@@ -43,7 +61,7 @@ export class SearchService {
             const createdAt = new Date(Date.parse(x.createdAt));
             const updatedAt = new Date(Date.parse(x.updatedAt));
 
-            return new SearchResultDto(x.name, x.id, createdAt, updatedAt);
+            return new SearchResultDto(x.name, x.id, createdAt, updatedAt, x.id);
         });
 
         return mapped;
@@ -151,6 +169,7 @@ export class SearchService {
         return getManager().createQueryBuilder(IoTDevice, "device");
     }
 
+    // eslint-disable-next-line max-lines-per-function
     private async applySecuityAndSelect<T>(
         req: AuthenticatedRequest,
         qb: SelectQueryBuilder<T>,
@@ -169,10 +188,44 @@ export class SearchService {
             );
         }
 
-        const select = qb.select(["id", '"createdAt"', '"updatedAt"', "name"]);
+        const toSelect = [
+            `"${alias}"."id"`,
+            `"${alias}"."createdAt"`,
+            `"${alias}"."updatedAt"`,
+            `"${alias}"."name"`,
+        ];
+        const select = qb;
         if (alias == "device") {
-            return select.addSelect('"applicationId"', "applicationId").getRawMany();
+            return (
+                select
+                    .select(toSelect.concat(['"deviceId"', '"deviceEUI"', '"apiKey"']))
+                    .addSelect('"type"', "deviceType")
+                    .addSelect('"applicationId"', "applicationId")
+                    .leftJoin(
+                        "application",
+                        "app",
+                        '"app"."id" = "device"."applicationId"'
+                    )
+                    .addSelect('"app"."belongsToId"', "organizationId")
+                    .leftJoin("organization", "org", '"org"."id" = "app"."belongsToId"')
+                    .addSelect('"org"."name"', "organizationName")
+                    // .limit(this.SEARCH_RESULT_LIMIT)
+                    .getRawMany()
+            );
+        } else if (alias == "app") {
+            return (
+                select
+                    .select(toSelect)
+                    .leftJoin(
+                        "organization",
+                        "org",
+                        `"org"."id" = "${alias}"."belongsToId"`
+                    )
+                    .addSelect('"org"."name"', "organizationName")
+                    .addSelect('"org"."id"', "organizationId")
+                    // .limit(this.SEARCH_RESULT_LIMIT)
+                    .getRawMany()
+            );
         }
-        return select.getRawMany();
     }
 }

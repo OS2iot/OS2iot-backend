@@ -10,6 +10,7 @@ import {
     Controller,
     Get,
     Logger,
+    ParseIntPipe,
     Query,
     Req,
     UseGuards,
@@ -46,13 +47,15 @@ export class SearchController {
     })
     async search(
         @Req() req: AuthenticatedRequest,
-        @Query("q") query?: string
+        @Query("q") query?: string,
+        @Query("limit", new ParseIntPipe()) limit?: number,
+        @Query("offset", new ParseIntPipe()) offset?: number,
     ): Promise<ListAllSearchResultsResponseDto> {
         if (query == null || query.trim() === "") {
             throw new BadRequestException(ErrorCodes.QueryMustNotBeEmpty);
         }
         console.time("search");
-        const res = await this.service.findByQuery(req, query);
+        const res = await this.service.findByQuery(req, query, limit, offset);
         console.timeEnd("search");
         return res;
     }
