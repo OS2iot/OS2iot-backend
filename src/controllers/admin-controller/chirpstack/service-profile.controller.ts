@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -110,6 +111,9 @@ export class ServiceProfileController {
             Logger.error(
                 `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
+            if (err?.message == "this object is used by other objects, remove them first") {
+                throw new BadRequestException(ErrorCodes.IsUsed);
+            }
         }
 
         if (!result) {
