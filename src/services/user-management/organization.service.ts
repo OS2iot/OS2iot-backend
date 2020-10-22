@@ -88,6 +88,12 @@ export class OrganizationService {
         });
     }
 
+    async findByIdWithPermissions(organizationId: number): Promise<Organization> {
+        return await this.organizationRepository.findOneOrFail(organizationId, {
+            relations: ["permissions"],
+        });
+    }
+
     async delete(id: number): Promise<DeleteResponseDto> {
         const res = await this.organizationRepository.delete(id);
         return new DeleteResponseDto(res.affected);
