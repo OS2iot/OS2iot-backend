@@ -137,9 +137,9 @@ describe("PermissionController (e2e)", () => {
         await app.close();
     });
 
-    it("(GET) /search?q= - query missing", async () => {
+    it("(GET) /search?limit=10&offset=0&q= - query missing", async () => {
         return request(app.getHttpServer())
-            .get("/search?q=")
+            .get("/search?limit=10&offset=0&q=")
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(400)
@@ -151,9 +151,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=E2E - Global Admin", async () => {
+    it("(GET) /search?limit=10&offset=0&q=E2E - Global Admin", async () => {
         return request(app.getHttpServer())
-            .get("/search?q=E2E")
+            .get("/search?limit=10&offset=0&q=E2E")
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -163,9 +163,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=E2E - Org Admin", async () => {
+    it("(GET) /search?limit=10&offset=0&q=E2E - Org Admin", async () => {
         return request(app.getHttpServer())
-            .get("/search?q=E2E")
+            .get("/search?limit=10&offset=0&q=E2E")
             .auth(orgAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -175,9 +175,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=E2E - Read/Write", async () => {
+    it("(GET) /search?limit=10&offset=0&q=E2E - Read/Write", async () => {
         return request(app.getHttpServer())
-            .get("/search?q=E2E")
+            .get("/search?limit=10&offset=0&q=E2E")
             .auth(readUserJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -187,9 +187,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=:lorawanId - Read/Write", async () => {
+    it("(GET) /search?limit=10&offset=0&q=:lorawanId - Read/Write", async () => {
         return request(app.getHttpServer())
-            .get(`/search?q=${lora1_1_1.deviceEUI}`)
+            .get(`/search?limit=10&offset=0&q=${lora1_1_1.deviceEUI}`)
             .auth(readUserJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -199,9 +199,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=:sigfox - Read/Write", async () => {
+    it("(GET) /search?limit=10&offset=0&q=:sigfox - Read/Write", async () => {
         return request(app.getHttpServer())
-            .get(`/search?q=${sigfox1_1_1.deviceId}`)
+            .get(`/search?limit=10&offset=0&q=${sigfox1_1_1.deviceId}`)
             .auth(readUserJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -211,9 +211,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=:generic - Read/Write", async () => {
+    it("(GET) /search?limit=10&offset=0&q=:generic - Read/Write", async () => {
         return request(app.getHttpServer())
-            .get(`/search?q=${device1_1_1.apiKey}`)
+            .get(`/search?limit=10&offset=0&q=${device1_1_1.apiKey}`)
             .auth(readUserJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -223,9 +223,9 @@ describe("PermissionController (e2e)", () => {
             });
     });
 
-    it("(GET) /search?q=:gateway - Read/Write", async () => {
+    it("(GET) /search?limit=10&offset=0&q=:gateway - Read/Write", async () => {
         return request(app.getHttpServer())
-            .get(`/search?q=${gatewayRequest.gateway.id}`)
+            .get(`/search?limit=10&offset=0&q=${gatewayRequest.gateway.id}`)
             .auth(readUserJwt, { type: "bearer" })
             .send()
             .expect(200)
