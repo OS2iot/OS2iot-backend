@@ -16,6 +16,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import * as _ from "lodash";
+import * as fs from "fs";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { LocalAuthGuard } from "@auth/local-auth.guard";
@@ -35,6 +36,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { UserService } from "@services/user-management/user.service";
 import { KombitAuthGuard } from "@auth/kombit-auth.guard";
 import { Request as expressRequest, Response } from "express";
+import { KombitStrategy } from "@auth/kombit.strategy";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -42,7 +44,8 @@ export class AuthController {
     constructor(
         private authService: AuthService,
         private userService: UserService,
-        private organisationService: OrganizationService
+        private organisationService: OrganizationService,
+        private strategy: KombitStrategy
     ) {}
 
     @Get("kombit/login")
@@ -65,6 +68,17 @@ export class AuthController {
     async kombitLogoutCallback(@Req() req: any, @Res() res: any): Promise<any> {
         // TODO: this
         Logger.log(req.body);
+    }
+
+    @Get("kombit/metadata")
+    async kombitMetadata(@Res() res: Response): Promise<any> {
+        res.set("Content-Type", "text/xml");
+        res.send(
+            this.strategy.generateServiceProviderMetadata(
+                fs.readFileSync("secrets/FOCES_PUBLIC.crt", "utf-8"),
+                fs.readFileSync("secrets/FOCES_PUBLIC.crt", "utf-8")
+            )
+        );
     }
 
     @Post("login")
