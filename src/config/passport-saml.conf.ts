@@ -16,14 +16,13 @@ export const samlPassportConf: SamlConfig = {
     logoutCallbackUrl: `${BASE_URL}/api/v1/auth/kombit/logout/callback`,
     logoutUrl: `${BASE_URL}/api/v1/auth/kombit/logout`,
     entryPoint: "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
-
     privateCert: fs.readFileSync("secrets/FOCES_PRIVATE_NO_PASSWORD.pem", "utf-8"),
     decryptionPvk: fs.readFileSync("secrets/FOCES_PRIVATE_NO_PASSWORD.pem", "utf-8"),
 
-    signatureAlgorithm: "sha1",
+    signatureAlgorithm: "sha256",
     disableRequestedAuthnContext: true,
     // forceAuthn: false,
-    // authnRequestBinding: "HTTP-Redirect",
+    authnRequestBinding: "HTTP-Redirect",
     // RACComparison: "minimum",
     // passive: false,
 };
