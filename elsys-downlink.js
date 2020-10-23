@@ -1,6 +1,7 @@
 // raw: 3E0A14000000461700000002 from https://www.elsys.se/en/downlink-generator/
 
 let raw = "3E0A14000000461700000002";
+let asd = "3E051400000045";
 
 // Convert hex to base64 bytes
 var base64String = Buffer.from(raw, "hex").toString("base64");
