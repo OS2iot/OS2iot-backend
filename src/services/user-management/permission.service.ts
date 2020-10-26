@@ -68,7 +68,7 @@ export class PermissionService {
 
     async createNewPermission(dto: CreatePermissionDto): Promise<Permission> {
         let permission;
-        const org: Organization = await this.organizationService.findByIdWithPermissions(
+        const org: Organization = await this.organizationService.findById(
             dto.organizationId
         );
 
@@ -131,7 +131,9 @@ export class PermissionService {
                 dto.applicationIds
             );
         }
-        permission.users = await this.userService.findManyUsersByIds(dto.userIds);
+        if (dto?.userIds?.length > 0) {
+            permission.users = await this.userService.findManyUsersByIds(dto.userIds);
+        }
     }
 
     private async setApplicationsOnPermission(
