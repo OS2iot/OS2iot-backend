@@ -4,6 +4,7 @@ import { PassportStrategy } from "@nestjs/passport";
 import { AuthService } from "@services/user-management/auth.service";
 import { Strategy } from "passport-saml";
 import * as fs from "fs";
+import { KombitLoginProfileDto } from "./kombit-login-profile.dto";
 
 @Injectable()
 export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
@@ -20,8 +21,10 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     // eslint-disable-next-line @typescript-eslint/ban-types
-    async validate(profile: any, done: Function) {
+    async validate(profile: KombitLoginProfileDto, done: Function) {
         try {
+            const exists = await this.authService.validateKombitUser(profile)
+
             done(null, profile);
         } catch (err) {
             done(err, false);

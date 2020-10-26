@@ -2,12 +2,13 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 
-import { UserResponseDto } from "@dto/user-response.dto";
-import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-
-import { UserService } from "./user.service";
+import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { JwtResponseDto } from "@dto/jwt-response.dto";
+import { KombitLoginProfileDto } from "@auth/kombit-login-profile.dto";
+import { User } from "@entities/user.entity";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { UserService } from "./user.service";
 
 @Injectable()
 export class AuthService {
@@ -34,6 +35,24 @@ export class AuthService {
             this.logger.warn(`Login with non-existing user: '${username}'`);
         }
         return null;
+    }
+
+    async validateKombitUser(profile: KombitLoginProfileDto): Promise<User> {
+        // TODO: Check if they have attribute to allow them into OS2IOT
+        let user = await this.usersService.findOneByNameId(profile.nameID);
+        if (user) {
+            this.logger.debug(
+                `User from Kombit ('${profile.nameID}') already exists with id: ${user.id}`
+            );
+        } else {
+            this.logger.debug(
+                `User from Kombit ('${profile.nameID}') does not already exist, will create.`
+            );
+            
+            user = await this.usersService.createUserFromKombit(profile);
+        }
+
+        return user;
     }
 
     async issueJwt(email: string, id: number): Promise<JwtResponseDto> {

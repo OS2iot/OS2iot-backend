@@ -7,7 +7,6 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
-import { map } from "lodash";
 import { Repository } from "typeorm";
 
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
@@ -19,6 +18,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
+import { KombitLoginProfileDto } from "@auth/kombit-login-profile.dto";
 
 @Injectable()
 export class UserService {
@@ -89,6 +89,12 @@ export class UserService {
         });
     }
 
+    async findOneByNameId(nameId: string): Promise<User> {
+        return await this.userRepository.findOne({
+            nameId: nameId,
+        });
+    }
+
     async findUserPermissions(id: number): Promise<Permission[]> {
         return (
             await this.userRepository.findOne(id, {
@@ -120,6 +126,21 @@ export class UserService {
         }
 
         return await this.userRepository.save(mappedUser, { reload: true });
+    }
+
+    async createUserFromKombit(profile: KombitLoginProfileDto): Promise<User> {
+        const user = new User();
+        await this.mapKombitLoginProfileToUser(user, profile);
+
+        return user;
+    }
+
+    async mapKombitLoginProfileToUser(
+        user: User,
+        profile: KombitLoginProfileDto
+    ): Promise<void> {
+        user.active = true;
+        user.name = profile.nameID;
     }
 
     private async setPasswordHash(mappedUser: User, password: string) {
