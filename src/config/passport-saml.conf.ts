@@ -4,11 +4,11 @@ import { SamlConfig } from "passport-saml";
 /**
  *  https://github.com/bergie/passport-saml
  */
-const BASE_URL = "https://131ed74f8ea2.ngrok.io";
+const BASE_URL = "https://8470fd5e996d.ngrok.io";
 
 export const samlPassportConf: SamlConfig = {
     // audience: BASEURL + "",
-    issuer: "https://131ed74f8ea2.ngrok.io/api/v1/auth/kombit/metadata", // `${BASE_URL}/api/v1/auth/kombit/metadata`,
+    issuer: "https://8470fd5e996d.ngrok.io/api/v1/auth/kombit/metadata", // `${BASE_URL}/api/v1/auth/kombit/metadata`,
 
     identifierFormat: "", // "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName",
 

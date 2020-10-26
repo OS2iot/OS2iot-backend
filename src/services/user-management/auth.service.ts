@@ -37,7 +37,7 @@ export class AuthService {
         return null;
     }
 
-    async validateKombitUser(profile: KombitLoginProfileDto): Promise<User> {
+    async validateKombitUser(profile: KombitLoginProfileDto): Promise<UserResponseDto> {
         // TODO: Check if they have attribute to allow them into OS2IOT
         let user = await this.usersService.findOneByNameId(profile.nameID);
         if (user) {
@@ -51,6 +51,8 @@ export class AuthService {
             
             user = await this.usersService.createUserFromKombit(profile);
         }
+
+        await this.usersService.updateLastLoginToNow(user);
 
         return user;
     }

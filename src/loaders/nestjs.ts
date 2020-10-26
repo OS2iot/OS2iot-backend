@@ -8,6 +8,7 @@ import { NestFactory } from "@nestjs/core";
 import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
 import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapter";
+import * as cookieParser from "cookie-parser";
 
 export async function setupNestJs(
     config: {
@@ -29,6 +30,7 @@ export async function setupNestJs(
     );
     app.enableCors();
     app.use(compression());
+    app.use(cookieParser());
 
     Logger.log(
         `Kafka: ${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${

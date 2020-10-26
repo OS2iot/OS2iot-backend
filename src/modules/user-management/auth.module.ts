@@ -1,4 +1,4 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module, forwardRef, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
@@ -12,6 +12,7 @@ import { UserModule } from "@modules/user-management/user.module";
 import { AuthService } from "@services/user-management/auth.service";
 import { AuthController } from "@user-management-controller/auth.controller";
 import { KombitStrategy } from "@auth/kombit.strategy";
+import { HandleRedirectUrlParameterMiddleware } from "@auth/handle-redirect-url-parameter.middleware";
 
 @Module({
     imports: [
@@ -35,4 +36,10 @@ import { KombitStrategy } from "@auth/kombit.strategy";
     exports: [AuthService],
     controllers: [AuthController],
 })
-export class AuthModule {}
+export class AuthModule {
+    configure(consumer: MiddlewareConsumer): void {
+        consumer
+            .apply(HandleRedirectUrlParameterMiddleware)
+            .forRoutes("auth/kombit/login");
+    }
+}

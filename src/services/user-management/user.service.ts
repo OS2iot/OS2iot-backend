@@ -132,15 +132,25 @@ export class UserService {
         const user = new User();
         await this.mapKombitLoginProfileToUser(user, profile);
 
-        return user;
+        return await this.userRepository.save(user);
     }
 
-    async mapKombitLoginProfileToUser(
+    private async mapKombitLoginProfileToUser(
         user: User,
         profile: KombitLoginProfileDto
     ): Promise<void> {
         user.active = true;
-        user.name = profile.nameID;
+        user.nameId = profile.nameID;
+        user.name = this.extractNameFromNameIDSAMLAttribute(profile.nameID);
+        user.active = true;
+    }
+
+    private extractNameFromNameIDSAMLAttribute(nameId: string): string {
+        return nameId
+            ?.split(",")
+            ?.find(x => x.startsWith("CN="))
+            ?.split("=")
+            ?.pop();
     }
 
     private async setPasswordHash(mappedUser: User, password: string) {

@@ -23,6 +23,7 @@ import { LocalAuthGuard } from "@auth/local-auth.guard";
 import { CurrentUserInfoDto } from "@dto/current-user-info.dto";
 import {
     AuthenticatedRequest,
+    AuthenticatedRequestKombitStrategy,
     AuthenticatedRequestLocalStrategy,
 } from "@dto/internal/authenticated-request";
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
@@ -58,9 +59,18 @@ export class AuthController {
     @Post("kombit/login/callback")
     @ApiOperation({ summary: "Login callback from Kombit adgangsstyring" })
     @UseGuards(KombitAuthGuard)
-    async kombitLoginCallback(@Req() req: any, @Res() res: any): Promise<any> {
-        // TODO: this
-        Logger.log(req.body);
+    async kombitLoginCallback(
+        @Req() req: AuthenticatedRequestKombitStrategy,
+        @Res() res: Response
+    ): Promise<any> {
+        const { nameId, id } = req.user;
+        const jwt = await this.authService.issueJwt(nameId, id);
+        const redirectTarget = req.cookies["redirect"];
+        if (redirectTarget) {
+            return res.redirect(`${redirectTarget}?jwt=${jwt.accessToken}`);
+        }
+
+        return await res.status(201).json(jwt);
     }
 
     @Post("kombit/logout/callback")
