@@ -66,7 +66,7 @@ export class AuthController {
         @Res() res: Response
     ): Promise<any> {
         const { nameId, id } = req.user;
-        const jwt = await this.authService.issueJwt(nameId, id);
+        const jwt = await this.authService.issueJwt(nameId, id, true);
         const redirectTarget = req.cookies["redirect"];
         if (redirectTarget) {
             return res.redirect(`${redirectTarget}?jwt=${jwt.accessToken}`);
@@ -125,7 +125,7 @@ export class AuthController {
         @Body() body: LoginDto
     ): Promise<any> {
         const { email, id } = req.user;
-        return this.authService.issueJwt(email, id);
+        return this.authService.issueJwt(email, id, false);
     }
 
     @Get("profile")

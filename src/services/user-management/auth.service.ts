@@ -57,8 +57,8 @@ export class AuthService {
         return user;
     }
 
-    async issueJwt(email: string, id: number): Promise<JwtResponseDto> {
-        const payload: JwtPayloadDto = { username: email, sub: id };
+    async issueJwt(email: string, id: number, isKombit?: boolean): Promise<JwtResponseDto> {
+        const payload: JwtPayloadDto = { username: email, sub: id, isKombit: isKombit };
         return {
             accessToken: this.jwtService.sign(payload),
         };
