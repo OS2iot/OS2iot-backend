@@ -49,6 +49,8 @@ export class AuthController {
         private strategy: KombitStrategy
     ) {}
 
+    private readonly logger = new Logger(AuthController.name);
+
     @Get("kombit/login")
     @ApiOperation({ summary: "Initiate login with Kombit adgangsstyring" })
     @UseGuards(KombitAuthGuard)
@@ -73,11 +75,33 @@ export class AuthController {
         return await res.status(201).json(jwt);
     }
 
-    @Post("kombit/logout/callback")
-    @ApiOperation({ summary: "Logout callback from Kombit adgangsstyring" })
-    async kombitLogoutCallback(@Req() req: any, @Res() res: any): Promise<any> {
-        // TODO: this
-        Logger.log(req.body);
+    @Get("kombit/logout")
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: "Initiates the SAML logout flow" })
+    public async logout(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
+        this.logger.debug("Get logout Logging out ...");
+        this.strategy.logout(req, (err: Error, url: string): void => {
+            req.logout();
+            this.logger.debug("Inside callback");
+            if (!err) {
+                this.logger.debug("No errors");
+                res.redirect(url);
+            } else {
+                this.logger.error(`Logout failed with error: ${JSON.stringify(err)}`);
+            }
+        });
+    }
+
+    @Get("kombit/logout/callback")
+    // @UseGuards(KombitAuthGuard)
+    @ApiOperation({ summary: "Handles the SAML logout" })
+    public async logoutCallback(
+        @Req() req: expressRequest,
+        @Res() res: Response
+    ): Promise<void> {
+        this.logger.debug("Get callback Logging out ...");
+        req.logout();
+        res.send("Logged out ...");
     }
 
     @Get("kombit/metadata")

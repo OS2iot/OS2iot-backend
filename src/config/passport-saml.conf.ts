@@ -14,8 +14,10 @@ export const samlPassportConf: SamlConfig = {
 
     callbackUrl: `${BASE_URL}/api/v1/auth/kombit/login/callback`,
     logoutCallbackUrl: `${BASE_URL}/api/v1/auth/kombit/logout/callback`,
-    logoutUrl: `${BASE_URL}/api/v1/auth/kombit/logout`,
-    entryPoint: "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
+    logoutUrl:
+        "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp", //`${BASE_URL}/api/v1/auth/kombit/logout`,
+    entryPoint:
+        "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
     privateCert: fs.readFileSync("secrets/FOCES_PRIVATE_NO_PASSWORD.pem", "utf-8"),
     decryptionPvk: fs.readFileSync("secrets/FOCES_PRIVATE_NO_PASSWORD.pem", "utf-8"),
 
@@ -26,4 +28,3 @@ export const samlPassportConf: SamlConfig = {
     // RACComparison: "minimum",
     // passive: false,
 };
-    

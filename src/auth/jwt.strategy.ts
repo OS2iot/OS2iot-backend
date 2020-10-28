@@ -16,15 +16,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private configService: ConfigService
     ) {
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                ExtractJwt.fromAuthHeaderAsBearerToken(),
+                ExtractJwt.fromUrlQueryParameter("secret_token"),
+            ]),
             ignoreExpiration: false,
             secretOrKey: configService.get<string>("jwt.secret"),
         });
     }
 
+    private readonly NAME_ID_FORMAT =
+        "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+
     async validate(payload: JwtPayloadDto): Promise<AuthenticatedUser> {
         // Does the user still exist?
-        const exists = await this.userService.exists(payload.sub);
+        const exists = await this.userService.findOne(payload.sub);
         if (!exists) {
             Logger.warn(
                 `Authorization for user with id: ${payload.sub} failed, since they no longer exists`
@@ -32,15 +38,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException();
         }
 
+        const result: AuthenticatedUser = {
+            userId: payload.sub,
+            username: payload.username,
+        };
+
+        if (exists.nameId) {
+            // Add SAML stuff
+            result.nameID = exists.nameId;
+            result.nameIDFormat = this.NAME_ID_FORMAT;
+        }
         // This data is already validated
-        const permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
+        result.permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
             payload.sub
         );
 
-        return {
-            userId: payload.sub,
-            username: payload.username,
-            permissions: permissions,
-        };
+        return result;
     }
 }
