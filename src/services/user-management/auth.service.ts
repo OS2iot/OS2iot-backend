@@ -3,12 +3,12 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
-import { JwtResponseDto } from "@dto/jwt-response.dto";
-import { KombitLoginProfileDto } from "@auth/kombit-login-profile.dto";
-import { User } from "@entities/user.entity";
-import { UserResponseDto } from "@dto/user-response.dto";
+
 import { UserService } from "./user.service";
+import { Profile } from "passport-saml";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
+import { JwtResponseDto } from "@dto/jwt-response.dto";
 
 @Injectable()
 export class AuthService {
@@ -37,7 +37,7 @@ export class AuthService {
         return null;
     }
 
-    async validateKombitUser(profile: KombitLoginProfileDto): Promise<UserResponseDto> {
+    async validateKombitUser(profile: Profile): Promise<UserResponseDto> {
         // TODO: Check if they have attribute to allow them into OS2IOT
         let user = await this.usersService.findOneByNameId(profile.nameID);
         if (user) {
@@ -48,7 +48,7 @@ export class AuthService {
             this.logger.debug(
                 `User from Kombit ('${profile.nameID}') does not already exist, will create.`
             );
-            
+
             user = await this.usersService.createUserFromKombit(profile);
         }
 
@@ -57,7 +57,11 @@ export class AuthService {
         return user;
     }
 
-    async issueJwt(email: string, id: number, isKombit?: boolean): Promise<JwtResponseDto> {
+    async issueJwt(
+        email: string,
+        id: number,
+        isKombit?: boolean
+    ): Promise<JwtResponseDto> {
         const payload: JwtPayloadDto = { username: email, sub: id, isKombit: isKombit };
         return {
             accessToken: this.jwtService.sign(payload),

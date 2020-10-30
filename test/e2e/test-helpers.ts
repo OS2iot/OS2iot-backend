@@ -139,6 +139,22 @@ export async function generateSavedOrganization(name?: string): Promise<Organiza
     return savedOrg;
 }
 
+export async function generateSavedKombitUser(nameID: string): Promise<User> {
+    return await getManager().save(generateKombitUser(nameID));
+}
+
+export function generateKombitUser(nameID: string): User {
+    const user = new User();
+    user.name = nameID.split(",").find(x => x.startsWith("CN"));
+    user.nameId = nameID;
+    user.email = null;
+    user.active = true;
+    user.passwordHash = null;
+    user.permissions = [];
+
+    return user;
+}
+
 export function generateUser(permissions: Permission[]): User {
     const user = new User();
     user.name = `TestUser${randomMacAddress()}`;

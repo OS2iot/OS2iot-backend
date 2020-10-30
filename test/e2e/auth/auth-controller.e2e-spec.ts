@@ -5,7 +5,6 @@ import { PassportModule } from "@nestjs/passport";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
-
 import configuration from "@config/configuration";
 import { LoginDto } from "@dto/login.dto";
 import { AuthModule } from "@modules/user-management/auth.module";
@@ -14,7 +13,7 @@ import {
     clearDatabase,
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
-} from "./test-helpers";
+} from "../test-helpers";
 
 describe("AuthController (e2e)", () => {
     let app: INestApplication;

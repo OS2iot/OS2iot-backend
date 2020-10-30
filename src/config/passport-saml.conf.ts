@@ -9,6 +9,7 @@ const BASE_URL = "https://localhost:8443";
 export const samlPassportConf: SamlConfig = {
     // audience: BASEURL + "",
     issuer: "https://localhost:8443/api/v1/auth/kombit/metadata", // `${BASE_URL}/api/v1/auth/kombit/metadata`,
+    audience: "https://localhost:8443/api/v1/auth/kombit/metadata",
 
     identifierFormat: "", // "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName",
 

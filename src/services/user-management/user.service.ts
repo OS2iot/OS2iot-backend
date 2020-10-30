@@ -18,7 +18,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
-import { KombitLoginProfileDto } from "@auth/kombit-login-profile.dto";
+import { Profile } from "passport-saml";
 
 @Injectable()
 export class UserService {
@@ -128,7 +128,7 @@ export class UserService {
         return await this.userRepository.save(mappedUser, { reload: true });
     }
 
-    async createUserFromKombit(profile: KombitLoginProfileDto): Promise<User> {
+    async createUserFromKombit(profile: Profile): Promise<User> {
         const user = new User();
         await this.mapKombitLoginProfileToUser(user, profile);
 
@@ -137,7 +137,7 @@ export class UserService {
 
     private async mapKombitLoginProfileToUser(
         user: User,
-        profile: KombitLoginProfileDto
+        profile: Profile
     ): Promise<void> {
         user.active = true;
         user.nameId = profile.nameID;
