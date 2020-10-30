@@ -4,7 +4,7 @@ import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-re
 import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { isHexadecimal, isUUID } from "class-validator";
 import * as _ from "lodash";
@@ -24,15 +24,34 @@ export class SearchService {
     ): Promise<ListAllSearchResultsResponseDto> {
         const urlDecoded = decodeURIComponent(query);
         const trimmedQuery = urlDecoded.trim();
-        let results: SearchResultDto[] = [];
 
-        const gateways = this.findGateways(trimmedQuery);
-        const apps = this.findApplications(req, trimmedQuery);
-        const devices = this.findIoTDevices(req, trimmedQuery);
+        const gatewayPromise = this.findGateways(trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.Gateway);
+            })
+            .catch(err => {
+                Logger.error(`Failed to search for Gateway, error: ${err}`);
+            });
 
-        results = this.addResults(await apps, SearchResultType.Application, results);
-        results = this.addResults(await devices, SearchResultType.IoTDevice, results);
-        results = this.addResults(await gateways, SearchResultType.Gateway, results);
+        const applicationPromise = this.findApplications(req, trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.Application);
+            })
+            .catch(err => {
+                Logger.error(`Failed to search for Application, error: ${err}`);
+            });
+
+        const devicePromise = this.findIoTDevices(req, trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.IoTDevice);
+            })
+            .catch(err => {
+                Logger.error(`Failed to search for IOTDevice, error: ${err}`);
+            });
+
+        const results = _.flatMap(
+            await Promise.all([applicationPromise, devicePromise, gatewayPromise])
+        );
 
         return {
             data: this.limitAndOrder(results, limit, offset),
@@ -53,9 +72,10 @@ export class SearchService {
     }
 
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
+        const escapedQuery = encodeURI(trimmedQuery);
         const gateways = await this.gatewayService.getAllWithPagination<
             ListAllGatewaysReponseDto
-        >(`gateways?search=${trimmedQuery}`, 1000, 0);
+        >(`gateways?search=${escapedQuery}`, 1000, 0);
 
         const mapped = gateways.result.map(x => {
             const createdAt = new Date(Date.parse(x.createdAt));
@@ -67,15 +87,11 @@ export class SearchService {
         return mapped;
     }
 
-    private addResults(
-        data: SearchResultDto[],
-        type: SearchResultType,
-        res: SearchResultDto[]
-    ) {
+    private addTypeToResults(data: SearchResultDto[], type: SearchResultType) {
         data.forEach(x => {
             x.type = type;
         });
-        return res.concat(data);
+        return data;
     }
 
     private async findApplications(

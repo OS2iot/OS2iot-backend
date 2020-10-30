@@ -35,7 +35,7 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
-describe("PermissionController (e2e)", () => {
+describe("SearchController (e2e)", () => {
     let app: INestApplication;
     let globalAdminJwt: string;
     let orgAdminJwt: string;
@@ -46,6 +46,7 @@ describe("PermissionController (e2e)", () => {
     let app1_2: Application;
     let app2_1: Application;
     let app2_2: Application;
+    let soeren: Application;
     let device1_1_1: GenericHTTPDevice;
     let device2_1_1: GenericHTTPDevice;
     let lora1_1_1: LoRaWANDevice;
@@ -112,6 +113,7 @@ describe("PermissionController (e2e)", () => {
         lora2_1_1 = await generateSavedLoRaWANDevice(app2_1, "2");
         sigfox1_1_1 = await generateSavedSigfoxDevice(app1_1, "1");
         sigfox2_1_1 = await generateSavedSigfoxDevice(app2_1, "2");
+        soeren = await generateSavedApplication(org2, "Søren")
 
         // Create user (global admin)
         const globalAdminUser = await generateSavedGlobalAdminUser();
@@ -159,7 +161,19 @@ describe("PermissionController (e2e)", () => {
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
-                expect(response.body.count).toBe(11);
+                expect(response.body.count).toBe(12);
+            });
+    });
+
+    it("(GET) /search?limit=10&offset=0&q=E2E - 'Søren'", async () => {
+        return request(app.getHttpServer())
+            .get("/search?limit=10&offset=0&q=Søren")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(1);
             });
     });
 
