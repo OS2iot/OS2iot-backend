@@ -20,7 +20,7 @@ import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { Profile } from "passport-saml";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
-import { KombitLoginProfileDto } from "@auth/kombit-login-profile.dto";
+import { Profile } from "passport-saml";
 
 @Injectable()
 export class UserService {
