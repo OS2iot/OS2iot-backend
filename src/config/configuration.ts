@@ -21,5 +21,11 @@ export default (): any => {
             baseurl:
                 process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
         },
+        kombit: {
+            entryPoint:
+                process.env.KOMBIT_ENTRYPOIN ||
+                "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
+            certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
+        },
     };
 };

@@ -3,11 +3,16 @@ import * as fs from "fs";
 import * as express from "express";
 import * as http from "http";
 import * as https from "https";
+import * as dotenv from "dotenv";
 
 import { setupNestJs } from "@loaders/nestjs";
 import { setupSwagger } from "@loaders/swagger";
 
 async function bootstrap() {
+    Logger.log("before env load")
+    // Load .env file as environment before startup.
+    dotenv.config({ path: "../.env", debug: true });
+    Logger.log("after env load")
     const httpsOptions = {
         key: fs.readFileSync("./secrets/private.key"),
         cert: fs.readFileSync("./secrets/publiccert.crt"),
