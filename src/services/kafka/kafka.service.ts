@@ -70,14 +70,23 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 topic: string;
                 message: KafkaMessage;
             }) => {
-                const arr = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
-                arr.forEach(async tuple => {
-                    const object = tuple[0];
-                    const fn = tuple[1];
-                    // bind the subscribed functions to topic
-                    const msg = JSON.parse(message.value.toString()) as KafkaPayload;
-                    await fn.apply(object, [msg]);
-                });
+                try {
+                    const arr = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
+                    this.logger.debug(
+                        `Got kafka message, have ${arr.length} receivers ...`
+                    );
+                    arr.forEach(async tuple => {
+                        const object = tuple[0];
+                        const fn = tuple[1];
+                        this.logger.debug(`Calling method ...`)
+                        // bind the subscribed functions to topic
+                        const msg = JSON.parse(message.value.toString()) as KafkaPayload;
+                        await fn.apply(object, [msg]);
+                    });
+                } catch (err) {
+                    this.logger.error(`Error occurred in eachMessage: ${err}`);
+                    this.logger.error(`${JSON.stringify(err)}`);
+                }
             },
         });
     }
@@ -86,14 +95,18 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         kafkaTopic: string,
         kafkaMessage: KafkaPayload
     ): Promise<void | RecordMetadata[]> {
+        this.logger.debug(`Connecting producer ...`);
         await this.producer.connect();
+        this.logger.debug(`Connected ...`);
         const metadata = await this.producer
             .send({
                 topic: kafkaTopic,
                 messages: [{ value: JSON.stringify(kafkaMessage) }],
             })
             .catch(e => this.logger.error(e.message, e));
+        this.logger.debug(`Sent from producer`);
         await this.producer.disconnect();
+        this.logger.debug(`Disconnected ...`);
         return metadata;
     }
 }

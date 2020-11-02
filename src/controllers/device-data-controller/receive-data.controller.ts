@@ -24,6 +24,8 @@ export class ReceiveDataController {
         private receiveDataService: ReceiveDataService
     ) {}
 
+    private readonly logger = new Logger(ReceiveDataController.name);
+
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Receive generic JSON data from edge devices" })
@@ -33,6 +35,10 @@ export class ReceiveDataController {
         @Query("apiKey") apiKey: string,
         @Body() data: ReceiveDataDto
     ): Promise<void> {
+        this.logger.debug(
+            `Got request. Apikey: '${apiKey}'. Data: '${JSON.stringify(data)}'`
+        );
+
         const iotDevice = await this.checkIfDeviceIsValid(apiKey);
 
         // @HACK: Convert the 'data' back to a string.
@@ -54,11 +60,12 @@ export class ReceiveDataController {
 
         if (!iotDevice) {
             const exception = new ForbiddenException(ErrorCodes.InvalidApiKey);
-            Logger.error(
+            this.logger.error(
                 "No device has been registered by the following API key " + apiKey
             );
             throw exception;
         }
+        this.logger.debug(`Found device id: ${iotDevice.id}`);
         return iotDevice;
     }
 }

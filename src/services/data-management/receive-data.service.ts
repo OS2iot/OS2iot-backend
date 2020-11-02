@@ -10,6 +10,7 @@ import { KafkaService } from "@services/kafka/kafka.service";
 @Injectable()
 export class ReceiveDataService {
     constructor(private kafkaService: KafkaService) {}
+    private readonly logger = new Logger(ReceiveDataService.name);
 
     async sendToKafka(
         iotDevice: IoTDevice,
@@ -17,6 +18,7 @@ export class ReceiveDataService {
         type: string,
         timestamp?: number
     ): Promise<void> {
+        this.logger.debug(`Received data, sending to Kafka`);
         const dto = new RawRequestDto();
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
@@ -29,15 +31,20 @@ export class ReceiveDataService {
             messageType: `receiveData.${type}`,
             topicName: KafkaTopic.RAW_REQUEST,
         };
+        this.logger.debug(`Made payload: '${JSON.stringify(payload)}'`);
 
         const rawStatus = await this.kafkaService.sendMessage(
             KafkaTopic.RAW_REQUEST,
             payload
         );
 
+        this.logger.debug(`Sent message to Kafka: ${JSON.stringify(rawStatus)}`);
+
         if (rawStatus) {
             const metadata = rawStatus as RecordMetadata[];
-            Logger.debug(`kafka status '${metadata[0].errorCode}'`);
+            this.logger.debug(`kafka status '${metadata[0].errorCode}'`);
+        } else {
+            this.logger.warn(`Did not get a raw status from Kafka ...`)
         }
     }
 }
