@@ -16,6 +16,7 @@ import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-devic
 import { ReceivedMessage } from "@entities/received-message";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { DeviceModel } from "./device-model.entity";
 
 @Entity("iot_device")
 @TableInheritance({
@@ -78,6 +79,9 @@ export abstract class IoTDevice extends DbBaseEntity {
         connection => connection.iotDevices
     )
     connections: IoTDevicePayloadDecoderDataTargetConnection[];
+
+    @ManyToOne(() => DeviceModel, deviceModel => deviceModel.devices)
+    deviceModel?: DeviceModel;
 
     toString(): string {
         return `IoTDevices: id: ${this.id} - name: ${this.name}`;

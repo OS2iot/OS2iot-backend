@@ -22,6 +22,7 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { User } from "@entities/user.entity";
 import { WritePermission } from "@entities/write-permission.entity";
+import { DeviceModel } from "@entities/device-model.entity";
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { WritePermission } from "@entities/write-permission.entity";
             HttpPushDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
+            DeviceModel,
             LoRaWANDevice,
             Organization,
             OrganizationAdminPermission,

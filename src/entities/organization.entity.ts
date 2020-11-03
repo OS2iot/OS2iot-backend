@@ -7,6 +7,7 @@ import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Permission } from "@entities/permission.entity";
 
 import { SigFoxGroup } from "./sigfox-group.entity";
+import { DeviceModel } from "./device-model.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -44,4 +45,11 @@ export class Organization extends DbBaseEntity {
         nullable: true,
     })
     sigfoxGroups: SigFoxGroup[];
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @OneToMany(type => DeviceModel, deviceModel => deviceModel.belongsTo, {
+        onDelete: "CASCADE",
+        nullable: true,
+    })
+    deviceModels: DeviceModel[];
 }
