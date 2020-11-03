@@ -60,6 +60,10 @@ export class CreateIoTDeviceDto {
     @IsOptional()
     metadata?: JSON;
 
+    @ApiProperty({required: false})
+    @IsOptional()
+    deviceModelId: number;
+
     @ApiProperty({ required: false })
     @IsOptional()
     @ValidateNested({ each: true })

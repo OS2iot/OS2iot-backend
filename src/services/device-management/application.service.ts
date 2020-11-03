@@ -98,6 +98,12 @@ export class ApplicationService {
         return await this.applicationRepository.findOneOrFail(id);
     }
 
+    async findOneWithOrganisation(id: number): Promise<Application> {
+        return await this.applicationRepository.findOneOrFail(id, {
+            relations: ["belongsTo"],
+        });
+    }
+
     async findOne(id: number): Promise<Application> {
         const app = await this.applicationRepository.findOneOrFail(id, {
             relations: [

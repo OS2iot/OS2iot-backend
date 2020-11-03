@@ -51,5 +51,5 @@ export class Organization extends DbBaseEntity {
         onDelete: "CASCADE",
         nullable: true,
     })
-    deviceModels: DeviceModel[];
+    deviceModels?: DeviceModel[];
 }

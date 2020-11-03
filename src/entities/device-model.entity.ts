@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 import { DbBaseEntity } from "./base.entity";
 import { IoTDevice } from "./iot-device.entity";
 import { Organization } from "./organization.entity";
@@ -8,12 +8,10 @@ export class DeviceModel extends DbBaseEntity {
     @Column({ type: "jsonb", nullable: true })
     body: JSON;
 
-    @ManyToOne(
-        type => Organization,
-        organization => organization.deviceModels
-    )
+    @ManyToOne(type => Organization, organization => organization.deviceModels)
+    @JoinColumn()
     belongsTo: Organization;
 
-    @OneToMany(type => IoTDevice, device => device.deviceModel, { onDelete: "SET NULL" })
+    @OneToMany(type => IoTDevice, device => device.deviceModel)
     devices: IoTDevice[];
 }

@@ -3,6 +3,7 @@ import { Point } from "geojson";
 import {
     Column,
     Entity,
+    JoinColumn,
     ManyToMany,
     ManyToOne,
     OneToMany,
@@ -80,7 +81,10 @@ export abstract class IoTDevice extends DbBaseEntity {
     )
     connections: IoTDevicePayloadDecoderDataTargetConnection[];
 
-    @ManyToOne(() => DeviceModel, deviceModel => deviceModel.devices)
+    @ManyToOne(() => DeviceModel, deviceModel => deviceModel.devices, {
+        onDelete: "SET NULL",
+    })
+    @JoinColumn()
     deviceModel?: DeviceModel;
 
     toString(): string {

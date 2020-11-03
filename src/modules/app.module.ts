@@ -27,6 +27,7 @@ import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contra
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SearchModule } from "./search.module";
+import { DeviceModelModule } from "./device-management/device-model.module";
 
 @Module({
     imports: [
@@ -66,6 +67,7 @@ import { SearchModule } from "./search.module";
         HttpModule,
         ApplicationModule,
         IoTDeviceModule,
+        DeviceModelModule,
         DataTargetModule,
         DataTargetKafkaModule,
         DataTargetSenderModule,

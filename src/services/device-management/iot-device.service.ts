@@ -36,6 +36,8 @@ import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { DeviceModel } from "@entities/device-model.entity";
+import { DeviceModelService } from "./device-model.service";
 
 @Injectable()
 export class IoTDeviceService {
@@ -52,7 +54,8 @@ export class IoTDeviceService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
-        private sigfoxGroupService: SigFoxGroupService
+        private sigfoxGroupService: SigFoxGroupService,
+        private deviceModelService: DeviceModelService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -335,6 +338,7 @@ export class IoTDeviceService {
         iotDevice.comment = createIoTDeviceDto.comment;
         iotDevice.commentOnLocation = createIoTDeviceDto.commentOnLocation;
         iotDevice.metadata = createIoTDeviceDto.metadata;
+        iotDevice.deviceModel = await this.mapDeviceModel(iotDevice, createIoTDeviceDto);
 
         iotDevice = await this.mapChildDtoToIoTDevice(
             createIoTDeviceDto,
@@ -343,6 +347,27 @@ export class IoTDeviceService {
         );
 
         return iotDevice;
+    }
+
+    async mapDeviceModel(
+        iotDevice: IoTDevice,
+        createIoTDeviceDto: CreateIoTDeviceDto
+    ): Promise<DeviceModel> {
+        if (createIoTDeviceDto.deviceModelId == undefined) {
+            return null;
+        }
+        const deviceModel = await this.deviceModelService.getByIdWithRelations(
+            createIoTDeviceDto.deviceModelId
+        );
+        const deviceModelOrganisationId = deviceModel.belongsTo.id;
+        const application = await this.applicationService.findOneWithOrganisation(
+            iotDevice.application.id
+        );
+        if (deviceModelOrganisationId != application.belongsTo.id) {
+            throw new BadRequestException(ErrorCodes.OrganizationDoesNotMatch);
+        }
+
+        return deviceModel;
     }
 
     private async setApplication(
