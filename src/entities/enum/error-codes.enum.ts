@@ -25,5 +25,5 @@ export enum ErrorCodes {
     OnlyAllowedForLoRaWANAndSigfox = "MESSAGE.ONLY-ALLOWED-FOR-LORAWAN-AND-SIGFOX",
     DeviceIsNotActivatedInChirpstack = "MESSAGE.DEVICE-IS-NOT-ACTIVATED-IN-CHIRPSTACK",
     QueryMustNotBeEmpty = "MESSAGE.QUERY-MUST-NOT-BE-EMPTY",
-    IsUsed = "MESSAGE.IS-USED"
+    IsUsed = "MESSAGE.IS-USED",
 }

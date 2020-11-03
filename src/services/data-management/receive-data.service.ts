@@ -44,7 +44,7 @@ export class ReceiveDataService {
             const metadata = rawStatus as RecordMetadata[];
             this.logger.debug(`kafka status '${metadata[0].errorCode}'`);
         } else {
-            this.logger.warn(`Did not get a raw status from Kafka ...`)
+            this.logger.warn(`Did not get a raw status from Kafka ...`);
         }
     }
 }

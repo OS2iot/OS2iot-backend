@@ -123,7 +123,9 @@ export class DeviceProfileController {
             Logger.error(
                 `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
-            if (err?.message == "this object is used by other objects, remove them first") {
+            if (
+                err?.message == "this object is used by other objects, remove them first"
+            ) {
                 throw new BadRequestException(ErrorCodes.IsUsed);
             }
         }

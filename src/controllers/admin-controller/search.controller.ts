@@ -49,7 +49,7 @@ export class SearchController {
         @Req() req: AuthenticatedRequest,
         @Query("q") query?: string,
         @Query("limit", new ParseIntPipe()) limit?: number,
-        @Query("offset", new ParseIntPipe()) offset?: number,
+        @Query("offset", new ParseIntPipe()) offset?: number
     ): Promise<ListAllSearchResultsResponseDto> {
         if (query == null || query.trim() === "") {
             throw new BadRequestException(ErrorCodes.QueryMustNotBeEmpty);

@@ -78,7 +78,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                     arr.forEach(async tuple => {
                         const object = tuple[0];
                         const fn = tuple[1];
-                        this.logger.debug(`Calling method ...`)
+                        this.logger.debug(`Calling method ...`);
                         // bind the subscribed functions to topic
                         const msg = JSON.parse(message.value.toString()) as KafkaPayload;
                         await fn.apply(object, [msg]);

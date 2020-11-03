@@ -113,7 +113,7 @@ describe("SearchController (e2e)", () => {
         lora2_1_1 = await generateSavedLoRaWANDevice(app2_1, "2");
         sigfox1_1_1 = await generateSavedSigfoxDevice(app1_1, "1");
         sigfox2_1_1 = await generateSavedSigfoxDevice(app2_1, "2");
-        soeren = await generateSavedApplication(org2, "Søren")
+        soeren = await generateSavedApplication(org2, "Søren");
 
         // Create user (global admin)
         const globalAdminUser = await generateSavedGlobalAdminUser();

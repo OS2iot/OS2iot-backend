@@ -376,11 +376,11 @@ describe("IoTDeviceController (e2e)", () => {
         metadata2.device = iotDevice;
         await getManager().save([metadata, metadata2]);
 
-        const receviedMessage = new ReceivedMessage();
-        receviedMessage.device = iotDevice;
-        receviedMessage.rawData = JSON.parse(`{"asdf":1234}`);
-        receviedMessage.sentTime = new Date(now.valueOf() - 10);
-        await getManager().save(receviedMessage);
+        const receivedMessage = new ReceivedMessage();
+        receivedMessage.device = iotDevice;
+        receivedMessage.rawData = JSON.parse(`{"asdf":1234}`);
+        receivedMessage.sentTime = new Date(now.valueOf() - 10);
+        await getManager().save(receivedMessage);
 
         await request(app.getHttpServer())
             .delete("/iot-device/" + iotDevice.id)
