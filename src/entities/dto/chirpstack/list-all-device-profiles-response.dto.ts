@@ -1,6 +1,6 @@
 import { DeviceProfileDto } from "./device-profile.dto";
 
-export class ListAllDeviceProfilesReponseDto {
+export class ListAllDeviceProfilesResponseDto {
     result: DeviceProfileDto[];
     totalCount: string;
 }

@@ -28,7 +28,7 @@ import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
-import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
+import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -96,7 +96,7 @@ export class DeviceProfileController {
     async getAll(
         @Query("limit") limit: number,
         @Query("offset") offset: number
-    ): Promise<ListAllDeviceProfilesReponseDto> {
+    ): Promise<ListAllDeviceProfilesResponseDto> {
         let result = undefined;
         try {
             Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);

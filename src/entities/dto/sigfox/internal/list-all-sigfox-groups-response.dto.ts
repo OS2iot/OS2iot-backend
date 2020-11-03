@@ -1,6 +1,6 @@
-import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-reponse.dto";
+import { ListAllEntitiesResponseDto } from "@dto/list-all-entities-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 
-export class ListAllSigFoxGroupReponseDto extends ListAllEntitiesResponseDto<
+export class ListAllSigFoxGroupResponseDto extends ListAllEntitiesResponseDto<
     SigFoxGroup
 > {}

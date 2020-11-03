@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import { In, Repository, getManager } from "typeorm";
 
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-response.dto";
 import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
 import { UserPermissions } from "@dto/permission-organization-application.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
@@ -150,7 +150,7 @@ export class PermissionService {
         return new DeleteResponseDto(res.affected);
     }
 
-    async getAllPermissions(): Promise<ListAllPermissionsReponseDto> {
+    async getAllPermissions(): Promise<ListAllPermissionsResponseDto> {
         const [data, count] = await getManager().findAndCount(Permission, {
             relations: ["organization", "users"],
         });
@@ -163,7 +163,7 @@ export class PermissionService {
 
     async getAllPermissionsInOrganizations(
         orgs: number[]
-    ): Promise<ListAllPermissionsReponseDto> {
+    ): Promise<ListAllPermissionsResponseDto> {
         const [data, count] = await getManager().findAndCount(OrganizationPermission, {
             where: { organization: In(orgs) },
             relations: ["organization", "users"],

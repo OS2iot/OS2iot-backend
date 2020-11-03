@@ -9,10 +9,10 @@ import {
 import { AxiosResponse } from "axios";
 
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
-import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { GatewayStatsResponseDto } from "@dto/chirpstack/gateway-stats.response.dto";
-import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -29,7 +29,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
 
-    async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
+    async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
         dto = await this.updateDto(dto);
 
         const result = await this.post("gateways", dto);
@@ -39,7 +39,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     async listAllPaginated(
         limit?: number,
         offset?: number
-    ): Promise<ListAllGatewaysReponseDto> {
+    ): Promise<ListAllGatewaysResponseDto> {
         // Default parameters if not set
         if (!offset) {
             offset = 0;
@@ -87,13 +87,13 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     async modifyGateway(
         gatewayId: string,
         dto: UpdateGatewayDto
-    ): Promise<ChirpstackReponseStatus> {
+    ): Promise<ChirpstackResponseStatus> {
         dto = await this.updateDto(dto);
         const result = await this.put("gateways", dto, gatewayId);
         return this.handlePossibleError(result, dto);
     }
 
-    async deleteGateway(gatewayId: string): Promise<ChirpstackReponseStatus> {
+    async deleteGateway(gatewayId: string): Promise<ChirpstackResponseStatus> {
         try {
             await this.delete("gateways", gatewayId);
             return {
@@ -113,7 +113,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     private handlePossibleError(
         result: AxiosResponse,
         dto: CreateGatewayDto | UpdateGatewayDto
-    ): ChirpstackReponseStatus {
+    ): ChirpstackResponseStatus {
         if (result.status != 200) {
             Logger.error(
                 `Error from Chirpstack: '${JSON.stringify(

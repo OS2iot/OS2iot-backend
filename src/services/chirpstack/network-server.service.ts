@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, OnModuleInit } from "@nestjs/
 import { AxiosResponse } from "axios";
 
 import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dto";
-import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
+import { ListAllNetworkServerResponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
@@ -50,7 +50,7 @@ export class ChirpstackSetupNetworkServerService
     }
 
     public async getNetworkServerCount(): Promise<number> {
-        const result: ListAllNetworkServerReponseDto = await this.getNetworkServers(
+        const result: ListAllNetworkServerResponseDto = await this.getNetworkServers(
             1000,
             0
         );

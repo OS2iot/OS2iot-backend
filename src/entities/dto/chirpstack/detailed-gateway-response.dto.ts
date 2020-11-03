@@ -1,4 +1,4 @@
-import { GatewayResponseDto } from "@dto/chirpstack/gateway-reponse.dto";
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 export class DetailedGatewayResponseDto extends GatewayResponseDto {
     discoveryEnabled: boolean;

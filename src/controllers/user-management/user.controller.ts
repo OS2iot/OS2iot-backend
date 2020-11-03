@@ -34,7 +34,7 @@ import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
-import { ListAllUsersResponseDto } from "@dto/list-all-users-reponse.dto";
+import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()

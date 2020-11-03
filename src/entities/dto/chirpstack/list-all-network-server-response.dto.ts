@@ -1,6 +1,6 @@
 import { NetworkServerDto } from "./network-server.dto";
 
-export class ListAllNetworkServerReponseDto {
+export class ListAllNetworkServerResponseDto {
     result: NetworkServerDto[];
     totalCount: number;
 }

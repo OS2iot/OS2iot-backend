@@ -2,12 +2,12 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 
-import { JwtReponseDto } from "@dto/jwt-response.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 
 import { UserService } from "./user.service";
+import { JwtResponseDto } from "@dto/jwt-response.dto";
 
 @Injectable()
 export class AuthService {
@@ -36,7 +36,7 @@ export class AuthService {
         return null;
     }
 
-    async issueJwt(email: string, id: number): Promise<JwtReponseDto> {
+    async issueJwt(email: string, id: number): Promise<JwtResponseDto> {
         const payload: JwtPayloadDto = { username: email, sub: id };
         return {
             accessToken: this.jwtService.sign(payload),

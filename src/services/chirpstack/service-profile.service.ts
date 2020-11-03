@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
-import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
+import { ListAllServiceProfilesResponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
@@ -32,8 +32,8 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     public async findAllServiceProfiles(
         limit?: number,
         offset?: number
-    ): Promise<ListAllServiceProfilesReponseDto> {
-        const res = await this.getAllWithPagination<ListAllServiceProfilesReponseDto>(
+    ): Promise<ListAllServiceProfilesResponseDto> {
+        const res = await this.getAllWithPagination<ListAllServiceProfilesResponseDto>(
             "service-profiles",
             limit,
             offset

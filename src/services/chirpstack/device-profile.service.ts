@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
-import { ListAllDeviceProfilesReponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
+import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 
@@ -31,8 +31,8 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     public async findAllDeviceProfiles(
         limit?: number,
         offset?: number
-    ): Promise<ListAllDeviceProfilesReponseDto> {
-        const result = await this.getAllWithPagination<ListAllDeviceProfilesReponseDto>(
+    ): Promise<ListAllDeviceProfilesResponseDto> {
+        const result = await this.getAllWithPagination<ListAllDeviceProfilesResponseDto>(
             "device-profiles",
             limit,
             offset

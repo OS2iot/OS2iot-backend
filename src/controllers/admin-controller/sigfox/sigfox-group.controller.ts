@@ -28,7 +28,7 @@ import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
-import { ListAllSigFoxGroupReponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
+import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
 import { SigFoxGetAllRequestDto } from "@dto/sigfox/internal/sigfox-get-all-request.dto";
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
@@ -62,7 +62,7 @@ export class SigfoxGroupController {
     async getAll(
         @Req() req: AuthenticatedRequest,
         @Query() query: SigFoxGetAllRequestDto
-    ): Promise<ListAllSigFoxGroupReponseDto> {
+    ): Promise<ListAllSigFoxGroupResponseDto> {
         checkIfUserHasReadAccessToOrganization(req, query.organizationId);
         return await this.service.findAllForOrganization(query.organizationId);
     }

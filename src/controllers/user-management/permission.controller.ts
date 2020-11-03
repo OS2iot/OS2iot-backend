@@ -26,7 +26,7 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ListAllPermissionsReponseDto } from "@dto/list-all-permissions-reponse.dto";
+import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-response.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
@@ -105,7 +105,7 @@ export class PermissionController {
     @ApiOperation({ summary: "Get list of all permissions" })
     async getAllPermissions(
         @Req() req: AuthenticatedRequest
-    ): Promise<ListAllPermissionsReponseDto> {
+    ): Promise<ListAllPermissionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.permissionService.getAllPermissions();
         } else {

@@ -30,8 +30,8 @@ import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
-import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
+import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
@@ -62,12 +62,12 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     @ApiResponse({
         status: 200,
         description: "Success",
-        type: ListAllApplicationsReponseDto,
+        type: ListAllApplicationsResponseDto,
     })
     async findAll(
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAndCountWithPagination(query);
         } else {
@@ -94,7 +94,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     async findByIoTDeviceId(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByIoTDeviceId(id);
         } else {
@@ -112,7 +112,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     async findByPayloadDecoderId(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByPayloadDecoderId(id);
         } else {
@@ -130,7 +130,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     async findByDataTargetId(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.service.findAllByDataTargetId(id);
         } else {

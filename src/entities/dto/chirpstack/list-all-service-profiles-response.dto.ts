@@ -1,6 +1,6 @@
 import { ServiceProfileDto } from "./service-profile.dto";
 
-export class ListAllServiceProfilesReponseDto {
+export class ListAllServiceProfilesResponseDto {
     result: ServiceProfileDto[];
     totalCount: string;
 }

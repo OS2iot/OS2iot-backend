@@ -9,7 +9,7 @@ import {
 } from "typeorm";
 
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
-import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
+import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
@@ -30,7 +30,7 @@ export class DataTargetService {
     async findAndCountAllWithPagination(
         query?: ListAllDataTargetsDto,
         applicationIds?: number[]
-    ): Promise<ListAllDataTargetsReponseDto> {
+    ): Promise<ListAllDataTargetsResponseDto> {
         let queryBuilder = getConnection()
             .getRepository(DataTarget)
             .createQueryBuilder("datatarget")

@@ -28,7 +28,7 @@ import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
-import { ListAllServiceProfilesReponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
+import { ListAllServiceProfilesResponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -90,7 +90,7 @@ export class ServiceProfileController {
     async getAll(
         @Query("limit") limit: number,
         @Query("offset") offset: number
-    ): Promise<ListAllServiceProfilesReponseDto> {
+    ): Promise<ListAllServiceProfilesResponseDto> {
         Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
         const res = await this.serviceProfileService.findAllServiceProfiles(
             limit || 50,

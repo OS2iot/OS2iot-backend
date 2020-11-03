@@ -27,7 +27,7 @@ import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllOrganizationsReponseDto } from "@dto/list-all-organizations-response.dto";
+import { ListAllOrganizationsResponseDto } from "@dto/list-all-organizations-response.dto";
 import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
@@ -72,7 +72,7 @@ export class OrganizationController {
     @ApiOperation({ summary: "Get list of all Organizations" })
     async findAll(
         @Req() req: AuthenticatedRequest
-    ): Promise<ListAllOrganizationsReponseDto> {
+    ): Promise<ListAllOrganizationsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.organizationService.findAll();
         } else {

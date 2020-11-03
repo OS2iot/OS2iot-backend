@@ -23,9 +23,9 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
-import { ChirpstackReponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -43,7 +43,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
-    async create(@Body() dto: CreateGatewayDto): Promise<ChirpstackReponseStatus> {
+    async create(@Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
         try {
             return await this.chirpstackGatewayService.createNewGateway(dto);
         } catch (err) {
@@ -61,7 +61,7 @@ export class ChirpstackGatewayController {
     @Read()
     async getAll(
         @Query() query?: ChirpstackPaginatedListDto
-    ): Promise<ListAllGatewaysReponseDto> {
+    ): Promise<ListAllGatewaysResponseDto> {
         return await this.chirpstackGatewayService.listAllPaginated(
             query.limit,
             query.offset
@@ -92,7 +92,7 @@ export class ChirpstackGatewayController {
     async update(
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
-    ): Promise<ChirpstackReponseStatus> {
+    ): Promise<ChirpstackResponseStatus> {
         if (dto.gateway.id) {
             throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
         }
@@ -102,7 +102,7 @@ export class ChirpstackGatewayController {
     @Delete(":gatewayId")
     async delete(
         @Param("gatewayId") gatewayId: string
-    ): Promise<ChirpstackReponseStatus> {
+    ): Promise<ChirpstackResponseStatus> {
         return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
 }

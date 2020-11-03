@@ -31,7 +31,7 @@ import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllPayloadDecoderDto } from "@dto/list-all-payload-decoder.dto";
-import { ListAllPayloadDecoderReponseDto } from "@dto/list-all-payload-decoders-response.dto";
+import { ListAllPayloadDecoderResponseDto } from "@dto/list-all-payload-decoders-response.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -80,7 +80,7 @@ export class PayloadDecoderController {
     async findAll(
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllPayloadDecoderDto
-    ): Promise<ListAllPayloadDecoderReponseDto> {
+    ): Promise<ListAllPayloadDecoderResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.payloadDecoderService.findAndCountWithPagination(
                 query,

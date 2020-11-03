@@ -14,7 +14,7 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 
 import { KafkaService } from "../kafka/kafka.service";
 import * as _ from "lodash";
-import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
+import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
@@ -49,7 +49,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
     }
 
     private async doTransformationsAndSend(
-        connections: ListAllConnectionsReponseDto,
+        connections: ListAllConnectionsResponseDto,
         dto: RawRequestDto
     ) {
         const uniqueCombinations = _.uniqBy(connections.data, x => x.payloadDecoder?.id);

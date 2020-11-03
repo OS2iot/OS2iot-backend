@@ -1,4 +1,4 @@
-import { ListAllGatewaysReponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-response.dto";
 import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
@@ -74,7 +74,7 @@ export class SearchService {
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
         const escapedQuery = encodeURI(trimmedQuery);
         const gateways = await this.gatewayService.getAllWithPagination<
-            ListAllGatewaysReponseDto
+            ListAllGatewaysResponseDto
         >(`gateways?search=${escapedQuery}`, 1000, 0);
 
         const mapped = gateways.result.map(x => {

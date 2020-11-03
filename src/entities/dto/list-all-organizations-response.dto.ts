@@ -1,7 +1,7 @@
 import { Organization } from "@entities/organization.entity";
 
-import { ListAllEntitiesResponseDto } from "./list-all-entities-reponse.dto";
+import { ListAllEntitiesResponseDto } from "./list-all-entities-response.dto";
 
-export class ListAllOrganizationsReponseDto extends ListAllEntitiesResponseDto<
+export class ListAllOrganizationsResponseDto extends ListAllEntitiesResponseDto<
     Organization
 > {}

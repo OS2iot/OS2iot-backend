@@ -11,7 +11,7 @@ import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpsta
 import { ChirpstackSingleDeviceResponseDto } from "@dto/chirpstack/chirpstack-single-device-response.dto";
 import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
 import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-device.dto";
-import { ListAllChirpstackApplicationsReponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
@@ -42,7 +42,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         const organizationID = await this.getDefaultOrganizationId();
         // Fetch applications
         const applications = await this.getAllWithPagination<
-            ListAllChirpstackApplicationsReponseDto
+            ListAllChirpstackApplicationsResponseDto
         >(`applications?limit=100&organizationID=${organizationID}`);
         // if default exist use it
         let applicationId;

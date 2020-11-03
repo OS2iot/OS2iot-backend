@@ -32,7 +32,7 @@ import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
+import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
@@ -63,12 +63,12 @@ export class ApplicationController {
     @ApiResponse({
         status: 200,
         description: "Success",
-        type: ListAllApplicationsReponseDto,
+        type: ListAllApplicationsResponseDto,
     })
     async findAll(
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllApplicationsDto
-    ): Promise<ListAllApplicationsReponseDto> {
+    ): Promise<ListAllApplicationsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return this.applicationService.findAndCountWithPagination(
                 query,

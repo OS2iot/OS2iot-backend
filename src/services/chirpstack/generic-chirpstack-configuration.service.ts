@@ -9,8 +9,8 @@ import {
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 import { HeaderDto } from "@dto/chirpstack/header.dto";
-import { ListAllNetworkServerReponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
-import { ListAllOrganizationsReponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
+import { ListAllNetworkServerResponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
+import { ListAllOrganizationsResponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
@@ -209,8 +209,8 @@ export class GenericChirpstackConfigurationService {
     public async getNetworkServers(
         limit?: number,
         offset?: number
-    ): Promise<ListAllNetworkServerReponseDto> {
-        const res = await this.getAllWithPagination<ListAllNetworkServerReponseDto>(
+    ): Promise<ListAllNetworkServerResponseDto> {
+        const res = await this.getAllWithPagination<ListAllNetworkServerResponseDto>(
             "network-servers",
             limit,
             offset
@@ -221,8 +221,8 @@ export class GenericChirpstackConfigurationService {
     public async getOrganizations(
         limit?: number,
         offset?: number
-    ): Promise<ListAllOrganizationsReponseDto> {
-        const res = await this.getAllWithPagination<ListAllOrganizationsReponseDto>(
+    ): Promise<ListAllOrganizationsResponseDto> {
+        const res = await this.getAllWithPagination<ListAllOrganizationsResponseDto>(
             "organizations",
             limit,
             offset

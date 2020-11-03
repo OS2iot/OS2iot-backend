@@ -9,7 +9,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
-import { ListAllSigFoxGroupReponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
+import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
@@ -38,7 +38,7 @@ export class SigFoxGroupService {
 
     async findAllForOrganization(
         organizationId: number
-    ): Promise<ListAllSigFoxGroupReponseDto> {
+    ): Promise<ListAllSigFoxGroupResponseDto> {
         const [data, count] = await this.repository.findAndCount({
             where: {
                 belongsTo: {

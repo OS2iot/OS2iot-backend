@@ -18,7 +18,7 @@ import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
-import { ListAllUsersResponseDto } from "@dto/list-all-users-reponse.dto";
+import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 
 @Injectable()
 export class UserService {

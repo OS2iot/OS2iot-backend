@@ -29,7 +29,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllDataTargetsReponseDto } from "@dto/list-all-data-targets-response.dto";
+import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
@@ -55,7 +55,7 @@ export class DataTargetController {
     async findAll(
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllDataTargetsDto
-    ): Promise<ListAllDataTargetsReponseDto> {
+    ): Promise<ListAllDataTargetsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.dataTargetService.findAndCountAllWithPagination(query);
         } else {

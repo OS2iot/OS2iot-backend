@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, In, Repository } from "typeorm";
 
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllApplicationsReponseDto } from "@dto/list-all-applications-response.dto";
+import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
@@ -29,7 +29,7 @@ export class ApplicationService {
         query?: ListAllEntitiesDto,
         whitelist?: number[],
         allFromOrgs?: number[]
-    ): Promise<ListAllApplicationsReponseDto> {
+    ): Promise<ListAllApplicationsResponseDto> {
         const orgCondition =
             allFromOrgs != null
                 ? { id: In(whitelist), belongsTo: In(allFromOrgs) }
@@ -52,7 +52,7 @@ export class ApplicationService {
         query: ListAllApplicationsDto,
         allowedApplications: number[],
         organizationIds: number[]
-    ): Promise<ListAllApplicationsReponseDto> {
+    ): Promise<ListAllApplicationsResponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 organizationIds.length > 0
@@ -76,7 +76,7 @@ export class ApplicationService {
     async findAndCountWithPagination(
         query?: ListAllEntitiesDto,
         allowedOrganisations?: number[]
-    ): Promise<ListAllApplicationsReponseDto> {
+    ): Promise<ListAllApplicationsResponseDto> {
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 allowedOrganisations != null

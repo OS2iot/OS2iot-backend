@@ -1,6 +1,6 @@
 import { Organization } from "@entities/organization.entity";
 
-export class ListAllOrganizationsReponseDto {
+export class ListAllOrganizationsResponseDto {
     totalCount: number;
 
     result: Organization[];

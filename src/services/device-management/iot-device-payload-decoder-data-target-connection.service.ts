@@ -11,7 +11,7 @@ import {
 } from "typeorm";
 
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
-import { ListAllConnectionsReponseDto } from "@dto/list-all-connections-response.dto";
+import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
@@ -34,7 +34,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     async findAndCountWithPagination(
         query?: ListAllEntitiesDto,
         allowed?: number[]
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (allowed != undefined) {
             return await this.findAndCountWithPaginationAndWhitelist(query, allowed);
         } else {
@@ -50,7 +50,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     async findAndCountWithPaginationAndWhitelist(
         query?: ListAllEntitiesDto,
         allowed?: number[]
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (allowed.length === 0) {
             return {
                 data: [],
@@ -73,7 +73,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         limit?: number,
         offset?: number,
         sort?: "ASC" | "DESC" | 1 | -1
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         const [result, total] = await this.repository.findAndCount({
             where: where || {},
             take: limit || 1000,
@@ -99,7 +99,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         limit?: number,
         offset?: number,
         sort?: "ASC" | "DESC" | 1 | -1
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         const [result, total] = await query
             .limit(limit || 1000)
             .skip(offset || 0)
@@ -125,7 +125,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     async findAllByIoTDeviceId(
         id: number,
         allowed?: number[]
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (allowed != undefined) {
             if (allowed.length === 0) {
                 return {
@@ -152,7 +152,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     async findAllByPayloadDecoderId(
         id: number,
         allowedOrganisations?: number[]
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (allowedOrganisations != undefined) {
             if (allowedOrganisations.length === 0) {
                 return {
@@ -181,7 +181,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     async findAllByDataTargetId(
         id: number,
         allowed?: number[]
-    ): Promise<ListAllConnectionsReponseDto> {
+    ): Promise<ListAllConnectionsResponseDto> {
         if (allowed != undefined) {
             if (allowed.length === 0) {
                 return {
