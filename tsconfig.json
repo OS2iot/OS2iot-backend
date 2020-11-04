@@ -29,6 +29,7 @@
             "@auth/*": ["src/auth/*"],
             "@helpers/*": ["src/helpers/*"],
             "@config/*": ["src/config/*"],
+            "@resources/*": ["src/resources/*"],
         }
     },
     "exclude": ["node_modules", "dist"]

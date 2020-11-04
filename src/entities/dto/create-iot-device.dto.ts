@@ -62,7 +62,7 @@ export class CreateIoTDeviceDto {
 
     @ApiProperty({required: false})
     @IsOptional()
-    deviceModelId: number;
+    deviceModelId?: number;
 
     @ApiProperty({ required: false })
     @IsOptional()

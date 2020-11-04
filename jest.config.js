@@ -17,6 +17,7 @@ module.exports = {
         "^@auth/(.*)": "<rootDir>//src/auth/$1",
         "^@helpers/(.*)": "<rootDir>//src/helpers/$1",
         "^@config/(.*)": "<rootDir>//src/config/$1",
+        "^@resources/(.*)": "<rootDir>//src/resources/$1",
     },
     moduleFileExtensions: ["js", "json", "ts"],
     rootDir: "./",

@@ -6,7 +6,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { DeleteResult, In, Repository } from "typeorm";
 import * as AJV from "ajv";
-import { deviceModelSchema } from "src/resources/device-model-schema";
+import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
