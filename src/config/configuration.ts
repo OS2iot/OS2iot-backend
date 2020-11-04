@@ -23,7 +23,7 @@ export default (): any => {
         },
         kombit: {
             entryPoint:
-                process.env.KOMBIT_ENTRYPOIN ||
+                process.env.KOMBIT_ENTRYPOINT ||
                 "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
             certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
         },

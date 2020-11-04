@@ -31,7 +31,13 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
             disableRequestedAuthnContext: true,
             authnRequestBinding: "HTTP-Redirect",
         });
+
+        this.logger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`)
+        this.logger.debug(`EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`)
     }
+
+    private readonly logger = new Logger(KombitStrategy.name);
+
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     async validate(profile: Profile, done: Function): Promise<UserResponseDto> {
