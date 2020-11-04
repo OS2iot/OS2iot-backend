@@ -13,10 +13,10 @@ async function bootstrap() {
     // Load .env file as environment before startup.
     dotenv.config({ path: "../.env", debug: true });
     Logger.log("after env load")
-    const httpsOptions = {
-        key: fs.readFileSync("./secrets/private.key"),
-        cert: fs.readFileSync("./secrets/publiccert.crt"),
-    };
+    // const httpsOptions = {
+    //     key: fs.readFileSync("./secrets/private.key"),
+    //     cert: fs.readFileSync("./secrets/publiccert.crt"),
+    // };
 
     const config = {
         NEST_PORT: 3000,
@@ -33,7 +33,7 @@ async function bootstrap() {
     // await app.listen(config.NEST_PORT);
     await app.init();
     const httpServer = http.createServer(server).listen(3000);
-    https.createServer(httpsOptions, server).listen(8443);
+    // https.createServer(httpsOptions, server).listen(8443);
 
     //const url = await httpServer.;
     // Logger.log(`Swagger on: ${url}${config.SWAGGER_PREFIX}`);
