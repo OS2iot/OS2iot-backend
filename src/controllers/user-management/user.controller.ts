@@ -28,13 +28,13 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
+import { ListAllUsersResponseDto } from "@dto/list-all-users-reponse.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -119,7 +119,7 @@ export class UserController {
 
     @Get()
     @ApiOperation({ summary: "Get all users" })
-    async findAll(): Promise<ListAllUsersReponseDto> {
+    async findAll(): Promise<ListAllUsersResponseDto> {
         return await this.userService.findAll();
     }
 }

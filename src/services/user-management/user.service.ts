@@ -10,7 +10,6 @@ import * as bcrypt from "bcryptjs";
 import { map } from "lodash";
 import { Repository } from "typeorm";
 
-import { ListAllUsersReponseDto } from "@dto/list-all-users-reponse.dto";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
@@ -19,6 +18,7 @@ import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
+import { ListAllUsersResponseDto } from "@dto/list-all-users-reponse.dto";
 
 @Injectable()
 export class UserService {
@@ -187,7 +187,7 @@ export class UserService {
         return await this.userRepository.findByIds(userIds);
     }
 
-    async findAll(): Promise<ListAllUsersReponseDto> {
+    async findAll(): Promise<ListAllUsersResponseDto> {
         const [data, count] = await this.userRepository.findAndCount({
             relations: ["permissions"],
         });
