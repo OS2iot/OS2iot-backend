@@ -44,6 +44,10 @@ export class AuthService {
             this.logger.debug(
                 `User from Kombit ('${profile.nameID}') already exists with id: ${user.id}`
             );
+            if (!user.active) {
+                this.logger.debug(`User (${user.id}) is disabled, not allowed!`);
+                throw new UnauthorizedException(ErrorCodes.UserInactive);
+            }
         } else {
             this.logger.debug(
                 `User from Kombit ('${profile.nameID}') does not already exist, will create.`

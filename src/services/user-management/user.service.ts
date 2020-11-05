@@ -172,6 +172,18 @@ export class UserService {
     }
 
     private mapDtoToUser(user: User, dto: UpdateUserDto): User {
+        if (user.nameId != null) {
+            if (dto.name && user.name != dto.name) {
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+            }
+            if (dto.email) {
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+            }
+            if (dto.password) {
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+            }
+        }
+
         user.name = dto.name;
         user.email = dto.email;
         user.permissions = user.permissions ? user.permissions : [];

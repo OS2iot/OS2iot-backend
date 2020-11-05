@@ -27,4 +27,5 @@ export enum ErrorCodes {
     DeviceIsNotActivatedInChirpstack = "MESSAGE.DEVICE-IS-NOT-ACTIVATED-IN-CHIRPSTACK",
     QueryMustNotBeEmpty = "MESSAGE.QUERY-MUST-NOT-BE-EMPTY",
     IsUsed = "MESSAGE.IS-USED",
+    CannotModifyOnKombitUser = "MESSAGE.CANNOT-MODIFY-ON-KOMBIT-USER",
 }
