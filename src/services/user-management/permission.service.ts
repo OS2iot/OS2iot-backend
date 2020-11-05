@@ -131,7 +131,7 @@ export class PermissionService {
                 dto.applicationIds
             );
         }
-        if (dto?.userIds?.length > 0) {
+        if (dto?.userIds?.length >= 0) {
             permission.users = await this.userService.findManyUsersByIds(dto.userIds);
         }
     }
