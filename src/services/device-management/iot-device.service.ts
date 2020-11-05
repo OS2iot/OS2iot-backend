@@ -178,6 +178,11 @@ export class IoTDeviceService {
                 "receivedMessage",
                 '"receivedMessage"."deviceId" = iot_device.id'
             )
+            .leftJoinAndSelect(
+                'iot_device.deviceModel',
+                "device_model",
+                'device_model.id = iot_device."deviceModelId"'
+            )
             .orderBy('metadata."sentTime"', "DESC")
             .getOne();
     }
