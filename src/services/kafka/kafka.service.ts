@@ -65,6 +65,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     async bindAllCombinedTopicToConsumer(_topic: string): Promise<void> {
         await this.consumer.subscribe({ topic: _topic, fromBeginning: false });
         await this.consumer.run({
+            autoCommit: true,
+            autoCommitThreshold: 1,
             eachMessage: async ({
                 topic,
                 message,
