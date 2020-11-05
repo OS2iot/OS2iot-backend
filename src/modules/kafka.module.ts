@@ -1,9 +1,8 @@
 import { DynamicModule, Global, Module } from "@nestjs/common";
 
 import { KafkaController } from "@device-data-controller/kafka.controller";
-import { KafkaConfig } from "@services/kafka/kafka.message";
 import { KafkaService } from "@services/kafka/kafka.service";
-import { ChirpstackMqttListenerModule } from "./device-integrations/chirpstack-mqtt-listener.module";
+import { KafkaConfig } from "kafkajs";
 
 @Global()
 @Module({ controllers: [KafkaController] })

@@ -57,7 +57,10 @@ import { SearchModule } from "./search.module";
                     process.env.KAFKA_PORT || "9093"
                 }`,
             ],
-            groupId: process.env.KAFKA_GROUPID || "os2iot-backend",
+            retry: {
+                initialRetryTime: 500,
+                retries: 8,
+            },
         }),
         ScheduleModule.forRoot(),
         HttpModule,

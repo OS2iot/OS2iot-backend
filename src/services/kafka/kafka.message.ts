@@ -21,9 +21,3 @@ export class KafkaPayload {
         };
     }
 }
-
-export declare class KafkaConfig {
-    clientId: string;
-    brokers: string[];
-    groupId: string;
-}

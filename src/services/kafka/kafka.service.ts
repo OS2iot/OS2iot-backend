@@ -6,10 +6,11 @@ import {
     Producer,
     RecordMetadata,
     logLevel,
+    KafkaConfig,
 } from "kafkajs";
 
 import { SUBSCRIBER_COMBINED_REF_MAP } from "./kafka.decorator";
-import { KafkaConfig, KafkaPayload } from "./kafka.message";
+import { KafkaPayload } from "./kafka.message";
 
 /**
  * Based on: https://github.com/rajeshkumarbehura/ts-nestjs-kafka /
@@ -20,20 +21,21 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     private kafka: Kafka;
     private producer: Producer;
     private consumer: Consumer;
-    private fixedConsumer: Consumer;
     private readonly consumerSuffix = "-" + Math.floor(Math.random() * 100000);
     private readonly logger = new Logger(KafkaService.name);
+    private readonly GROUP_ID = process.env.KAFKA_GROUPID || "os2iot-backend";
 
     constructor(private kafkaConfig: KafkaConfig) {
         this.kafka = new Kafka({
             ssl: false,
             clientId: this.kafkaConfig.clientId,
             brokers: this.kafkaConfig.brokers,
-            logLevel: logLevel.NOTHING,
+            logLevel: logLevel.INFO,
+            retry: this.kafkaConfig.retry,
         });
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
-            groupId: this.kafkaConfig.groupId + this.consumerSuffix,
+            groupId: this.GROUP_ID + this.consumerSuffix,
             heartbeatInterval: 5000,
         });
     }
@@ -61,7 +63,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     }
 
     async bindAllCombinedTopicToConsumer(_topic: string): Promise<void> {
-        await this.consumer.subscribe({ topic: _topic, fromBeginning: false });
+        await this.consumer.subscribe({ topic: _topic, fromBeginning: true });
         await this.consumer.run({
             eachMessage: async ({
                 topic,
