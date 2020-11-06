@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { SamlConfig } from "passport-saml";
+import { SamlConfig } from "passport-saml/lib/passport-saml/types";
 
 /**
  *  https://github.com/bergie/passport-saml
