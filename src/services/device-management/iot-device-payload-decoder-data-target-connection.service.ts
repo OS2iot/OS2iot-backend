@@ -289,15 +289,19 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         createConnectionDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto,
         connection: IoTDevicePayloadDecoderDataTargetConnection
     ) {
-        if (createConnectionDto.payloadDecoderId != undefined) {
-            try {
-                connection.payloadDecoder = await this.payloadDecoderService.findOne(
-                    createConnectionDto.payloadDecoderId
-                );
-            } catch (err) {
-                throw new BadRequestException(
-                    `Could not find PayloadDecoder by id: '${createConnectionDto.payloadDecoderId}'`
-                );
+        if (createConnectionDto.payloadDecoderId !== undefined) {
+            if (createConnectionDto.payloadDecoderId === null) {
+                connection.payloadDecoder = null;
+            } else {
+                try {
+                    connection.payloadDecoder = await this.payloadDecoderService.findOne(
+                        createConnectionDto.payloadDecoderId
+                    );
+                } catch (err) {
+                    throw new BadRequestException(
+                        `Could not find PayloadDecoder by id: '${createConnectionDto.payloadDecoderId}'`
+                    );
+                }
             }
         }
     }
