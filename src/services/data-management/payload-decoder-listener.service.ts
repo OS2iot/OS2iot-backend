@@ -37,7 +37,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
 
         // Fetch related objects
         const dto: RawRequestDto = payload.body;
-        const connections = await this.connectionService.findAllByIoTDeviceId(
+        const connections = await this.connectionService.findAllByIoTDeviceIdWithDeviceModel(
             dto.iotDeviceId
         );
         this.logger.debug(

@@ -122,6 +122,17 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
             .innerJoinAndSelect("dt.application", "dataTargetApp");
     }
 
+    async findAllByIoTDeviceIdWithDeviceModel(
+        id: number
+    ): Promise<ListAllConnectionsResponseDto> {
+        const query = this.genDefaultQuery()
+            .leftJoinAndSelect("d.deviceModel", "dm")
+            .where("d.id = :deviceId", {
+                deviceId: id,
+            });
+        return await this.findAllWithWhereQueryBuilder(query);
+    }
+
     async findAllByIoTDeviceId(
         id: number,
         allowed?: number[]
