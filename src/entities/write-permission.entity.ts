@@ -6,8 +6,8 @@ import { PermissionType } from "@enum/permission-type.enum";
 
 @ChildEntity(PermissionType.Write)
 export class WritePermission extends OrganizationApplicationPermission {
-    constructor(name: string, org: Organization) {
-        super(name, org);
+    constructor(name: string, org: Organization, addNewApps = false) {
+        super(name, org, addNewApps);
         this.type = PermissionType.Write;
     }
 }

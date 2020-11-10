@@ -12,7 +12,7 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { OrganizationPermission } from "@entities/organization-permission.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Permission } from "@entities/permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";

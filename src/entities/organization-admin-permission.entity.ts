@@ -1,7 +1,7 @@
 import { ChildEntity } from "typeorm";
 
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { OrganizationPermission } from "@entities/organization-permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 
 import { OrganizationAdmin } from "../auth/roles.decorator";

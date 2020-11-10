@@ -13,7 +13,7 @@ import { GlobalAdminPermission } from "@entities/global-admin-permission.entity"
 import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organizion-permission.entity";
+import { OrganizationPermission } from "@entities/organization-permission.entity";
 import { Permission } from "@entities/permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
 import { User } from "@entities/user.entity";
@@ -28,7 +28,7 @@ import { UserService } from "./user.service";
 export class PermissionService {
     constructor(
         @InjectRepository(Permission)
-        private permissionReposity: Repository<Permission>,
+        private permissionRepository: Repository<Permission>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
         @Inject(forwardRef(() => UserService))
@@ -42,8 +42,12 @@ export class PermissionService {
     ADMIN_SUFFIX = " - OrganizationAdmin";
 
     async createDefaultPermissions(org: Organization): Promise<OrganizationPermission[]> {
-        const readPermission = new ReadPermission(org.name + this.READ_SUFFIX, org);
-        const writePermission = new WritePermission(org.name + this.WRITE_SUFFIX, org);
+        const readPermission = new ReadPermission(org.name + this.READ_SUFFIX, org, true);
+        const writePermission = new WritePermission(
+            org.name + this.WRITE_SUFFIX,
+            org,
+            true
+        );
         const adminPermission = new OrganizationAdminPermission(
             org.name + this.ADMIN_SUFFIX,
             org
@@ -78,11 +82,19 @@ export class PermissionService {
                 break;
             }
             case PermissionType.Write: {
-                permission = new WritePermission(dto.name, org);
+                permission = new WritePermission(
+                    dto.name,
+                    org,
+                    dto.automaticallyAddNewApplications
+                );
                 break;
             }
             case PermissionType.Read: {
-                permission = new ReadPermission(dto.name, org);
+                permission = new ReadPermission(
+                    dto.name,
+                    org,
+                    dto.automaticallyAddNewApplications
+                );
                 break;
             }
             default:
@@ -130,19 +142,13 @@ export class PermissionService {
             (permission as OrganizationApplicationPermission).applications = await this.applicationService.findManyByIds(
                 dto.applicationIds
             );
+
+            (permission as OrganizationApplicationPermission).automaticallyAddNewApplications =
+                dto.automaticallyAddNewApplications;
         }
         if (dto?.userIds?.length >= 0) {
             permission.users = await this.userService.findManyUsersByIds(dto.userIds);
         }
-    }
-
-    private async setApplicationsOnPermission(
-        permission: OrganizationApplicationPermission,
-        dto: UpdatePermissionDto
-    ) {
-        permission.applications = await this.applicationService.findManyByIds(
-            dto.applicationIds
-        );
     }
 
     async deletePermission(id: number): Promise<DeleteResponseDto> {
@@ -183,7 +189,7 @@ export class PermissionService {
     }
 
     async findPermissionsForUser(userId: number): Promise<PermissionMinimalDto[]> {
-        return await this.permissionReposity
+        return await this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoin("permission.users", "user")
             .leftJoinAndSelect(
@@ -208,7 +214,7 @@ export class PermissionService {
     async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
-        return await this.permissionReposity
+        return await this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoin("permission.users", "user")
             .leftJoinAndSelect("permission.organization", "organization")

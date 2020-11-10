@@ -24,4 +24,7 @@ export class UpdatePermissionDto {
         },
     })
     applicationIds?: number[];
+
+    @ApiProperty({ required: false })
+    automaticallyAddNewApplications?: boolean;
 }

@@ -37,4 +37,7 @@ export class CreatePermissionDto {
         },
     })
     applicationIds?: number[];
+    
+    @ApiProperty({ required: false })
+    automaticallyAddNewApplications?: boolean;
 }
