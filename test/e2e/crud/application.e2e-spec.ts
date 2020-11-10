@@ -30,6 +30,7 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
+import { WritePermission } from "@entities/write-permission.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -594,5 +595,53 @@ describe("ApplicationController (e2e)", () => {
                     },
                 });
             });
+    });
+
+    it("(POST) /application - auto adds to permission", async () => {
+        const org = await generateSavedOrganization();
+
+        const readPerm = org.permissions.find(
+            x => x.type == PermissionType.Read
+        ) as ReadPermission;
+        expect(readPerm.automaticallyAddNewApplications).toBeTruthy();
+
+        const writePerm = org.permissions.find(
+            x => x.type == PermissionType.Write
+        ) as WritePermission;
+        expect(writePerm.automaticallyAddNewApplications).toBeTruthy();
+
+        const testAppOne: CreateApplicationDto = {
+            name: "AutoAdd",
+            description: "AutoAdd",
+            organizationId: org.id,
+        };
+
+        let newAppId = null;
+        await request(app.getHttpServer())
+            .post("/application/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(testAppOne)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "AutoAdd",
+                    description: "AutoAdd",
+                    iotDevices: [] as any[],
+                    dataTargets: [] as any[],
+                });
+                newAppId = response.body.id;
+            });
+
+        const applicationInDatabase: Application[] = await repository.find();
+        expect(applicationInDatabase).toHaveLength(1);
+
+        const reloadedReadPerm = await getManager().findOne(ReadPermission, {
+            where: { id: readPerm.id },
+            relations: ["applications"],
+        });
+        expect(reloadedReadPerm.applications[0]).toMatchObject({
+            id: newAppId,
+        });
     });
 });

@@ -112,10 +112,12 @@ describe("PermissionController (e2e)", () => {
                         expect.objectContaining({
                             name: org.name + " - Write",
                             type: PermissionType.Write,
+                            automaticallyAddNewApplications: true,
                         }),
                         expect.objectContaining({
                             name: org.name + " - Read",
                             type: PermissionType.Read,
+                            automaticallyAddNewApplications: true,
                         }),
                     ])
                 );
@@ -165,6 +167,7 @@ describe("PermissionController (e2e)", () => {
                     organization: {
                         id: org.id,
                     },
+                    automaticallyAddNewApplications: false,
                 });
             });
     });

@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, forwardRef } from "@nestjs/common";
+import {
+    BadRequestException,
+    Inject,
+    Injectable,
+    forwardRef,
+    Logger,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as _ from "lodash";
 import { In, Repository, getManager } from "typeorm";
@@ -23,6 +29,7 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { OrganizationService } from "@services/user-management/organization.service";
 
 import { UserService } from "./user.service";
+import { Application } from "@entities/application.entity";
 
 @Injectable()
 export class PermissionService {
@@ -104,6 +111,28 @@ export class PermissionService {
         await this.mapToPermission(permission, dto);
 
         return await getManager().save(permission);
+    }
+
+    async autoAddPermissionsToApplication(app: Application): Promise<void> {
+        const permissionsInOrganisation = await getManager().find(
+            OrganizationApplicationPermission,
+            {
+                where: {
+                    organization: {
+                        id: app.belongsTo.id,
+                    },
+                    automaticallyAddNewApplications: true,
+                },
+                relations: ["applications"],
+            }
+        );
+
+        await Promise.all(
+            permissionsInOrganisation.map(async p => {
+                p.applications.push(app);
+                await getManager().save(p);
+            })
+        );
     }
 
     async addUsersToPermission(permission: Permission, users: User[]): Promise<void> {

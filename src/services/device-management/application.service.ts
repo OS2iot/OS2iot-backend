@@ -11,9 +11,9 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
+import { PermissionService } from "@services/user-management/permission.service";
 
 @Injectable()
 export class ApplicationService {
@@ -22,7 +22,9 @@ export class ApplicationService {
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
-        private chirpstackDeviceService: ChirpstackDeviceService
+        private chirpstackDeviceService: ChirpstackDeviceService,
+        @Inject(forwardRef(() => PermissionService))
+        private permissionService: PermissionService
     ) {}
 
     async findAndCountInList(
@@ -156,7 +158,11 @@ export class ApplicationService {
         mappedApplication.iotDevices = [];
         mappedApplication.dataTargets = [];
 
-        return this.applicationRepository.save(mappedApplication);
+        const app = await this.applicationRepository.save(mappedApplication);
+
+        await this.permissionService.autoAddPermissionsToApplication(app);
+
+        return app;
     }
 
     async update(

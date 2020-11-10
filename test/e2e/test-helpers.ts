@@ -124,8 +124,8 @@ export function generateOrganization(name?: string): Organization {
     const WRITE_SUFFIX = " - Write";
     const ADMIN_SUFFIX = " - OrganizationAdmin";
 
-    const readPermission = new ReadPermission(org.name + READ_SUFFIX, org);
-    const writePermission = new WritePermission(org.name + WRITE_SUFFIX, org);
+    const readPermission = new ReadPermission(org.name + READ_SUFFIX, org, true);
+    const writePermission = new WritePermission(org.name + WRITE_SUFFIX, org, true);
     const adminPermission = new OrganizationAdminPermission(org.name + ADMIN_SUFFIX, org);
     org.permissions = [adminPermission, writePermission, readPermission];
 
