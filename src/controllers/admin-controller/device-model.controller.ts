@@ -35,7 +35,6 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { DeviceModelService } from "@services/device-management/device-model.service";
-import { check } from "prettier";
 
 @ApiTags("Device Model")
 @Controller("device-model")
@@ -101,7 +100,7 @@ export class DeviceModelController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateDeviceModelDto
     ): Promise<DeviceModel> {
-        const deviceModel = await this.service.getById(id);
+        const deviceModel = await this.service.getByIdWithRelations(id);
         checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
 
         return this.service.update(deviceModel, dto);
