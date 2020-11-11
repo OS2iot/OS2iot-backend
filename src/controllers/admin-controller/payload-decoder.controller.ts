@@ -68,9 +68,6 @@ export class PayloadDecoderController {
         if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
-
-        checkIfUserHasReadAccessToOrganization(req, result?.organization?.id);
-
         return result;
     }
 
@@ -81,23 +78,10 @@ export class PayloadDecoderController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllPayloadDecoderDto
     ): Promise<ListAllPayloadDecoderResponseDto> {
-        if (req.user.permissions.isGlobalAdmin) {
-            return await this.payloadDecoderService.findAndCountWithPagination(
-                query,
-                null
-            );
-        }
-
-        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
-        if (query?.organizationId) {
-            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
-        }
-
-        const result = await this.payloadDecoderService.findAndCountWithPagination(
+        return await this.payloadDecoderService.findAndCountWithPagination(
             query,
-            query.organizationId ? [query.organizationId] : allowedOrganizations
+            query.organizationId
         );
-        return result;
     }
 
     @Post()

@@ -26,13 +26,13 @@ export class PayloadDecoderService {
 
     async findAndCountWithPagination(
         query: ListAllEntitiesDto,
-        organizationIds?: number[]
+        organizationId: number
     ): Promise<ListAllPayloadDecoderResponseDto> {
         const [result, total] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationIds != null ? { organization: In(organizationIds) } : {},
+            where: organizationId != null ? { organization: organizationId } : {},
             take: query.limit,
             skip: query.offset,
-            order: { id: query.sort }, // TODO: Generic sorting possible?
+            order: { id: query.sort },
             relations: ["organization"],
         });
 
