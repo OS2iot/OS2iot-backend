@@ -14,10 +14,17 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { GatewayStatsResponseDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import {
+    UpdateGatewayContentsDto,
+    UpdateGatewayDto,
+} from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
+import * as _ from "lodash";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -28,17 +35,27 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         super(internalHttpService);
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
+    private readonly logger = new Logger(ChirpstackGatewayService.name, true);
 
     async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
-        dto = await this.updateDto(dto);
+        dto.gateway = await this.updateDtoContents(dto.gateway);
+
+        dto.gateway.tags = this.addOrganizationToTags(dto);
 
         const result = await this.post("gateways", dto);
         return this.handlePossibleError(result, dto);
     }
 
+    addOrganizationToTags(dto: CreateGatewayDto): { [id: string]: string } {
+        const tags = dto.gateway.tags;
+        tags.organizationId = `${dto.organizationId}`;
+        return tags;
+    }
+
     async listAllPaginated(
         limit?: number,
-        offset?: number
+        offset?: number,
+        organizationId?: number
     ): Promise<ListAllGatewaysResponseDto> {
         // Default parameters if not set
         if (!offset) {
@@ -47,7 +64,32 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         if (!limit) {
             limit = 100;
         }
-        return await this.getAllWithPagination("gateways", limit, offset);
+        const results = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
+            "gateways",
+            limit,
+            offset
+        );
+        await Promise.all(
+            results.result.map(async x => {
+                const gw = await this.getOne(x.id);
+                x.tags = gw.gateway.tags;
+                x.tags.organizationId =
+                    gw.gateway.tags?.organizationId != null
+                        ? gw.gateway.tags?.organizationId
+                        : null;
+            })
+        );
+        if (organizationId !== undefined) {
+            const filteredResults = _.filter(results.result, x => {
+                return x.tags.organizationId === `${organizationId}`;
+            });
+            return {
+                result: filteredResults,
+                totalCount: filteredResults.length,
+            };
+        }
+
+        return results;
     }
 
     async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
@@ -86,11 +128,26 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     async modifyGateway(
         gatewayId: string,
-        dto: UpdateGatewayDto
+        dto: UpdateGatewayDto,
+        req: AuthenticatedRequest
     ): Promise<ChirpstackResponseStatus> {
-        dto = await this.updateDto(dto);
+        dto.gateway = await this.updateDtoContents(dto.gateway);
+        dto.gateway.tags = await this.ensureOrganizationIdIsSet(req, dto);
         const result = await this.put("gateways", dto, gatewayId);
         return this.handlePossibleError(result, dto);
+    }
+
+    async ensureOrganizationIdIsSet(
+        req: AuthenticatedRequest,
+        dto: UpdateGatewayDto
+    ): Promise<{ [id: string]: string }> {
+        const existing = await this.getOne(dto.gateway.id);
+        const tags = dto.gateway.tags;
+        tags.organizationId = existing.gateway.tags?.organizationId;
+        if (existing.gateway.tags?.organizationId != null) {
+            checkIfUserHasWriteAccessToOrganization(req, +existing.gateway.tags.organizationId);
+        }
+        return tags;
     }
 
     async deleteGateway(gatewayId: string): Promise<ChirpstackResponseStatus> {
@@ -129,27 +186,27 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return { success: true };
     }
 
-    private async updateDto(
-        dto: CreateGatewayDto | UpdateGatewayDto
-    ): Promise<CreateGatewayDto | UpdateGatewayDto> {
+    private async updateDtoContents(
+        contentsDto: GatewayContentsDto | UpdateGatewayContentsDto
+    ): Promise<GatewayContentsDto | UpdateGatewayContentsDto> {
         // Chirpstack requires 'gatewayProfileID' to be set (with value or null)
-        if (!dto?.gateway?.gatewayProfileID) {
-            dto.gateway.gatewayProfileID = null;
+        if (!contentsDto?.gatewayProfileID) {
+            contentsDto.gatewayProfileID = null;
         }
 
         // Add network server
-        if (!dto?.gateway?.networkServerID) {
-            dto.gateway.networkServerID = await this.chirpstackSetupNetworkServerService.getDefaultNetworkServerId();
+        if (!contentsDto?.networkServerID) {
+            contentsDto.networkServerID = await this.chirpstackSetupNetworkServerService.getDefaultNetworkServerId();
         }
 
-        if (!dto?.gateway?.organizationID) {
-            dto.gateway.organizationID = await this.chirpstackSetupNetworkServerService.getDefaultOrganizationId();
+        if (!contentsDto?.organizationID) {
+            contentsDto.organizationID = await this.chirpstackSetupNetworkServerService.getDefaultOrganizationId();
         }
 
-        if (dto?.gateway?.tagsString) {
-            dto.gateway.tags = JSON.parse(dto.gateway.tagsString);
+        if (contentsDto?.tagsString) {
+            contentsDto.tags = JSON.parse(contentsDto.tagsString);
         }
 
-        return dto;
+        return contentsDto;
     }
 }

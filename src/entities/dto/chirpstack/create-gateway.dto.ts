@@ -9,4 +9,7 @@ export class CreateGatewayDto {
     @ValidateNested({ each: true })
     @Type(() => GatewayContentsDto)
     gateway: GatewayContentsDto;
+
+    @ApiProperty({ required: true })
+    organizationId: number;
 }

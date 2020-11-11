@@ -9,6 +9,7 @@ import {
     Post,
     Put,
     Query,
+    Req,
     UseGuards,
 } from "@nestjs/common";
 import {
@@ -30,6 +31,8 @@ import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-respons
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
+import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -43,7 +46,11 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
-    async create(@Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
+    async create(
+        @Req() req: AuthenticatedRequest,
+        @Body() dto: CreateGatewayDto
+    ): Promise<ChirpstackResponseStatus> {
+        checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
         try {
             return await this.chirpstackGatewayService.createNewGateway(dto);
         } catch (err) {
@@ -64,7 +71,8 @@ export class ChirpstackGatewayController {
     ): Promise<ListAllGatewaysResponseDto> {
         return await this.chirpstackGatewayService.listAllPaginated(
             query.limit,
-            query.offset
+            query.offset,
+            query.organizationId
         );
     }
 
@@ -90,19 +98,28 @@ export class ChirpstackGatewayController {
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
     async update(
+        @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
     ): Promise<ChirpstackResponseStatus> {
         if (dto.gateway.id) {
             throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
         }
-        return await this.chirpstackGatewayService.modifyGateway(gatewayId, dto);
+        return await this.chirpstackGatewayService.modifyGateway(gatewayId, dto, req);
     }
 
     @Delete(":gatewayId")
     async delete(
+        @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string
     ): Promise<ChirpstackResponseStatus> {
+        const gw = await this.chirpstackGatewayService.getOne(gatewayId);
+        if (gw.gateway.tags?.organizationId != null) {
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                +gw.gateway.tags.organizationId
+            );
+        }
         return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
 }

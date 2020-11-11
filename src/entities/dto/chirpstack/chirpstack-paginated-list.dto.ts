@@ -5,4 +5,6 @@ export class ChirpstackPaginatedListDto {
     limit? = 100;
     @ApiProperty({ type: Number, required: false })
     offset? = 0;
+    @ApiProperty({ type: Number, required: false })
+    organizationId?: number;
 }
