@@ -26,11 +26,13 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { DeviceModel } from "@entities/device-model.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
         `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
             `DELETE FROM "received_message"; \n` +
+            `DELETE FROM "device_model"; \n` +
             `DELETE FROM "iot_device"; \n` +
             `DELETE FROM "application"; \n` +
             `DELETE FROM "data_target"; \n` +
@@ -110,6 +112,34 @@ export async function generateSavedOrganizationAdminPermission(
     org: Organization
 ): Promise<OrganizationAdminPermission> {
     return await getManager().save(generateOrganizationAdminPermission(org));
+}
+
+export function generateDeviceModel(
+    org: Organization,
+    name = "myDevice Sensor for Containers 345"
+): DeviceModel {
+    const model = new DeviceModel();
+    model.belongsTo = org;
+    model.body = JSON.parse(`{
+      "id": "myDevice-wastecontainer-sensor-345",
+      "name": "${name}",
+      "type": "DeviceModel",
+      "category": ["sensor"],
+      "function": ["sensing"],
+      "brandName": "myDevice",
+      "modelName": "S4Container 345",
+      "manufacturerName": "myDevice Inc.",
+      "controlledProperty": ["fillingLevel", "temperature"]
+    }`);
+
+    return model;
+}
+
+export async function generateSavedDeviceModel(
+    org: Organization,
+    name = "myDevice Sensor for Containers 345"
+) {
+    return await getManager().save(generateDeviceModel(org, name));
 }
 
 export function generateOrganization(name?: string): Organization {

@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllDeviceModelResponseDto } from "@dto/list-all-device-model-response.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { DeviceModel } from "@entities/device-model.entity";
+import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     checkIfUserHasReadAccessToOrganization,
     checkIfUserHasWriteAccessToOrganization,
@@ -69,7 +70,7 @@ export class DeviceModelController {
     ): Promise<DeviceModel> {
         const deviceModel = await this.service.getById(id);
         if (!deviceModel) {
-            throw new NotFoundException();
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
         checkIfUserHasReadAccessToOrganization(req, deviceModel.belongsTo.id);

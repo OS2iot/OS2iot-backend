@@ -8,7 +8,6 @@ import { DeleteResult, In, Repository } from "typeorm";
 import * as AJV from "ajv";
 import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class DeviceModelService {
@@ -17,7 +16,7 @@ export class DeviceModelService {
         private repository: Repository<DeviceModel>,
         private organizationService: OrganizationService
     ) {
-        this.avj = new AJV({ allErrors: true, missingRefs: "ignore", verbose: true });
+        this.avj = new AJV({ allErrors: true, missingRefs: "ignore", verbose: false });
         this.avj.addSchema(deviceModelSchema, this.SCHEMA_NAME);
     }
 

@@ -8,7 +8,9 @@ export class DeviceModel extends DbBaseEntity {
     @Column({ type: "jsonb", nullable: true })
     body: JSON;
 
-    @ManyToOne(type => Organization, organization => organization.deviceModels)
+    @ManyToOne(type => Organization, organization => organization.deviceModels, {
+        onDelete: "CASCADE",
+    })
     @JoinColumn()
     belongsTo: Organization;
 
