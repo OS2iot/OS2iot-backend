@@ -165,8 +165,11 @@ describe("ChirpstackGatewayController (e2e)", () => {
             .put(`/chirpstack/gateway/${originalId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
+            .expect(200)
             .then(response => {
-                Logger.log(response.body);
+                expect(response.body).toMatchObject({
+                    success: true,
+                });
             });
 
         // Check that it was changed.

@@ -93,6 +93,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
 
     async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
+        if (gatewayId?.length != 16) {
+            throw new BadRequestException("Invalid gateway id");
+        }
         try {
             const result: SingleGatewayResponseDto = await this.get(
                 `gateways/${gatewayId}`
@@ -132,20 +135,24 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         req: AuthenticatedRequest
     ): Promise<ChirpstackResponseStatus> {
         dto.gateway = await this.updateDtoContents(dto.gateway);
-        dto.gateway.tags = await this.ensureOrganizationIdIsSet(req, dto);
+        dto.gateway.tags = await this.ensureOrganizationIdIsSet(gatewayId, dto, req);
         const result = await this.put("gateways", dto, gatewayId);
         return this.handlePossibleError(result, dto);
     }
 
     async ensureOrganizationIdIsSet(
-        req: AuthenticatedRequest,
-        dto: UpdateGatewayDto
+        gatewayId: string,
+        dto: UpdateGatewayDto,
+        req: AuthenticatedRequest
     ): Promise<{ [id: string]: string }> {
-        const existing = await this.getOne(dto.gateway.id);
+        const existing = await this.getOne(gatewayId);
         const tags = dto.gateway.tags;
         tags.organizationId = existing.gateway.tags?.organizationId;
         if (existing.gateway.tags?.organizationId != null) {
-            checkIfUserHasWriteAccessToOrganization(req, +existing.gateway.tags.organizationId);
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                +existing.gateway.tags.organizationId
+            );
         }
         return tags;
     }
