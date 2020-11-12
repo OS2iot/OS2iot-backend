@@ -12,6 +12,7 @@ import {
     Post,
     Put,
     Query,
+    Req,
     UseGuards,
 } from "@nestjs/common";
 import {
@@ -33,6 +34,8 @@ import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dt
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
@@ -47,8 +50,10 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
     async create(
+        @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
+        checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
         const result = await this.deviceProfileService.createDeviceProfile(createDto);
         return result.data;
     }
@@ -58,15 +63,30 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Update an existing DeviceProfile" })
     @ApiBadRequestResponse()
     @HttpCode(204)
+    @Write()
     async update(
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
         @Body() updateDto: UpdateDeviceProfileDto
     ): Promise<void> {
+        await this.checkForWriteAccess(id, req);
         try {
             await this.deviceProfileService.updateDeviceProfile(updateDto, id);
         } catch (err) {
             Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
             throw new InternalServerErrorException(err?.response?.data);
+        }
+    }
+
+    private async checkForWriteAccess(id: string, req: AuthenticatedRequest) {
+        const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
+            id
+        );
+        if (deviceProfile.deviceProfile.tags?.organizationId) {
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                +deviceProfile.deviceProfile.tags?.organizationId
+            );
         }
     }
 
@@ -115,7 +135,11 @@ export class DeviceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
-    async deleteOne(@Param("id") id: string): Promise<DeleteResponseDto> {
+    async deleteOne(
+        @Req() req: AuthenticatedRequest,
+        @Param("id") id: string
+    ): Promise<DeleteResponseDto> {
+        await this.checkForWriteAccess(id, req);
         let result = undefined;
         try {
             result = await this.deviceProfileService.deleteDeviceProfile(id);

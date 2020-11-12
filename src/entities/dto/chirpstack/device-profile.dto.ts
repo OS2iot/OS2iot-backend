@@ -93,4 +93,7 @@ export class DeviceProfileDto {
 
     @ApiProperty({ required: false })
     supportsJoin?: boolean;
+
+    @ApiHideProperty()
+    tags?: { [id: string]: string };
 }

@@ -9,4 +9,7 @@ export class CreateDeviceProfileDto {
     @ValidateNested({ each: true })
     @Type(() => DeviceProfileDto)
     deviceProfile: DeviceProfileDto;
+
+    @ApiProperty({ required: true })
+    organizationId: number;
 }

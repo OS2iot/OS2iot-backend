@@ -5,22 +5,31 @@ import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dt
 import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
+import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
     public async createDeviceProfile(
         dto: CreateDeviceProfileDto
     ): Promise<AxiosResponse> {
-        dto = await this.updateDto(dto);
+        dto.deviceProfile = await this.updateDto(dto.deviceProfile);
+        dto.deviceProfile.tags = this.addOrganizationToTags(dto);
         const result = await this.post("device-profiles", dto);
         return result;
     }
 
+    private addOrganizationToTags(dto: CreateDeviceProfileDto): { [id: string]: string } {
+        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        tags.organizationId = `${dto.organizationId}`;
+        return tags;
+    }
+
     public async updateDeviceProfile(
-        data: CreateDeviceProfileDto,
+        data: UpdateDeviceProfileDto,
         id: string
     ): Promise<AxiosResponse> {
-        data = await this.updateDto(data);
+        data.deviceProfile = await this.updateDto(data.deviceProfile);
         return await this.put("device-profiles", data, id);
     }
 
@@ -38,6 +47,14 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             offset
         );
 
+        // await Promise.all(
+        //     result.result.map(async x => {
+        //         const dp = await this.findOneDeviceProfileById(x.id);
+        //         x.tags = dp.deviceProfile.tags;
+        //         x.tags.organizationId = dp.deviceProfile.tags?.organizationId;
+        //     })
+        // );
+
         return result;
     }
 
@@ -49,9 +66,9 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return result;
     }
 
-    public async updateDto(dto: CreateDeviceProfileDto): Promise<CreateDeviceProfileDto> {
-        dto.deviceProfile.networkServerID = await this.getDefaultNetworkServerId();
-        dto.deviceProfile.organizationID = await this.getDefaultOrganizationId();
+    public async updateDto(dto: DeviceProfileDto): Promise<DeviceProfileDto> {
+        dto.networkServerID = await this.getDefaultNetworkServerId();
+        dto.organizationID = await this.getDefaultOrganizationId();
 
         return dto;
     }
