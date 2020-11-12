@@ -19,7 +19,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return result;
     }
 
-    private addOrganizationToTags(dto: CreateDeviceProfileDto): { [id: string]: string } {
+    private addOrganizationToTags(dto: CreateDeviceProfileDto): { [id: string]: string | number } {
         let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
         tags.organizationId = `${dto.organizationId}`;
         return tags;

@@ -95,5 +95,5 @@ export class DeviceProfileDto {
     supportsJoin?: boolean;
 
     @ApiHideProperty()
-    tags?: { [id: string]: string };
+    tags?: { [id: string]: string | number };
 }

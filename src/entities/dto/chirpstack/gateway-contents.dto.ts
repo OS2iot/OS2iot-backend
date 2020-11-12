@@ -70,5 +70,5 @@ export class GatewayContentsDto {
     tagsString?: string;
 
     @ApiHideProperty()
-    tags?: { [id: string]: string };
+    tags?: { [id: string]: string | number };
 }

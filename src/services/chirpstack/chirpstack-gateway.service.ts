@@ -36,6 +36,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
     private readonly logger = new Logger(ChirpstackGatewayService.name, true);
+    private readonly ORG_ID_KEY = "organizationId";
 
     async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
         dto.gateway = await this.updateDtoContents(dto.gateway);
@@ -46,9 +47,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return this.handlePossibleError(result, dto);
     }
 
-    addOrganizationToTags(dto: CreateGatewayDto): { [id: string]: string } {
+    addOrganizationToTags(dto: CreateGatewayDto): { [id: string]: string | number } {
         const tags = dto.gateway.tags;
-        tags.organizationId = `${dto.organizationId}`;
+        tags[this.ORG_ID_KEY] = `${dto.organizationId}`;
         return tags;
     }
 
@@ -73,15 +74,15 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             results.result.map(async x => {
                 const gw = await this.getOne(x.id);
                 x.tags = gw.gateway.tags;
-                x.tags.organizationId =
-                    gw.gateway.tags?.organizationId != null
-                        ? gw.gateway.tags?.organizationId
+                x.tags[this.ORG_ID_KEY] =
+                    gw.gateway.tags[this.ORG_ID_KEY] != null
+                        ? +gw.gateway.tags[this.ORG_ID_KEY]
                         : null;
             })
         );
         if (organizationId !== undefined) {
             const filteredResults = _.filter(results.result, x => {
-                return x.tags.organizationId === `${organizationId}`;
+                return x.tags[this.ORG_ID_KEY] === `${organizationId}`;
             });
             return {
                 result: filteredResults,
@@ -100,6 +101,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             const result: SingleGatewayResponseDto = await this.get(
                 `gateways/${gatewayId}`
             );
+            result.gateway.tags[this.ORG_ID_KEY] = +result.gateway.tags[this.ORG_ID_KEY];
 
             result.stats = (await this.getGatewayStats(gatewayId)).result;
 
@@ -144,14 +146,14 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         gatewayId: string,
         dto: UpdateGatewayDto,
         req: AuthenticatedRequest
-    ): Promise<{ [id: string]: string }> {
+    ): Promise<{ [id: string]: string | number }> {
         const existing = await this.getOne(gatewayId);
         const tags = dto.gateway.tags;
-        tags.organizationId = existing.gateway.tags?.organizationId;
-        if (existing.gateway.tags?.organizationId != null) {
+        tags[this.ORG_ID_KEY] = +existing.gateway.tags[this.ORG_ID_KEY];
+        if (existing.gateway.tags[this.ORG_ID_KEY] != null) {
             checkIfUserHasWriteAccessToOrganization(
                 req,
-                +existing.gateway.tags.organizationId
+                +existing.gateway.tags[this.ORG_ID_KEY]
             );
         }
         return tags;
