@@ -9,7 +9,10 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ListAllOrganizationsResponseDto } from "@dto/list-all-organizations-response.dto";
+import {
+    ListAllMinimalOrganizationsResponseDto,
+    ListAllOrganizationsResponseDto,
+} from "@dto/list-all-organizations-response.dto";
 import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
@@ -53,6 +56,17 @@ export class OrganizationService {
     async findAll(): Promise<ListAllOrganizationsResponseDto> {
         const [data, count] = await this.organizationRepository.findAndCount({
             relations: ["permissions", "applications"],
+        });
+
+        return {
+            count: count,
+            data: data,
+        };
+    }
+
+    async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
+        const [data, count] = await this.organizationRepository.findAndCount({
+            select: ["id", "name"],
         });
 
         return {

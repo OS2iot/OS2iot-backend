@@ -22,12 +22,15 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { GlobalAdmin } from "@auth/roles.decorator";
+import { GlobalAdmin, Read } from "@auth/roles.decorator";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllOrganizationsResponseDto } from "@dto/list-all-organizations-response.dto";
+import {
+    ListAllMinimalOrganizationsResponseDto,
+    ListAllOrganizationsResponseDto,
+} from "@dto/list-all-organizations-response.dto";
 import { CreateOrganizationDto } from "@dto/user-management/create-organization.dto";
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
@@ -66,6 +69,16 @@ export class OrganizationController {
         checkIfUserHasAdminAccessToOrganization(req, id);
 
         return await this.organizationService.update(id, updateOrganizationDto);
+    }
+
+    @Get("minimal")
+    @ApiOperation({
+        summary:
+            "Get list of the minimal representation of organizations, i.e. id and name.",
+    })
+    @Read()
+    async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
+        return await this.organizationService.findAllMinimal();
     }
 
     @Get()
