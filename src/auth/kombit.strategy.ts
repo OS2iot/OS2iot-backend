@@ -30,14 +30,14 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
             signatureAlgorithm: "sha256",
             disableRequestedAuthnContext: true,
             authnRequestBinding: "HTTP-Redirect",
+            acceptedClockSkewMs: 1000, // Allow some slack in clock sync
         });
 
-        this.logger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`)
-        this.logger.debug(`EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`)
+        this.logger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`);
+        this.logger.debug(`EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`);
     }
 
     private readonly logger = new Logger(KombitStrategy.name);
-
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     async validate(profile: Profile, done: Function): Promise<UserResponseDto> {
