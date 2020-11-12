@@ -9,6 +9,7 @@ import { PayloadDecoderModule } from "@modules/device-management/payload-decoder
 import { KafkaModule } from "@modules/kafka.module";
 import { SharedModule } from "@modules/shared.module";
 import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
+import { PayloadDecoderExecutorModuleModule } from "@modules/payload-decoder-executor-module.module";
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { PayloadDecoderListenerService } from "@services/data-management/payload
         PayloadDecoderModule,
         HttpModule,
         ApplicationModule,
+        PayloadDecoderExecutorModuleModule,
     ],
     controllers: [PayloadDecoderController],
     providers: [PayloadDecoderListenerService],

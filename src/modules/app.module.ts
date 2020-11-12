@@ -28,6 +28,7 @@ import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.m
 import { ScheduleModule } from "@nestjs/schedule";
 import { SearchModule } from "./search.module";
 import { DeviceModelModule } from "./device-management/device-model.module";
+import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
 
 @Module({
     imports: [
@@ -88,6 +89,7 @@ import { DeviceModelModule } from "./device-management/device-model.module";
         SigfoxContractModule,
         SigfoxDeviceModule,
         SearchModule,
+        TestPayloadDecoderModule,
     ],
     controllers: [],
     providers: [],

@@ -15,12 +15,14 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaService } from "../kafka/kafka.service";
 import * as _ from "lodash";
 import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
+import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
     constructor(
         private connectionService: IoTDevicePayloadDecoderDataTargetConnectionService,
-        private kafkaService: KafkaService
+        private kafkaService: KafkaService,
+        private executor: PayloadDecoderExecutorService
     ) {
         super();
     }
@@ -102,7 +104,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             );
 
             // Decode the payload
-            res = await this.callUntrustedCode(
+            res = await this.executor.callUntrustedCode(
                 payloadDecoder.decodingFunction,
                 relatedIoTDevice,
                 rawPayload
@@ -155,35 +157,5 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             payload: JSON.parse(decodedPayload),
             payloadDecoderId: payloadTransformerId,
         };
-    }
-
-    async callUntrustedCode(
-        code: string,
-        iotDevice: IoTDevice,
-        rawPayload: JSON
-    ): Promise<string> {
-        const vm2Logger = new Logger(`${PayloadDecoderListenerService.name}-VM2`);
-        const vm = new VM({
-            timeout: 5000,
-            sandbox: {
-                innerIotDevice: iotDevice,
-                innerPayload: rawPayload,
-                log(data: any): void {
-                    vm2Logger.debug(data);
-                },
-                btoa(str: string): string {
-                    return Buffer.from(str).toString("base64");
-                },
-                atob(str: string): string {
-                    return Buffer.from(str, "base64").toString("binary");
-                },
-            },
-        });
-        const callingCode = `\n\ndecode(innerPayload, innerIotDevice);`;
-        const combinedCode = code + callingCode;
-        const res = vm.run(new VMScript(combinedCode));
-        this.logger.debug(`Returned: '${JSON.stringify(res)}'`);
-
-        return JSON.stringify(res);
     }
 }
