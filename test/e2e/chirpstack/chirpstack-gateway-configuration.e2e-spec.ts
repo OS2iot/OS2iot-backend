@@ -152,10 +152,12 @@ describe("ChirpstackGatewayController (e2e)", () => {
             });
     });
 
-    it("(PUT) Change gateway", async () => {
+    it("(PUT) Change gateway - OK", async () => {
         const dto = await createGatewayReturnDto();
         const originalId = dto.gateway.id;
         dto.gateway.id = undefined;
+        dto.organizationId = undefined;
+        dto.gateway.tags = undefined;
 
         dto.gateway.name = `${gatewayNamePrefix}-ChangedName-PUT`;
 
@@ -163,7 +165,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
             .put(`/chirpstack/gateway/${originalId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
-            .expect(200);
+            .then(response => {
+                Logger.log(response.body);
+            });
 
         // Check that it was changed.
         const changedGateway: SingleGatewayResponseDto = await service.getOne(originalId);

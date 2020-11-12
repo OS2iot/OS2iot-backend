@@ -152,6 +152,7 @@ describe("OrganizationController (e2e)", () => {
                     type: PermissionType.Read,
                     createdAt: expect.any(String),
                     updatedAt: expect.any(String),
+                    automaticallyAddNewApplications: true,
                 });
                 expect(response.body.permissions).toContainEqual({
                     id: expect.any(Number),
@@ -159,6 +160,7 @@ describe("OrganizationController (e2e)", () => {
                     type: PermissionType.Write,
                     createdAt: expect.any(String),
                     updatedAt: expect.any(String),
+                    automaticallyAddNewApplications: true,
                 });
                 expect(response.body.permissions).toContainEqual({
                     id: expect.any(Number),

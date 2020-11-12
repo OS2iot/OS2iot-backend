@@ -730,6 +730,7 @@ export async function makeCreateGatewayDto(
             organizationID: "1",
             tagsString: '{ "asdf": "abcd" }',
         },
+        organizationId: 1,
     };
     return request;
 }
