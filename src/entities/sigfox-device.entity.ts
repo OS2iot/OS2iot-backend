@@ -14,7 +14,7 @@ export class SigFoxDevice extends IoTDevice {
     @Max(24, { message: "Must at most be 24 characters" })
     deviceTypeId: string;
 
-    @Column({ nullable: true, default: "5e74c24476600f14bab7e0bd" })
+    @Column({ nullable: true })
     groupId: string;
 
     @Column({ nullable: true })

@@ -117,6 +117,9 @@ export class IoTDeviceService {
             sigfoxGroup,
             sigfoxDevice
         );
+        if (!thisDevice) {
+            throw new NotFoundException(ErrorCodes.SigfoxError)
+        }
         sigfoxDevice.sigfoxSettings = await this.mapSigFoxBackendDataToDto(
             thisDevice,
             sigfoxGroup
@@ -179,7 +182,7 @@ export class IoTDeviceService {
                 '"receivedMessage"."deviceId" = iot_device.id'
             )
             .leftJoinAndSelect(
-                'iot_device.deviceModel',
+                "iot_device.deviceModel",
                 "device_model",
                 'device_model.id = iot_device."deviceModelId"'
             )
@@ -419,7 +422,7 @@ export class IoTDeviceService {
         const sigfoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             dto.sigfoxSettings.groupId
         );
-
+        cast.groupId = sigfoxGroup.sigfoxGroupId;
         await this.createOrUpdateSigFoxDevice(dto, sigfoxGroup, cast);
 
         await this.sigfoxApiDeviceTypeService.addOrUpdateCallback(
