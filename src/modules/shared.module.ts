@@ -23,6 +23,7 @@ import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { User } from "@entities/user.entity";
 import { WritePermission } from "@entities/write-permission.entity";
 import { DeviceModel } from "@entities/device-model.entity";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { DeviceModel } from "@entities/device-model.entity";
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,
             LoRaWANDevice,
+            OpenDataDkDataset,
             Organization,
             OrganizationAdminPermission,
             OrganizationApplicationPermission,

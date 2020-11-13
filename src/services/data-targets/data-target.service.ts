@@ -18,12 +18,15 @@ import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ApplicationService } from "@services/device-management/application.service";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 
 @Injectable()
 export class DataTargetService {
     constructor(
         @InjectRepository(DataTarget)
         private dataTargetRepository: Repository<DataTarget>,
+        @InjectRepository(OpenDataDkDataset)
+        private openDataDkRepository: Repository<OpenDataDkDataset>,
         private applicationService: ApplicationService
     ) {}
 
@@ -72,7 +75,7 @@ export class DataTargetService {
 
     async findOne(id: number): Promise<DataTarget> {
         return await this.dataTargetRepository.findOneOrFail(id, {
-            relations: ["application"],
+            relations: ["application", "openDataDkDataset"],
         });
     }
 
@@ -91,9 +94,13 @@ export class DataTargetService {
             dataTarget
         );
 
+        if (createDataTargetDto.openDataDkDataset) {
+            dataTarget.openDataDkDataset = this.mapOpenDataDk(createDataTargetDto);
+        }
+
         // Use the generic manager since we cannot use a general repository.
         const entityManager = getManager();
-        return await entityManager.save(mappedDataTarget);
+        return await entityManager.save(mappedDataTarget, {});
     }
 
     async update(
@@ -141,6 +148,15 @@ export class DataTargetService {
         this.setAuthorizationHeader(dataTargetDto, dataTarget);
 
         return dataTarget;
+    }
+
+    private mapOpenDataDk(createDataTargetDto: CreateDataTargetDto): OpenDataDkDataset {
+        const openDataDkDataset = this.openDataDkRepository.create(
+            createDataTargetDto.openDataDkDataset
+        );
+        Logger.debug(JSON.stringify(createDataTargetDto.openDataDkDataset));
+
+        return openDataDkDataset;
     }
 
     private setAuthorizationHeader(

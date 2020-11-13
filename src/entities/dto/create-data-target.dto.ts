@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
     IsNumber,
     IsOptional,
@@ -9,6 +9,7 @@ import {
 } from "class-validator";
 
 import { DataTargetType } from "@enum/data-target-type.enum";
+import { CreateOpenDataDkDatasetDto } from "./create-open-data-dk-dataset.dto";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
@@ -36,4 +37,8 @@ export class CreateDataTargetDto {
 
     @ApiProperty({ required: false, default: "derp", example: null })
     authorizationHeader: string;
+
+    @ApiPropertyOptional({ required: false })
+    @IsOptional()
+    openDataDkDataset: CreateOpenDataDkDatasetDto;
 }

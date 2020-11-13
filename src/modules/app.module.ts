@@ -29,6 +29,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { SearchModule } from "./search.module";
 import { DeviceModelModule } from "./device-management/device-model.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
+import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 
 @Module({
     imports: [
@@ -46,7 +47,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
                 synchronize: true,
-                logging: false,
+                logging: true,
                 autoLoadEntities: true,
                 retryAttempts: 0,
                 maxQueryExecutionTime: 200, // Log queries slower than 200 ms
@@ -79,6 +80,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
         SigfoxDeviceModule,
         SearchModule,
         TestPayloadDecoderModule,
+        OpenDataDkSharingModule,
     ],
     controllers: [],
     providers: [],

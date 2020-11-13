@@ -1,7 +1,8 @@
-import { Column, Entity, ManyToOne, TableInheritance } from "typeorm";
+import { Column, Entity, ManyToOne, OneToOne, TableInheritance } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
 
 @Entity("data_target")
@@ -24,4 +25,11 @@ export abstract class DataTarget extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     application: Application;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @OneToOne(type => OpenDataDkDataset, o => o.dataTarget, {
+        nullable: true,
+        cascade: true,
+    })
+    openDataDkDataset: OpenDataDkDataset;
 }
