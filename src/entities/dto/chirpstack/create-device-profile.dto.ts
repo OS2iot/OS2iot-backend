@@ -11,5 +11,5 @@ export class CreateDeviceProfileDto {
     deviceProfile: DeviceProfileDto;
 
     @ApiProperty({ required: true })
-    organizationId: number;
+    internalOrganizationId: number;
 }

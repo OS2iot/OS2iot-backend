@@ -53,7 +53,7 @@ export class DeviceProfileController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
-        checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
+        checkIfUserHasWriteAccessToOrganization(req, createDto.internalOrganizationId);
         const result = await this.deviceProfileService.createDeviceProfile(createDto);
         return result.data;
     }

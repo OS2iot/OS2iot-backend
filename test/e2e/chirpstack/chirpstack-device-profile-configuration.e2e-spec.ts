@@ -223,7 +223,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
         const deviceProfile: CreateDeviceProfileDto = {
             deviceProfile: deviceProfileDto,
-            organizationId: 1,
+            internalOrganizationId: 1,
         };
 
         return deviceProfile;

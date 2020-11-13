@@ -36,7 +36,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
     private readonly logger = new Logger(ChirpstackGatewayService.name, true);
-    private readonly ORG_ID_KEY = "organizationId";
+    private readonly ORG_ID_KEY = "internalOrganizationId";
 
     async createNewGateway(dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
         dto.gateway = await this.updateDtoContents(dto.gateway);

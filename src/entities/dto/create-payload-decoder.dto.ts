@@ -16,5 +16,6 @@ export class CreatePayloadDecoderDto {
     decodingFunction: string;
 
     @ApiProperty({ required: true })
+    @IsNumber()
     organizationId: number;
 }
