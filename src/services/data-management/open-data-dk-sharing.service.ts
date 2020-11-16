@@ -142,7 +142,7 @@ export class OpenDataDkSharingService {
         ds.contactPoint = new ContactPoint();
         ds.contactPoint["@type"] = "vcard:Contact";
         ds.contactPoint.fn = dataset.authorName;
-        ds.contactPoint.hasEmail = dataset.authorEmail;
+        ds.contactPoint.hasEmail = `mailto:${dataset.authorEmail}`;
 
         ds.distribution = [this.mapDistribution(dataset)];
 
