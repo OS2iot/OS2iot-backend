@@ -1,15 +1,9 @@
-import {
-    ContactPoint,
-    Dataset,
-    DCATRootObject,
-    Distribution,
-} from "@dto/open-data-dk-dcat.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
+import { DCATRootObject } from "@dto/open-data-dk-dcat.dto";
 import { Controller, Get, NotFoundException, Param, ParseIntPipe } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { OpenDataDkSharingService } from "@services/data-management/open-data-dk-sharing.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
-import { plainToClass } from "class-transformer";
 
 @ApiTags("OpenData.dk")
 @Controller("open-data-dk-sharing")
@@ -21,7 +15,7 @@ export class OpenDataDkSharingController {
 
     @Get(":organizationId")
     async getCatalog(
-        @Param("id", new ParseIntPipe()) orgId: number
+        @Param("organizationId", new ParseIntPipe()) orgId: number
     ): Promise<DCATRootObject> {
         const organization = await this.organizationService.findById(orgId);
         if (!organization) {
@@ -31,5 +25,28 @@ export class OpenDataDkSharingController {
         }
 
         return this.service.createDCAT(organization);
+    }
+
+    @Get("data/:organizationId/:shareId")
+    async getData(
+        @Param("organizationId", new ParseIntPipe()) orgId: number,
+        @Param("shareId", new ParseIntPipe()) shareId: number
+    ) {
+        const organization = await this.organizationService.findById(orgId);
+        if (!organization) {
+            throw new NotFoundException(
+                `Could not find an organization with the id: ${orgId}`
+            );
+        }
+
+        const dataset = await this.service.findById(shareId, organization.id);
+        if (!dataset) {
+            throw new NotFoundException(
+                `Could not find dataset with id: ${shareId} on organization: ${organization.id}`
+            );
+        }
+
+        // TODO: Add caching pr. shareId (https://docs.nestjs.com/techniques/caching)
+        return this.service.getDecodedDataInDataset(dataset);
     }
 }
