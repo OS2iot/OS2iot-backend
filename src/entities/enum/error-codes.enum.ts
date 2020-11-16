@@ -28,4 +28,5 @@ export enum ErrorCodes {
     QueryMustNotBeEmpty = "MESSAGE.QUERY-MUST-NOT-BE-EMPTY",
     IsUsed = "MESSAGE.IS-USED",
     CannotModifyOnKombitUser = "MESSAGE.CANNOT-MODIFY-ON-KOMBIT-USER",
+    SigfoxError = "MESSAGE.SIGFOX-ERROR",
 }

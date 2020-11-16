@@ -36,7 +36,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
             groupId: this.GROUP_ID + this.consumerSuffix,
-            heartbeatInterval: 5000,
+            heartbeatInterval: 10000,
         });
     }
 
@@ -44,6 +44,19 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         await this.connect();
         SUBSCRIBER_COMBINED_REF_MAP.forEach(async (functionRef, topic) => {
             await this.bindAllCombinedTopicToConsumer(topic);
+        });
+
+        await this.consumer.on(this.consumer.events.HEARTBEAT, ({ timestamp }) => {
+            this.logger.debug("Heartbeat ... " + timestamp);
+        });
+        await this.consumer.on(this.consumer.events.STOP, () => {
+            this.logger.debug("STOP ... ");
+        });
+        await this.consumer.on(this.consumer.events.CRASH, ({ error }) => {
+            this.logger.debug("CRASH ... " + error);
+        });
+        await this.consumer.on(this.consumer.events.DISCONNECT, () => {
+            this.logger.debug("DISCONNECT ... ");
         });
     }
 
@@ -64,35 +77,41 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     async bindAllCombinedTopicToConsumer(_topic: string): Promise<void> {
         await this.consumer.subscribe({ topic: _topic, fromBeginning: false });
-        await this.consumer.run({
-            autoCommit: true,
-            autoCommitThreshold: 1,
-            eachMessage: async ({
-                topic,
-                message,
-            }: {
-                topic: string;
-                message: KafkaMessage;
-            }) => {
-                try {
-                    const arr = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
-                    this.logger.debug(
-                        `Got kafka message, have ${arr.length} receivers ...`
-                    );
-                    arr.forEach(async tuple => {
-                        const object = tuple[0];
-                        const fn = tuple[1];
-                        this.logger.debug(`Calling method ...`);
-                        // bind the subscribed functions to topic
-                        const msg = JSON.parse(message.value.toString()) as KafkaPayload;
-                        await fn.apply(object, [msg]);
-                    });
-                } catch (err) {
-                    this.logger.error(`Error occurred in eachMessage: ${err}`);
-                    this.logger.error(`${JSON.stringify(err)}`);
-                }
-            },
-        });
+        await this.consumer
+            .run({
+                autoCommit: true,
+                autoCommitThreshold: 1,
+                eachMessage: async ({
+                    topic,
+                    message,
+                }: {
+                    topic: string;
+                    message: KafkaMessage;
+                }) => {
+                    try {
+                        const arr = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
+                        this.logger.debug(
+                            `Got kafka message, have ${arr.length} receivers ...`
+                        );
+                        arr.forEach(async tuple => {
+                            const object = tuple[0];
+                            const fn = tuple[1];
+                            this.logger.debug(`Calling method ...`);
+                            // bind the subscribed functions to topic
+                            const msg = JSON.parse(
+                                message.value.toString()
+                            ) as KafkaPayload;
+                            await fn.apply(object, [msg]);
+                        });
+                    } catch (err) {
+                        this.logger.error(`Error occurred in eachMessage: ${err}`);
+                        this.logger.error(`${JSON.stringify(err)}`);
+                    }
+                },
+            })
+            .catch(err => {
+                this.logger.error("Kafkajs got error: " + err);
+            });
     }
 
     async sendMessage(
