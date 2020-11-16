@@ -52,18 +52,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
                 maxQueryExecutionTime: 200, // Log queries slower than 200 ms
             }),
         }),
-        KafkaModule.register({
-            clientId: process.env.KAFKA_CLIENTID || "os2iot-client",
-            brokers: [
-                `${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
-                    process.env.KAFKA_PORT || "9093"
-                }`,
-            ],
-            retry: {
-                initialRetryTime: 500,
-                retries: 8,
-            },
-        }),
+        KafkaModule,
         ScheduleModule.forRoot(),
         HttpModule,
         ApplicationModule,

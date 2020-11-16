@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { HealthCheckService } from "@services/health/health-check.service";
 import {
     Consumer,
     Kafka,
@@ -25,13 +26,25 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(KafkaService.name);
     private readonly GROUP_ID = process.env.KAFKA_GROUPID || "os2iot-backend";
 
-    constructor(private kafkaConfig: KafkaConfig) {
+    constructor(private healthCheckService: HealthCheckService) {
+        const kafkaConfig = {
+            clientId: process.env.KAFKA_CLIENTID || "os2iot-client",
+            brokers: [
+                `${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
+                    process.env.KAFKA_PORT || "9093"
+                }`,
+            ],
+            retry: {
+                initialRetryTime: 500,
+                retries: 8,
+            },
+        };
         this.kafka = new Kafka({
             ssl: false,
-            clientId: this.kafkaConfig.clientId,
-            brokers: this.kafkaConfig.brokers,
+            clientId: kafkaConfig.clientId,
+            brokers: kafkaConfig.brokers,
             logLevel: logLevel.INFO,
-            retry: this.kafkaConfig.retry,
+            retry: kafkaConfig.retry,
         });
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
@@ -48,6 +61,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
         await this.consumer.on(this.consumer.events.HEARTBEAT, ({ timestamp }) => {
             this.logger.debug("Heartbeat ... " + timestamp);
+            this.healthCheckService.lastHeartbeat = timestamp;
         });
         await this.consumer.on(this.consumer.events.STOP, () => {
             this.logger.debug("STOP ... ");
