@@ -1,3 +1,4 @@
+import { PATH_METADATA } from "@nestjs/common/constants";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -13,6 +14,8 @@ import { Organization } from "@entities/organization.entity";
 import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import configuration from "@config/configuration";
+import { OpenDataDkSharingController } from "@admin-controller/open-data-dk-sharing.controller";
 
 @Injectable()
 export class OpenDataDkSharingService {
@@ -22,6 +25,7 @@ export class OpenDataDkSharingService {
         private payloadDecoderExecutorService: PayloadDecoderExecutorService
     ) {}
 
+    private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
     private readonly logger = new Logger(OpenDataDkSharingService.name);
 
     async getDecodedDataInDataset(dataset: OpenDataDkDataset) {
@@ -128,7 +132,7 @@ export class OpenDataDkSharingService {
         ds["@type"] = "dcat:Dataset";
         ds.accessLevel = "public";
 
-        ds.identifier = this.generateIdentifier(dataset);
+        ds.identifier = this.generateUrl(organization, dataset);
         ds.license = dataset.license;
         ds.landingPage = undefined;
         ds.title = dataset.name;
@@ -144,27 +148,28 @@ export class OpenDataDkSharingService {
         ds.contactPoint.fn = dataset.authorName;
         ds.contactPoint.hasEmail = `mailto:${dataset.authorEmail}`;
 
-        ds.distribution = [this.mapDistribution(dataset)];
+        ds.distribution = [this.mapDistribution(organization, dataset)];
 
         return ds;
     }
 
-    private mapDistribution(dataset: OpenDataDkDataset) {
+    private mapDistribution(organization: Organization, dataset: OpenDataDkDataset) {
         const distribution = new Distribution();
         distribution["@type"] = "dcat:Distribution";
         distribution.mediaType = "application/json";
         distribution.format = "JSON";
 
-        distribution.accessURL = this.generateAccessUrl(dataset);
+        distribution.accessURL = this.generateUrl(organization, dataset);
         distribution.title = dataset.resourceTitle;
         return distribution;
     }
 
-    private generateIdentifier(dataset: OpenDataDkDataset): string {
-        return `test${dataset.id}`;
-    }
-
-    private generateAccessUrl(dataset: OpenDataDkDataset): string {
-        return `https://test.dk/blabla${dataset.id}`;
+    private generateUrl(organization: Organization, dataset: OpenDataDkDataset): string {
+        const controllerUrl = Reflect.getMetadata(
+            PATH_METADATA,
+            OpenDataDkSharingController
+        );
+        const organizationId = organization.id;
+        return `${this.BACKEND_BASE_URL}/api/v1/${controllerUrl}/${organizationId}/data/${dataset.id}`;
     }
 }
