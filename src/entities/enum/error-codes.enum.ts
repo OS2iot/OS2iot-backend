@@ -29,4 +29,5 @@ export enum ErrorCodes {
     IsUsed = "MESSAGE.IS-USED",
     CannotModifyOnKombitUser = "MESSAGE.CANNOT-MODIFY-ON-KOMBIT-USER",
     SigfoxError = "MESSAGE.SIGFOX-ERROR",
+    NoData = "NoData"
 }

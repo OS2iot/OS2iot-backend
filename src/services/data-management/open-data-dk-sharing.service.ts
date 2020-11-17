@@ -16,6 +16,7 @@ import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-devic
 import { IoTDevice } from "@entities/iot-device.entity";
 import configuration from "@config/configuration";
 import { OpenDataDkSharingController } from "@admin-controller/open-data-dk-sharing.controller";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class OpenDataDkSharingService {
@@ -38,6 +39,10 @@ export class OpenDataDkSharingService {
             .innerJoinAndSelect("devices.latestReceivedMessage", "msg")
             .where("dataset.id = :id", { id: dataset.id })
             .getOne();
+
+        if (!rawData) {
+            return { error: ErrorCodes.NoData };
+        }
 
         return this.decodeData(rawData);
     }
@@ -73,9 +78,9 @@ export class OpenDataDkSharingService {
                 device,
                 device.latestReceivedMessage.rawData
             );
-            results.push(decoded);
+            results.push(JSON.parse(decoded));
         } else {
-            results.push(device.latestReceivedMessage);
+            results.push(device.latestReceivedMessage.rawData);
         }
     }
 
