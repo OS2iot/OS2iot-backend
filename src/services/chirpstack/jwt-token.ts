@@ -7,8 +7,8 @@ import * as nJwt from "njwt";
 export class JwtToken {
     static setupToken(): string {
         const claims = {
-            iss: "chirpstack-application-server", // issuer of the claim
-            aud: "chirpstack-application-server", // audience for which the claim is intended
+            iss: "as", // issuer of the claim
+            aud: "as", // audience for which the claim is intended
             iat: Math.floor(new Date().valueOf() / 1000 - 10), // unix time from which the token is valid
             nbf: Math.floor(new Date().valueOf() / 1000 - 10), // unix time from which the token is valid
             exp: Math.floor(new Date().valueOf() / 1000) + 60 * 60 * 24 * 14, // unix time when the token expires
