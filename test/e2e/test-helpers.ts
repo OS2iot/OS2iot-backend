@@ -31,6 +31,7 @@ import { DeviceModel } from "@entities/device-model.entity";
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
         `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
+            `DELETE FROM "open_data_dk_dataset"; \n` +
             `DELETE FROM "received_message"; \n` +
             `DELETE FROM "device_model"; \n` +
             `DELETE FROM "iot_device"; \n` +

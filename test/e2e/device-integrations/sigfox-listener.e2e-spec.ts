@@ -40,10 +40,7 @@ describe("SigFoxListenerController (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
-                KafkaModule.register({
-                    clientId: "os2iot-client-e2e",
-                    brokers: ["host.docker.internal:9093"],
-                }),
+                KafkaModule,
                 SigFoxListenerModule,
             ],
         }).compile();

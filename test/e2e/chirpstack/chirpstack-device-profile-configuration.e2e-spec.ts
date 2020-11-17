@@ -119,6 +119,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
+                    internalOrganizationId: expect.any(Number),
                 });
 
                 expect(response.body.result).toContainEqual({
@@ -129,6 +130,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     organizationID: expect.any(String),
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
+                    internalOrganizationId: expect.any(Number),
                 });
             });
     });

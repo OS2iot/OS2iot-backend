@@ -45,10 +45,7 @@ describe("End-to-End (e2e)", () => {
                     logging: false,
                     autoLoadEntities: true,
                 }),
-                KafkaModule.register({
-                    clientId: "os2iot-client-e2e",
-                    brokers: ["host.docker.internal:9093"],
-                }),
+                KafkaModule,
                 ReceiveDataModule,
                 PayloadDecoderKafkaModule,
                 DataTargetKafkaModule,

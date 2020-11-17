@@ -2,7 +2,7 @@ import { Global, Module } from "@nestjs/common";
 
 import { KafkaController } from "@device-data-controller/kafka.controller";
 import { KafkaService } from "@services/kafka/kafka.service";
-import { HealthCheckModule } from "src/health-check/health-check.module";
+import { HealthCheckModule } from "@modules/health-check.module";
 
 @Global()
 @Module({
