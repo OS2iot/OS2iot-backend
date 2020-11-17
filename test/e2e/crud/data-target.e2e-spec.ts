@@ -334,6 +334,86 @@ describe("DataTargetController (e2e)", () => {
             });
     });
 
+    it("(PUT) /data-target/:id - change existing - add OpenDataDK", async () => {
+        const applications = await createApplications();
+        const applicationId = applications[0].id;
+
+        const dataTarget = await createDataTarget(applications);
+        const dataTargetId = dataTarget.id;
+        const dataTargetBody: CreateDataTargetDto = {
+            name: "et navn",
+            applicationId: applicationId,
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+            authorizationHeader: null,
+            openDataDkDataset: {
+                name: "E2E",
+                description: "e2e",
+                keywords: ["etKeyWord"],
+                license: "http://portal.opendata.dk/dataset/open-data-dk-licens",
+                authorName: "E2E",
+                authorEmail: "e2e@test.dk",
+                resourceTitle: "Rumsensor2",
+            },
+        };
+
+        return await request(app.getHttpServer())
+            .put(`/data-target/${dataTargetId}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dataTargetBody)
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "et navn",
+                    openDataDkDataset: {
+                        name: "E2E",
+                    },
+                });
+            });
+    });
+
+    it("(POST) /data-target/:id - change existing - add OpenDataDK", async () => {
+        const applications = await createApplications();
+        const applicationId = applications[0].id;
+
+        // const dataTarget = await createDataTarget(applications);
+        // const dataTargetId = dataTarget.id;
+        const dataTargetBody: CreateDataTargetDto = {
+            name: "et navn",
+            applicationId: applicationId,
+            type: DataTargetType.HttpPush,
+            url: "http://example.com/test-endepunkt",
+            timeout: 3000,
+            authorizationHeader: null,
+            openDataDkDataset: {
+                name: "E2E",
+                description: "e2e",
+                keywords: ["etKeyWord"],
+                license: "http://portal.opendata.dk/dataset/open-data-dk-licens",
+                authorName: "E2E",
+                authorEmail: "e2e@test.dk",
+                resourceTitle: "Rumsensor2",
+            },
+        };
+
+        return await request(app.getHttpServer())
+            .post(`/data-target/`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dataTargetBody)
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    name: "et navn",
+                    openDataDkDataset: {
+                        name: "E2E",
+                    },
+                });
+            });
+    });
+
     it("(DELETE) /data-target/:id - not found", async () => {
         const applications = await createApplications();
         const dataTarget = await createDataTarget(applications);

@@ -40,5 +40,5 @@ export class CreateDataTargetDto {
 
     @ApiPropertyOptional({ required: false })
     @IsOptional()
-    openDataDkDataset: CreateOpenDataDkDatasetDto;
+    openDataDkDataset?: CreateOpenDataDkDatasetDto;
 }
