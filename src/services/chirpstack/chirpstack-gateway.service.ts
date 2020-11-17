@@ -73,16 +73,14 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         await Promise.all(
             results.result.map(async x => {
                 const gw = await this.getOne(x.id);
+                x.internalOrganizationId = gw.gateway.internalOrganizationId;
                 x.tags = gw.gateway.tags;
-                x.tags[this.ORG_ID_KEY] =
-                    gw.gateway.tags[this.ORG_ID_KEY] != null
-                        ? +gw.gateway.tags[this.ORG_ID_KEY]
-                        : null;
+                x.tags[this.ORG_ID_KEY] = undefined;
             })
         );
         if (organizationId !== undefined) {
             const filteredResults = _.filter(results.result, x => {
-                return x.tags[this.ORG_ID_KEY] === `${organizationId}`;
+                return x.internalOrganizationId === +organizationId;
             });
             return {
                 result: filteredResults,
@@ -101,7 +99,8 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             const result: SingleGatewayResponseDto = await this.get(
                 `gateways/${gatewayId}`
             );
-            result.gateway.tags[this.ORG_ID_KEY] = +result.gateway.tags[this.ORG_ID_KEY];
+            result.gateway.internalOrganizationId = +result.gateway.tags[this.ORG_ID_KEY];
+            result.gateway.tags[this.ORG_ID_KEY] = undefined;
 
             result.stats = (await this.getGatewayStats(gatewayId)).result;
 

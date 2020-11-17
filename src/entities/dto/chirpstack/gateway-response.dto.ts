@@ -15,4 +15,6 @@ export class GatewayResponseDto {
     updatedAt?: string;
     firstSeenAt?: string;
     lastSeenAt?: string;
+
+    internalOrganizationId: number;
 }
