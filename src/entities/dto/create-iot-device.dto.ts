@@ -7,6 +7,7 @@ import {
     MaxLength,
     Min,
     MinLength,
+    ValidateIf,
     ValidateNested,
 } from "class-validator";
 
@@ -60,18 +61,18 @@ export class CreateIoTDeviceDto {
     @IsOptional()
     metadata?: JSON;
 
-    @ApiProperty({required: false})
+    @ApiProperty({ required: false })
     @IsOptional()
     deviceModelId?: number;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf(o => o.type == IoTDeviceType.LoRaWAN)
     @ValidateNested({ each: true })
     @Type(() => CreateLoRaWANSettingsDto)
     lorawanSettings?: CreateLoRaWANSettingsDto;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf(o => o.type == IoTDeviceType.SigFox)
     @ValidateNested({ each: true })
     @Type(() => CreateSigFoxSettingsDto)
     sigfoxSettings?: CreateSigFoxSettingsDto;

@@ -1,5 +1,12 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import {
+    IsNumber,
+    IsOptional,
+    IsString,
+    Matches,
+    MaxLength,
+    ValidateIf,
+} from "class-validator";
 
 export class CreateSigFoxSettingsDto {
     @ApiProperty({ required: true })
@@ -9,7 +16,7 @@ export class CreateSigFoxSettingsDto {
     deviceId: string;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf(o => !o.connectToExistingDeviceInBackend)
     @IsString()
     @MaxLength(24)
     @Matches(/[0-9A-Fa-f]{1,24}/)
@@ -18,7 +25,8 @@ export class CreateSigFoxSettingsDto {
     @ApiHideProperty()
     deviceTypeName?: string;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ required: true })
+    @IsNumber()
     groupId: number;
 
     @ApiHideProperty()
@@ -28,13 +36,13 @@ export class CreateSigFoxSettingsDto {
     connectToExistingDeviceInBackend?: boolean;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf(o => !o.connectToExistingDeviceInBackend)
     @IsString()
     @Matches(/[0-9A-Fa-f]+/)
     pac?: string;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf(o => !o.connectToExistingDeviceInBackend && !o?.prototype)
     @IsString()
     endProductCertificate?: string;
 
