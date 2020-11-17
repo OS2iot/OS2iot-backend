@@ -95,7 +95,7 @@ export class DataTargetService {
         );
 
         if (createDataTargetDto.openDataDkDataset) {
-            dataTarget.openDataDkDataset = this.mapOpenDataDk(createDataTargetDto);
+            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(createDataTargetDto);
         }
 
         // Use the generic manager since we cannot use a general repository.
@@ -113,6 +113,10 @@ export class DataTargetService {
             updateDataTargetDto,
             existing
         );
+
+        if (updateDataTargetDto.openDataDkDataset) {
+            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(updateDataTargetDto);
+        }
 
         const res = this.dataTargetRepository.save(mappedDataTarget);
 
