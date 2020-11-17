@@ -17,8 +17,10 @@ export class OpenDataDkSharingController {
     async getCatalog(
         @Param("organizationId", new ParseIntPipe()) orgId: number
     ): Promise<DCATRootObject> {
-        const organization = await this.organizationService.findById(orgId);
-        if (!organization) {
+        let organization;
+        try {
+            organization = await this.organizationService.findById(orgId);
+        } catch (err) {
             throw new NotFoundException(
                 `Could not find an organization with the id: ${orgId}`
             );
@@ -32,8 +34,10 @@ export class OpenDataDkSharingController {
         @Param("organizationId", new ParseIntPipe()) orgId: number,
         @Param("shareId", new ParseIntPipe()) shareId: number
     ) {
-        const organization = await this.organizationService.findById(orgId);
-        if (!organization) {
+        let organization;
+        try {
+            organization = await this.organizationService.findById(orgId);
+        } catch (err) {
             throw new NotFoundException(
                 `Could not find an organization with the id: ${orgId}`
             );

@@ -27,6 +27,10 @@ import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
+import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { now } from "lodash";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -61,6 +65,28 @@ export function generateSigfoxDeviceFromData(
     sigfoxDevice.metadata = JSON.parse('""');
 
     return sigfoxDevice;
+}
+
+export async function generateSavedReceivedMessageAndMetadata(
+    iotDevice: IoTDevice,
+    payloadString = LORAWAN_PAYLOAD
+) {
+    const now = new Date();
+    const messageTime = now.valueOf() - 10;
+
+    const metadata = new ReceivedMessageMetadata();
+    metadata.sentTime = new Date(messageTime);
+    metadata.device = iotDevice;
+    const metadata2 = new ReceivedMessageMetadata();
+    metadata2.sentTime = new Date(now.valueOf() - 24 * 60 * 60);
+    metadata2.device = iotDevice;
+    await getManager().save([metadata, metadata2]);
+
+    const receivedMessage = new ReceivedMessage();
+    receivedMessage.device = iotDevice;
+    receivedMessage.rawData = JSON.parse(payloadString);
+    receivedMessage.sentTime = new Date(messageTime);
+    await getManager().save(receivedMessage);
 }
 
 export async function generateSavedSigfoxDeviceFromData(
@@ -338,6 +364,15 @@ export async function generateSavedDataTarget(
     return await getManager().save(generateDataTarget(application, url));
 }
 
+export async function generateSavedDataTargetWithOpenDataDk(
+    application: Application,
+    url?: string
+): Promise<HttpPushDataTarget> {
+    return await getManager().save(generateDataTargetWithOpenDataDk(application, url), {
+        reload: true,
+    });
+}
+
 export function generateDataTarget(
     application: Application,
     url?: string
@@ -348,6 +383,27 @@ export function generateDataTarget(
     dataTarget.application = application;
     dataTarget.timeout = 30000;
 
+    return dataTarget;
+}
+
+export function generateDataTargetWithOpenDataDk(
+    application: Application,
+    url?: string
+): HttpPushDataTarget {
+    const dataTarget = new HttpPushDataTarget();
+    dataTarget.name = "E2E Test Http Push Data Target";
+    dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
+    dataTarget.application = application;
+    dataTarget.timeout = 30000;
+    dataTarget.openDataDkDataset = new OpenDataDkDataset();
+    dataTarget.openDataDkDataset.name = "E2E";
+    dataTarget.openDataDkDataset.description = "e2e";
+    dataTarget.openDataDkDataset.keywords = ["etKeyWord"];
+    dataTarget.openDataDkDataset.license =
+        "http://portal.opendata.dk/dataset/open-data-dk-licens";
+    dataTarget.openDataDkDataset.authorName = "E2E";
+    dataTarget.openDataDkDataset.authorEmail = "e2e@test.dk";
+    dataTarget.openDataDkDataset.resourceTitle = "Rumsensor2";
     return dataTarget;
 }
 
@@ -639,6 +695,22 @@ export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDt
         unixTimestamp: 1596921546,
     };
 }
+
+export const LORAWAN_PAYLOAD = `{
+  "data": "AQEXAjEEAIsFCAcOPQ==",
+  "freq": 867100000,
+  "chan": 3,
+  "tmst": 71333956,
+  "utmms": 1597675976328,
+  "rfch": 0,
+  "stat": 1,
+  "rssi": -39,
+  "size": 26,
+  "modu": "LORA",
+  "datr": "SF12BW125",
+  "codr": "4/5",
+  "lsnr": 12
+}`;
 
 export const SIGFOX_PAYLOAD_2 = `{
   "time": 1600674364,
