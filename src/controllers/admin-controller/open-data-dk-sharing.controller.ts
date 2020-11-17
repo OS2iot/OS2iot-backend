@@ -27,7 +27,7 @@ export class OpenDataDkSharingController {
         return this.service.createDCAT(organization);
     }
 
-    @Get("data/:organizationId/:shareId")
+    @Get(":organizationId/data/:shareId")
     async getData(
         @Param("organizationId", new ParseIntPipe()) orgId: number,
         @Param("shareId", new ParseIntPipe()) shareId: number
