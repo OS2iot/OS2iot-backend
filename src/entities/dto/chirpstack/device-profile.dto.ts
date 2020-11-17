@@ -96,4 +96,7 @@ export class DeviceProfileDto {
 
     @ApiHideProperty()
     tags?: { [id: string]: string | number };
+
+    @ApiHideProperty()
+    internalOrganizationId?: number;
 }

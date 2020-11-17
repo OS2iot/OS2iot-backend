@@ -10,6 +10,8 @@ import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
+    private readonly ORG_ID_KEY = "internalOrganizationId";
+
     public async createDeviceProfile(
         dto: CreateDeviceProfileDto
     ): Promise<AxiosResponse> {
@@ -19,9 +21,11 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return result;
     }
 
-    private addOrganizationToTags(dto: CreateDeviceProfileDto): { [id: string]: string | number } {
+    private addOrganizationToTags(
+        dto: CreateDeviceProfileDto
+    ): { [id: string]: string | number } {
         let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
-        tags.organizationId = `${dto.internalOrganizationId}`;
+        tags[this.ORG_ID_KEY] = `${dto.internalOrganizationId}`;
         return tags;
     }
 
@@ -47,13 +51,12 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             offset
         );
 
-        // await Promise.all(
-        //     result.result.map(async x => {
-        //         const dp = await this.findOneDeviceProfileById(x.id);
-        //         x.tags = dp.deviceProfile.tags;
-        //         x.tags.organizationId = dp.deviceProfile.tags?.organizationId;
-        //     })
-        // );
+        await Promise.all(
+            result.result.map(async x => {
+                const dp = await this.findOneDeviceProfileById(x.id);
+                x.internalOrganizationId = +dp.deviceProfile.internalOrganizationId;
+            })
+        );
 
         return result;
     }
@@ -63,6 +66,11 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             "device-profiles",
             id
         );
+        result.deviceProfile.internalOrganizationId = +result.deviceProfile.tags[
+            this.ORG_ID_KEY
+        ];
+        result.deviceProfile.tags[this.ORG_ID_KEY] = undefined;
+
         return result;
     }
 
