@@ -230,7 +230,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
 
     async findOne(id: number): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         try {
-            return await this.repository.findOne(id, {
+            return await this.repository.findOneOrFail(id, {
                 relations: [
                     "iotDevices",
                     "payloadDecoder",
