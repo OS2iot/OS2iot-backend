@@ -12,12 +12,15 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 
 import {
+    clearDatabase,
     gatewayNamePrefix,
     generateSavedGlobalAdminUser,
+    generateSavedOrganization,
     generateValidJwtForUser,
     makeCreateGatewayDto,
 } from "../test-helpers";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import { Organization } from "@entities/organization.entity";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
@@ -61,6 +64,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
     });
 
     beforeEach(async () => {
+        await clearDatabase();
         // Delete all gateways created in E2E tests:
         const existing = await service.listAllPaginated(1000, 0);
         existing.result.forEach(async element => {
@@ -79,8 +83,8 @@ describe("ChirpstackGatewayController (e2e)", () => {
         return (await createGatewayReturnDto()).gateway.id;
     }
 
-    async function createGatewayReturnDto(): Promise<CreateGatewayDto> {
-        const dto = await makeCreateGatewayDto(chirpstackSetupNetworkServerService);
+    async function createGatewayReturnDto(org?: Organization): Promise<CreateGatewayDto> {
+        const dto = await makeCreateGatewayDto(chirpstackSetupNetworkServerService, org);
         await service.createNewGateway(dto);
         return dto;
     }
@@ -153,7 +157,8 @@ describe("ChirpstackGatewayController (e2e)", () => {
     });
 
     it("(PUT) Change gateway - OK", async () => {
-        const dto = await createGatewayReturnDto();
+        const org = await generateSavedOrganization();
+        const dto = await createGatewayReturnDto(org);
         const originalId = dto.gateway.id;
         dto.gateway.id = undefined;
         dto.organizationId = undefined;
@@ -177,6 +182,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
         expect(changedGateway?.gateway).toMatchObject({
             id: originalId,
             name: dto.gateway.name,
+            internalOrganizationId: org.id,
         });
     });
 

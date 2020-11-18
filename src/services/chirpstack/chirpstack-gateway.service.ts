@@ -148,11 +148,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     ): Promise<{ [id: string]: string | number }> {
         const existing = await this.getOne(gatewayId);
         const tags = dto.gateway.tags;
-        tags[this.ORG_ID_KEY] = +existing.gateway.tags[this.ORG_ID_KEY];
-        if (existing.gateway.tags[this.ORG_ID_KEY] != null) {
+        tags[this.ORG_ID_KEY] = `${existing.gateway.internalOrganizationId}`;
+        if (tags[this.ORG_ID_KEY] != null) {
             checkIfUserHasWriteAccessToOrganization(
                 req,
-                +existing.gateway.tags[this.ORG_ID_KEY]
+                +tags[this.ORG_ID_KEY]
             );
         }
         return tags;
