@@ -6,6 +6,7 @@ import {
     MaxLength,
     Min,
     MinLength,
+    ValidateNested,
 } from "class-validator";
 
 import { DataTargetType } from "@enum/data-target-type.enum";
@@ -39,6 +40,7 @@ export class CreateDataTargetDto {
     authorizationHeader: string;
 
     @ApiPropertyOptional({ required: false })
+    @ValidateNested({ each: true })
     @IsOptional()
     openDataDkDataset?: CreateOpenDataDkDatasetDto;
 }
