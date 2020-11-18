@@ -19,6 +19,7 @@ import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
+import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 
 @Injectable()
 export class DataTargetService {
@@ -95,7 +96,11 @@ export class DataTargetService {
         );
 
         if (createDataTargetDto.openDataDkDataset) {
-            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(createDataTargetDto);
+            dataTarget.openDataDkDataset = new OpenDataDkDataset();
+            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(
+                createDataTargetDto.openDataDkDataset,
+                dataTarget.openDataDkDataset
+            );
         } else {
             mappedDataTarget.openDataDkDataset = null;
         }
@@ -109,7 +114,9 @@ export class DataTargetService {
         id: number,
         updateDataTargetDto: UpdateDataTargetDto
     ): Promise<DataTarget> {
-        const existing = await this.dataTargetRepository.findOneOrFail(id);
+        const existing = await this.dataTargetRepository.findOneOrFail(id, {
+            relations: ["openDataDkDataset"],
+        });
 
         const mappedDataTarget = await this.mapDtoToDataTarget(
             updateDataTargetDto,
@@ -117,7 +124,13 @@ export class DataTargetService {
         );
 
         if (updateDataTargetDto.openDataDkDataset) {
-            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(updateDataTargetDto);
+            if (existing.openDataDkDataset == null) {
+                existing.openDataDkDataset = new OpenDataDkDataset();
+            }
+            mappedDataTarget.openDataDkDataset = this.mapOpenDataDk(
+                updateDataTargetDto.openDataDkDataset,
+                existing.openDataDkDataset
+            );
         } else {
             mappedDataTarget.openDataDkDataset = null;
         }
@@ -158,16 +171,18 @@ export class DataTargetService {
         return dataTarget;
     }
 
-    private mapOpenDataDk(dto: CreateDataTargetDto): OpenDataDkDataset {
-        const o = new OpenDataDkDataset();
-        o.name = dto.openDataDkDataset.name;
-        o.license = dto.openDataDkDataset.license;
-        o.authorName = dto.openDataDkDataset.authorName;
-        o.authorEmail = dto.openDataDkDataset.authorEmail;
+    private mapOpenDataDk(
+        dto: CreateOpenDataDkDatasetDto,
+        o: OpenDataDkDataset
+    ): OpenDataDkDataset {
+        o.name = dto.name;
+        o.license = dto.license;
+        o.authorName = dto.authorName;
+        o.authorEmail = dto.authorEmail;
 
-        o.description = dto.openDataDkDataset.description;
-        o.keywords = dto.openDataDkDataset.keywords;
-        o.resourceTitle = dto.openDataDkDataset.resourceTitle;
+        o.description = dto.description;
+        o.keywords = dto.keywords;
+        o.resourceTitle = dto.resourceTitle;
         return o;
     }
 
