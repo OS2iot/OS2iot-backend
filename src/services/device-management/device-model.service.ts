@@ -46,7 +46,7 @@ export class DeviceModelService {
     async getById(id: number): Promise<DeviceModel> {
         return this.repository.findOne(id, {
             loadRelationIds: {
-                relations: ["belongsTo"],
+                relations: ["belongsTo", "createdBy", "updatedBy"],
             },
         });
     }
@@ -54,35 +54,33 @@ export class DeviceModelService {
     async getByIdWithRelations(id: number): Promise<DeviceModel> {
         return this.repository.findOne(id, {
             relations: ["belongsTo"],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
     }
 
-    async create(dto: CreateDeviceModelDto): Promise<DeviceModel> {
+    async create(dto: CreateDeviceModelDto, userId: number): Promise<DeviceModel> {
         const deviceModel = new DeviceModel();
         deviceModel.belongsTo = await this.organizationService.findById(dto.belongsToId);
-        return this.update(deviceModel, dto);
+        deviceModel.createdBy = userId;
+        return this.update(deviceModel, dto, userId);
     }
 
     async update(
         deviceModel: DeviceModel,
-        dto: UpdateDeviceModelDto
+        dto: UpdateDeviceModelDto,
+        userId: number
     ): Promise<DeviceModel> {
         this.validateModel(dto.body);
 
         deviceModel.body = dto.body;
-
+        deviceModel.updatedBy = userId;
         return this.repository.save(deviceModel);
     }
 
     async delete(id: number): Promise<DeleteResult> {
         return this.repository.delete(id);
-    }
-
-    private async mapToModel(
-        deviceModel: DeviceModel,
-        dto: CreateDeviceModelDto
-    ): Promise<void> {
-        deviceModel.body = dto.body;
     }
 
     private validateModel(body: JSON): void {

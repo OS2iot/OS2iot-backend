@@ -87,7 +87,7 @@ export class DeviceModelController {
     ): Promise<DeviceModel> {
         checkIfUserHasWriteAccessToOrganization(req, dto.belongsToId);
 
-        const res = await this.service.create(dto);
+        const res = await this.service.create(dto, req.user.userId);
 
         return res;
     }
@@ -104,7 +104,7 @@ export class DeviceModelController {
         const deviceModel = await this.service.getByIdWithRelations(id);
         checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
 
-        return this.service.update(deviceModel, dto);
+        return this.service.update(deviceModel, dto, req.user.userId);
     }
 
     @Delete(":id")
