@@ -1,4 +1,10 @@
-import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+    CreateDateColumn,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from "typeorm";
 
 /**
  * This class contains all the values which are stored by default on all entities.
@@ -15,5 +21,11 @@ export abstract class DbBaseEntity {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    // TODO: Introduce createdBy and updatedBy after user access control system
+    @ManyToOne("User", { nullable: true })
+    @JoinColumn()
+    createdBy?: number;
+
+    @ManyToOne("User", { nullable: true })
+    @JoinColumn()
+    updatedBy?: number;
 }
