@@ -8,6 +8,7 @@ import {
     MinLength,
     ValidateNested,
 } from "class-validator";
+import { Type } from "class-transformer";
 
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { CreateOpenDataDkDatasetDto } from "./create-open-data-dk-dataset.dto";
@@ -41,6 +42,6 @@ export class CreateDataTargetDto {
 
     @ApiPropertyOptional({ required: false })
     @ValidateNested({ each: true })
-    @IsOptional()
+    @Type(() => CreateOpenDataDkDatasetDto)
     openDataDkDataset?: CreateOpenDataDkDatasetDto;
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDataURI, IsEmail, IsString, IsUrl } from "class-validator";
+import { IsArray, IsEmail, IsString, IsUrl } from "class-validator";
 
 export class CreateOpenDataDkDatasetDto {
     @ApiProperty({ required: true })
@@ -11,7 +11,7 @@ export class CreateOpenDataDkDatasetDto {
     description: string;
 
     @ApiProperty({ required: true })
-    @IsString()
+    @IsString({ each: true, always: true })
     keywords: string[];
 
     @ApiProperty({ required: true })
