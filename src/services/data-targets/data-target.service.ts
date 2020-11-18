@@ -26,8 +26,6 @@ export class DataTargetService {
     constructor(
         @InjectRepository(DataTarget)
         private dataTargetRepository: Repository<DataTarget>,
-        @InjectRepository(OpenDataDkDataset)
-        private openDataDkRepository: Repository<OpenDataDkDataset>,
         private applicationService: ApplicationService
     ) {}
 
@@ -77,6 +75,9 @@ export class DataTargetService {
     async findOne(id: number): Promise<DataTarget> {
         return await this.dataTargetRepository.findOneOrFail(id, {
             relations: ["application", "openDataDkDataset"],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
     }
 
@@ -86,7 +87,10 @@ export class DataTargetService {
         });
     }
 
-    async create(createDataTargetDto: CreateDataTargetDto): Promise<DataTarget> {
+    async create(
+        createDataTargetDto: CreateDataTargetDto,
+        userId: number
+    ): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
         const dataTarget = this.createDataTargetByDto(childType);
 
@@ -105,6 +109,8 @@ export class DataTargetService {
             mappedDataTarget.openDataDkDataset = null;
         }
 
+        mappedDataTarget.createdBy = userId;
+        mappedDataTarget.updatedBy = userId;
         // Use the generic manager since we cannot use a general repository.
         const entityManager = getManager();
         return await entityManager.save(mappedDataTarget, {});
@@ -112,7 +118,8 @@ export class DataTargetService {
 
     async update(
         id: number,
-        updateDataTargetDto: UpdateDataTargetDto
+        updateDataTargetDto: UpdateDataTargetDto,
+        userId: number
     ): Promise<DataTarget> {
         const existing = await this.dataTargetRepository.findOneOrFail(id, {
             relations: ["openDataDkDataset"],
@@ -134,7 +141,7 @@ export class DataTargetService {
         } else {
             mappedDataTarget.openDataDkDataset = null;
         }
-
+        mappedDataTarget.updatedBy = userId;
         const res = this.dataTargetRepository.save(mappedDataTarget);
 
         return res;

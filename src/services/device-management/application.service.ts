@@ -114,6 +114,9 @@ export class ApplicationService {
                 "iotDevices.receivedMessagesMetadata",
                 "belongsTo",
             ],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
         if (app.iotDevices.some(x => x.type == IoTDeviceType.LoRaWAN)) {
             await this.matchWithChirpstackStatusData(app);
@@ -148,7 +151,10 @@ export class ApplicationService {
         return await this.applicationRepository.find({ id: In(ids) });
     }
 
-    async create(createApplicationDto: CreateApplicationDto): Promise<Application> {
+    async create(
+        createApplicationDto: CreateApplicationDto,
+        userId: number
+    ): Promise<Application> {
         const application = new Application();
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
@@ -157,7 +163,8 @@ export class ApplicationService {
         );
         mappedApplication.iotDevices = [];
         mappedApplication.dataTargets = [];
-
+        mappedApplication.createdBy = userId;
+        mappedApplication.updatedBy = userId;
         const app = await this.applicationRepository.save(mappedApplication);
 
         await this.permissionService.autoAddPermissionsToApplication(app);
@@ -167,7 +174,8 @@ export class ApplicationService {
 
     async update(
         id: number,
-        updateApplicationDto: UpdateApplicationDto
+        updateApplicationDto: UpdateApplicationDto,
+        userId: number
     ): Promise<Application> {
         const existingApplication = await this.applicationRepository.findOneOrFail(id, {
             relations: ["iotDevices", "dataTargets"],
@@ -178,6 +186,7 @@ export class ApplicationService {
             existingApplication
         );
 
+        mappedApplication.updatedBy = userId;
         return this.applicationRepository.save(mappedApplication);
     }
 

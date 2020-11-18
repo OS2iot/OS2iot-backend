@@ -94,7 +94,7 @@ export class DataTargetController {
         @Body() createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {
         checkIfUserHasWriteAccessToApplication(req, createDataTargetDto.applicationId);
-        return await this.dataTargetService.create(createDataTargetDto);
+        return await this.dataTargetService.create(createDataTargetDto, req.user.userId);
     }
 
     @Put(":id")
@@ -112,7 +112,11 @@ export class DataTargetController {
             checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
         }
 
-        const dataTarget = await this.dataTargetService.update(id, updateDto);
+        const dataTarget = await this.dataTargetService.update(
+            id,
+            updateDto,
+            req.user.userId
+        );
         return dataTarget;
     }
 

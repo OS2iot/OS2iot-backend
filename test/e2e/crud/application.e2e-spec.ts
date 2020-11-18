@@ -31,11 +31,13 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { WritePermission } from "@entities/write-permission.entity";
+import { User } from "@entities/user.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<Application>;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let iotDeviceService: IoTDeviceService;
     let deviceProfileService: DeviceProfileService;
     let serviceProfileService: ServiceProfileService;
@@ -82,9 +84,9 @@ describe("ApplicationController (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {

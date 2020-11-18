@@ -165,7 +165,10 @@ export class ApplicationController {
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
-        const application = this.applicationService.create(createApplicationDto);
+        const application = this.applicationService.create(
+            createApplicationDto,
+            req.user.userId
+        );
         return application;
     }
 
@@ -194,7 +197,8 @@ export class ApplicationController {
 
         const application = await this.applicationService.update(
             id,
-            updateApplicationDto
+            updateApplicationDto,
+            req.user.userId
         );
 
         return application;
