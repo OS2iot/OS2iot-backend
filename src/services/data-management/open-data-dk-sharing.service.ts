@@ -141,8 +141,8 @@ export class OpenDataDkSharingService {
         ds.license = dataset.license;
         ds.landingPage = undefined;
         ds.title = dataset.name;
-        ds.description = dataset.description;
-        ds.keyword = dataset.keywords;
+        ds.description = dataset.description != null ? dataset.description : undefined;
+        ds.keyword = dataset.keywords != null ? dataset.keywords : undefined;
         ds.issued = dataset.createdAt;
         ds.modified = dataset.updatedAt;
         ds.publisher = {
@@ -165,7 +165,8 @@ export class OpenDataDkSharingService {
         distribution.format = "JSON";
 
         distribution.accessURL = this.generateUrl(organization, dataset);
-        distribution.title = dataset.resourceTitle;
+        distribution.title =
+            dataset.resourceTitle != null ? dataset.resourceTitle : undefined;
         return distribution;
     }
 

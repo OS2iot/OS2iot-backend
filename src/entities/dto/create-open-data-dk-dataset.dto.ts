@@ -1,18 +1,22 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsEmail, IsString, IsUrl } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsEmail, IsOptional, IsString, IsUrl, Length } from "class-validator";
 
 export class CreateOpenDataDkDatasetDto {
     @ApiProperty({ required: true })
     @IsString()
+    @Length(1, 100)
     name: string;
 
-    @ApiProperty({ required: true })
+    @ApiPropertyOptional({ required: false })
+    @IsOptional()
     @IsString()
-    description: string;
+    @Length(1, 1024)
+    description?: string;
 
-    @ApiProperty({ required: true })
+    @ApiPropertyOptional({ required: false })
+    @IsOptional()
     @IsString({ each: true, always: true })
-    keywords: string[];
+    keywords?: string[];
 
     @ApiProperty({ required: true })
     @IsString()
@@ -21,6 +25,7 @@ export class CreateOpenDataDkDatasetDto {
 
     @ApiProperty({ required: true })
     @IsString()
+    @Length(5, 100)
     authorName: string;
 
     @ApiProperty({ required: true })
@@ -28,7 +33,9 @@ export class CreateOpenDataDkDatasetDto {
     @IsEmail()
     authorEmail: string;
 
-    @ApiProperty({ required: true })
+    @ApiPropertyOptional({ required: false })
+    @IsOptional()
     @IsString()
-    resourceTitle: string;
+    @Length(5, 100)
+    resourceTitle?: string;
 }

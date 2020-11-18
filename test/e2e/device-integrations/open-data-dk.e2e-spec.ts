@@ -117,6 +117,61 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
+    
+    it("(GET) ​​/open-data-dk-sharing​/{organizationId} - Optional values are null", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        await generateSavedDataTargetWithOpenDataDk(application);
+
+        // Act
+        return await request(app.getHttpServer())
+            .get(`/open-data-dk-sharing/${org.id}`)
+            .send()
+            // Assert
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    "@context":
+                        "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
+                    "@type": "dcat:Catalog",
+                    conformsTo: "https://project-open-data.cio.gov/v1.1/schema",
+                    describedBy:
+                        "https://project-open-data.cio.gov/v1.1/schema/catalog.json",
+                    dataset: [
+                        {
+                            "@type": "dcat:Dataset",
+                            accessLevel: "public",
+                            identifier: expect.any(String),
+                            license:
+                                "http://portal.opendata.dk/dataset/open-data-dk-licens",
+                            title: "E2E",
+                            // description: "e2e",
+                            // keyword: ["etKeyWord"],
+                            issued: expect.any(String),
+                            modified: expect.any(String),
+                            publisher: { name: "E2E Test Organization" },
+                            contactPoint: {
+                                "@type": "vcard:Contact",
+                                fn: "E2E",
+                                hasEmail: "mailto:e2e@test.dk",
+                            },
+                            distribution: [
+                                {
+                                    "@type": "dcat:Distribution",
+                                    mediaType: "application/json",
+                                    format: "JSON",
+                                    accessURL: expect.any(String),
+                                    // title: "Rumsensor2",
+                                },
+                            ],
+                        },
+                    ],
+                });
+            });
+    });
+
     it("(GET) ​​/open-data-dk-sharing​/{organizationId} - Wrong org id", async () => {
         // Arrange
         const org = await generateSavedOrganization();

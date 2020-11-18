@@ -366,11 +366,15 @@ export async function generateSavedDataTarget(
 
 export async function generateSavedDataTargetWithOpenDataDk(
     application: Application,
-    url?: string
+    url?: string,
+    minimal = false
 ): Promise<HttpPushDataTarget> {
-    return await getManager().save(generateDataTargetWithOpenDataDk(application, url), {
-        reload: true,
-    });
+    return await getManager().save(
+        generateDataTargetWithOpenDataDk(application, url, minimal),
+        {
+            reload: true,
+        }
+    );
 }
 
 export function generateDataTarget(
@@ -388,7 +392,8 @@ export function generateDataTarget(
 
 export function generateDataTargetWithOpenDataDk(
     application: Application,
-    url?: string
+    url?: string,
+    minimal?: boolean
 ): HttpPushDataTarget {
     const dataTarget = new HttpPushDataTarget();
     dataTarget.name = "E2E Test Http Push Data Target";
@@ -397,13 +402,13 @@ export function generateDataTargetWithOpenDataDk(
     dataTarget.timeout = 30000;
     dataTarget.openDataDkDataset = new OpenDataDkDataset();
     dataTarget.openDataDkDataset.name = "E2E";
-    dataTarget.openDataDkDataset.description = "e2e";
-    dataTarget.openDataDkDataset.keywords = ["etKeyWord"];
+    dataTarget.openDataDkDataset.description = minimal ? null : "e2e";
+    dataTarget.openDataDkDataset.keywords = minimal ? null : ["etKeyWord"];
     dataTarget.openDataDkDataset.license =
         "http://portal.opendata.dk/dataset/open-data-dk-licens";
     dataTarget.openDataDkDataset.authorName = "E2E";
     dataTarget.openDataDkDataset.authorEmail = "e2e@test.dk";
-    dataTarget.openDataDkDataset.resourceTitle = "Rumsensor2";
+    dataTarget.openDataDkDataset.resourceTitle = minimal ? null : "Rumsensor2";
     return dataTarget;
 }
 
@@ -784,7 +789,8 @@ export function randomMacAddress(): string {
 }
 
 export async function makeCreateGatewayDto(
-    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
+    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService,
+    org?: Organization
 ): Promise<CreateGatewayDto> {
     const mac = randomMacAddress();
     const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
@@ -803,7 +809,7 @@ export async function makeCreateGatewayDto(
             organizationID: "1",
             tagsString: '{ "asdf": "abcd" }',
         },
-        organizationId: 1,
+        organizationId: org?.id != null ? org?.id : 1,
     };
     return request;
 }

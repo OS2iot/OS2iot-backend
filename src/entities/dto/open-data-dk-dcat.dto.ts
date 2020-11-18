@@ -14,7 +14,7 @@ export class ContactPoint {
 export class Distribution {
     @Expose({ name: "@type" })
     "@type": string;
-    title: string;
+    title?: string;
     format: string;
     mediaType: string;
     accessURL: string;

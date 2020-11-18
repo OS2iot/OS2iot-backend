@@ -154,13 +154,17 @@ export class DataTargetService {
         return dataTarget;
     }
 
-    private mapOpenDataDk(createDataTargetDto: CreateDataTargetDto): OpenDataDkDataset {
-        const openDataDkDataset = this.openDataDkRepository.create(
-            createDataTargetDto.openDataDkDataset
-        );
-        Logger.debug(JSON.stringify(createDataTargetDto.openDataDkDataset));
+    private mapOpenDataDk(dto: CreateDataTargetDto): OpenDataDkDataset {
+        const o = new OpenDataDkDataset();
+        o.name = dto.openDataDkDataset.name;
+        o.license = dto.openDataDkDataset.license;
+        o.authorName = dto.openDataDkDataset.authorName;
+        o.authorEmail = dto.openDataDkDataset.authorEmail;
 
-        return openDataDkDataset;
+        o.description = dto.openDataDkDataset.description;
+        o.keywords = dto.openDataDkDataset.keywords;
+        o.resourceTitle = dto.openDataDkDataset.resourceTitle;
+        return o;
     }
 
     private setAuthorizationHeader(
