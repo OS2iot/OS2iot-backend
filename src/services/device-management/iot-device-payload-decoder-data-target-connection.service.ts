@@ -237,6 +237,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
                     "dataTarget",
                     "iotDevices.application",
                 ],
+                loadRelationIds: {
+                    relations: ["createdBy", "updatedBy"],
+                },
             });
         } catch (err) {
             throw new NotFoundException(
@@ -246,18 +249,21 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     }
 
     async create(
-        createConnectionDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
+        createConnectionDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto,
+        userId: number
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         const connection = new IoTDevicePayloadDecoderDataTargetConnection();
 
         const mapped = await this.mapDtoToConnection(connection, createConnectionDto);
-
+        mapped.createdBy = userId;
+        mapped.updatedBy = userId;
         return await this.repository.save(mapped);
     }
 
     async update(
         id: number,
-        updateConnectionDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto
+        updateConnectionDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto,
+        userId: number
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         let connection;
         try {
@@ -269,7 +275,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         }
 
         const mapped = await this.mapDtoToConnection(connection, updateConnectionDto);
-
+        mapped.updatedBy = userId;
         return await this.repository.save(mapped);
     }
 

@@ -153,7 +153,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         createDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         await this.checkUserHasWriteAccessToAllIotDevices(createDto.iotDeviceIds, req);
-        return await this.service.create(createDto);
+        return await this.service.create(createDto, req.user.userId);
     }
 
     private async checkUserHasWriteAccessToAllIotDevices(
@@ -190,7 +190,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         if (updateDto.iotDeviceIds != oldIds) {
             await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
         }
-        return await this.service.update(id, updateDto);
+        return await this.service.update(id, updateDto, req.user.userId);
     }
 
     @Delete(":id")

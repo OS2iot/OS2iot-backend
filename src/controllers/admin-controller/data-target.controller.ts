@@ -59,6 +59,10 @@ export class DataTargetController {
         if (req.user.permissions.isGlobalAdmin) {
             return await this.dataTargetService.findAndCountAllWithPagination(query);
         } else {
+            if (query.applicationId) {
+                query.applicationId = +query.applicationId;
+            }
+
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
             if (query.applicationId && !allowed.some(x => x === query.applicationId)) {
                 throw new UnauthorizedException();
