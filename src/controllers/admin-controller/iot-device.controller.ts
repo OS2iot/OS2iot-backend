@@ -132,7 +132,7 @@ export class IoTDeviceController {
     ): Promise<IoTDevice> {
         checkIfUserHasWriteAccessToApplication(req, createDto.applicationId);
 
-        const device = this.iotDeviceService.create(createDto);
+        const device = this.iotDeviceService.create(createDto, req.user.userId);
         return device;
     }
 
@@ -174,7 +174,11 @@ export class IoTDeviceController {
             checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
         }
 
-        const application = await this.iotDeviceService.update(id, updateDto);
+        const application = await this.iotDeviceService.update(
+            id,
+            updateDto,
+            req.user.userId
+        );
 
         return application;
     }

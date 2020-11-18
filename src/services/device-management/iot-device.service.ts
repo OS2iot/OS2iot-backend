@@ -118,7 +118,7 @@ export class IoTDeviceService {
             sigfoxDevice
         );
         if (!thisDevice) {
-            throw new NotFoundException(ErrorCodes.SigfoxError)
+            throw new NotFoundException(ErrorCodes.SigfoxError);
         }
         sigfoxDevice.sigfoxSettings = await this.mapSigFoxBackendDataToDto(
             thisDevice,
@@ -165,6 +165,7 @@ export class IoTDeviceService {
     private async queryDatabaseForIoTDevice(id: number) {
         return await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
+            .loadAllRelationIds({ relations: ["createdBy", "updatedBy"] })
             .where("iot_device.id = :id", { id: id })
             .innerJoinAndSelect(
                 "iot_device.application",
@@ -258,7 +259,10 @@ export class IoTDeviceService {
         });
     }
 
-    async create(createIoTDeviceDto: CreateIoTDeviceDto): Promise<IoTDevice> {
+    async create(
+        createIoTDeviceDto: CreateIoTDeviceDto,
+        userId: number
+    ): Promise<IoTDevice> {
         const childType = iotDeviceTypeMap[createIoTDeviceDto.type];
         const iotDevice = new childType();
 
@@ -267,6 +271,9 @@ export class IoTDeviceService {
             iotDevice,
             false
         );
+
+        mappedIotDevice.createdBy = userId;
+        mappedIotDevice.updatedBy = userId;
 
         const entityManager = getManager();
         return entityManager.save(mappedIotDevice);
@@ -303,7 +310,11 @@ export class IoTDeviceService {
         };
     }
 
-    async update(id: number, updateDto: UpdateIoTDeviceDto): Promise<IoTDevice> {
+    async update(
+        id: number,
+        updateDto: UpdateIoTDeviceDto,
+        userId: number
+    ): Promise<IoTDevice> {
         const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(id);
 
         const mappedIoTDevice = await this.mapDtoToIoTDevice(
@@ -312,6 +323,7 @@ export class IoTDeviceService {
             true
         );
 
+        mappedIoTDevice.updatedBy = userId;
         const res = this.iotDeviceRepository.save(mappedIoTDevice);
 
         return res;
