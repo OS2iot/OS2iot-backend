@@ -11,7 +11,7 @@ import {
 import { Type } from "class-transformer";
 
 import { DataTargetType } from "@enum/data-target-type.enum";
-import { CreateOpenDataDkDatasetDto } from "./create-open-data-dk-dataset.dto";
+import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
@@ -41,6 +41,7 @@ export class CreateDataTargetDto {
     authorizationHeader: string;
 
     @ApiPropertyOptional({ required: false })
+    @IsOptional()
     @ValidateNested({ each: true })
     @Type(() => CreateOpenDataDkDatasetDto)
     openDataDkDataset?: CreateOpenDataDkDatasetDto;
