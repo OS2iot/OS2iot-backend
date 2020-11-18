@@ -1,14 +1,14 @@
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
-
+import * as xml2js from "xml2js";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-
 import { UserService } from "./user.service";
 import { Profile } from "passport-saml";
 import { JwtResponseDto } from "@dto/jwt-response.dto";
+import { XMLObject, XMLOutput } from "@dto/user-management/xml-object";
 
 @Injectable()
 export class AuthService {
@@ -37,7 +37,72 @@ export class AuthService {
         return null;
     }
 
+    private async getPrivilegesIntermediate(profile: Profile): Promise<string> {
+        const xml = profile.getAssertionXml();
+        const parser = this.getXmlParser();
+
+        return await parser
+            .parseStringPromise(xml)
+            .then((doc: XMLOutput) => {
+                const assertion = doc["Assertion"];
+                const privilegesNode = assertion["AttributeStatement"][0][
+                    "Attribute"
+                ].find((x: XMLOutput) => {
+                    return (
+                        x["$"]["Name"] == "dk:gov:saml:attribute:Privileges_intermediate"
+                    );
+                });
+                const base64Xml = privilegesNode["AttributeValue"][0]["_"];
+
+                return base64Xml;
+            })
+            .catch((err: any) => {
+                this.logger.error("Could not load attribute in SAML response");
+                return null;
+            });
+    }
+
+    private async isAllowed(privilegesBase64: string): Promise<boolean> {
+        const decodedXml = Buffer.from(privilegesBase64, "base64").toString("binary");
+
+        const parser = this.getXmlParser();
+
+        return await parser
+            .parseStringPromise(decodedXml)
+            .then((doc: XMLOutput) => {
+                return doc["PrivilegeList"][
+                    "PrivilegeGroup"
+                ].some((privilegeGroups: XMLOutput) =>
+                    privilegeGroups["Privilege"].some(
+                        (privileges: XMLOutput) =>
+                            privileges["_"].indexOf(
+                                "http://os2iot.dk/roles/usersystemrole/adgang/"
+                            ) > -1
+                    )
+                );
+            })
+            .catch((err: any) => {
+                this.logger.error("Could not find privileges in result");
+                return false;
+            });
+    }
+
+    private getXmlParser() {
+        const parserConfig = {
+            explicitRoot: true,
+            explicitCharkey: true,
+            tagNameProcessors: [xml2js.processors.stripPrefix],
+        };
+        const parser = new xml2js.Parser(parserConfig);
+        return parser;
+    }
+
     async validateKombitUser(profile: Profile): Promise<UserResponseDto> {
+        const privilegesBase64 = await this.getPrivilegesIntermediate(profile);
+        if (!privilegesBase64 || !this.isAllowed(privilegesBase64)) {
+            // User doesn't have brugersystemrolle ...
+            throw new UnauthorizedException(ErrorCodes.MissingRole);
+        }
         // TODO: Check if they have attribute to allow them into OS2IOT
         let user = await this.usersService.findOneByNameId(profile.nameID);
         if (user) {

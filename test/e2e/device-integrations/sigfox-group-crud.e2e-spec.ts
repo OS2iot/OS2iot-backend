@@ -21,6 +21,7 @@ import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.mod
 import { Organization } from "@entities/organization.entity";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
+import { User } from "@entities/user.entity";
 
 describe("SigfoxGroupController (e2e)", () => {
     let app: INestApplication;

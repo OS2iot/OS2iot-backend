@@ -30,4 +30,5 @@ export enum ErrorCodes {
     CannotModifyOnKombitUser = "MESSAGE.CANNOT-MODIFY-ON-KOMBIT-USER",
     SigfoxError = "MESSAGE.SIGFOX-ERROR",
     NoData = "NoData",
+    MissingRole = "MissingRole",
 }
