@@ -160,7 +160,6 @@ export class DataTargetService {
     ): Promise<DataTarget> {
         dataTarget.name = dataTargetDto.name;
         if (dataTargetDto.applicationId != null) {
-            // TODO: What if it doesn't exist?
             try {
                 dataTarget.application = await this.applicationService.findOneWithoutRelations(
                     dataTargetDto.applicationId
