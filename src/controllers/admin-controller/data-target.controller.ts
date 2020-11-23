@@ -64,7 +64,7 @@ export class DataTargetController {
             }
 
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-            if (query.applicationId && !allowed.some(x => x === query.applicationId)) {
+            if (+query.applicationId && !allowed.some(x => x === +query.applicationId)) {
                 throw new UnauthorizedException();
             }
 
