@@ -5,8 +5,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
 import configuration from "@config/configuration";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { DeviceIntegrationPersistenceModule } from "@modules/data-management/device-integration-persistence.module";
 import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";

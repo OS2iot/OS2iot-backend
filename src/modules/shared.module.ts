@@ -16,8 +16,8 @@ import { OrganizationPermission } from "@entities/organization-permission.entity
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Permission } from "@entities/permission.entity";
 import { ReadPermission } from "@entities/read-permission.entity";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { User } from "@entities/user.entity";

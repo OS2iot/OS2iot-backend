@@ -8,7 +8,7 @@ import { Repository, getManager } from "typeorm";
 import configuration from "@config/configuration";
 import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 
@@ -38,7 +38,7 @@ import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto"
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
-import { ReceivedMessage } from "@entities/received-message";
+import { ReceivedMessage } from "@entities/received-message.entity";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";

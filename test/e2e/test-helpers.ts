@@ -28,8 +28,8 @@ import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { SigFoxApiDeviceContent } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { now } from "lodash";
 
 export async function clearDatabase(): Promise<void> {

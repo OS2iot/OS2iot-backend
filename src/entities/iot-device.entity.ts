@@ -14,8 +14,8 @@ import {
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { DeviceModel } from "./device-model.entity";
 

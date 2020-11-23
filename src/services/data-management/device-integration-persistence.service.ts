@@ -4,8 +4,8 @@ import { Repository } from "typeorm";
 
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { ReceivedMessage } from "@entities/received-message";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
