@@ -11,12 +11,16 @@ import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
     private readonly ORG_ID_KEY = "internalOrganizationId";
+    private readonly UPDATED_BY_KEY = "os2iot-updated-by";
+    private readonly CREATED_BY_KEY = "os2iot-created-by";
 
     public async createDeviceProfile(
-        dto: CreateDeviceProfileDto
+        dto: CreateDeviceProfileDto,
+        userId: number
     ): Promise<AxiosResponse> {
         dto.deviceProfile = await this.updateDto(dto.deviceProfile);
         dto.deviceProfile.tags = this.addOrganizationToTags(dto);
+        dto.deviceProfile.tags = this.addUserIdToTags(dto, userId);
         const result = await this.post("device-profiles", dto);
         return result;
     }
@@ -29,10 +33,31 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return tags;
     }
 
+    private addUserIdToTags(
+        dto: CreateDeviceProfileDto,
+        userId: number
+    ): { [id: string]: string | number } {
+        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        tags[this.CREATED_BY_KEY] = `${userId}`;
+        tags[this.UPDATED_BY_KEY] = `${userId}`;
+        return tags;
+    }
+
+    private updateUserIdTags(
+        dto: UpdateDeviceProfileDto,
+        userId: number
+    ): { [id: string]: string | number } {
+        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        tags[this.UPDATED_BY_KEY] = `${userId}`;
+        return tags;
+    }
+
     public async updateDeviceProfile(
         data: UpdateDeviceProfileDto,
-        id: string
+        id: string,
+        userId: number
     ): Promise<AxiosResponse> {
+        data.deviceProfile.tags = this.updateUserIdTags(data, userId);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
         return await this.put("device-profiles", data, id);
     }
@@ -55,6 +80,8 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             result.result.map(async x => {
                 const dp = await this.findOneDeviceProfileById(x.id);
                 x.internalOrganizationId = +dp.deviceProfile.internalOrganizationId;
+                x.createdBy = +dp.deviceProfile.createdBy;
+                x.updatedBy = +dp.deviceProfile.updatedBy;
             })
         );
 
@@ -69,7 +96,12 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         result.deviceProfile.internalOrganizationId = +result.deviceProfile.tags[
             this.ORG_ID_KEY
         ];
+        result.deviceProfile.createdBy = +result.deviceProfile.tags[this.CREATED_BY_KEY];
+        result.deviceProfile.updatedBy = +result.deviceProfile.tags[this.UPDATED_BY_KEY];
+
         result.deviceProfile.tags[this.ORG_ID_KEY] = undefined;
+        result.deviceProfile.tags[this.CREATED_BY_KEY] = undefined;
+        result.deviceProfile.tags[this.UPDATED_BY_KEY] = undefined;
 
         return result;
     }

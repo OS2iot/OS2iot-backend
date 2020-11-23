@@ -99,4 +99,10 @@ export class DeviceProfileDto {
 
     @ApiHideProperty()
     internalOrganizationId?: number;
+
+    @ApiHideProperty()
+    updatedBy?: number;
+
+    @ApiHideProperty()
+    createdBy?: number;
 }

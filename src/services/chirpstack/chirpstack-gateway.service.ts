@@ -101,8 +101,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                 x.internalOrganizationId = gw.gateway.internalOrganizationId;
                 x.updatedBy = gw.gateway.updatedBy;
                 x.updatedBy = gw.gateway.updatedBy;
-                // x.tags = gw.gateway.tags;
-                // x.tags[this.ORG_ID_KEY] = undefined;
             })
         );
         if (organizationId !== undefined) {

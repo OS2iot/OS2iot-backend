@@ -54,7 +54,10 @@ export class DeviceProfileController {
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
         checkIfUserHasWriteAccessToOrganization(req, createDto.internalOrganizationId);
-        const result = await this.deviceProfileService.createDeviceProfile(createDto);
+        const result = await this.deviceProfileService.createDeviceProfile(
+            createDto,
+            req.user.userId
+        );
         return result.data;
     }
 
@@ -71,7 +74,11 @@ export class DeviceProfileController {
     ): Promise<void> {
         await this.checkForWriteAccess(id, req);
         try {
-            await this.deviceProfileService.updateDeviceProfile(updateDto, id);
+            await this.deviceProfileService.updateDeviceProfile(
+                updateDto,
+                id,
+                req.user.userId
+            );
         } catch (err) {
             Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
             throw new InternalServerErrorException(err?.response?.data);
