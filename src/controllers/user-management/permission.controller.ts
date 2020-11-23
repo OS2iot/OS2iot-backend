@@ -57,7 +57,7 @@ export class PermissionController {
     ): Promise<Permission> {
         checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
 
-        return await this.permissionService.createNewPermission(dto);
+        return await this.permissionService.createNewPermission(dto, req.user.userId);
     }
 
     @Put(":id")
@@ -78,7 +78,7 @@ export class PermissionController {
             );
         }
 
-        return await this.permissionService.updatePermission(id, dto);
+        return await this.permissionService.updatePermission(id, dto, req.user.userId);
     }
 
     @Delete(":id")

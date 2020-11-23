@@ -48,7 +48,10 @@ export class PermissionService {
     WRITE_SUFFIX = " - Write";
     ADMIN_SUFFIX = " - OrganizationAdmin";
 
-    async createDefaultPermissions(org: Organization): Promise<OrganizationPermission[]> {
+    async createDefaultPermissions(
+        org: Organization,
+        userId: number
+    ): Promise<OrganizationPermission[]> {
         const readPermission = new ReadPermission(org.name + this.READ_SUFFIX, org, true);
         const writePermission = new WritePermission(
             org.name + this.WRITE_SUFFIX,
@@ -59,6 +62,12 @@ export class PermissionService {
             org.name + this.ADMIN_SUFFIX,
             org
         );
+        readPermission.createdBy = userId;
+        readPermission.updatedBy = userId;
+        writePermission.createdBy = userId;
+        writePermission.updatedBy = userId;
+        adminPermission.createdBy = userId;
+        adminPermission.updatedBy = userId;
         // Use the manager since otherwise, we'd need a repository for each of them
         const entityManager = getManager();
         return await entityManager.save([
@@ -77,7 +86,10 @@ export class PermissionService {
         return await getManager().save(new GlobalAdminPermission());
     }
 
-    async createNewPermission(dto: CreatePermissionDto): Promise<Permission> {
+    async createNewPermission(
+        dto: CreatePermissionDto,
+        userId: number
+    ): Promise<Permission> {
         let permission;
         const org: Organization = await this.organizationService.findById(
             dto.organizationId
@@ -109,6 +121,8 @@ export class PermissionService {
         }
 
         await this.mapToPermission(permission, dto);
+        permission.createdBy = userId;
+        permission.updatedBy = userId;
 
         return await getManager().save(permission);
     }
@@ -145,7 +159,11 @@ export class PermissionService {
         user.permissions = user.permissions.filter(x => x.id != permission.id);
     }
 
-    async updatePermission(id: number, dto: UpdatePermissionDto): Promise<Permission> {
+    async updatePermission(
+        id: number,
+        dto: UpdatePermissionDto,
+        userId: number
+    ): Promise<Permission> {
         const permission = await getManager().findOne(Permission, {
             where: { id: id },
             relations: ["organization", "users", "applications"],
@@ -154,6 +172,7 @@ export class PermissionService {
         permission.name = dto.name;
 
         await this.mapToPermission(permission, dto);
+        permission.updatedBy = userId;
 
         const savedPermission = await getManager().save(permission);
 

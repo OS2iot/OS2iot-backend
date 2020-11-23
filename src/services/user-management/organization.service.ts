@@ -40,7 +40,7 @@ export class OrganizationService {
         try {
             const res = await this.organizationRepository.save(organization);
 
-            await this.permissionService.createDefaultPermissions(res);
+            await this.permissionService.createDefaultPermissions(res, userId);
 
             return res;
         } catch (err) {
