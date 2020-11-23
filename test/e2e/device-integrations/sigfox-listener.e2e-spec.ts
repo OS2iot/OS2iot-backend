@@ -10,7 +10,7 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
 import { KafkaModule } from "@modules/kafka.module";
 
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { setupKafkaListener, sleep, waitForEvents } from "../kafka-test-helpers";
 import {
     SIGFOX_PAYLOAD_2,
     clearDatabase,
@@ -37,7 +37,7 @@ describe("SigFoxListenerController (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 KafkaModule,
@@ -47,7 +47,10 @@ describe("SigFoxListenerController (e2e)", () => {
 
         app = moduleFixture.createNestApplication();
         await app.init();
-    });
+        consumer = await setupKafkaListener(consumer, [], KafkaTopic.RAW_REQUEST);
+        await sleep(100);
+        await consumer.disconnect();
+    }, 30000);
 
     afterAll(async () => {
         // Ensure clean shutdown

@@ -30,7 +30,6 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
-import { now } from "lodash";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -45,10 +44,10 @@ export async function clearDatabase(): Promise<void> {
             `DELETE FROM "payload_decoder";  \n` +
             `DELETE FROM "user_permissions_permission";  \n` +
             `DELETE FROM "application_permissions_permission";  \n` +
-            `DELETE FROM "user";  \n` +
             `DELETE FROM "permission";  \n` +
             `DELETE FROM "organization";  \n` +
-            `DELETE FROM "sigfox_group";  \n`
+            `DELETE FROM "sigfox_group";  \n` +
+            `DELETE FROM "user";  \n`
     );
 }
 

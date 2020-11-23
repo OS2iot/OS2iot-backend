@@ -21,10 +21,12 @@ import {
 } from "../test-helpers";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { Organization } from "@entities/organization.entity";
+import { User } from "@entities/user.entity";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
     let service: ChirpstackGatewayService;
+    let globalAdmin: User;
     let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     let globalAdminJwt: string;
@@ -74,9 +76,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
             }
         });
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     async function createGateway(): Promise<string> {
@@ -85,7 +87,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
 
     async function createGatewayReturnDto(org?: Organization): Promise<CreateGatewayDto> {
         const dto = await makeCreateGatewayDto(chirpstackSetupNetworkServerService, org);
-        await service.createNewGateway(dto);
+        await service.createNewGateway(dto, globalAdmin.id);
         return dto;
     }
     it("(POST) Create new Gateway", async () => {

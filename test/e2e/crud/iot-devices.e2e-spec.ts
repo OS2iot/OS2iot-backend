@@ -41,11 +41,13 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { User } from "@entities/user.entity";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<GenericHTTPDevice>;
     let applicationRepository: Repository<Application>;
+    let globalAdmin: User;
     let globalAdminJwt: string;
     let service: IoTDeviceService;
     let sigfoxApiDeviceService: SigFoxApiDeviceService;
@@ -98,9 +100,9 @@ describe("IoTDeviceController (e2e)", () => {
     beforeEach(async () => {
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {
@@ -185,23 +187,26 @@ describe("IoTDeviceController (e2e)", () => {
         const mac = randomMacAddress();
         const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
         const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
-        const device = await iotDeviceService.create({
-            name: "E2E-" + mac,
-            type: IoTDeviceType.LoRaWAN,
-            applicationId: app1.id,
-            longitude: 12,
-            latitude: 32,
-            comment: "asdf",
-            commentOnLocation: "fdsa",
-            metadata: JSON.parse("{}"),
-            lorawanSettings: {
-                activationType: ActivationType.NONE,
-                devAddr: mac,
-                devEUI: mac,
-                deviceProfileID: deviceProfile.result[0].id,
-                serviceProfileID: serviceProfile.result[0].id,
+        const device = await iotDeviceService.create(
+            {
+                name: "E2E-" + mac,
+                type: IoTDeviceType.LoRaWAN,
+                applicationId: app1.id,
+                longitude: 12,
+                latitude: 32,
+                comment: "asdf",
+                commentOnLocation: "fdsa",
+                metadata: JSON.parse("{}"),
+                lorawanSettings: {
+                    activationType: ActivationType.NONE,
+                    devAddr: mac,
+                    devEUI: mac,
+                    deviceProfileID: deviceProfile.result[0].id,
+                    serviceProfileID: serviceProfile.result[0].id,
+                },
             },
-        });
+            globalAdmin.id
+        );
 
         return await request(app.getHttpServer())
             .get("/iot-device/" + device.id)

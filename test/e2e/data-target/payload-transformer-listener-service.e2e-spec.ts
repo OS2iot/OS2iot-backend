@@ -11,7 +11,7 @@ import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-deco
 import { KafkaModule } from "@modules/kafka.module";
 import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
 
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { setupKafkaListener, sleep, waitForEvents } from "../kafka-test-helpers";
 import {
     clearDatabase,
     generateRawRequestLoRaWANKafkaPayload,
@@ -53,7 +53,10 @@ describe(`${PayloadDecoderListenerService.name} (e2e)`, () => {
         service = moduleFixture.get(PayloadDecoderListenerService.name);
 
         // Get a reference to the repository such that we can CRUD on it.
-    });
+        consumer = await setupKafkaListener(consumer, [], KafkaTopic.RAW_REQUEST);
+        await sleep(100);
+        await consumer.disconnect();
+    }, 30000);
 
     afterAll(async () => {
         // Ensure clean shutdown

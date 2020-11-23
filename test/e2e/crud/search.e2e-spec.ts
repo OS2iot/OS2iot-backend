@@ -34,9 +34,11 @@ import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gatewa
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { User } from "@entities/user.entity";
 
 describe("SearchController (e2e)", () => {
     let app: INestApplication;
+    let globalAdmin: User;
     let globalAdminJwt: string;
     let orgAdminJwt: string;
     let readUserJwt: string;
@@ -97,8 +99,13 @@ describe("SearchController (e2e)", () => {
             }
         });
 
+        // Create user (global admin)
+        globalAdmin = await generateSavedGlobalAdminUser();
+        // Generate store jwt
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
+
         gatewayRequest = await makeCreateGatewayDto(chirpstackSetupNetworkServerService);
-        const gateway = await chirpstackGatewayService.createNewGateway(gatewayRequest);
+        await chirpstackGatewayService.createNewGateway(gatewayRequest, globalAdmin.id);
 
         // Add set of data
         org1 = await generateSavedOrganization("org1");
@@ -115,10 +122,6 @@ describe("SearchController (e2e)", () => {
         sigfox2_1_1 = await generateSavedSigfoxDevice(app2_1, "2");
         soeren = await generateSavedApplication(org2, "Søren");
 
-        // Create user (global admin)
-        const globalAdminUser = await generateSavedGlobalAdminUser();
-        // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(globalAdminUser);
         const orgAdminUser = await generateSavedOrganizationAdminUser(org1);
         orgAdminJwt = generateValidJwtForUser(orgAdminUser);
 

@@ -16,10 +16,12 @@ import {
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { User } from "@entities/user.entity";
 
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;
     let app: INestApplication;
+    let globalAdmin: User;
     let globalAdminJwt: string;
     const testname = "e2e";
 
@@ -52,9 +54,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterAll(async () => {
@@ -75,7 +77,10 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     it("(GET) /chirpstack/device-profiles/:id - OK", async () => {
         // Arrange
         const original: CreateDeviceProfileDto = await createDeviceProfileData();
-        const result = await deviceProfileService.createDeviceProfile(original);
+        const result = await deviceProfileService.createDeviceProfile(
+            original,
+            globalAdmin.id
+        );
         const deviceProfileId = result.data.id;
 
         // Act
@@ -97,11 +102,17 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     it("(GET) /chirpstack/device-profiles/ - OK", async () => {
         // Arrange
         const original: CreateDeviceProfileDto = await createDeviceProfileData();
-        const result1 = await deviceProfileService.createDeviceProfile(original);
+        const result1 = await deviceProfileService.createDeviceProfile(
+            original,
+            globalAdmin.id
+        );
 
         const changed = original;
         changed.deviceProfile.name = `${testname}-changed`;
-        const result2 = await deviceProfileService.createDeviceProfile(changed);
+        const result2 = await deviceProfileService.createDeviceProfile(
+            changed,
+            globalAdmin.id
+        );
 
         // Act
         return await request(app.getHttpServer())
@@ -120,6 +131,8 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                     internalOrganizationId: expect.any(Number),
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
 
                 expect(response.body.result).toContainEqual({
@@ -131,6 +144,8 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     updatedAt: expect.any(String),
                     createdAt: expect.any(String),
                     internalOrganizationId: expect.any(Number),
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
             });
     });
@@ -179,7 +194,10 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     it("(PUT) /chirpstack/device-profiles/:id - OK", async () => {
         // Arrange
         const original: CreateDeviceProfileDto = await createDeviceProfileData();
-        const result = await deviceProfileService.createDeviceProfile(original);
+        const result = await deviceProfileService.createDeviceProfile(
+            original,
+            globalAdmin.id
+        );
         const deviceProfileId = result.data.id;
 
         const changed = original;
@@ -198,7 +216,10 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     it("(DELETE) /chirpstack/device-profiles/:id - OK", async () => {
         //Arrange
         const original: CreateDeviceProfileDto = await createDeviceProfileData();
-        const result = await deviceProfileService.createDeviceProfile(original);
+        const result = await deviceProfileService.createDeviceProfile(
+            original,
+            globalAdmin.id
+        );
         const deviceProfileId = result.data.id;
 
         // Act

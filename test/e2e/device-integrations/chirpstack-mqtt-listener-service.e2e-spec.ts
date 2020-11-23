@@ -10,7 +10,7 @@ import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirp
 import { KafkaModule } from "@modules/kafka.module";
 import { ChirpstackMQTTListenerService } from "@services/data-management/chirpstack-mqtt-listener.service";
 
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { setupKafkaListener, sleep, waitForEvents } from "../kafka-test-helpers";
 import {
     clearDatabase,
     generateSavedApplication,
@@ -54,8 +54,11 @@ describe("ChirpstackMQTTListenerService (e2e)", () => {
     });
 
     beforeEach(async () => {
+        consumer = await setupKafkaListener(consumer, [], KafkaTopic.RAW_REQUEST);
+        await sleep(100);
+        await consumer.disconnect();
         await clearDatabase();
-    });
+    }, 30000);
 
     afterEach(async () => {
         await clearDatabase();

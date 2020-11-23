@@ -557,23 +557,26 @@ describe("ApplicationController (e2e)", () => {
         const mac = randomMacAddress();
         const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
         const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
-        const device = await iotDeviceService.create({
-            name: "E2E-" + mac,
-            type: IoTDeviceType.LoRaWAN,
-            applicationId: app1.id,
-            longitude: 12,
-            latitude: 32,
-            comment: "asdf",
-            commentOnLocation: "fdsa",
-            metadata: JSON.parse("{}"),
-            lorawanSettings: {
-                activationType: ActivationType.NONE,
-                devAddr: mac,
-                devEUI: mac,
-                deviceProfileID: deviceProfile.result[0].id,
-                serviceProfileID: serviceProfile.result[0].id,
+        const device = await iotDeviceService.create(
+            {
+                name: "E2E-" + mac,
+                type: IoTDeviceType.LoRaWAN,
+                applicationId: app1.id,
+                longitude: 12,
+                latitude: 32,
+                comment: "asdf",
+                commentOnLocation: "fdsa",
+                metadata: JSON.parse("{}"),
+                lorawanSettings: {
+                    activationType: ActivationType.NONE,
+                    devAddr: mac,
+                    devEUI: mac,
+                    deviceProfileID: deviceProfile.result[0].id,
+                    serviceProfileID: serviceProfile.result[0].id,
+                },
             },
-        });
+            globalAdmin.id
+        );
 
         // Act
         return request(app.getHttpServer())

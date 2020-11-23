@@ -13,7 +13,7 @@ import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { KafkaModule } from "@modules/kafka.module";
 
-import { setupKafkaListener, waitForEvents } from "../kafka-test-helpers";
+import { setupKafkaListener, sleep, waitForEvents } from "../kafka-test-helpers";
 import { clearDatabase } from "../test-helpers";
 
 describe("ReceiveDataController (e2e)", () => {
@@ -45,7 +45,10 @@ describe("ReceiveDataController (e2e)", () => {
         await app.init();
 
         applicationRepository = moduleFixture.get("ApplicationRepository");
-    });
+        consumer = await setupKafkaListener(consumer, [], KafkaTopic.RAW_REQUEST);
+        await sleep(100);
+        await consumer.disconnect();
+    }, 30000);
 
     afterAll(async () => {
         // Ensure clean shutdown
