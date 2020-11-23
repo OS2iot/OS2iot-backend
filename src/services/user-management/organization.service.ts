@@ -31,9 +31,11 @@ export class OrganizationService {
 
     private readonly logger = new Logger(OrganizationService.name, true);
 
-    async create(dto: CreateOrganizationDto): Promise<Organization> {
+    async create(dto: CreateOrganizationDto, userId: number): Promise<Organization> {
         const organization = new Organization();
         organization.name = dto.name;
+        organization.createdBy = userId;
+        organization.updatedBy = userId;
 
         try {
             const res = await this.organizationRepository.save(organization);
@@ -46,9 +48,14 @@ export class OrganizationService {
         }
     }
 
-    async update(id: number, dto: UpdateOrganizationDto): Promise<Organization> {
+    async update(
+        id: number,
+        dto: UpdateOrganizationDto,
+        userId: number
+    ): Promise<Organization> {
         const org = await this.findByIdWithRelations(id);
         org.name = dto.name;
+        org.updatedBy = userId;
 
         return await this.organizationRepository.save(org);
     }

@@ -53,9 +53,13 @@ export class OrganizationController {
     @Post()
     @ApiOperation({ summary: "Create a new Organization" })
     async create(
+        @Req() req: AuthenticatedRequest,
         @Body() createOrganizationDto: CreateOrganizationDto
     ): Promise<Organization> {
-        return await this.organizationService.create(createOrganizationDto);
+        return await this.organizationService.create(
+            createOrganizationDto,
+            req.user.userId
+        );
     }
 
     @Put(":id")
@@ -68,7 +72,11 @@ export class OrganizationController {
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, id);
 
-        return await this.organizationService.update(id, updateOrganizationDto);
+        return await this.organizationService.update(
+            id,
+            updateOrganizationDto,
+            req.user.userId
+        );
     }
 
     @Get("minimal")
