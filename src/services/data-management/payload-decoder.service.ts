@@ -42,19 +42,25 @@ export class PayloadDecoderService {
         };
     }
 
-    async create(createDto: CreatePayloadDecoderDto): Promise<PayloadDecoder> {
+    async create(
+        createDto: CreatePayloadDecoderDto,
+        userId: number
+    ): Promise<PayloadDecoder> {
         const newPayloadDecoder = new PayloadDecoder();
         const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
             createDto,
             newPayloadDecoder
         );
+        mappedPayloadDecoder.createdBy = userId;
+        mappedPayloadDecoder.updatedBy = userId;
 
         return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
     }
 
     async update(
         id: number,
-        updateDto: UpdatePayloadDecoderDto
+        updateDto: UpdatePayloadDecoderDto,
+        userId: number
     ): Promise<PayloadDecoder> {
         const payloadDecoder = await this.payloadDecoderRepository.findOneOrFail(id);
 
@@ -62,6 +68,7 @@ export class PayloadDecoderService {
             updateDto,
             payloadDecoder
         );
+        mappedPayloadDecoder.updatedBy = userId;
 
         return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
     }

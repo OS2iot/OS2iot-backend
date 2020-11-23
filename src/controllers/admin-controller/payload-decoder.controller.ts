@@ -96,7 +96,10 @@ export class PayloadDecoderController {
         checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
 
         // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.create(createDto);
+        const payloadDecoder = await this.payloadDecoderService.create(
+            createDto,
+            req.user.userId
+        );
         return payloadDecoder;
     }
 
@@ -116,7 +119,11 @@ export class PayloadDecoderController {
             checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
         }
         // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.update(id, updateDto);
+        const payloadDecoder = await this.payloadDecoderService.update(
+            id,
+            updateDto,
+            req.user.userId
+        );
 
         return payloadDecoder;
     }
