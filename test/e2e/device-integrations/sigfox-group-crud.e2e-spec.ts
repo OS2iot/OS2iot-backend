@@ -26,6 +26,7 @@ describe("SigfoxGroupController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<SigFoxGroup>;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let org: Organization;
 
     beforeAll(async () => {
@@ -63,9 +64,9 @@ describe("SigfoxGroupController (e2e)", () => {
     beforeEach(async () => {
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
 
         org = await generateSavedOrganization("E2E-test");
     });

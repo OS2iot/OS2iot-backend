@@ -26,10 +26,10 @@ import { User } from "@entities/user.entity";
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
     let service: ChirpstackGatewayService;
-    let globalAdmin: User;
     let chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService;
     let app: INestApplication;
     let globalAdminJwt: string;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({

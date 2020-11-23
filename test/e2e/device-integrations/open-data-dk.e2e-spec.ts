@@ -117,7 +117,6 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    
     it("(GET) ​​/open-data-dk-sharing​/{organizationId} - Optional values are null", async () => {
         // Arrange
         const org = await generateSavedOrganization();

@@ -21,8 +21,8 @@ import { User } from "@entities/user.entity";
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;
     let app: INestApplication;
-    let globalAdmin: User;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     const testname = "e2e";
 
     beforeAll(async () => {

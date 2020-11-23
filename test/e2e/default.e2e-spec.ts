@@ -21,7 +21,7 @@ describe("DefaultController (e2e)", () => {
         await app.close();
     });
 
-   test.skip("/ (GET)", done => {
+    test.skip("/ (GET)", done => {
         return request(app.getHttpServer())
             .get("/")
             .expect(200)

@@ -27,7 +27,7 @@ describe("OrganizationController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<Organization>;
     let globalAdminJwt: string;
-    let user: User;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -65,9 +65,9 @@ describe("OrganizationController (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {

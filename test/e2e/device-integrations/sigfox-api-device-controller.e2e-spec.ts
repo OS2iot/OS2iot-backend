@@ -3,9 +3,6 @@ import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
-import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
-import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import {
@@ -13,18 +10,16 @@ import {
     generateSavedApplication,
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
-    generateSavedSigfoxDevice,
     generateSavedSigfoxDeviceFromData,
     generateSavedSigFoxGroup,
-    generateSigfoxDevice,
     generateValidJwtForUser,
-    SIGFOX_DEVICE_ID,
     SIGFOX_DEVICE_ID_2,
 } from "../test-helpers";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
-import { getManager, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
+import { User } from "@entities/user.entity";
 
 describe("SigfoxApiDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -32,6 +27,7 @@ describe("SigfoxApiDeviceController (e2e)", () => {
     let sigfoxApiDeviceService: SigFoxApiDeviceService;
     let repository: Repository<SigFoxDevice>;
     let globalAdminJwt: string;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -72,9 +68,9 @@ describe("SigfoxApiDeviceController (e2e)", () => {
     beforeEach(async () => {
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     it("(GET) /sigfox-api-device/ - Get all", async () => {

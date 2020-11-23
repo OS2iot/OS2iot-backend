@@ -16,11 +16,13 @@ import {
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { User } from "@entities/user.entity";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
     let app: INestApplication;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     const testname = "e2e";
 
     beforeAll(async () => {
@@ -52,9 +54,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterAll(async () => {

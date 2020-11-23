@@ -25,12 +25,14 @@ import {
     generateSavedPayloadDecoder,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { User } from "@entities/user.entity";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<IoTDevicePayloadDecoderDataTargetConnection>;
     const urlPath = "/iot-device-payload-decoder-data-target-connection/";
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let orgAdminJwt: string;
     let organisation: Organization;
 
@@ -72,9 +74,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
 
         organisation = await generateSavedOrganization();
         const nonAdminUser = await generateSavedOrganizationAdminUser(organisation);
@@ -397,6 +399,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     dataTarget: {
                         id: dataTarget.id,
                     },
+                    updatedBy: globalAdmin.id,
+                    createdBy: globalAdmin.id,
                 });
             });
     });
@@ -426,6 +430,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     dataTarget: {
                         id: dataTarget.id,
                     },
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
                 expect(response.body.iotDevices.map((x: any) => x.id)).toContainEqual(
                     iotDevice.id
@@ -482,6 +488,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     dataTarget: {
                         id: dataTarget.id,
                     },
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
             });
     });
@@ -506,6 +514,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             .expect(201)
             .then(response => {
                 expect(response.body).toMatchObject({
+                    updatedBy: globalAdmin.id,
                     iotDevices: [
                         {
                             id: iotDevice.id,
@@ -551,6 +560,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     dataTarget: {
                         id: dataTarget.id,
                     },
+                    updatedBy: globalAdmin.id,
                 });
                 expect(response.body).not.toHaveProperty("payloadDecoder");
             });

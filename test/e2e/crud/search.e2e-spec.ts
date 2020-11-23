@@ -38,8 +38,8 @@ import { User } from "@entities/user.entity";
 
 describe("SearchController (e2e)", () => {
     let app: INestApplication;
-    let globalAdmin: User;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let orgAdminJwt: string;
     let readUserJwt: string;
     let org1: Organization;

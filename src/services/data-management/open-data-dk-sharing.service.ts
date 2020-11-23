@@ -29,7 +29,9 @@ export class OpenDataDkSharingService {
     private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
     private readonly logger = new Logger(OpenDataDkSharingService.name);
 
-    async getDecodedDataInDataset(dataset: OpenDataDkDataset) {
+    async getDecodedDataInDataset(
+        dataset: OpenDataDkDataset
+    ): Promise<any[] | { error: ErrorCodes }> {
         const rawData = await this.repository
             .createQueryBuilder("dataset")
             .innerJoinAndSelect("dataset.dataTarget", "dt")

@@ -19,11 +19,13 @@ import {
     generateSavedPayloadDecoder,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { User } from "@entities/user.entity";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<PayloadDecoder>;
     let globalAdminJwt: string;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,9 +63,9 @@ describe("PayloadDecoderController (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {

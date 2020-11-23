@@ -19,7 +19,7 @@ export class DefaultController {
         const isKafkaOk = this.healthCheckService.isKafkaOk();
         // This is the healthcheck for k8s
         if (!isKafkaOk) {
-            throw new InternalServerErrorException("Kafka failed! :'(")
+            throw new InternalServerErrorException("Kafka failed! :'(");
         }
         return "OK";
     }

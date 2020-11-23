@@ -9,10 +9,10 @@ import { setupNestJs } from "@loaders/nestjs";
 import { setupSwagger } from "@loaders/swagger";
 
 async function bootstrap() {
-    Logger.log("before env load")
+    Logger.log("before env load");
     // Load .env file as environment before startup.
     dotenv.config({ path: "../.env", debug: true });
-    Logger.log("after env load")
+    Logger.log("after env load");
 
     const config = {
         NEST_PORT: 3000,
@@ -34,9 +34,9 @@ async function bootstrap() {
             key: fs.readFileSync("../secrets/private.key"),
             cert: fs.readFileSync("../secrets/publiccert.crt"),
         };
-        https.createServer(httpsOptions, server).listen(8443);    
+        https.createServer(httpsOptions, server).listen(8443);
     } catch (err) {
-        Logger.log("Could not setup https, skipping.")
+        Logger.log("Could not setup https, skipping.");
     }
 
     //const url = await httpServer.;

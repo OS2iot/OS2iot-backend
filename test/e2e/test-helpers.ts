@@ -69,7 +69,7 @@ export function generateSigfoxDeviceFromData(
 export async function generateSavedReceivedMessageAndMetadata(
     iotDevice: IoTDevice,
     payloadString = LORAWAN_PAYLOAD
-) {
+): Promise<void> {
     const now = new Date();
     const messageTime = now.valueOf() - 10;
 
@@ -164,7 +164,7 @@ export function generateDeviceModel(
 export async function generateSavedDeviceModel(
     org: Organization,
     name = "myDevice Sensor for Containers 345"
-) {
+): Promise<DeviceModel> {
     return await getManager().save(generateDeviceModel(org, name));
 }
 

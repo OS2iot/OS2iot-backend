@@ -24,7 +24,7 @@ describe("UserController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<User>;
     let globalAdminJwt: string;
-    let user: User;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -62,9 +62,9 @@ describe("UserController (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {
@@ -82,7 +82,7 @@ describe("UserController (e2e)", () => {
                 expect(response.body.count).toBe(1);
                 expect(response.body.data).toMatchObject([
                     {
-                        email: user.email,
+                        email: globalAdmin.email,
                     },
                 ]);
                 // Ensure that passwords / passwordHashes are not leaked.
@@ -93,18 +93,18 @@ describe("UserController (e2e)", () => {
 
     it("(GET) /user/:id - Get one element by id", async () => {
         return request(app.getHttpServer())
-            .get(`/user/${user.id}`)
+            .get(`/user/${globalAdmin.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    id: user.id,
+                    id: globalAdmin.id,
                     createdAt: expect.any(String),
                     updatedAt: expect.any(String),
-                    name: user.name,
-                    email: user.email,
-                    active: user.active,
+                    name: globalAdmin.name,
+                    email: globalAdmin.email,
+                    active: globalAdmin.active,
                     permissions: [
                         {
                             name: "GlobalAdmin",
@@ -122,7 +122,7 @@ describe("UserController (e2e)", () => {
 
     it("(GET) /user/:id - Not found", async () => {
         return request(app.getHttpServer())
-            .get(`/user/${user.id + 1}`)
+            .get(`/user/${globalAdmin.id + 1}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
             .expect("Content-Type", /json/)
@@ -168,7 +168,7 @@ describe("UserController (e2e)", () => {
     it("(POST) /user/ - Create user - fail, not unique email", async () => {
         const dto = {
             name: "test",
-            email: user.email,
+            email: globalAdmin.email,
             password: "string",
             active: true,
         };
@@ -190,29 +190,29 @@ describe("UserController (e2e)", () => {
 
     it("(PUT) /user/:id - Update user", async () => {
         const dto: UpdateUserDto = {
-            name: `${user.name} - changed`,
-            email: user.email,
+            name: `${globalAdmin.name} - changed`,
+            email: globalAdmin.email,
             password: "nothunter2",
             active: true,
         };
 
         await request(app.getHttpServer())
-            .put(`/user/${user.id}`)
+            .put(`/user/${globalAdmin.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    name: `${user.name} - changed`,
-                    email: user.email,
+                    name: `${globalAdmin.name} - changed`,
+                    email: globalAdmin.email,
                     active: true,
                 });
             });
 
         const usersInDb: User[] = await repository.find();
         expect(usersInDb).toHaveLength(1);
-        const userFromDb = await repository.findOne(user.id, {
+        const userFromDb = await repository.findOne(globalAdmin.id, {
             select: ["passwordHash"],
         });
         const isPasswordCorrect = await bcrypt.compare(
@@ -224,28 +224,28 @@ describe("UserController (e2e)", () => {
 
     it("(PUT) /user/:id - Update user - password optional", async () => {
         const dto: UpdateUserDto = {
-            name: `${user.name} - changed2`,
-            email: user.email,
+            name: `${globalAdmin.name} - changed2`,
+            email: globalAdmin.email,
             active: true,
         };
 
         await request(app.getHttpServer())
-            .put(`/user/${user.id}`)
+            .put(`/user/${globalAdmin.id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             .expect(200)
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    name: `${user.name} - changed2`,
-                    email: user.email,
+                    name: `${globalAdmin.name} - changed2`,
+                    email: globalAdmin.email,
                     active: true,
                 });
             });
 
         const usersInDb: User[] = await repository.find();
         expect(usersInDb).toHaveLength(1);
-        const userFromDb = await repository.findOne(user.id, {
+        const userFromDb = await repository.findOne(globalAdmin.id, {
             select: ["passwordHash"],
         });
         const isPasswordCorrect = await bcrypt.compare(

@@ -9,4 +9,3 @@ export class CreateDeviceModelDto {
     @ApiProperty({ required: true })
     body: JSON;
 }
-

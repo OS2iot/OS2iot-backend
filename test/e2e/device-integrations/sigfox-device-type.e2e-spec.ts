@@ -22,12 +22,14 @@ import { SigFoxApiDeviceTypeContent } from "@dto/sigfox/external/sigfox-api-devi
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
+import { User } from "@entities/user.entity";
 
 describe("SigfoxDeviceTypeController (e2e)", () => {
     let app: INestApplication;
     let org: Organization;
     let sigfoxGroup: SigFoxGroup;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     const contractId = "5f51dce1e833d917cdf9fe93";
     let service: SigFoxApiDeviceTypeService;
     let usersService: SigfoxApiUsersService;
@@ -63,9 +65,9 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
         org = await generateSavedOrganization();
         sigfoxGroup = await generateSavedSigFoxGroup(org);
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
         await deleteExisting(service, usersService, sigfoxGroup);
     });
 

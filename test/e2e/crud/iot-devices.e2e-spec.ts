@@ -47,8 +47,8 @@ describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<GenericHTTPDevice>;
     let applicationRepository: Repository<Application>;
-    let globalAdmin: User;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let service: IoTDeviceService;
     let sigfoxApiDeviceService: SigFoxApiDeviceService;
     let chirpstackDeviceService: ChirpstackDeviceService;

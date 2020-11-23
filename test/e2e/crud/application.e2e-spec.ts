@@ -267,6 +267,8 @@ describe("ApplicationController (e2e)", () => {
                     description: "Post Tester",
                     iotDevices: [] as any[],
                     dataTargets: [] as any[],
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
             });
 
@@ -382,6 +384,7 @@ describe("ApplicationController (e2e)", () => {
                     id: id,
                     name: "PUT Test",
                     description: "PUT Tester",
+                    updatedBy: globalAdmin.id,
                 });
             });
 
@@ -414,6 +417,7 @@ describe("ApplicationController (e2e)", () => {
                     id: id,
                     name: application.name,
                     description: "PUT Tester",
+                    updatedBy: globalAdmin.id,
                 });
             });
 
@@ -508,6 +512,7 @@ describe("ApplicationController (e2e)", () => {
                     description: "Tester changed",
                     iotDevices: [{ id: savedIoTDevice.id }],
                     dataTargets: [],
+                    updatedBy: globalAdmin.id,
                 });
             });
     });

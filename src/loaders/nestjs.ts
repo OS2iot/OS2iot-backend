@@ -9,6 +9,7 @@ import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
 import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapter";
 import * as cookieParser from "cookie-parser";
+import { Express } from "express";
 
 export async function setupNestJs(
     config: {
@@ -17,7 +18,7 @@ export async function setupNestJs(
         CURRENT_VERSION_PREFIX: string;
         SWAGGER_PREFIX: string;
     },
-    server: any
+    server: Express
 ): Promise<INestApplication> {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);

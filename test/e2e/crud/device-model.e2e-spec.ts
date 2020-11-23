@@ -3,58 +3,32 @@ import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
-import { Repository, getManager } from "typeorm";
+import { Repository } from "typeorm";
 
 import configuration from "@config/configuration";
-import { Application } from "@entities/application.entity";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
-import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
     generateDeviceModel,
-    generateSavedApplication,
     generateSavedDeviceModel,
     generateSavedGlobalAdminUser,
-    generateSavedHttpDevice,
-    generateSavedLoRaWANDevice,
     generateSavedOrganization,
-    generateSavedSigfoxDevice,
-    generateSavedSigfoxDeviceFromData,
-    generateSavedSigFoxGroup,
     generateValidJwtForUser,
-    randomMacAddress,
-    SIGFOX_DEVICE_ID,
-    SIGFOX_DEVICE_ID_2,
 } from "../test-helpers";
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
-import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
-import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
-import { SigFoxDevice } from "@entities/sigfox-device.entity";
-import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
-import { ReceivedMessage } from "@entities/received-message.entity";
-import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
-import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
-import { ActivationType } from "@enum/lorawan-activation-type.enum";
-import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { DeviceModelController } from "@admin-controller/device-model.controller";
 import { DeviceModelModule } from "@modules/device-management/device-model.module";
 import { Organization } from "@entities/organization.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
-import { DEFAULT_ECDH_CURVE } from "tls";
+import { User } from "@entities/user.entity";
 
 describe(`${DeviceModelController.name} (e2e)`, () => {
     let app: INestApplication;
     let repository: Repository<DeviceModel>;
     let globalAdminJwt: string;
+    let globalAdmin: User;
     let org: Organization;
 
     beforeAll(async () => {
@@ -92,9 +66,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
     beforeEach(async () => {
         await clearDatabase();
         // Create user (global admin)
-        const user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
         org = await generateSavedOrganization();
     });
 
@@ -170,6 +144,8 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
             .then(response => {
                 expect(response.body).toMatchObject({
                     body: body,
+                    createdBy: globalAdmin.id,
+                    updatedBy: globalAdmin.id,
                 });
             });
 
@@ -278,6 +254,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 expect(response.body).toMatchObject({
+                    updatedBy: globalAdmin.id,
                     body: {
                         name: "a new name!",
                     },

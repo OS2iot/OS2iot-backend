@@ -26,7 +26,7 @@ import {
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;
     let globalAdminJwt: string;
-    let user: User;
+    let globalAdmin: User;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,9 +61,9 @@ describe("PermissionController (e2e)", () => {
         // Clear data before each test
         await clearDatabase();
         // Create user (global admin)
-        user = await generateSavedGlobalAdminUser();
+        globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
-        globalAdminJwt = generateValidJwtForUser(user);
+        globalAdminJwt = generateValidJwtForUser(globalAdmin);
     });
 
     afterEach(async () => {
@@ -126,7 +126,7 @@ describe("PermissionController (e2e)", () => {
 
     it("(GET) /permission/:id - GlobalAdmin", async () => {
         return await request(app.getHttpServer())
-            .get("/permission/" + user.permissions[0].id)
+            .get("/permission/" + globalAdmin.permissions[0].id)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
@@ -137,7 +137,7 @@ describe("PermissionController (e2e)", () => {
                     type: PermissionType.GlobalAdmin,
                     users: [
                         {
-                            id: user.id,
+                            id: globalAdmin.id,
                         },
                     ],
                 });

@@ -1,4 +1,5 @@
 import { DCATRootObject } from "@dto/open-data-dk-dcat.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 import { Controller, Get, NotFoundException, Param, ParseIntPipe } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { OpenDataDkSharingService } from "@services/data-management/open-data-dk-sharing.service";
@@ -33,7 +34,7 @@ export class OpenDataDkSharingController {
     async getData(
         @Param("organizationId", new ParseIntPipe()) orgId: number,
         @Param("shareId", new ParseIntPipe()) shareId: number
-    ) {
+    ): Promise<any[] | { error: ErrorCodes }> {
         let organization;
         try {
             organization = await this.organizationService.findById(orgId);

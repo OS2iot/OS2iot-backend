@@ -28,7 +28,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     private addOrganizationToTags(
         dto: CreateDeviceProfileDto
     ): { [id: string]: string | number } {
-        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        const tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
         tags[this.ORG_ID_KEY] = `${dto.internalOrganizationId}`;
         return tags;
     }
@@ -37,7 +37,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         dto: CreateDeviceProfileDto,
         userId: number
     ): { [id: string]: string | number } {
-        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        const tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
         tags[this.CREATED_BY_KEY] = `${userId}`;
         tags[this.UPDATED_BY_KEY] = `${userId}`;
         return tags;
@@ -47,7 +47,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         dto: UpdateDeviceProfileDto,
         userId: number
     ): { [id: string]: string | number } {
-        let tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
+        const tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
         tags[this.UPDATED_BY_KEY] = `${userId}`;
         return tags;
     }
