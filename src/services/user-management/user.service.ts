@@ -112,9 +112,11 @@ export class UserService {
             .execute();
     }
 
-    async createUser(dto: CreateUserDto): Promise<User> {
+    async createUser(dto: CreateUserDto, userId: number): Promise<User> {
         const user = new User();
         const mappedUser = this.mapDtoToUser(user, dto);
+        mappedUser.createdBy = userId;
+        mappedUser.updatedBy = userId;
 
         await this.setPasswordHash(mappedUser, dto.password);
 
@@ -172,13 +174,13 @@ export class UserService {
     private mapDtoToUser(user: User, dto: UpdateUserDto): User {
         if (user.nameId != null) {
             if (dto.name && user.name != dto.name) {
-                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
             if (dto.email) {
-                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
             if (dto.password) {
-                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser)
+                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
         }
 
@@ -190,12 +192,13 @@ export class UserService {
         return user;
     }
 
-    async updateUser(id: number, dto: UpdateUserDto): Promise<User> {
+    async updateUser(id: number, dto: UpdateUserDto, userId: number): Promise<User> {
         const user = await this.userRepository.findOne(id, {
             relations: ["permissions"],
         });
 
         const mappedUser = this.mapDtoToUser(user, dto);
+        mappedUser.updatedBy = userId;
         if (dto.password != null && dto.password != undefined) {
             this.logger.log(
                 `Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`

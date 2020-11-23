@@ -61,7 +61,8 @@ export class UserController {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { passwordHash, ...user } = await this.userService.createUser(
-                createUserDto
+                createUserDto,
+                req.user.userId
             );
 
             return user;
@@ -90,7 +91,11 @@ export class UserController {
         }
         // Don't leak the passwordHash
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { passwordHash, ...user } = await this.userService.updateUser(id, dto);
+        const { passwordHash, ...user } = await this.userService.updateUser(
+            id,
+            dto,
+            req.user.userId
+        );
 
         return user;
     }

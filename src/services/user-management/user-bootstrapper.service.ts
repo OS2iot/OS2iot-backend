@@ -20,13 +20,16 @@ export class UserBootstrapperService implements OnApplicationBootstrap {
             return;
         }
 
-        await this.userService.createUser({
-            email: this.GLOBAL_ADMIN_EMAIL,
-            name: this.GLOBAL_ADMIN_NAME,
-            password: this.GLOBAL_ADMIN_DEFAULT_PASSWORD,
-            active: true,
-            globalAdmin: true,
-        });
+        await this.userService.createUser(
+            {
+                email: this.GLOBAL_ADMIN_EMAIL,
+                name: this.GLOBAL_ADMIN_NAME,
+                password: this.GLOBAL_ADMIN_DEFAULT_PASSWORD,
+                active: true,
+                globalAdmin: true,
+            },
+            null
+        );
         this.logger.log(
             `Created GlobalAdmin user with login - E-mail: '${this.GLOBAL_ADMIN_EMAIL}' - Password: '${this.GLOBAL_ADMIN_DEFAULT_PASSWORD}'`
         );
