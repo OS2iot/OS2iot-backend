@@ -52,7 +52,10 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
         try {
-            return await this.chirpstackGatewayService.createNewGateway(dto);
+            return await this.chirpstackGatewayService.createNewGateway(
+                dto,
+                req.user.userId
+            );
         } catch (err) {
             if (err?.response?.data?.message == "object already exists") {
                 throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
@@ -115,10 +118,7 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         const gw = await this.chirpstackGatewayService.getOne(gatewayId);
         if (gw.gateway.tags?.organizationId != null) {
-            checkIfUserHasWriteAccessToOrganization(
-                req,
-                +gw.gateway.tags.organizationId
-            );
+            checkIfUserHasWriteAccessToOrganization(req, +gw.gateway.tags.organizationId);
         }
         return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
