@@ -97,7 +97,7 @@ export class SigfoxGroupController {
         checkIfUserHasWriteAccessToOrganization(req, query.organizationId);
 
         try {
-            return await this.service.create(query);
+            return await this.service.create(query, req.user.userId);
         } catch (err) {
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
                 throw new BadRequestException(
@@ -125,7 +125,7 @@ export class SigfoxGroupController {
         }
         checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
         try {
-            return await this.service.update(group, dto);
+            return await this.service.update(group, dto, req.user.userId);
         } catch (err) {
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
                 throw new BadRequestException(

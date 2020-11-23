@@ -117,7 +117,10 @@ export class SigFoxGroupService {
         });
     }
 
-    async create(query: CreateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
+    async create(
+        query: CreateSigFoxGroupRequestDto,
+        userId: number
+    ): Promise<SigFoxGroup> {
         const sigfoxGroup = new SigFoxGroup();
         try {
             sigfoxGroup.belongsTo = await this.organizationService.findById(
@@ -127,18 +130,22 @@ export class SigFoxGroupService {
             throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
         }
 
-        const res = await this.map(sigfoxGroup, query);
-        await this.addSigFoxDataToAllGroupsAndSave([res]);
-        return res;
+        const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
+        mappedSigfoxGroup.createdBy = userId;
+        mappedSigfoxGroup.updatedBy = userId;
+        await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
+        return mappedSigfoxGroup;
     }
 
     async update(
         sigfoxGroup: SigFoxGroup,
-        query: UpdateSigFoxGroupRequestDto
+        query: UpdateSigFoxGroupRequestDto,
+        userId: number
     ): Promise<SigFoxGroup> {
-        const res = await this.map(sigfoxGroup, query);
-        await this.addSigFoxDataToAllGroupsAndSave([res]);
-        return res;
+        const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
+        mappedSigfoxGroup.updatedBy = userId;
+        await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
+        return mappedSigfoxGroup;
     }
 
     private async map(
