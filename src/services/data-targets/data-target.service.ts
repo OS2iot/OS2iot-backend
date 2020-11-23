@@ -105,6 +105,8 @@ export class DataTargetService {
                 createDataTargetDto.openDataDkDataset,
                 dataTarget.openDataDkDataset
             );
+            mappedDataTarget.openDataDkDataset.createdBy = userId;
+            mappedDataTarget.openDataDkDataset.updatedBy = userId;
         } else {
             mappedDataTarget.openDataDkDataset = null;
         }
@@ -138,6 +140,7 @@ export class DataTargetService {
                 updateDataTargetDto.openDataDkDataset,
                 existing.openDataDkDataset
             );
+            mappedDataTarget.openDataDkDataset.updatedBy = userId;
         } else {
             mappedDataTarget.openDataDkDataset = null;
         }
