@@ -74,11 +74,7 @@ export class DeviceProfileController {
     ): Promise<void> {
         await this.checkForWriteAccess(id, req);
         try {
-            await this.deviceProfileService.updateDeviceProfile(
-                updateDto,
-                id,
-                req.user.userId
-            );
+            await this.deviceProfileService.updateDeviceProfile(updateDto, id, req);
         } catch (err) {
             Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
             throw new InternalServerErrorException(err?.response?.data);

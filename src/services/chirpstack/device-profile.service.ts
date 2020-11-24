@@ -7,6 +7,8 @@ import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-devic
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
+import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
@@ -55,11 +57,25 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     public async updateDeviceProfile(
         data: UpdateDeviceProfileDto,
         id: string,
-        userId: number
+        req: AuthenticatedRequest
     ): Promise<AxiosResponse> {
-        data.deviceProfile.tags = this.updateUserIdTags(data, userId);
+        data.deviceProfile.tags = await this.ensureOrganizationIdIsSet(id, req);
+        data.deviceProfile.tags = this.updateUserIdTags(data, req.user.userId);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
         return await this.put("device-profiles", data, id);
+    }
+
+    private async ensureOrganizationIdIsSet(
+        deviceProfileId: string,
+        req: AuthenticatedRequest
+    ): Promise<{ [id: string]: string | number }> {
+        const existing = await this.findOneDeviceProfileById(deviceProfileId);
+        const tags = existing.deviceProfile.tags;
+        tags[this.ORG_ID_KEY] = `${existing.deviceProfile.internalOrganizationId}`;
+        if (tags[this.ORG_ID_KEY] != null) {
+            checkIfUserHasWriteAccessToOrganization(req, +tags[this.ORG_ID_KEY]);
+        }
+        return tags;
     }
 
     public async deleteDeviceProfile(id: string): Promise<AxiosResponse> {
