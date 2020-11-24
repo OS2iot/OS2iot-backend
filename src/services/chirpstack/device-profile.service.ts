@@ -45,40 +45,46 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return tags;
     }
 
-    private updateUserIdTags(
-        dto: UpdateDeviceProfileDto,
-        userId: number
-    ): { [id: string]: string | number } {
-        const tags = dto.deviceProfile?.tags != null ? dto.deviceProfile.tags : {};
-        tags[this.UPDATED_BY_KEY] = `${userId}`;
-        return tags;
-    }
-
     public async updateDeviceProfile(
         data: UpdateDeviceProfileDto,
         id: string,
         req: AuthenticatedRequest
     ): Promise<AxiosResponse> {
-        data.deviceProfile.tags = await this.ensureOrganizationIdIsSet(id, req);
-        data.deviceProfile.tags = this.updateUserIdTags(data, req.user.userId);
+        data.deviceProfile.tags = await this.updateTags(id, req);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
         return await this.put("device-profiles", data, id);
     }
 
-    private async ensureOrganizationIdIsSet(
+    private async updateTags(
         deviceProfileId: string,
         req: AuthenticatedRequest
     ): Promise<{ [id: string]: string | number }> {
-        const existing = await this.findOneDeviceProfileById(deviceProfileId);
-        const tags = existing.deviceProfile.tags;
-        tags[this.ORG_ID_KEY] = `${existing.deviceProfile.internalOrganizationId}`;
+        const result: CreateDeviceProfileDto = await this.getOneById(
+            "device-profiles",
+            deviceProfileId
+        );
+        const tags = result.deviceProfile.tags;
+        tags[this.UPDATED_BY_KEY] = `${req.user.userId}`;
         if (tags[this.ORG_ID_KEY] != null) {
             checkIfUserHasWriteAccessToOrganization(req, +tags[this.ORG_ID_KEY]);
         }
         return tags;
     }
 
-    public async deleteDeviceProfile(id: string): Promise<AxiosResponse> {
+    public async deleteDeviceProfile(
+        id: string,
+        req: AuthenticatedRequest
+    ): Promise<AxiosResponse> {
+        const result: CreateDeviceProfileDto = await this.getOneById(
+            "device-profiles",
+            id
+        );
+        if (result.deviceProfile.tags[this.ORG_ID_KEY] != null) {
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                +result.deviceProfile.tags[this.ORG_ID_KEY]
+            );
+        }
         return await this.delete("device-profiles", id);
     }
 

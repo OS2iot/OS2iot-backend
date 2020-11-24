@@ -99,8 +99,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             results.result.map(async x => {
                 const gw = await this.getOne(x.id);
                 x.internalOrganizationId = gw.gateway.internalOrganizationId;
-                x.updatedBy = gw.gateway.updatedBy;
-                x.updatedBy = gw.gateway.updatedBy;
             })
         );
         if (organizationId !== undefined) {

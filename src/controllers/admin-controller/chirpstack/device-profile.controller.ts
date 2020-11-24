@@ -72,24 +72,11 @@ export class DeviceProfileController {
         @Param("id") id: string,
         @Body() updateDto: UpdateDeviceProfileDto
     ): Promise<void> {
-        await this.checkForWriteAccess(id, req);
         try {
             await this.deviceProfileService.updateDeviceProfile(updateDto, id, req);
         } catch (err) {
             Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
             throw new InternalServerErrorException(err?.response?.data);
-        }
-    }
-
-    private async checkForWriteAccess(id: string, req: AuthenticatedRequest) {
-        const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
-            id
-        );
-        if (deviceProfile.deviceProfile.tags?.organizationId) {
-            checkIfUserHasWriteAccessToOrganization(
-                req,
-                +deviceProfile.deviceProfile.tags?.organizationId
-            );
         }
     }
 
@@ -142,10 +129,9 @@ export class DeviceProfileController {
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string
     ): Promise<DeleteResponseDto> {
-        await this.checkForWriteAccess(id, req);
         let result = undefined;
         try {
-            result = await this.deviceProfileService.deleteDeviceProfile(id);
+            result = await this.deviceProfileService.deleteDeviceProfile(id, req);
         } catch (err) {
             Logger.error(
                 `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
