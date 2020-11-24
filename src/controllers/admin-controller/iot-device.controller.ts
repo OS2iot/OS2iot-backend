@@ -149,7 +149,7 @@ export class IoTDeviceController {
         if (!device) {
             throw new NotFoundException();
         }
-        checkIfUserHasWriteAccessToApplication(req, id);
+        checkIfUserHasWriteAccessToApplication(req, device?.application?.id);
 
         return await this.downlinkService.createDownlink(dto, device);
     }
