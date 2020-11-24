@@ -233,6 +233,9 @@ export class PermissionService {
         return await getManager().findOneOrFail(Permission, {
             where: { id: id },
             relations: ["organization", "users", "applications"],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
     }
 

@@ -21,6 +21,9 @@ export class PayloadDecoderService {
     async findOne(id: number): Promise<PayloadDecoder> {
         return await this.payloadDecoderRepository.findOneOrFail(id, {
             relations: ["organization"],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
     }
 

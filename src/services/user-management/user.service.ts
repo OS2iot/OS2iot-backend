@@ -71,6 +71,9 @@ export class UserService {
 
         return await this.userRepository.findOne(id, {
             relations: relations,
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
         });
     }
 
