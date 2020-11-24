@@ -19,6 +19,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { Profile } from "passport-saml";
+import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 
 @Injectable()
 export class UserService {
@@ -241,6 +242,16 @@ export class UserService {
         return {
             data: data.map(x => x as UserResponseDto),
             count: count,
+        };
+    }
+
+    async findAllMinimal(): Promise<ListAllUsersMinimalResponseDto> {
+        const result = await this.userRepository.find({
+            select: ["id", "name"],
+            order: { id: "ASC" },
+        });
+        return {
+            users: result,
         };
     }
 }
