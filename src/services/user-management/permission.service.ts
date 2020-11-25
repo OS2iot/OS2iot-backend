@@ -30,6 +30,8 @@ import { OrganizationService } from "@services/user-management/organization.serv
 
 import { UserService } from "./user.service";
 import { Application } from "@entities/application.entity";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @Injectable()
 export class PermissionService {
@@ -68,13 +70,18 @@ export class PermissionService {
         writePermission.updatedBy = userId;
         adminPermission.createdBy = userId;
         adminPermission.updatedBy = userId;
+
         // Use the manager since otherwise, we'd need a repository for each of them
         const entityManager = getManager();
-        return await entityManager.save([
+        const r = await entityManager.save([
             adminPermission,
             writePermission,
             readPermission,
         ]);
+        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[0].id, r[0].name);
+        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[1].id, r[1].name);
+        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[2].id, r[2].name);
+        return r;
     }
 
     async findOrCreateGlobalAdminPermission(): Promise<GlobalAdminPermission> {

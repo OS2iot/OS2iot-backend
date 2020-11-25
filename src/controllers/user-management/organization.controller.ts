@@ -37,6 +37,8 @@ import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -56,10 +58,23 @@ export class OrganizationController {
         @Req() req: AuthenticatedRequest,
         @Body() createOrganizationDto: CreateOrganizationDto
     ): Promise<Organization> {
-        return await this.organizationService.create(
-            createOrganizationDto,
-            req.user.userId
-        );
+        try {
+            const organization = await this.organizationService.create(
+                createOrganizationDto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.CREATE,
+                Organization.name,
+                req.user.userId,
+                organization.id,
+                organization.name
+            );
+            return organization;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, Organization.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -70,13 +85,26 @@ export class OrganizationController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() updateOrganizationDto: UpdateOrganizationDto
     ): Promise<Organization> {
-        checkIfUserHasAdminAccessToOrganization(req, id);
+        try {
+            checkIfUserHasAdminAccessToOrganization(req, id);
 
-        return await this.organizationService.update(
-            id,
-            updateOrganizationDto,
-            req.user.userId
-        );
+            const organization = await this.organizationService.update(
+                id,
+                updateOrganizationDto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.UPDATE,
+                Organization.name,
+                req.user.userId,
+                organization.id,
+                organization.name
+            );
+            return organization;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, Organization.name, req.user.userId, id);
+            throw err;
+        }
     }
 
     @Get("minimal")
@@ -126,8 +154,16 @@ export class OrganizationController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        checkIfUserHasAdminAccessToOrganization(req, id);
+        try {
+            checkIfUserHasAdminAccessToOrganization(req, id);
 
-        return await this.organizationService.delete(id);
+            const result = await this.organizationService.delete(id);
+
+            AuditLog.success(ActionType.DELETE, Organization.name, req.user.userId, id);
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.DELETE, Organization.name, req.user.userId, id);
+            throw err;
+        }
     }
 }
