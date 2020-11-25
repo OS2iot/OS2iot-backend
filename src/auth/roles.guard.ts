@@ -17,10 +17,13 @@ export class RolesGuard implements CanActivate {
         }
         const request = context.switchToHttp().getRequest();
         const user: AuthenticatedUser = request.user;
-        this.logger.log({
-            userId: user.userId,
-            userName: user.username,
-        });
+        this.logger.verbose(
+            JSON.stringify({
+                msg: "Authorized user using JWT",
+                userId: user.userId,
+                userName: user.username,
+            })
+        );
         return this.hasAccess(user, roleRequired);
     }
 
