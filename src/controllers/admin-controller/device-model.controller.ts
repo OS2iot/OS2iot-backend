@@ -6,6 +6,7 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllDeviceModelResponseDto } from "@dto/list-all-device-model-response.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
+import { ActionType } from "@entities/audit-log-entry";
 import { DeviceModel } from "@entities/device-model.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
@@ -35,6 +36,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import { AuditLog } from "@services/audit-log.service";
 import { DeviceModelService } from "@services/device-management/device-model.service";
 
 @ApiTags("Device Model")
@@ -88,7 +90,7 @@ export class DeviceModelController {
         checkIfUserHasWriteAccessToOrganization(req, dto.belongsToId);
 
         const res = await this.service.create(dto, req.user.userId);
-
+        AuditLog.success(ActionType.CREATE, DeviceModel.name, req.user.userId, res.id);
         return res;
     }
 
@@ -102,9 +104,15 @@ export class DeviceModelController {
         @Body() dto: UpdateDeviceModelDto
     ): Promise<DeviceModel> {
         const deviceModel = await this.service.getByIdWithRelations(id);
-        checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
-
-        return this.service.update(deviceModel, dto, req.user.userId);
+        try {
+            checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
+            throw err;
+        }
+        const res = await this.service.update(deviceModel, dto, req.user.userId);
+        AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
+        return res;
     }
 
     @Delete(":id")
@@ -116,8 +124,14 @@ export class DeviceModelController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const deviceModel = await this.service.getByIdWithRelations(id);
-        checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+        try {
+            checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+        } catch (err) {
+            AuditLog.fail(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
+            throw err;
+        }
         const res = await this.service.delete(id);
+        AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
         return new DeleteResponseDto(res.affected);
     }
 }
