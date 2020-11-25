@@ -38,6 +38,8 @@ import {
     checkIfUserIsGlobalAdmin,
 } from "@helpers/security-helper";
 import { PermissionService } from "@services/user-management/permission.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -55,9 +57,26 @@ export class PermissionController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreatePermissionDto
     ): Promise<Permission> {
-        checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
+        try {
+            checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
 
-        return await this.permissionService.createNewPermission(dto, req.user.userId);
+            const result = await this.permissionService.createNewPermission(
+                dto,
+                req.user.userId
+            );
+
+            AuditLog.success(
+                ActionType.CREATE,
+                Permission.name,
+                req.user.userId,
+                result.id,
+                result.name
+            );
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, Permission.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -67,18 +86,36 @@ export class PermissionController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdatePermissionDto
     ): Promise<Permission> {
-        const permission = await this.permissionService.getPermission(id);
-        if (permission.type == PermissionType.GlobalAdmin) {
-            checkIfUserIsGlobalAdmin(req);
-        } else {
-            const organizationPermission = permission as OrganizationPermission;
-            checkIfUserHasAdminAccessToOrganization(
-                req,
-                organizationPermission.organization.id
-            );
-        }
+        try {
+            const permission = await this.permissionService.getPermission(id);
+            if (permission.type == PermissionType.GlobalAdmin) {
+                checkIfUserIsGlobalAdmin(req);
+            } else {
+                const organizationPermission = permission as OrganizationPermission;
+                checkIfUserHasAdminAccessToOrganization(
+                    req,
+                    organizationPermission.organization.id
+                );
+            }
 
-        return await this.permissionService.updatePermission(id, dto, req.user.userId);
+            const result = await this.permissionService.updatePermission(
+                id,
+                dto,
+                req.user.userId
+            );
+
+            AuditLog.success(
+                ActionType.UPDATE,
+                Permission.name,
+                req.user.userId,
+                result.id,
+                result.name
+            );
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId, id);
+            throw err;
+        }
     }
 
     @Delete(":id")
@@ -87,18 +124,26 @@ export class PermissionController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        const permission = await this.permissionService.getPermission(id);
-        if (permission.type == PermissionType.GlobalAdmin) {
-            throw new BadRequestException("You cannot delete GlobalAdmin");
-        } else {
-            const organizationPermission = permission as OrganizationPermission;
-            checkIfUserHasAdminAccessToOrganization(
-                req,
-                organizationPermission.organization.id
-            );
-        }
+        try {
+            const permission = await this.permissionService.getPermission(id);
+            if (permission.type == PermissionType.GlobalAdmin) {
+                throw new BadRequestException("You cannot delete GlobalAdmin");
+            } else {
+                const organizationPermission = permission as OrganizationPermission;
+                checkIfUserHasAdminAccessToOrganization(
+                    req,
+                    organizationPermission.organization.id
+                );
+            }
 
-        return await this.permissionService.deletePermission(id);
+            const result = await this.permissionService.deletePermission(id);
+
+            AuditLog.success(ActionType.DELETE, Permission.name, req.user.userId, id);
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.DELETE, Permission.name, req.user.userId, id);
+            throw err;
+        }
     }
 
     @Get()
