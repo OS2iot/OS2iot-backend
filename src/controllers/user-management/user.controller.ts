@@ -36,6 +36,9 @@ import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
+import { User } from "@entities/user.entity";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -72,9 +75,17 @@ export class UserController {
                 createUserDto,
                 req.user.userId
             );
+            AuditLog.success(
+                ActionType.CREATE,
+                User.name,
+                req.user.userId,
+                user.id,
+                user.name
+            );
 
             return user;
         } catch (err) {
+            AuditLog.fail(ActionType.CREATE, User.name, req.user.userId);
             if (
                 err instanceof QueryFailedError &&
                 err.message.startsWith("duplicate key value violates unique constraint")
@@ -94,18 +105,30 @@ export class UserController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateUserDto
     ): Promise<UserResponseDto> {
-        if (dto.globalAdmin) {
-            checkIfUserIsGlobalAdmin(req);
-        }
-        // Don't leak the passwordHash
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { passwordHash, ...user } = await this.userService.updateUser(
-            id,
-            dto,
-            req.user.userId
-        );
+        try {
+            if (dto.globalAdmin) {
+                checkIfUserIsGlobalAdmin(req);
+            }
+            // Don't leak the passwordHash
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { passwordHash, ...user } = await this.userService.updateUser(
+                id,
+                dto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.UPDATE,
+                User.name,
+                req.user.userId,
+                user.id,
+                user.name
+            );
 
-        return user;
+            return user;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId, id);
+            throw err;
+        }
     }
 
     @Get(":id")
