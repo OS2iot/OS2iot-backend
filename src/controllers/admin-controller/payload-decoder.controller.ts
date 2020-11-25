@@ -40,6 +40,8 @@ import {
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
@@ -95,14 +97,26 @@ export class PayloadDecoderController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
-        checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
+        try {
+            checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
 
-        // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.create(
-            createDto,
-            req.user.userId
-        );
-        return payloadDecoder;
+            // TODO: Valider at funktionen er gyldig
+            const payloadDecoder = await this.payloadDecoderService.create(
+                createDto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.CREATE,
+                PayloadDecoder.name,
+                req.user.userId,
+                payloadDecoder.id,
+                payloadDecoder.name
+            );
+            return payloadDecoder;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, PayloadDecoder.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -115,19 +129,31 @@ export class PayloadDecoderController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
-        checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
-        const oldDecoder = await this.payloadDecoderService.findOne(id);
-        if (oldDecoder?.organization?.id) {
-            checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
-        }
-        // TODO: Valider at funktionen er gyldig
-        const payloadDecoder = await this.payloadDecoderService.update(
-            id,
-            updateDto,
-            req.user.userId
-        );
+        try {
+            checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
+            const oldDecoder = await this.payloadDecoderService.findOne(id);
+            if (oldDecoder?.organization?.id) {
+                checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
+            }
+            // TODO: Valider at funktionen er gyldig
+            const payloadDecoder = await this.payloadDecoderService.update(
+                id,
+                updateDto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.UPDATE,
+                PayloadDecoder.name,
+                req.user.userId,
+                payloadDecoder.id,
+                payloadDecoder.name
+            );
 
-        return payloadDecoder;
+            return payloadDecoder;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, PayloadDecoder.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Delete(":id")
@@ -148,9 +174,10 @@ export class PayloadDecoderController {
             if (result.affected == 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
-
+            AuditLog.success(ActionType.DELETE, PayloadDecoder.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
+            AuditLog.fail(ActionType.DELETE, PayloadDecoder.name, req.user.userId);
             throw new NotFoundException(err);
         }
     }
