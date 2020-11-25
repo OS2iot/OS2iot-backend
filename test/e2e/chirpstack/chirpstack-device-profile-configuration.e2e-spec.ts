@@ -68,7 +68,10 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
             response.result.forEach(async deviceProfile => {
                 if (deviceProfile.name.startsWith(testname)) {
-                    await deviceProfileService.deleteDeviceProfile(deviceProfile.id);
+                    await deviceProfileService.deleteDeviceProfile(
+                        deviceProfile.id,
+                        null
+                    );
                 }
             });
         });
