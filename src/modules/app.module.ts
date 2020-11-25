@@ -54,10 +54,10 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
                 maxQueryExecutionTime: 1000, // Log queries slower than 1000 ms
             }),
         }),
-        LoggerModule.forRoot({
-            pinoHttp: { useLevel: "debug", autoLogging: false },
-            exclude: [{ method: RequestMethod.GET, path: "" }],
-        }),
+        // LoggerModule.forRoot({
+        //     pinoHttp: { useLevel: "debug", autoLogging: false },
+        //     exclude: [{ method: RequestMethod.GET, path: "" }],
+        // }),
         KafkaModule,
         ScheduleModule.forRoot(),
         HttpModule,

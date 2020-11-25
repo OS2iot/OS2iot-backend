@@ -21,10 +21,7 @@ export async function setupNestJs(
     },
     server: Express
 ): Promise<INestApplication> {
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
-        logger: false,
-    });
-    app.useLogger(app.get(Logger));
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(
         new ValidationPipe({
