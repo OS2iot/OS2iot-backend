@@ -34,7 +34,8 @@ export class SigFoxApiDeviceTypeService {
     "deviceTypeId": "{deviceTypeId}",
     "deviceId": "{device}",
     "data": "{data}",
-    "seqNumber": {seqNumber}
+    "seqNumber": {seqNumber},
+    "ack": {ack}
 }`;
     private readonly CALLBACK_CONTENT_TYPE = "application/json";
     private readonly URL_BASE = "device-types";

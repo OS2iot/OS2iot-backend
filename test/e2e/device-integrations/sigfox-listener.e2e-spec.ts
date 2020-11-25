@@ -116,6 +116,7 @@ describe("SigFoxListenerController (e2e)", () => {
         sigfoxDevice.downlinkPayload = "001e19028f101272";
         await getManager().save(sigfoxDevice);
         const payload = JSON.parse(SIGFOX_PAYLOAD);
+        payload.ack = true;
 
         // Store all the messages sent to kafka
         const kafkaMessages: [string, KafkaMessage][] = [];
@@ -139,6 +140,42 @@ describe("SigFoxListenerController (e2e)", () => {
                     },
                 });
             });
+        // Sleep a bit until the message is processed (to avoid race-condition)
+        await waitForEvents(kafkaMessages, 1);
+
+        // Assert
+
+        // Pull out the payloads passed along after transforming
+        const payloads = kafkaMessages.map(x => {
+            return JSON.parse(x[1].value.toString("utf8")).body;
+        });
+        expect(payloads).toHaveLength(1);
+    }, 10000);
+
+    it("(POST) /sigfox-callback/data/bidir - Receive data from Sigfox backend - and be have downlink, but device not ready to get downlink", async () => {
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const sigfoxDevice = await generateSavedSigfoxDevice(application);
+        sigfoxDevice.downlinkPayload = "001e19028f101272";
+        await getManager().save(sigfoxDevice);
+        const payload = JSON.parse(SIGFOX_PAYLOAD);
+        payload.ack = false;
+
+        // Store all the messages sent to kafka
+        const kafkaMessages: [string, KafkaMessage][] = [];
+
+        // Setup kafkaListener to see if it is sent correctly.
+        consumer = await setupKafkaListener(
+            consumer,
+            kafkaMessages,
+            KafkaTopic.RAW_REQUEST
+        );
+
+        // Act
+        await request(app.getHttpServer())
+            .post("/sigfox-callback/data/bidir?apiKey=" + sigfoxDevice.deviceTypeId)
+            .send(payload)
+            .expect(204);
         // Sleep a bit until the message is processed (to avoid race-condition)
         await waitForEvents(kafkaMessages, 1);
 

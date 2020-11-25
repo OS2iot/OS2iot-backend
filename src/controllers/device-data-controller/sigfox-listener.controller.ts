@@ -22,8 +22,7 @@ import { ReceiveDataService } from "@services/data-management/receive-data.servi
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigFoxDownlinkCallbackDto } from "@dto/sigfox/external/sigfox-callback.dto";
-import { HttpStatus } from "@nestjs/common/enums/http-status.enum";
-import { Request, Response } from "express";
+import { Response } from "express";
 
 @ApiTags("SigFox")
 @Controller("sigfox-callback")
@@ -57,7 +56,7 @@ export class SigFoxListenerController {
             data.time * 1000 // Timestamp passed must be in millis, sigfox uses seconds.
         );
 
-        if (this.shouldSendDownlink(sigfoxDevice)) {
+        if (this.shouldSendDownlink(sigfoxDevice, data)) {
             const payload = await this.doDownlink(sigfoxDevice);
             return res.status(200).json(payload);
         }
@@ -91,8 +90,16 @@ export class SigFoxListenerController {
         }
     }
 
-    private shouldSendDownlink(iotDevice: SigFoxDevice) {
-        return iotDevice.downlinkPayload != null;
+    private shouldSendDownlink(iotDevice: SigFoxDevice, data: SigFoxCallbackDto) {
+        if (iotDevice.downlinkPayload != null) {
+            this.logger.debug(`Wanting to send downlink to ${iotDevice.deviceId}`);
+        }
+        if (!data.ack) {
+            this.logger.debug(
+                `Device ${iotDevice.deviceId} is not ready for downlink ('ack' == false)`
+            );
+        }
+        return data.ack && iotDevice.downlinkPayload != null;
     }
 
     private async findSigFoxDevice(data: SigFoxCallbackDto) {

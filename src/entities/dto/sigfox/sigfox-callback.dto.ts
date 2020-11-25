@@ -8,11 +8,11 @@ export class SigFoxCallbackDto {
     deviceId: string;
     data: string;
     seqNumber: number;
+    // If true, then the device expects a downlink
+    ack: boolean;
 
     // Only included in BIDIR
     longPolling?: boolean;
-    // Only included in BIDIR
-    ack?: boolean;
 
     // these are not available for all contracts "Condition: for devices with contract option NETWORK METADATA"
     // https://support.sigfox.com/docs/bidir
