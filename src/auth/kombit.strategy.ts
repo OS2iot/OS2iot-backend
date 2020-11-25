@@ -4,6 +4,7 @@ import { AuthService } from "@services/user-management/auth.service";
 import { Profile, Strategy } from "passport-saml";
 import { UserResponseDto } from "@dto/user-response.dto";
 import configuration from "@config/configuration";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
@@ -46,6 +47,10 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
             done(null, exists);
             return exists;
         } catch (err) {
+            if (err?.message == ErrorCodes.MissingRole) {
+                done(null, ErrorCodes.MissingRole);
+                return null;
+            }
             done(err, false);
         }
     }

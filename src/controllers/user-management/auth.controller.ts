@@ -8,6 +8,7 @@ import {
     UseGuards,
     Request,
     Logger,
+    UnauthorizedException,
 } from "@nestjs/common";
 import {
     ApiBearerAuth,
@@ -38,6 +39,7 @@ import { UserService } from "@services/user-management/user.service";
 import { KombitAuthGuard } from "@auth/kombit-auth.guard";
 import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -65,9 +67,25 @@ export class AuthController {
         @Req() req: AuthenticatedRequestKombitStrategy,
         @Res() res: Response
     ): Promise<any> {
+        const redirectTarget = req.cookies["redirect"];
+
+        // Login without proper roles
+        if (!(req.user instanceof User)) {
+            if (req.user == ErrorCodes.MissingRole) {
+                // Send back to frontend with an error
+                if (redirectTarget) {
+                    return res.redirect(
+                        `${redirectTarget}?error=${ErrorCodes.MissingRole}`
+                    );
+                } else {
+                    throw new UnauthorizedException(ErrorCodes.MissingRole);
+                }
+            }
+            throw new UnauthorizedException();
+        }
+
         const { nameId, id } = req.user;
         const jwt = await this.authService.issueJwt(nameId, id, true);
-        const redirectTarget = req.cookies["redirect"];
         if (redirectTarget) {
             return res.redirect(`${redirectTarget}?jwt=${jwt.accessToken}`);
         }
