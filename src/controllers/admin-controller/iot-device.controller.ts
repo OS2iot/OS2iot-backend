@@ -48,6 +48,8 @@ import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-devic
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -132,9 +134,21 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateIoTDeviceDto
     ): Promise<IoTDevice> {
-        checkIfUserHasWriteAccessToApplication(req, createDto.applicationId);
+        try {
+            checkIfUserHasWriteAccessToApplication(req, createDto.applicationId);
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+            throw err;
+        }
 
-        const device = this.iotDeviceService.create(createDto, req.user.userId);
+        const device = await this.iotDeviceService.create(createDto, req.user.userId);
+        AuditLog.success(
+            ActionType.CREATE,
+            IoTDevice.name,
+            req.user.userId,
+            device.id,
+            device.name
+        );
         return device;
     }
 
@@ -149,11 +163,18 @@ export class IoTDeviceController {
     ): Promise<void | CreateChirpstackDeviceQueueItemResponse> {
         const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
         if (!device) {
+            AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
             throw new NotFoundException();
         }
-        checkIfUserHasWriteAccessToApplication(req, device?.application?.id);
-
-        return await this.downlinkService.createDownlink(dto, device);
+        try {
+            checkIfUserHasWriteAccessToApplication(req, device?.application?.id);
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
+            throw err;
+        }
+        const result = await this.downlinkService.createDownlink(dto, device);
+        AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
+        return result;
     }
 
     @Put(":id")
@@ -170,19 +191,30 @@ export class IoTDeviceController {
             id,
             false
         );
-        checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
-        if (updateDto.applicationId !== oldIotDevice.application.id) {
-            // New application
-            checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+        try {
+            checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
+            if (updateDto.applicationId !== oldIotDevice.application.id) {
+                // New application
+                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+            }
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+            throw err;
         }
 
-        const application = await this.iotDeviceService.update(
+        const iotDevice = await this.iotDeviceService.update(
             id,
             updateDto,
             req.user.userId
         );
-
-        return application;
+        AuditLog.success(
+            ActionType.UPDATE,
+            IoTDevice.name,
+            req.user.userId,
+            iotDevice.id,
+            iotDevice.name
+        );
+        return iotDevice;
     }
 
     @Delete(":id")
@@ -196,12 +228,19 @@ export class IoTDeviceController {
             id,
             false
         );
-        checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
+        try {
+            checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
+        } catch (err) {
+            AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
+            throw err;
+        }
 
         try {
             const result = await this.iotDeviceService.delete(id);
+            AuditLog.success(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
+            AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
             throw new BadRequestException(err);
         }
     }
