@@ -12,6 +12,7 @@ import {
     Post,
     Put,
     Query,
+    Req,
     UseGuards,
 } from "@nestjs/common";
 import {
@@ -33,6 +34,9 @@ import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/service-profiles")
@@ -48,9 +52,17 @@ export class ServiceProfileController {
     @ApiOperation({ summary: "Create a new ServiceProfile" })
     @ApiBadRequestResponse()
     async create(
+        @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateServiceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
         const res = await this.serviceProfileService.createServiceProfile(createDto);
+        AuditLog.success(
+            ActionType.CREATE,
+            "ChirpstackServiceProfile",
+            req.user.userId,
+            createDto.serviceProfile.id,
+            createDto.serviceProfile.name
+        );
         return res.data;
     }
 
@@ -60,6 +72,7 @@ export class ServiceProfileController {
     @ApiBadRequestResponse()
     @HttpCode(204)
     async update(
+        @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
     ): Promise<void> {
@@ -69,9 +82,22 @@ export class ServiceProfileController {
         );
 
         if (result.status != 200) {
+            AuditLog.fail(
+                ActionType.UPDATE,
+                "ChirpstackServiceProfile",
+                req.user.userId,
+                updateDto.serviceProfile.id,
+                updateDto.serviceProfile.name
+            );
             throw new InternalServerErrorException(result.data);
         }
-
+        AuditLog.success(
+            ActionType.UPDATE,
+            "ChirpstackServiceProfile",
+            req.user.userId,
+            updateDto.serviceProfile.id,
+            updateDto.serviceProfile.name
+        );
         return;
     }
 
@@ -104,25 +130,47 @@ export class ServiceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
-    async deleteOne(@Param("id") id: string): Promise<DeleteResponseDto> {
-        let result = undefined;
+    async deleteOne(
+        @Req() req: AuthenticatedRequest,
+        @Param("id") id: string
+    ): Promise<DeleteResponseDto> {
         try {
-            result = await this.serviceProfileService.deleteServiceProfile(id);
-        } catch (err) {
-            this.logger.error(
-                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
-            );
-            if (
-                err?.message == "this object is used by other objects, remove them first"
-            ) {
-                throw new BadRequestException(ErrorCodes.IsUsed);
+            let result = undefined;
+            try {
+                result = await this.serviceProfileService.deleteServiceProfile(id);
+            } catch (err) {
+                this.logger.error(
+                    `Error occured during delete: '${JSON.stringify(
+                        err?.response?.data
+                    )}'`
+                );
+                if (
+                    err?.message ==
+                    "this object is used by other objects, remove them first"
+                ) {
+                    throw new BadRequestException(ErrorCodes.IsUsed);
+                }
             }
-        }
 
-        if (!result) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+            if (!result) {
+                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            }
+            AuditLog.success(
+                ActionType.DELETE,
+                "ChirpstackServiceProfile",
+                req.user.userId,
+                id
+            );
 
-        return new DeleteResponseDto(1);
+            return new DeleteResponseDto(1);
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.DELETE,
+                "ChirpstackServiceProfile",
+                req.user.userId,
+                id
+            );
+            throw err;
+        }
     }
 }
