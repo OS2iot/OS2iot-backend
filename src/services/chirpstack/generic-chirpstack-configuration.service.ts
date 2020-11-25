@@ -27,6 +27,8 @@ export class GenericChirpstackConfigurationService {
     }:${process.env.CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
     constructor(private httpService: HttpService) {}
 
+    private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
+
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
         if (limit != null && offset != null) {
             const headerDto: HeaderDto = {
@@ -71,7 +73,7 @@ export class GenericChirpstackConfigurationService {
                 .post(header.url, data, axiosConfig)
                 .toPromise();
 
-            Logger.debug(
+            this.innerLogger.debug(
                 `post: ${JSON.stringify(
                     data
                 )} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
@@ -81,7 +83,7 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            Logger.error(`post got error: ${JSON.stringify(err?.response?.data)}`);
+            this.innerLogger.error(`post got error: ${JSON.stringify(err?.response?.data)}`);
 
             this.throwBadRequestIf400(err);
 
@@ -105,7 +107,7 @@ export class GenericChirpstackConfigurationService {
         try {
             const result = await this.httpService.put(url, data, axiosConfig).toPromise();
 
-            Logger.debug(
+            this.innerLogger.debug(
                 `put: ${JSON.stringify(
                     data
                 )} to ${endpoint} resulting in ${result.status.toString()} and message: ${
@@ -116,7 +118,7 @@ export class GenericChirpstackConfigurationService {
             return result;
         } catch (err) {
             this.throwBadRequestIf400(err);
-            Logger.error(`Put got error: `);
+            this.innerLogger.error(`Put got error: `);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
@@ -128,7 +130,7 @@ export class GenericChirpstackConfigurationService {
             const url = header.url + "/" + id;
             const result = await this.httpService.get(url, axiosConfig).toPromise();
 
-            Logger.debug(
+            this.innerLogger.debug(
                 `get by ID from:${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
@@ -136,7 +138,7 @@ export class GenericChirpstackConfigurationService {
 
             return result.data;
         } catch (err) {
-            Logger.error(`get got error: ${JSON.stringify(err?.response)}`);
+            this.innerLogger.error(`get got error: ${JSON.stringify(err?.response)}`);
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
@@ -148,12 +150,12 @@ export class GenericChirpstackConfigurationService {
             const url = header.url + (id != undefined ? "/" + id : "");
             const result = await this.httpService.delete(url, axiosConfig).toPromise();
 
-            Logger.debug(
+            this.innerLogger.debug(
                 `delete : ${result.status.toString()} and message: ${result.statusText}`
             );
             return result;
         } catch (err) {
-            Logger.error(`Delete got error: ${JSON.stringify(err?.response?.data)}`);
+            this.innerLogger.error(`Delete got error: ${JSON.stringify(err?.response?.data)}`);
             throw new InternalServerErrorException(err?.response?.data);
         }
     }
@@ -169,7 +171,7 @@ export class GenericChirpstackConfigurationService {
 
             return result.data;
         } catch (err) {
-            Logger.error(
+            this.innerLogger.error(
                 `GET '${header.url}' failed with error (${
                     err?.response?.status
                 }): '${JSON.stringify(err?.response?.data)}'`
@@ -194,14 +196,14 @@ export class GenericChirpstackConfigurationService {
             const result = await this.httpService
                 .get(header.url, axiosConfig)
                 .toPromise();
-            Logger.debug(
+            this.innerLogger.debug(
                 `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
                     result.statusText
                 }`
             );
             return result.data;
         } catch (err) {
-            Logger.error(`GET ${header.url} got error: ${err}`);
+            this.innerLogger.error(`GET ${header.url} got error: ${err}`);
             throw new NotFoundException();
         }
     }

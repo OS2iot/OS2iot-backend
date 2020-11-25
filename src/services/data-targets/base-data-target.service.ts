@@ -8,18 +8,17 @@ import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interf
  */
 export abstract class BaseDataTargetService {
     constructor() {
-        Logger.debug(`Initialized ${BaseDataTargetService.name}`);
+        this.baseLogger.debug(`Initialized ${BaseDataTargetService.name}`);
     }
-
-    protected abstract logger: Logger;
+    protected readonly baseLogger = new Logger(BaseDataTargetService.name);
 
     success(receiver: string): DataTargetSendStatus {
-        this.logger.debug(`Send to ${receiver} sucessful!`);
+        this.baseLogger.debug(`Send to ${receiver} sucessful!`);
         return { status: SendStatus.OK };
     }
 
     failure(receiver: string, errorMessage: string): DataTargetSendStatus {
-        this.logger.error(`Send to ${receiver} failed with error ${errorMessage}`);
+        this.baseLogger.error(`Send to ${receiver} failed with error ${errorMessage}`);
         return {
             status: SendStatus.ERROR,
             errorMessage: errorMessage.toString(),

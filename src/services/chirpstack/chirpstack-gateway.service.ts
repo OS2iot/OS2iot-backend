@@ -133,7 +133,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
             return result;
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Tried to find gateway with id: '${gatewayId}', got an error: ${JSON.stringify(
                     err
                 )}`
@@ -190,7 +190,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                 success: true,
             };
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Got error from Chirpstack: ${JSON.stringify(err?.response?.data)}`
             );
             return {
@@ -205,7 +205,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         dto: CreateGatewayDto | UpdateGatewayDto
     ): ChirpstackResponseStatus {
         if (result.status != 200) {
-            Logger.error(
+            this.logger.error(
                 `Error from Chirpstack: '${JSON.stringify(
                     dto
                 )}', got response: ${JSON.stringify(result.data)}`

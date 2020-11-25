@@ -1,4 +1,5 @@
-import { Logger } from "@nestjs/common";
+import { Logger } from "nestjs-pino";
+import { Logger as BuiltInLogger } from "@nestjs/common";
 import * as fs from "fs";
 import * as express from "express";
 import * as http from "http";
@@ -9,10 +10,8 @@ import { setupNestJs } from "@loaders/nestjs";
 import { setupSwagger } from "@loaders/swagger";
 
 async function bootstrap() {
-    Logger.log("before env load");
     // Load .env file as environment before startup.
     dotenv.config({ path: "../.env", debug: true });
-    Logger.log("after env load");
 
     const config = {
         NEST_PORT: 3000,
@@ -36,7 +35,7 @@ async function bootstrap() {
         };
         https.createServer(httpsOptions, server).listen(8443);
     } catch (err) {
-        Logger.log("Could not setup https, skipping.");
+        BuiltInLogger.log("Could not setup https, skipping.");
     }
 
     //const url = await httpServer.;

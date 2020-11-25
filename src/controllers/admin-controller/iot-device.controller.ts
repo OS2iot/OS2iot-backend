@@ -63,6 +63,8 @@ export class IoTDeviceController {
         private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
 
+    private readonly logger = new Logger(IoTDeviceController.name);
+
     @Get(":id")
     @ApiOperation({ summary: "Find one IoT-Device by id" })
     @ApiNotFoundResponse()
@@ -79,7 +81,7 @@ export class IoTDeviceController {
                 true
             );
         } catch (err) {
-            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+            this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
 
         if (!result) {
@@ -104,7 +106,7 @@ export class IoTDeviceController {
                 true
             );
         } catch (err) {
-            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+            this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
 
         if (!device) {

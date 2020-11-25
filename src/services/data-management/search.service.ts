@@ -15,6 +15,7 @@ export class SearchService {
     constructor(private gatewayService: ChirpstackGatewayService) {}
 
     private readonly SEARCH_RESULT_LIMIT = 100;
+    private readonly logger = new Logger(SearchService.name);
 
     async findByQuery(
         req: AuthenticatedRequest,
@@ -30,7 +31,7 @@ export class SearchService {
                 return this.addTypeToResults(x, SearchResultType.Gateway);
             })
             .catch(err => {
-                Logger.error(`Failed to search for Gateway, error: ${err}`);
+                this.logger.error(`Failed to search for Gateway, error: ${err}`);
             });
 
         const applicationPromise = this.findApplications(req, trimmedQuery)
@@ -38,7 +39,7 @@ export class SearchService {
                 return this.addTypeToResults(x, SearchResultType.Application);
             })
             .catch(err => {
-                Logger.error(`Failed to search for Application, error: ${err}`);
+                this.logger.error(`Failed to search for Application, error: ${err}`);
             });
 
         const devicePromise = this.findIoTDevices(req, trimmedQuery)
@@ -46,7 +47,7 @@ export class SearchService {
                 return this.addTypeToResults(x, SearchResultType.IoTDevice);
             })
             .catch(err => {
-                Logger.error(`Failed to search for IOTDevice, error: ${err}`);
+                this.logger.error(`Failed to search for IOTDevice, error: ${err}`);
             });
 
         const results = _.flatMap(

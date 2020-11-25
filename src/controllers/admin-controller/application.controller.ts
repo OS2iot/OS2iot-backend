@@ -56,6 +56,8 @@ import { ApplicationService } from "@services/device-management/application.serv
 export class ApplicationController {
     constructor(private applicationService: ApplicationService) {}
 
+    private readonly logger = new Logger(ApplicationController.name);
+
     @Read()
     @Get()
     @ApiProduces("application/json")
@@ -159,7 +161,7 @@ export class ApplicationController {
         );
 
         if (!isValid) {
-            Logger.error(
+            this.logger.error(
                 `Tried to create an application with name: '${createApplicationDto.name}'`
             );
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
@@ -189,7 +191,7 @@ export class ApplicationController {
                 id
             ))
         ) {
-            Logger.error(
+            this.logger.error(
                 `Tried to change an application with name: '${updateApplicationDto.name}'`
             );
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);

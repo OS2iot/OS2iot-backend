@@ -1,6 +1,7 @@
-import { HttpModule, Module } from "@nestjs/common";
+import { HttpModule, Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { LoggerModule } from "nestjs-pino";
 
 import configuration from "@config/configuration";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
@@ -47,11 +48,15 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
                 synchronize: true,
-                logging: true,
+                logging: false,
                 autoLoadEntities: true,
                 retryAttempts: 0,
-                maxQueryExecutionTime: 200, // Log queries slower than 200 ms
+                maxQueryExecutionTime: 1000, // Log queries slower than 1000 ms
             }),
+        }),
+        LoggerModule.forRoot({
+            pinoHttp: { useLevel: "debug", autoLogging: false },
+            exclude: [{ method: RequestMethod.GET, path: "" }],
         }),
         KafkaModule,
         ScheduleModule.forRoot(),

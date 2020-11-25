@@ -28,6 +28,7 @@ export class DataTargetService {
         private dataTargetRepository: Repository<DataTarget>,
         private applicationService: ApplicationService
     ) {}
+    private readonly logger = new Logger(DataTargetService.name);
 
     async findAndCountAllWithPagination(
         query?: ListAllDataTargetsDto,
@@ -165,7 +166,7 @@ export class DataTargetService {
                     dataTargetDto.applicationId
                 );
             } catch (err) {
-                Logger.error(
+                this.logger.error(
                     `Could not find application with id: ${dataTargetDto.applicationId}`
                 );
 

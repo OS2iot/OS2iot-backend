@@ -1,9 +1,10 @@
 import {
     BadRequestException,
     INestApplication,
-    Logger,
     ValidationPipe,
+    Logger as BuiltInLogger,
 } from "@nestjs/common";
+import { Logger } from "nestjs-pino";
 import { NestFactory } from "@nestjs/core";
 import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
@@ -20,7 +21,10 @@ export async function setupNestJs(
     },
     server: Express
 ): Promise<INestApplication> {
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
+        logger: false,
+    });
+    app.useLogger(app.get(Logger));
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(
         new ValidationPipe({
@@ -33,7 +37,7 @@ export async function setupNestJs(
     app.use(compression());
     app.use(cookieParser());
 
-    Logger.log(
+    BuiltInLogger.log(
         `Kafka: ${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
             process.env.KAFKA_PORT || "9092"
         }`

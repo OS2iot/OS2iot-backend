@@ -45,6 +45,8 @@ import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helpe
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
+    private readonly logger = new Logger(DeviceProfileController.name);
+
     @Post()
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new DeviceProfile" })
@@ -75,7 +77,7 @@ export class DeviceProfileController {
         try {
             await this.deviceProfileService.updateDeviceProfile(updateDto, id, req);
         } catch (err) {
-            Logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
+            this.logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
             throw new InternalServerErrorException(err?.response?.data);
         }
     }
@@ -91,7 +93,7 @@ export class DeviceProfileController {
         try {
             result = await this.deviceProfileService.findOneDeviceProfileById(id);
         } catch (err) {
-            Logger.error(`Error occured during get/:id : '${JSON.stringify(err)}'`);
+            this.logger.error(`Error occured during get/:id : '${JSON.stringify(err)}'`);
         }
         if (!result) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -109,13 +111,13 @@ export class DeviceProfileController {
     ): Promise<ListAllDeviceProfilesResponseDto> {
         let result = undefined;
         try {
-            Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
+            this.logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
             result = await this.deviceProfileService.findAllDeviceProfiles(
                 limit || 50,
                 offset || 0
             );
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`
             );
         }
@@ -133,7 +135,7 @@ export class DeviceProfileController {
         try {
             result = await this.deviceProfileService.deleteDeviceProfile(id, req);
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
             if (

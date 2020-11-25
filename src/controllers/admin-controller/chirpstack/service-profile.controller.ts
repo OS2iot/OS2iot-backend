@@ -41,6 +41,7 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 @Write()
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
+    private readonly logger = new Logger(ServiceProfileController.name);
 
     @Post()
     @ApiProduces("application/json")
@@ -91,7 +92,7 @@ export class ServiceProfileController {
         @Query("limit") limit: number,
         @Query("offset") offset: number
     ): Promise<ListAllServiceProfilesResponseDto> {
-        Logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
+        this.logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
         const res = await this.serviceProfileService.findAllServiceProfiles(
             limit || 50,
             offset || 0
@@ -108,7 +109,7 @@ export class ServiceProfileController {
         try {
             result = await this.serviceProfileService.deleteServiceProfile(id);
         } catch (err) {
-            Logger.error(
+            this.logger.error(
                 `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
             );
             if (

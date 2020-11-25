@@ -84,7 +84,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     }
 
     async disconnect(): Promise<void> {
-        Logger.debug("Disconnecting from Kafka!");
+        this.logger.debug("Disconnecting from Kafka!");
         await this.producer.disconnect();
         await this.consumer.disconnect();
     }

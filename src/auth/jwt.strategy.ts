@@ -24,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             secretOrKey: configService.get<string>("jwt.secret"),
         });
     }
+    private readonly logger = new Logger(JwtStrategy.name);
 
     private readonly NAME_ID_FORMAT =
         "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
@@ -32,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         // Does the user still exist?
         const exists = await this.userService.findOne(payload.sub);
         if (!exists) {
-            Logger.warn(
+            this.logger.warn(
                 `Authorization for user with id: ${payload.sub} failed, since they no longer exists`
             );
             throw new UnauthorizedException();

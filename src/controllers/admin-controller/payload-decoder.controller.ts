@@ -51,6 +51,8 @@ import { PayloadDecoderService } from "@services/data-management/payload-decoder
 export class PayloadDecoderController {
     constructor(private payloadDecoderService: PayloadDecoderService) {}
 
+    private readonly logger = new Logger(PayloadDecoderController.name);
+
     @Get(":id")
     @ApiOperation({ summary: "Find one Payload Decoder by id" })
     @ApiNotFoundResponse()
@@ -62,7 +64,7 @@ export class PayloadDecoderController {
         try {
             result = await this.payloadDecoderService.findOne(id);
         } catch (err) {
-            Logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+            this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
 
         if (!result) {
