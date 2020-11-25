@@ -39,6 +39,8 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { checkIfUserHasWriteAccessToApplication } from "@helpers/security-helper";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("IoT-Device, PayloadDecoder and DataTarget Connection")
 @Controller("iot-device-payload-decoder-data-target-connection")
@@ -152,8 +154,28 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Body()
         createDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-        await this.checkUserHasWriteAccessToAllIotDevices(createDto.iotDeviceIds, req);
-        return await this.service.create(createDto, req.user.userId);
+        try {
+            await this.checkUserHasWriteAccessToAllIotDevices(
+                createDto.iotDeviceIds,
+                req
+            );
+            const result = await this.service.create(createDto, req.user.userId);
+
+            AuditLog.success(
+                ActionType.CREATE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                result.id
+            );
+            return result;
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.CREATE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId
+            );
+            throw err;
+        }
     }
 
     private async checkUserHasWriteAccessToAllIotDevices(
@@ -180,17 +202,37 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Body()
         updateDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-        const newIotDevice = await this.iotDeviceService.findOne(
-            updateDto.iotDeviceIds[0]
-        );
-        checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
-        const oldConnection = await this.service.findOne(id);
-        await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
-        const oldIds = oldConnection.iotDevices.map(x => x.id);
-        if (updateDto.iotDeviceIds != oldIds) {
-            await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
+        try {
+            const newIotDevice = await this.iotDeviceService.findOne(
+                updateDto.iotDeviceIds[0]
+            );
+            checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
+            const oldConnection = await this.service.findOne(id);
+            await this.checkUserHasWriteAccessToAllIotDevices(
+                updateDto.iotDeviceIds,
+                req
+            );
+            const oldIds = oldConnection.iotDevices.map(x => x.id);
+            if (updateDto.iotDeviceIds != oldIds) {
+                await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
+            }
+            const result = await this.service.update(id, updateDto, req.user.userId);
+
+            AuditLog.success(
+                ActionType.UPDATE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                result.id
+            );
+            return result;
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.UPDATE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                id
+            );
         }
-        return await this.service.update(id, updateDto, req.user.userId);
     }
 
     @Delete(":id")
@@ -203,18 +245,39 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         const oldConnection = await this.service.findOne(id);
-        await this.checkUserHasWriteAccessToAllIotDevices(
-            oldConnection.iotDevices.map(x => x.id),
-            req
-        );
+        try {
+            await this.checkUserHasWriteAccessToAllIotDevices(
+                oldConnection.iotDevices.map(x => x.id),
+                req
+            );
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.DELETE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                id
+            );
+            throw err;
+        }
         try {
             const result = await this.service.delete(id);
-
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
+            AuditLog.success(
+                ActionType.DELETE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                id
+            );
             return new DeleteResponseDto(result.affected);
         } catch (err) {
+            AuditLog.fail(
+                ActionType.DELETE,
+                IoTDevicePayloadDecoderDataTargetConnection.name,
+                req.user.userId,
+                id
+            );
             throw new NotFoundException(err);
         }
     }
