@@ -39,6 +39,8 @@ import {
     checkIfUserHasWriteAccessToApplication,
 } from "@helpers/security-helper";
 import { DataTargetService } from "@services/data-targets/data-target.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -98,7 +100,18 @@ export class DataTargetController {
         @Body() createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {
         checkIfUserHasWriteAccessToApplication(req, createDataTargetDto.applicationId);
-        return await this.dataTargetService.create(createDataTargetDto, req.user.userId);
+        const dataTarget = await this.dataTargetService.create(
+            createDataTargetDto,
+            req.user.userId
+        );
+        AuditLog.success(
+            ActionType.CREATE,
+            DataTarget.name,
+            req.user.userId,
+            dataTarget.id,
+            dataTarget.name
+        );
+        return dataTarget;
     }
 
     @Put(":id")
@@ -111,15 +124,33 @@ export class DataTargetController {
         @Body() updateDto: UpdateDataTargetDto
     ): Promise<DataTarget> {
         const oldDataTarget = await this.dataTargetService.findOne(id);
-        checkIfUserHasWriteAccessToApplication(req, oldDataTarget.application.id);
-        if (oldDataTarget.application.id != updateDto.applicationId) {
-            checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+        try {
+            checkIfUserHasWriteAccessToApplication(req, oldDataTarget.application.id);
+            if (oldDataTarget.application.id != updateDto.applicationId) {
+                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+            }
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.UPDATE,
+                DataTarget.name,
+                req.user.userId,
+                oldDataTarget.id,
+                oldDataTarget.name
+            );
+            throw err;
         }
 
         const dataTarget = await this.dataTargetService.update(
             id,
             updateDto,
             req.user.userId
+        );
+        AuditLog.success(
+            ActionType.UPDATE,
+            DataTarget.name,
+            req.user.userId,
+            dataTarget.id,
+            dataTarget.name
         );
         return dataTarget;
     }
@@ -138,8 +169,10 @@ export class DataTargetController {
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
+            AuditLog.success(ActionType.DELETE, DataTarget.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
+            AuditLog.fail(ActionType.DELETE, DataTarget.name, req.user.userId, id);
             throw new NotFoundException(err);
         }
     }
