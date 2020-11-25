@@ -3,7 +3,7 @@ export class AuditLogEntry {
     actionType: ActionType;
     type: string;
     completed?: boolean;
-    id?: number;
+    id?: number | string;
     name?: string;
     userId: number;
 }

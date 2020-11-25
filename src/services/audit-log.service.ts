@@ -9,7 +9,7 @@ export class AuditLog {
         actionType: ActionType,
         type: string,
         userId: number,
-        id: number = null,
+        id: number | string = null,
         name: string = null,
         completed = false
     ): Promise<void> {
@@ -29,7 +29,7 @@ export class AuditLog {
         actionType: ActionType,
         type: string,
         userId: number,
-        id: number = null,
+        id: number | string = null,
         name: string = null
     ): Promise<void> {
         this.log(actionType, type, userId, id, name, true);
@@ -39,7 +39,7 @@ export class AuditLog {
         actionType: ActionType,
         type: string,
         userId: number,
-        id: number = null,
+        id: number | string = null,
         name: string = null
     ): Promise<void> {
         this.log(actionType, type, userId, id, name, false);

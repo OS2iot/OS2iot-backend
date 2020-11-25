@@ -33,6 +33,8 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -52,11 +54,26 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
         try {
-            return await this.chirpstackGatewayService.createNewGateway(
+            const gateway = await this.chirpstackGatewayService.createNewGateway(
                 dto,
                 req.user.userId
             );
+            AuditLog.success(
+                ActionType.CREATE,
+                "ChirpstackGateway",
+                req.user.userId,
+                dto.gateway.id,
+                dto.gateway.name
+            );
+            return gateway;
         } catch (err) {
+            AuditLog.fail(
+                ActionType.CREATE,
+                "ChirpstackGateway",
+                req.user.userId,
+                dto.gateway.id,
+                dto.gateway.name
+            );
             if (err?.response?.data?.message == "object already exists") {
                 throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
             }
@@ -105,10 +122,33 @@ export class ChirpstackGatewayController {
         @Param("gatewayId") gatewayId: string,
         @Body() dto: UpdateGatewayDto
     ): Promise<ChirpstackResponseStatus> {
-        if (dto.gateway.id) {
-            throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
+        try {
+            if (dto.gateway.id) {
+                throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
+            }
+            const gateway = await this.chirpstackGatewayService.modifyGateway(
+                gatewayId,
+                dto,
+                req
+            );
+            AuditLog.success(
+                ActionType.UPDATE,
+                "ChirpstackGateway",
+                req.user.userId,
+                dto.gateway.id,
+                dto.gateway.name
+            );
+            return gateway;
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.UPDATE,
+                "ChirpstackGateway",
+                req.user.userId,
+                dto.gateway.id,
+                dto.gateway.name
+            );
+            throw err;
         }
-        return await this.chirpstackGatewayService.modifyGateway(gatewayId, dto, req);
     }
 
     @Delete(":gatewayId")
@@ -116,10 +156,32 @@ export class ChirpstackGatewayController {
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string
     ): Promise<ChirpstackResponseStatus> {
-        const gw = await this.chirpstackGatewayService.getOne(gatewayId);
-        if (gw.gateway.tags?.organizationId != null) {
-            checkIfUserHasWriteAccessToOrganization(req, +gw.gateway.tags.organizationId);
+        try {
+            const gw = await this.chirpstackGatewayService.getOne(gatewayId);
+            if (gw.gateway.tags?.organizationId != null) {
+                checkIfUserHasWriteAccessToOrganization(
+                    req,
+                    +gw.gateway.tags.organizationId
+                );
+            }
+            const deleteResult = await this.chirpstackGatewayService.deleteGateway(
+                gatewayId
+            );
+            AuditLog.success(
+                ActionType.DELETE,
+                "ChirpstackGateway",
+                req.user.userId,
+                gatewayId
+            );
+            return deleteResult;
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.DELETE,
+                "ChirpstackGateway",
+                req.user.userId,
+                gatewayId
+            );
+            throw err;
         }
-        return await this.chirpstackGatewayService.deleteGateway(gatewayId);
     }
 }
