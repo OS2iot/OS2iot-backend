@@ -178,8 +178,8 @@ export class ApplicationController {
             ActionType.CREATE,
             Application.name,
             req.user.userId,
-            application.name,
-            application.id
+            application.id,
+            application.name
         );
         return application;
     }
@@ -218,8 +218,8 @@ export class ApplicationController {
             ActionType.UPDATE,
             Application.name,
             req.user.userId,
-            application.name,
-            application.id
+            application.id,
+            application.name
         );
         return application;
     }
@@ -240,13 +240,7 @@ export class ApplicationController {
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
-            AuditLog.success(
-                ActionType.DELETE,
-                Application.name,
-                req.user.userId,
-                null,
-                id
-            );
+            AuditLog.success(ActionType.DELETE, Application.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, Application.name, req.user.userId);

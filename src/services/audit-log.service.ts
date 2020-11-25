@@ -9,8 +9,8 @@ export class AuditLog {
         actionType: ActionType,
         type: string,
         userId: number,
-        name: string = null,
         id: number = null,
+        name: string = null,
         completed = false
     ): Promise<void> {
         const auditLogEntry: AuditLogEntry = {
@@ -29,19 +29,19 @@ export class AuditLog {
         actionType: ActionType,
         type: string,
         userId: number,
-        name: string = null,
-        id: number = null
+        id: number = null,
+        name: string = null
     ): Promise<void> {
-        this.log(actionType, type, userId, name, id, true);
+        this.log(actionType, type, userId, id, name, true);
     }
 
     static async fail(
         actionType: ActionType,
         type: string,
         userId: number,
-        name: string = null,
-        id: number = null
+        id: number = null,
+        name: string = null
     ): Promise<void> {
-        this.log(actionType, type, userId, name, id, false);
+        this.log(actionType, type, userId, id, name, false);
     }
 }
