@@ -36,6 +36,8 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
@@ -55,12 +57,35 @@ export class DeviceProfileController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
-        checkIfUserHasWriteAccessToOrganization(req, createDto.internalOrganizationId);
-        const result = await this.deviceProfileService.createDeviceProfile(
-            createDto,
-            req.user.userId
-        );
-        return result.data;
+        try {
+            checkIfUserHasWriteAccessToOrganization(
+                req,
+                createDto.internalOrganizationId
+            );
+            const result = await this.deviceProfileService.createDeviceProfile(
+                createDto,
+                req.user.userId
+            );
+
+            AuditLog.success(
+                ActionType.CREATE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                createDto.deviceProfile.id,
+                createDto.deviceProfile.name
+            );
+
+            return result.data;
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.CREATE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                createDto.deviceProfile.id,
+                createDto.deviceProfile.name
+            );
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -76,8 +101,22 @@ export class DeviceProfileController {
     ): Promise<void> {
         try {
             await this.deviceProfileService.updateDeviceProfile(updateDto, id, req);
+            AuditLog.success(
+                ActionType.UPDATE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                updateDto.deviceProfile.id,
+                updateDto.deviceProfile.name
+            );
         } catch (err) {
             this.logger.error(`Error occured during put: '${JSON.stringify(err)}'`);
+            AuditLog.fail(
+                ActionType.CREATE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                updateDto.deviceProfile.id,
+                updateDto.deviceProfile.name
+            );
             throw new InternalServerErrorException(err?.response?.data);
         }
     }
@@ -131,24 +170,42 @@ export class DeviceProfileController {
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string
     ): Promise<DeleteResponseDto> {
-        let result = undefined;
         try {
-            result = await this.deviceProfileService.deleteDeviceProfile(id, req);
-        } catch (err) {
-            this.logger.error(
-                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
-            );
-            if (
-                err?.message == "this object is used by other objects, remove them first"
-            ) {
-                throw new BadRequestException(ErrorCodes.IsUsed);
+            let result = undefined;
+            try {
+                result = await this.deviceProfileService.deleteDeviceProfile(id, req);
+            } catch (err) {
+                this.logger.error(
+                    `Error occured during delete: '${JSON.stringify(
+                        err?.response?.data
+                    )}'`
+                );
+                if (
+                    err?.message ==
+                    "this object is used by other objects, remove them first"
+                ) {
+                    throw new BadRequestException(ErrorCodes.IsUsed);
+                }
             }
-        }
 
-        if (!result) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            if (!result) {
+                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            }
+            AuditLog.success(
+                ActionType.DELETE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                id
+            );
+            return new DeleteResponseDto(1);
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.DELETE,
+                "ChirpstackDeviceProfile",
+                req.user.userId,
+                id
+            );
+            throw err;
         }
-
-        return new DeleteResponseDto(1);
     }
 }
