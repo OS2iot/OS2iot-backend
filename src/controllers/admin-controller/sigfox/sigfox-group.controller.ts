@@ -40,6 +40,8 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { SigFoxTestResponse } from "@dto/sigfox/internal/sigfox-test-response.dto";
 import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("SigFox")
 @Controller("sigfox-group")
@@ -94,11 +96,19 @@ export class SigfoxGroupController {
         @Req() req: AuthenticatedRequest,
         @Body() query: CreateSigFoxGroupRequestDto
     ): Promise<SigFoxGroup> {
-        checkIfUserHasWriteAccessToOrganization(req, query.organizationId);
-
         try {
-            return await this.service.create(query, req.user.userId);
+            checkIfUserHasWriteAccessToOrganization(req, query.organizationId);
+            const group = await this.service.create(query, req.user.userId);
+
+            AuditLog.success(
+                ActionType.CREATE,
+                SigFoxGroup.name,
+                req.user.userId,
+                group.id
+            );
+            return group;
         } catch (err) {
+            AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId);
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
                 throw new BadRequestException(
                     ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
@@ -121,12 +131,21 @@ export class SigfoxGroupController {
         try {
             group = await this.service.findOneForPermissionCheck(id);
         } catch (err) {
+            AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId, id);
             throw new NotFoundException();
         }
         checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
         try {
-            return await this.service.update(group, dto, req.user.userId);
+            const changeGroup = await this.service.update(group, dto, req.user.userId);
+            AuditLog.success(
+                ActionType.UPDATE,
+                SigFoxGroup.name,
+                req.user.userId,
+                group.id
+            );
+            return changeGroup;
         } catch (err) {
+            AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId, id);
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
                 throw new BadRequestException(
                     ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
