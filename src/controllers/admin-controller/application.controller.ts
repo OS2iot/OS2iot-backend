@@ -45,6 +45,8 @@ import {
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import { ApplicationService } from "@services/device-management/application.service";
+import { AuditLog } from "@services/audit-log.service";
+import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Application")
 @Controller("application")
@@ -164,12 +166,20 @@ export class ApplicationController {
             this.logger.error(
                 `Tried to create an application with name: '${createApplicationDto.name}'`
             );
+            AuditLog.fail(ActionType.CREATE, Application.name, req.user.userId);
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
-        const application = this.applicationService.create(
+        const application = await this.applicationService.create(
             createApplicationDto,
             req.user.userId
+        );
+        AuditLog.success(
+            ActionType.CREATE,
+            Application.name,
+            req.user.userId,
+            application.name,
+            application.id
         );
         return application;
     }
@@ -194,6 +204,7 @@ export class ApplicationController {
             this.logger.error(
                 `Tried to change an application with name: '${updateApplicationDto.name}'`
             );
+            AuditLog.fail(ActionType.UPDATE, Application.name, req.user.userId);
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
@@ -203,6 +214,13 @@ export class ApplicationController {
             req.user.userId
         );
 
+        AuditLog.success(
+            ActionType.UPDATE,
+            Application.name,
+            req.user.userId,
+            application.name,
+            application.id
+        );
         return application;
     }
 
@@ -222,8 +240,16 @@ export class ApplicationController {
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
+            AuditLog.success(
+                ActionType.DELETE,
+                Application.name,
+                req.user.userId,
+                null,
+                id
+            );
             return new DeleteResponseDto(result.affected);
         } catch (err) {
+            AuditLog.fail(ActionType.DELETE, Application.name, req.user.userId);
             throw new NotFoundException(err);
         }
     }
