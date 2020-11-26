@@ -14,13 +14,18 @@ import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
+    generateSavedApplication,
+    generateSavedConnection,
+    generateSavedDataTarget,
     generateSavedGlobalAdminUser,
+    generateSavedIoTDevice,
     generateSavedOrganization,
     generateSavedPayloadDecoder,
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
@@ -258,6 +263,29 @@ describe("PayloadDecoderController (e2e)", () => {
 
                 expect(auditLogSuccessListener).toHaveBeenCalled();
                 expect(auditLogFailListener).not.toHaveBeenCalled();
+            });
+    });
+
+    it("(DELETE) /payload-decoder/:id - not allowed since decoder is in use", async () => {
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const iotDevice = await generateSavedIoTDevice(application);
+        const dt = await generateSavedDataTarget(application);
+        const decoder = await generateSavedPayloadDecoder();
+        await generateSavedConnection(iotDevice, dt, decoder);
+
+        return await request(app.getHttpServer())
+            .delete(`/payload-decoder/${decoder.id}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: ErrorCodes.DeleteNotAllowedItemIsInUse,
+                });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 });

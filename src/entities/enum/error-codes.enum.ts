@@ -31,4 +31,5 @@ export enum ErrorCodes {
     SigfoxError = "MESSAGE.SIGFOX-ERROR",
     NoData = "NoData",
     MissingRole = "MissingRole",
+    DeleteNotAllowedItemIsInUse = "MESSAGE.DELETE-NOT-ALLOWED-ITEM-IS-IN-USE",
 }

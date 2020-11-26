@@ -82,7 +82,7 @@ export abstract class IoTDevice extends DbBaseEntity {
     connections: IoTDevicePayloadDecoderDataTargetConnection[];
 
     @ManyToOne(() => DeviceModel, deviceModel => deviceModel.devices, {
-        onDelete: "SET NULL",
+        onDelete: "RESTRICT",
     })
     @JoinColumn()
     deviceModel?: DeviceModel;

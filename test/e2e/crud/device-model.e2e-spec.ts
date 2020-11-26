@@ -3,7 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
-import { Repository } from "typeorm";
+import { getManager, Repository } from "typeorm";
 
 import configuration from "@config/configuration";
 import { AuthModule } from "@modules/user-management/auth.module";
@@ -11,8 +11,11 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import {
     clearDatabase,
     generateDeviceModel,
+    generateIoTDevice,
+    generateSavedApplication,
     generateSavedDeviceModel,
     generateSavedGlobalAdminUser,
+    generateSavedIoTDevice,
     generateSavedOrganization,
     generateValidJwtForUser,
 } from "../test-helpers";
@@ -24,6 +27,7 @@ import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 describe(`${DeviceModelController.name} (e2e)`, () => {
     let app: INestApplication;
@@ -47,7 +51,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 AuthModule,
@@ -303,5 +307,28 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
 
         expect(auditLogSuccessListener).toHaveBeenCalled();
         expect(auditLogFailListener).not.toHaveBeenCalled();
+    });
+
+    it("(DELETE) /device-model/:id - In use, not allowed", async () => {
+        const application = await generateSavedApplication(org);
+        const deviceModel = await generateSavedDeviceModel(org, "my device model");
+        const device = await generateIoTDevice(application);
+        device.deviceModel = deviceModel;
+        await getManager().save(device);
+        expect(await repository.findOne()).not.toBeNull();
+
+        await request(app.getHttpServer())
+            .delete("/device-model/" + deviceModel.id)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .expect(400)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toMatchObject({
+                    message: ErrorCodes.DeleteNotAllowedItemIsInUse,
+                });
+            });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 });

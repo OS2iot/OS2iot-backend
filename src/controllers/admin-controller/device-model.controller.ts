@@ -14,6 +14,7 @@ import {
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -133,15 +134,18 @@ export class DeviceModelController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        const deviceModel = await this.service.getByIdWithRelations(id);
         try {
+            const deviceModel = await this.service.getByIdWithRelations(id);
             checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+            const res = await this.service.delete(id);
+            AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
+            return new DeleteResponseDto(res.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
+            if (err?.name == "QueryFailedError") {
+                throw new BadRequestException(ErrorCodes.DeleteNotAllowedItemIsInUse);
+            }
             throw err;
         }
-        const res = await this.service.delete(id);
-        AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
-        return new DeleteResponseDto(res.affected);
     }
 }

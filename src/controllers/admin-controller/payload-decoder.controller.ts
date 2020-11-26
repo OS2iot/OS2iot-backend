@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -178,6 +179,9 @@ export class PayloadDecoderController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, PayloadDecoder.name, req.user.userId);
+            if (err?.name == "QueryFailedError") {
+                throw new BadRequestException(ErrorCodes.DeleteNotAllowedItemIsInUse);
+            }
             throw new NotFoundException(err);
         }
     }

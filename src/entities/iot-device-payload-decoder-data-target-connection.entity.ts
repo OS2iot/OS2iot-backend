@@ -16,7 +16,7 @@ export class IoTDevicePayloadDecoderDataTargetConnection extends DbBaseEntity {
     @JoinTable()
     iotDevices: IoTDevice[];
 
-    @ManyToOne(() => PayloadDecoder, { nullable: true, onDelete: "CASCADE" })
+    @ManyToOne(() => PayloadDecoder, { nullable: true, onDelete: "RESTRICT" })
     @JoinColumn()
     payloadDecoder?: PayloadDecoder;
 
