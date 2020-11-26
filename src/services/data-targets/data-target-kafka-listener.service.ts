@@ -59,19 +59,15 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         dto: TransformedPayloadDto
     ) {
         // Get connections in order to only send to the dataTargets which is identified by the pair of IoTDevice and PayloadDecoder
-        const connections = await this.ioTDevicePayloadDecoderDataTargetConnectionService.findAllByIoTDeviceAndPayloadDecoderId(
+        const dataTargets = await this.dataTargetService.findDataTargetsByConnectionPayloadDecoderAndIoTDevice(
             iotDevice.id,
             dto.payloadDecoderId
         );
+
+        const ids = dataTargets.map(x => x.id).join(", ");
         this.logger.debug(
-            `Found ${connections.length} Connections: [${connections
-                .map(x => x.id)
-                .join(", ")}]`
+            `Found ${dataTargets.length} datatargets to send to: [${ids}] for iotDeviceId: '${iotDevice.id}' and payloadDecoderId: '${dto.payloadDecoderId}'`
         );
-
-        // Map from connections to datatargets
-        const dataTargets = connections.map(x => x.dataTarget);
-
         this.sendToDataTargets(dataTargets, dto);
     }
 

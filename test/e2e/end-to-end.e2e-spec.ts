@@ -11,24 +11,25 @@ import * as request from "supertest";
 
 import {
     clearDatabase,
-    generateIoTDevice,
     generateSavedApplication,
     generateSavedConnection,
     generateSavedDataTarget,
     generateSavedHttpDevice,
-    generateSavedIoTDevice,
     generateSavedOrganization,
     generateSavedPayloadDecoder,
 } from "./test-helpers";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
-import { sleep } from "./kafka-test-helpers";
 import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
+import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
+import waitForExpect from "wait-for-expect";
 
 describe("End-to-End (e2e)", () => {
     let app: INestApplication;
     let kafkaService: KafkaService;
     let httpService: HttpService;
+    let httpPushService: HttpPushDataTargetService;
+    let httpPushListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,7 +43,7 @@ describe("End-to-End (e2e)", () => {
                     password: "toi2so",
                     database: "os2iot-e2e",
                     synchronize: true,
-                    logging: false,
+                    logging: true,
                     autoLoadEntities: true,
                 }),
                 KafkaModule,
@@ -59,6 +60,8 @@ describe("End-to-End (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         kafkaService = moduleFixture.get("KafkaService");
+        httpPushService = moduleFixture.get("HttpPushDataTargetService");
+        httpPushListener = jest.spyOn(httpPushService, "send");
     });
 
     afterAll(async () => {
@@ -74,6 +77,7 @@ describe("End-to-End (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     const dataToSend = JSON.parse(`{
@@ -118,8 +122,75 @@ describe("End-to-End (e2e)", () => {
             .expect(204);
 
         // Assert
-        await sleep(5_000);
+        await waitForExpect(() => {
+            expect(httpPushListener).toHaveBeenCalledTimes(4);
+        });
     }, 60_000);
 
-    it.todo("Setup 3 devices, 1 payload transformer, 2 data targets and send to devices");
+    it("Setup 2 separate applications - IOT-1018 / IOT-960", async () => {
+        const org1 = await generateSavedOrganization();
+        const app1 = await generateSavedApplication(org1);
+        const dev1 = await generateSavedHttpDevice(app1);
+        const dt1 = await generateSavedDataTarget(
+            app1,
+            "https://endhndo0qpbanxp.m.pipedream.net"
+        );
+
+        const org2 = await generateSavedOrganization("2");
+        const app2 = await generateSavedApplication(org2, "2");
+        const dev2 = await generateSavedHttpDevice(app2);
+        const pd2 = await generateSavedPayloadDecoder(org2);
+        const dt2 = await generateSavedDataTarget(
+            app2,
+            "https://enge6zla3nxtmbo.m.pipedream.net"
+        );
+
+        await generateSavedConnection(dev1, dt1);
+        await generateSavedConnection(dev2, dt2);
+        await generateSavedConnection(dev2, dt2, pd2);
+
+        // Act
+        await request(app.getHttpServer())
+            .post("/receive-data/?apiKey=" + dev1.apiKey)
+            .send(dataToSend)
+            .expect(204);
+
+        // Assert
+        await waitForExpect(() => {
+            expect(httpPushListener).toHaveBeenCalledTimes(1);
+        });
+    }, 60_0000);
+
+    it("Setup 2 separate applications - shared payload decoder - IOT-1018 / IOT-960", async () => {
+        const org1 = await generateSavedOrganization();
+        const app1 = await generateSavedApplication(org1);
+        const dev1 = await generateSavedHttpDevice(app1);
+        const dt1 = await generateSavedDataTarget(
+            app1,
+            "https://endhndo0qpbanxp.m.pipedream.net"
+        );
+
+        const org2 = await generateSavedOrganization("2");
+        const app2 = await generateSavedApplication(org2, "2");
+        const dev2 = await generateSavedHttpDevice(app2);
+        const pd2 = await generateSavedPayloadDecoder(org2);
+        const dt2 = await generateSavedDataTarget(
+            app2,
+            "https://enge6zla3nxtmbo.m.pipedream.net"
+        );
+
+        await generateSavedConnection(dev1, dt1, pd2);
+        await generateSavedConnection(dev2, dt2, pd2);
+
+        // Act
+        await request(app.getHttpServer())
+            .post("/receive-data/?apiKey=" + dev1.apiKey)
+            .send(dataToSend)
+            .expect(204);
+
+        // Assert
+        await waitForExpect(() => {
+            expect(httpPushListener).toHaveBeenCalledTimes(1);
+        });
+    }, 60_0000);
 });

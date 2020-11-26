@@ -88,6 +88,34 @@ export class DataTargetService {
         });
     }
 
+    async findDataTargetsByConnectionPayloadDecoderAndIoTDevice(
+        iotDeviceId: number,
+        payloadDecoderId?: number
+    ): Promise<DataTarget[]> {
+        const res = await this.dataTargetRepository
+            .createQueryBuilder("dt")
+            .innerJoin(
+                "iot_device_payload_decoder_data_target_connection",
+                "con",
+                'con."dataTargetId" = dt.id'
+            )
+            .innerJoin(
+                "iot_dev_pay_dec_dat_tar_con_iot_dev_iot_dev",
+                "jt",
+                'jt."iotDevicePayloadDecoderDataTargetConnectionId" = con.id'
+            )
+            .where('jt."iotDeviceId" = :iotDeviceId', { iotDeviceId: iotDeviceId });
+        if (payloadDecoderId === null) {
+            return res.andWhere('con."payloadDecoderId" is null').getMany();
+        } else {
+            return res
+                .andWhere('con."payloadDecoderId" = :decoderId', {
+                    decoderId: payloadDecoderId,
+                })
+                .getMany();
+        }
+    }
+
     async create(
         createDataTargetDto: CreateDataTargetDto,
         userId: number
