@@ -17,6 +17,7 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
@@ -24,6 +25,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     let globalAdminJwt: string;
     let globalAdmin: User;
     const testname = "e2e";
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -48,6 +52,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         await app.init();
 
         serviceProfileService = moduleFixture.get("ServiceProfileService");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     beforeEach(async () => {
@@ -72,6 +79,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                 }
             });
         });
+        jest.clearAllMocks();
     });
 
     it("(POST) /chirpstack/service-profiles/ - OK", async () => {
@@ -87,8 +95,11 @@ describe("ChirpstackServiceProfileConfiguration", () => {
             .expect("Content-Type", /json/)
             .then(response => {
                 // Assert
-                // Unfortinitly we just get a UUID from Chirpstack
+                // Unfortunately we just get a UUID from Chirpstack
                 expect(response.body).toHaveProperty("id");
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -162,13 +173,16 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         changed.serviceProfile.name = `${testname}-changed`;
 
         // Act
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put("/chirpstack/service-profiles/" + serviceProfileId)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(changed)
             // Assert
             // No body is sent back from Chirpstack :'(
             .expect(204);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /chirpstack/service-profiles/:id - OK", async () => {
@@ -188,6 +202,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                 expect(response.body).toMatchObject({
                     affected: 1,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 

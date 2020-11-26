@@ -20,6 +20,7 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("DataTargetController (e2e)", () => {
     let app: INestApplication;
@@ -27,6 +28,9 @@ describe("DataTargetController (e2e)", () => {
     let applicationRepository: Repository<Application>;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -54,6 +58,9 @@ describe("DataTargetController (e2e)", () => {
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("HttpPushDataTargetRepository");
         applicationRepository = moduleFixture.get("ApplicationRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -73,6 +80,8 @@ describe("DataTargetController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+
+        jest.clearAllMocks();
     });
 
     const createDataTarget = async (applications: Application[]): Promise<DataTarget> => {
@@ -265,6 +274,9 @@ describe("DataTargetController (e2e)", () => {
         expect(dataTargetsInDb[0]).toMatchObject({
             name: "et navn",
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /data-target/ - application missing from request", async () => {
@@ -275,7 +287,7 @@ describe("DataTargetController (e2e)", () => {
             timeout: 3000,
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post(`/data-target/`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
@@ -286,6 +298,9 @@ describe("DataTargetController (e2e)", () => {
                     message: `MESSAGE.ID-MISSING-FROM-REQUEST`,
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(POST) /data-target/ - application not found", async () => {
@@ -297,7 +312,7 @@ describe("DataTargetController (e2e)", () => {
             timeout: 3000,
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post(`/data-target/`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
@@ -308,6 +323,9 @@ describe("DataTargetController (e2e)", () => {
                     message: `MESSAGE.ID-DOES-NOT-EXIST`,
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(PUT) /data-target/:id - change existing", async () => {
@@ -325,7 +343,7 @@ describe("DataTargetController (e2e)", () => {
             authorizationHeader: null,
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put(`/data-target/${dataTargetId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
@@ -336,6 +354,9 @@ describe("DataTargetController (e2e)", () => {
                     name: "et navn",
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /data-target/:id - change existing - add OpenDataDK", async () => {
@@ -362,7 +383,7 @@ describe("DataTargetController (e2e)", () => {
             },
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put(`/data-target/${dataTargetId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
@@ -376,6 +397,9 @@ describe("DataTargetController (e2e)", () => {
                     },
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /data-target/:id - change existing - add OpenDataDK", async () => {
@@ -402,7 +426,7 @@ describe("DataTargetController (e2e)", () => {
             },
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post(`/data-target/`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dataTargetBody)
@@ -416,6 +440,9 @@ describe("DataTargetController (e2e)", () => {
                     },
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /data-target/:id - not found", async () => {
@@ -423,7 +450,7 @@ describe("DataTargetController (e2e)", () => {
         const dataTarget = await createDataTarget(applications);
         const wrongDataTargetId = dataTarget.id + 1;
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .delete(`/data-target/${wrongDataTargetId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
@@ -434,6 +461,9 @@ describe("DataTargetController (e2e)", () => {
                     status: 404,
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(DELETE) /data-target/:id - deleted", async () => {
@@ -441,7 +471,7 @@ describe("DataTargetController (e2e)", () => {
         const dataTarget = await createDataTarget(applications);
         const wrongDataTargetId = dataTarget.id;
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .delete(`/data-target/${wrongDataTargetId}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
@@ -452,5 +482,8 @@ describe("DataTargetController (e2e)", () => {
                     affected: 1,
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });

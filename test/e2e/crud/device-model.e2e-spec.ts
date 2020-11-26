@@ -23,6 +23,7 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe(`${DeviceModelController.name} (e2e)`, () => {
     let app: INestApplication;
@@ -30,6 +31,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
     let globalAdminJwt: string;
     let globalAdmin: User;
     let org: Organization;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -56,6 +60,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("DeviceModelRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -74,6 +81,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
 
     afterEach(async () => {
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     it("(GET) /device-model/:id - none", async () => {
@@ -153,6 +161,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
         expect(orgFromDb).toMatchObject({
             body: body,
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /device-model/ - Bad model, missing type", async () => {
@@ -172,7 +183,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
             body: JSON.parse(JSON.stringify(body)),
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post("/device-model/")
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
@@ -191,6 +202,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
                     ],
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(PUT) /device-model/:id - bad change", async () => {
@@ -209,7 +223,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
         const dto: UpdateDeviceModelDto = {
             body: JSON.parse(JSON.stringify(body)),
         };
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put("/device-model/" + deviceModel.id)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
@@ -228,6 +242,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
                     ],
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(PUT) /device-model/:id - OK", async () => {
@@ -264,6 +281,9 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
         expect(orgFromDb).toMatchObject({
             body: body,
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /device-model/:id - OK", async () => {
@@ -280,5 +300,8 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
                     affected: 1,
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });

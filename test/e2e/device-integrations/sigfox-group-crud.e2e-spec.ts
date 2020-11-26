@@ -22,6 +22,7 @@ import { Organization } from "@entities/organization.entity";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("SigfoxGroupController (e2e)", () => {
     let app: INestApplication;
@@ -29,6 +30,9 @@ describe("SigfoxGroupController (e2e)", () => {
     let globalAdminJwt: string;
     let globalAdmin: User;
     let org: Organization;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -55,6 +59,9 @@ describe("SigfoxGroupController (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("GenericHTTPDeviceRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -74,6 +81,7 @@ describe("SigfoxGroupController (e2e)", () => {
 
     afterEach(async () => {
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     it("(GET) /sigfox-group/ - empty", async () => {
@@ -196,6 +204,9 @@ describe("SigfoxGroupController (e2e)", () => {
                     },
                 });
                 expect(response.body).not.toHaveProperty("password");
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -222,6 +233,9 @@ describe("SigfoxGroupController (e2e)", () => {
                     statusCode: 401,
                 });
                 expect(response.body).not.toHaveProperty("password");
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -256,6 +270,9 @@ describe("SigfoxGroupController (e2e)", () => {
                     },
                 });
                 expect(response.body).not.toHaveProperty("password");
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -280,6 +297,9 @@ describe("SigfoxGroupController (e2e)", () => {
                     message: "MESSAGE.SIGFOX-BAD-LOGIN",
                     statusCode: 401,
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -292,13 +312,16 @@ describe("SigfoxGroupController (e2e)", () => {
         };
 
         // Act
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put(`/sigfox-group/${group.id + 1}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
             // Assert
             .expect(404)
             .expect("Content-Type", /json/);
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(POST) /sigfox-group/test-connection - OK", async () => {

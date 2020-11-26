@@ -87,11 +87,21 @@ export class DeviceModelController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateDeviceModelDto
     ): Promise<DeviceModel> {
-        checkIfUserHasWriteAccessToOrganization(req, dto.belongsToId);
+        try {
+            checkIfUserHasWriteAccessToOrganization(req, dto.belongsToId);
 
-        const res = await this.service.create(dto, req.user.userId);
-        AuditLog.success(ActionType.CREATE, DeviceModel.name, req.user.userId, res.id);
-        return res;
+            const res = await this.service.create(dto, req.user.userId);
+            AuditLog.success(
+                ActionType.CREATE,
+                DeviceModel.name,
+                req.user.userId,
+                res.id
+            );
+            return res;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, DeviceModel.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -103,16 +113,16 @@ export class DeviceModelController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateDeviceModelDto
     ): Promise<DeviceModel> {
-        const deviceModel = await this.service.getByIdWithRelations(id);
         try {
+            const deviceModel = await this.service.getByIdWithRelations(id);
             checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+            const res = await this.service.update(deviceModel, dto, req.user.userId);
+            AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
+            return res;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
             throw err;
         }
-        const res = await this.service.update(deviceModel, dto, req.user.userId);
-        AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
-        return res;
     }
 
     @Delete(":id")

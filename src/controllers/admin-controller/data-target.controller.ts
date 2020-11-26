@@ -99,19 +99,27 @@ export class DataTargetController {
         @Req() req: AuthenticatedRequest,
         @Body() createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {
-        checkIfUserHasWriteAccessToApplication(req, createDataTargetDto.applicationId);
-        const dataTarget = await this.dataTargetService.create(
-            createDataTargetDto,
-            req.user.userId
-        );
-        AuditLog.success(
-            ActionType.CREATE,
-            DataTarget.name,
-            req.user.userId,
-            dataTarget.id,
-            dataTarget.name
-        );
-        return dataTarget;
+        try {
+            checkIfUserHasWriteAccessToApplication(
+                req,
+                createDataTargetDto.applicationId
+            );
+            const dataTarget = await this.dataTargetService.create(
+                createDataTargetDto,
+                req.user.userId
+            );
+            AuditLog.success(
+                ActionType.CREATE,
+                DataTarget.name,
+                req.user.userId,
+                dataTarget.id,
+                dataTarget.name
+            );
+            return dataTarget;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, DataTarget.name, req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")

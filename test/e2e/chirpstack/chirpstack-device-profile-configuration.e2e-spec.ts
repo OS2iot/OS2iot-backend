@@ -17,6 +17,9 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { UserPermissions } from "@dto/permission-organization-application.dto";
 
 describe("ChirpstackDeviceProfileConfiguration", () => {
     let deviceProfileService: DeviceProfileService;
@@ -24,6 +27,10 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     let globalAdminJwt: string;
     let globalAdmin: User;
     const testname = "e2e";
+    let fakeUser: AuthenticatedRequest;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -48,6 +55,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         await app.init();
 
         deviceProfileService = moduleFixture.get("DeviceProfileService");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     beforeEach(async () => {
@@ -57,6 +67,14 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         globalAdmin = await generateSavedGlobalAdminUser();
         // Generate store jwt
         globalAdminJwt = generateValidJwtForUser(globalAdmin);
+        fakeUser = {
+            user: {
+                userId: globalAdmin.id,
+                username: globalAdmin.name,
+                permissions: new UserPermissions(),
+            },
+        };
+        fakeUser.user.permissions.isGlobalAdmin = true;
     });
 
     afterAll(async () => {
@@ -70,11 +88,12 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 if (deviceProfile.name.startsWith(testname)) {
                     await deviceProfileService.deleteDeviceProfile(
                         deviceProfile.id,
-                        null
+                        fakeUser
                     );
                 }
             });
         });
+        jest.clearAllMocks();
     });
 
     it("(GET) /chirpstack/device-profiles/:id - OK", async () => {
@@ -173,6 +192,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                     },
                     success: false,
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -191,6 +213,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 // Assert
                 // Unfortinitly we just get a UUID from Chirpstack
                 expect(response.body).toHaveProperty("id");
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -207,13 +232,16 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
         changed.deviceProfile.name = `${testname}-changed`;
 
         // Act
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put("/chirpstack/device-profiles/" + deviceProfileId)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(changed)
             // Assert
             // No body is sent back from Chirpstack :'(
             .expect(204);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /chirpstack/device-profiles/:id - OK", async () => {
@@ -236,6 +264,9 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 expect(response.body).toMatchObject({
                     affected: 1,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 

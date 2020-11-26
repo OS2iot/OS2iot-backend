@@ -22,6 +22,7 @@ import {
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 // eslint-disable-next-line max-lines-per-function
 describe("ChirpstackGatewayController (e2e)", () => {
@@ -30,6 +31,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
     let app: INestApplication;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -58,11 +62,18 @@ describe("ChirpstackGatewayController (e2e)", () => {
         chirpstackSetupNetworkServerService = moduleFixture.get(
             "ChirpstackSetupNetworkServerService"
         );
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
         // Ensure clean shutdown
         await app.close();
+    });
+
+    afterEach(async () => {
+        jest.clearAllMocks();
     });
 
     beforeEach(async () => {
@@ -104,6 +115,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
         // Check that it was created.
         const newElement = await service.getOne(req.gateway.id);
         expect(newElement).toMatchObject({ gateway: { id: req.gateway.id } });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(GET) Get gateway by id", async () => {
@@ -186,6 +200,9 @@ describe("ChirpstackGatewayController (e2e)", () => {
             name: dto.gateway.name,
             internalOrganizationId: org.id,
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) Change gateway - Bad DTO", async () => {
@@ -219,14 +236,20 @@ describe("ChirpstackGatewayController (e2e)", () => {
                     message: "MESSAGE.GATEWAY-ID-NOT-ALLOWED-IN-UPDATE",
                 });
             });
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(DELETE) Delete gateway", async () => {
         const id = await createGateway();
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .delete(`/chirpstack/gateway/${id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .expect(200);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });

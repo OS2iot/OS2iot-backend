@@ -22,12 +22,16 @@ import {
     generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("OrganizationController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<Organization>;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -54,6 +58,9 @@ describe("OrganizationController (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("OrganizationRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -73,6 +80,7 @@ describe("OrganizationController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     it("(GET) /organization/ - None", () => {
@@ -206,6 +214,9 @@ describe("OrganizationController (e2e)", () => {
 
         const orgFromDb = await repository.findOne({ where: { name: "e2e" } });
         expect(orgFromDb).toBeTruthy();
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /organization/ - Create organization - fail, not unique name", async () => {
@@ -227,6 +238,9 @@ describe("OrganizationController (e2e)", () => {
                     message: ErrorCodes.OrganizationAlreadyExists,
                     statusCode: 400,
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -247,6 +261,9 @@ describe("OrganizationController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     name: `${org.name} - changed`,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -266,5 +283,8 @@ describe("OrganizationController (e2e)", () => {
 
         const orgs = await repository.find();
         expect(orgs).toHaveLength(0);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });

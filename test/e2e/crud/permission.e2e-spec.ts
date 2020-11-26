@@ -22,11 +22,15 @@ import {
     generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("PermissionController (e2e)", () => {
     let app: INestApplication;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -50,6 +54,9 @@ describe("PermissionController (e2e)", () => {
 
         app = moduleFixture.createNestApplication();
         await app.init();
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -69,6 +76,7 @@ describe("PermissionController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     it("(GET) /permission/ - Only Global Admin", async () => {
@@ -169,6 +177,9 @@ describe("PermissionController (e2e)", () => {
                     },
                     automaticallyAddNewApplications: false,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -218,6 +229,9 @@ describe("PermissionController (e2e)", () => {
                 }),
             ])
         );
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /permission/:id - Org admin - change permission", async () => {
@@ -268,6 +282,9 @@ describe("PermissionController (e2e)", () => {
                 }),
             ])
         );
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /permission/:id - Org admin - Delete a permission", async () => {
@@ -288,6 +305,9 @@ describe("PermissionController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     affected: 1,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -301,10 +321,13 @@ describe("PermissionController (e2e)", () => {
             x => x.constructor.name == "ReadPermission"
         );
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .delete("/permission/" + permissionToDelete.id)
             .auth(jwt, { type: "bearer" })
             .expect(403);
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(DELETE) /permission/:id - Delete a permission", async () => {
@@ -323,6 +346,9 @@ describe("PermissionController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     affected: 1,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 });

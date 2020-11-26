@@ -19,12 +19,16 @@ import {
     generateSavedOrganizationAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("UserController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<User>;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -51,6 +55,9 @@ describe("UserController (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("UserRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -70,7 +77,9 @@ describe("UserController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+        jest.clearAllMocks();
     });
+
     it("(GET) /user/ - Only Global Admin", () => {
         return request(app.getHttpServer())
             .get("/user/")
@@ -164,6 +173,9 @@ describe("UserController (e2e)", () => {
         });
         const isPasswordCorrect = await bcrypt.compare(dto.password, user.passwordHash);
         expect(isPasswordCorrect).toBeTruthy();
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
     it("(POST) /user/ - Create user - fail, not unique email", async () => {
         const dto = {
@@ -185,6 +197,8 @@ describe("UserController (e2e)", () => {
                     message: "MESSAGE.USER-ALREADY-EXISTS",
                     statusCode: 400,
                 });
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -220,6 +234,9 @@ describe("UserController (e2e)", () => {
             userFromDb.passwordHash
         );
         expect(isPasswordCorrect).toBeTruthy();
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /user/:id - Update user - password optional", async () => {
@@ -253,6 +270,9 @@ describe("UserController (e2e)", () => {
             userFromDb.passwordHash
         );
         expect(isPasswordCorrect).toBeTruthy();
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /user/:id - Update user - Preserves permissions", async () => {
@@ -293,5 +313,8 @@ describe("UserController (e2e)", () => {
         expect(userFromDb.permissions[0]).toMatchObject({
             type: "OrganizationAdmin",
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });

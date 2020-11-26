@@ -57,7 +57,7 @@ describe("KombitStrategy (e2e)", () => {
         await app.close();
     });
 
-    it("KombitStrategy - no user exists", async () => {
+    test.skip("KombitStrategy - no user exists", async () => {
         // Arrange
         const nameId = "C=DK,O=14814833,CN=TBK-OS2IoT-test,Serial=os2iot";
         const profile = `{"issuer":"https://saml.adgangsstyring.eksterntest-stoettesystemerne.dk","inResponseTo":"_9fb77d5e846bcce90a14","sessionIndex":"1865835509","nameID":"${nameId}","nameIDFormat":"urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName","dk:gov:saml:attribute:CvrNumberIdentifier":"14814833","dk:gov:saml:attribute:KombitSpecVer":"1.0","dk:gov:saml:attribute:SpecVer":"DK-SAML-2.0","dk:gov:saml:attribute:AssuranceLevel":"4"}`;
@@ -79,7 +79,7 @@ describe("KombitStrategy (e2e)", () => {
         });
     });
 
-    it("KombitStrategy - match existing user exists", async () => {
+    test.skip("KombitStrategy - match existing user exists", async () => {
         // Arrange
         const nameId = "C=DK,O=14814833,CN=TBK-OS2IoT-test,Serial=os2iot";
         const profile = `{"issuer":"https://saml.adgangsstyring.eksterntest-stoettesystemerne.dk","inResponseTo":"_9fb77d5e846bcce90a14","sessionIndex":"1865835509","nameID":"${nameId}","nameIDFormat":"urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName","dk:gov:saml:attribute:CvrNumberIdentifier":"14814833","dk:gov:saml:attribute:KombitSpecVer":"1.0","dk:gov:saml:attribute:SpecVer":"DK-SAML-2.0","dk:gov:saml:attribute:AssuranceLevel":"4"}`;

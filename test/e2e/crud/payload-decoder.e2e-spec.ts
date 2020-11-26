@@ -20,12 +20,16 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
     let repository: Repository<PayloadDecoder>;
     let globalAdminJwt: string;
     let globalAdmin: User;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -52,6 +56,9 @@ describe("PayloadDecoderController (e2e)", () => {
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("PayloadDecoderRepository");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -71,6 +78,8 @@ describe("PayloadDecoderController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+
+        jest.clearAllMocks();
     });
 
     it("(GET) /payload-decoder/ - empty", () => {
@@ -162,6 +171,9 @@ describe("PayloadDecoderController (e2e)", () => {
         expect(payloadDecodersInDb[0]).toMatchObject({
             name: "Test",
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /payload-decoder/ - decoding function not encoded", async () => {
@@ -180,6 +192,9 @@ describe("PayloadDecoderController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     message: `MESSAGE.BAD-ENCODING`,
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -203,6 +218,9 @@ describe("PayloadDecoderController (e2e)", () => {
                     name: decoder.name,
                     decodingFunction: "return 0;",
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -219,6 +237,9 @@ describe("PayloadDecoderController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     name: "EntityNotFound",
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -234,6 +255,9 @@ describe("PayloadDecoderController (e2e)", () => {
                 expect(response.body).toMatchObject({
                     affected: 1,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 });

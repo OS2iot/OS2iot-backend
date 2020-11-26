@@ -32,6 +32,7 @@ import { ChirpstackAdministrationModule } from "@modules/device-integrations/chi
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { WritePermission } from "@entities/write-permission.entity";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -41,6 +42,9 @@ describe("ApplicationController (e2e)", () => {
     let iotDeviceService: IoTDeviceService;
     let deviceProfileService: DeviceProfileService;
     let serviceProfileService: ServiceProfileService;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -73,6 +77,9 @@ describe("ApplicationController (e2e)", () => {
         iotDeviceService = moduleFixture.get("IoTDeviceService");
         deviceProfileService = moduleFixture.get("DeviceProfileService");
         serviceProfileService = moduleFixture.get("ServiceProfileService");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -92,7 +99,10 @@ describe("ApplicationController (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+
+        jest.clearAllMocks();
     });
+
     it("(GET) /application/ - empty", () => {
         return request(app.getHttpServer())
             .get("/application/")
@@ -274,6 +284,9 @@ describe("ApplicationController (e2e)", () => {
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(1);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /application/ - Create application - fail as name is not unique", async () => {
@@ -309,6 +322,9 @@ describe("ApplicationController (e2e)", () => {
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(1);
+
+        expect(auditLogFailListener).toHaveBeenCalled();
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /application/ - Delete application", async () => {
@@ -337,6 +353,8 @@ describe("ApplicationController (e2e)", () => {
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(0);
+        expect(auditLogFailListener).not.toHaveBeenCalled();
+        expect(auditLogSuccessListener).toHaveBeenCalled();
     });
 
     it("(DELETE) /application/ - Delete application - Not existing", async () => {
@@ -365,6 +383,9 @@ describe("ApplicationController (e2e)", () => {
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(1);
+
+        expect(auditLogFailListener).toHaveBeenCalled();
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /application/ - Change application", async () => {
@@ -395,6 +416,8 @@ describe("ApplicationController (e2e)", () => {
             name: "PUT Test",
             description: "PUT Tester",
         });
+        expect(auditLogFailListener).not.toHaveBeenCalled();
+        expect(auditLogSuccessListener).toHaveBeenCalled();
     });
 
     it("(PUT) /application/ - Change application - to same name allowed", async () => {
@@ -428,6 +451,8 @@ describe("ApplicationController (e2e)", () => {
             name: application.name,
             description: "PUT Tester",
         });
+        expect(auditLogFailListener).not.toHaveBeenCalled();
+        expect(auditLogSuccessListener).toHaveBeenCalled();
     });
 
     it("(PUT) /application/ - Change application - to same name allowed of another, not allowed", async () => {
@@ -467,6 +492,9 @@ describe("ApplicationController (e2e)", () => {
                     message: "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
                 });
             });
+
+        expect(auditLogFailListener).toHaveBeenCalled();
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /application/ - Change application - show iotdevices and datatargets in results", async () => {
@@ -515,6 +543,9 @@ describe("ApplicationController (e2e)", () => {
                     updatedBy: globalAdmin.id,
                 });
             });
+
+        expect(auditLogFailListener).not.toHaveBeenCalled();
+        expect(auditLogSuccessListener).toHaveBeenCalled();
     });
 
     it("(GET) /application/ - User only allowed SOME in organization", async () => {
@@ -653,5 +684,8 @@ describe("ApplicationController (e2e)", () => {
         expect(reloadedReadPerm.applications[0]).toMatchObject({
             id: newAppId,
         });
+        
+        expect(auditLogFailListener).not.toHaveBeenCalled();
+        expect(auditLogSuccessListener).toHaveBeenCalled();
     });
 });

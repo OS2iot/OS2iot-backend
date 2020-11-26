@@ -42,6 +42,7 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("IoTDeviceController (e2e)", () => {
     let app: INestApplication;
@@ -55,6 +56,9 @@ describe("IoTDeviceController (e2e)", () => {
     let iotDeviceService: IoTDeviceService;
     let deviceProfileService: DeviceProfileService;
     let serviceProfileService: ServiceProfileService;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -90,6 +94,9 @@ describe("IoTDeviceController (e2e)", () => {
         iotDeviceService = moduleFixture.get("IoTDeviceService");
         deviceProfileService = moduleFixture.get("DeviceProfileService");
         serviceProfileService = moduleFixture.get("ServiceProfileService");
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -107,6 +114,7 @@ describe("IoTDeviceController (e2e)", () => {
 
     afterEach(async () => {
         await clearDatabase();
+        jest.clearAllMocks();
     });
 
     it("(GET) /iot-device/:id - none", async () => {
@@ -249,7 +257,8 @@ describe("IoTDeviceController (e2e)", () => {
                 complex1: ["asdf", "b", "c", 1, true],
             },
         };
-        return await request(app.getHttpServer())
+
+        await request(app.getHttpServer())
             .post("/iot-device/")
             .auth(globalAdminJwt, { type: "bearer" })
             .send(testIoTDevice)
@@ -273,6 +282,9 @@ describe("IoTDeviceController (e2e)", () => {
                     },
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(PUT) /iot-device/:id", async () => {
@@ -307,7 +319,7 @@ describe("IoTDeviceController (e2e)", () => {
             metadata: { b_key: "b_value" },
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .put("/iot-device/" + iotDeviceId)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(changedIoTDeviceJson)
@@ -328,6 +340,9 @@ describe("IoTDeviceController (e2e)", () => {
                     apiKey: oldUuid, // Check that the apiKey is preserved.
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /iot-device/:id", async () => {
@@ -364,6 +379,9 @@ describe("IoTDeviceController (e2e)", () => {
         const [res, count] = await repository.findAndCount();
         expect(res.length).toBe(0);
         expect(count).toBe(0);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /iot-device/:id - with receivedData", async () => {
@@ -400,6 +418,9 @@ describe("IoTDeviceController (e2e)", () => {
         const [res, count] = await repository.findAndCount();
         expect(res.length).toBe(0);
         expect(count).toBe(0);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(DELETE) /iot-device/:id - doesn't exist", async () => {
@@ -433,6 +454,9 @@ describe("IoTDeviceController (e2e)", () => {
         const [res, count] = await repository.findAndCount();
         expect(res.length).toBe(1);
         expect(count).toBe(1);
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     test.skip("(GET) /iot-device/:id - SigFox device", async () => {
@@ -577,6 +601,9 @@ describe("IoTDeviceController (e2e)", () => {
             data: "PgoUAAAARhcAAAAC",
             jsonObject: "",
         });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /iot-device/:id/downlink - LORAWAN device - bad id", async () => {
@@ -597,6 +624,9 @@ describe("IoTDeviceController (e2e)", () => {
             .send(dto)
             // Assert
             .expect(404);
+
+        expect(auditLogSuccessListener).not.toHaveBeenCalled();
+        expect(auditLogFailListener).toHaveBeenCalled();
     });
 
     it("(GET) /iot-device/:id/downlink - LORAWAN device", async () => {

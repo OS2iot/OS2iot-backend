@@ -136,20 +136,19 @@ export class IoTDeviceController {
     ): Promise<IoTDevice> {
         try {
             checkIfUserHasWriteAccessToApplication(req, createDto.applicationId);
+            const device = await this.iotDeviceService.create(createDto, req.user.userId);
+            AuditLog.success(
+                ActionType.CREATE,
+                IoTDevice.name,
+                req.user.userId,
+                device.id,
+                device.name
+            );
+            return device;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
             throw err;
         }
-
-        const device = await this.iotDeviceService.create(createDto, req.user.userId);
-        AuditLog.success(
-            ActionType.CREATE,
-            IoTDevice.name,
-            req.user.userId,
-            device.id,
-            device.name
-        );
-        return device;
     }
 
     @Post(":id/downlink")
@@ -161,20 +160,22 @@ export class IoTDeviceController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: CreateIoTDeviceDownlinkDto
     ): Promise<void | CreateChirpstackDeviceQueueItemResponse> {
-        const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
-        if (!device) {
-            AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
-            throw new NotFoundException();
-        }
         try {
+            const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(
+                id
+            );
+            if (!device) {
+                AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
+                throw new NotFoundException();
+            }
             checkIfUserHasWriteAccessToApplication(req, device?.application?.id);
+            const result = await this.downlinkService.createDownlink(dto, device);
+            AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
+            return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
             throw err;
         }
-        const result = await this.downlinkService.createDownlink(dto, device);
-        AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
-        return result;
     }
 
     @Put(":id")
@@ -224,24 +225,18 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-            id,
-            false
-        );
         try {
+            const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
+                id,
+                false
+            );
             checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
-        } catch (err) {
-            AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
-            throw err;
-        }
-
-        try {
             const result = await this.iotDeviceService.delete(id);
             AuditLog.success(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
-            throw new BadRequestException(err);
+            throw err;
         }
     }
 }

@@ -26,6 +26,7 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
+import { AuditLog } from "@services/audit-log.service";
 
 describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let app: INestApplication;
@@ -35,6 +36,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     let globalAdmin: User;
     let orgAdminJwt: string;
     let organisation: Organization;
+
+    let auditLogSuccessListener: any;
+    let auditLogFailListener: any;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -63,6 +67,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
         repository = moduleFixture.get(
             "IoTDevicePayloadDecoderDataTargetConnectionRepository"
         );
+
+        auditLogSuccessListener = jest.spyOn(AuditLog, "success");
+        auditLogFailListener = jest.spyOn(AuditLog, "fail");
     });
 
     afterAll(async () => {
@@ -86,6 +93,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
     afterEach(async () => {
         // Clear data after each test
         await clearDatabase();
+
+        jest.clearAllMocks();
     });
 
     it("(GET) /iot-device-payload-decoder-data-target-connection/ - Empty", async () => {
@@ -381,7 +390,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             payloadDecoderId: payloadDecoder.id,
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post(urlPath)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
@@ -403,6 +412,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     createdBy: globalAdmin.id,
                 });
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /iot-device-payload-decoder-data-target-connection/:id - All ok - Multiple IoTDevices.", async () => {
@@ -417,7 +429,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
             payloadDecoderId: payloadDecoder.id,
         };
 
-        return await request(app.getHttpServer())
+        await request(app.getHttpServer())
             .post(urlPath)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
@@ -440,6 +452,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     loraDevice.id
                 );
             });
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
     it("(POST) /iot-device-payload-decoder-data-target-connection/:id - No IoTDevices.", async () => {
@@ -461,6 +476,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                 expect(response.body).toMatchObject({
                     message: "Must contain at least one IoTDevice",
                 });
+
+                expect(auditLogSuccessListener).not.toHaveBeenCalled();
+                expect(auditLogFailListener).toHaveBeenCalled();
             });
     });
 
@@ -491,6 +509,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     createdBy: globalAdmin.id,
                     updatedBy: globalAdmin.id,
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -527,6 +548,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                         id: payloadDecoder.id,
                     },
                 });
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -563,6 +587,9 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                     updatedBy: globalAdmin.id,
                 });
                 expect(response.body).not.toHaveProperty("payloadDecoder");
+
+                expect(auditLogSuccessListener).toHaveBeenCalled();
+                expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
 
@@ -590,5 +617,8 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
 
         const allConnections = await repository.find();
         expect(allConnections).toHaveLength(0);
+
+        expect(auditLogSuccessListener).toHaveBeenCalled();
+        expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 });
