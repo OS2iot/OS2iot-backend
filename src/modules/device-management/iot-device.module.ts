@@ -11,6 +11,7 @@ import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-devi
 import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-cleanup.service";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { DeviceModelModule } from "./device-model.module";
+import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-payload-decoder.controller";
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { DeviceModelModule } from "./device-model.module";
         forwardRef(() => SigfoxDeviceModule),
     ],
     exports: [IoTDeviceService],
-    controllers: [IoTDeviceController],
+    controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],
     providers: [IoTDeviceService, PeriodicSigFoxCleanupService, IoTDeviceDownlinkService],
 })
 export class IoTDeviceModule {}

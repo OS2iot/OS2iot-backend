@@ -48,7 +48,7 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
                 synchronize: true,
-                logging: false,
+                logging: true,
                 autoLoadEntities: true,
                 retryAttempts: 0,
                 maxQueryExecutionTime: 1000, // Log queries slower than 1000 ms

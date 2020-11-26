@@ -24,3 +24,4 @@ export class IoTDevicePayloadDecoderDataTargetConnection extends DbBaseEntity {
     @JoinColumn()
     dataTarget: DataTarget;
 }
+

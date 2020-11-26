@@ -38,6 +38,8 @@ import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
 import { DeviceModelService } from "./device-model.service";
+import { ListAllIoTDevicesMinimalResponseDto } from "@dto/list-all-iot-devices-minimal-response.dto";
+import { of } from "rxjs";
 
 @Injectable()
 export class IoTDeviceService {
@@ -143,6 +145,54 @@ export class IoTDeviceService {
             endProductCertificate: thisDevice.productCertificate.key,
             prototype: thisDevice.prototype,
         };
+    }
+
+    async findAllByPayloadDecoder(
+        payloadDecoderId: number,
+        limit: number,
+        offset: number
+    ): Promise<ListAllIoTDevicesMinimalResponseDto> {
+        const data = this.getQueryForFindAllByPayloadDecoder(payloadDecoderId)
+            .addSelect('"application"."id"', "applicationId")
+            .addSelect('"application"."belongsToId"', "organizationId")
+            .limit(limit)
+            .offset(offset)
+            .getRawMany();
+
+        const count = this.getQueryForFindAllByPayloadDecoder(
+            payloadDecoderId
+        ).getCount();
+        return {
+            data: await data,
+            count: await count,
+        };
+    }
+
+    private getQueryForFindAllByPayloadDecoder(payloadDecoderId: number) {
+        return this.iotDeviceRepository
+            .createQueryBuilder("device")
+            .innerJoin(
+                "device.application",
+                "application",
+                'application.id = device."applicationId"'
+            )
+            .innerJoin(
+                "iot_dev_pay_dec_dat_tar_con_iot_dev_iot_dev",
+                "jt",
+                '"jt"."iotDeviceId" = "device"."id"'
+            )
+            .innerJoin(
+                "device.connections",
+                "connection",
+                '"connection"."id" = "jt"."iotDevicePayloadDecoderDataTargetConnectionId"'
+            )
+            .leftJoin(
+                "device.latestReceivedMessage",
+                "receivedMessage",
+                '"receivedMessage"."deviceId" = device.id'
+            )
+            .where('"connection"."payloadDecoderId" = :id', { id: payloadDecoderId })
+            .select(['"device"."id"', '"device"."name"', '"receivedMessage"."sentTime"']);
     }
 
     /**
