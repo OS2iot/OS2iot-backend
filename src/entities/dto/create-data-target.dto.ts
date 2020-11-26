@@ -3,6 +3,7 @@ import {
     IsNumber,
     IsOptional,
     IsString,
+    IsUrl,
     MaxLength,
     Min,
     MinLength,
@@ -12,6 +13,7 @@ import { Type } from "class-transformer";
 
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
+import { IsNotBlank } from "@helpers/is-not-blank.validator";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
@@ -31,6 +33,8 @@ export class CreateDataTargetDto {
     @ApiProperty({ required: true, example: "https://example.com/endpoint" })
     @IsString()
     @MaxLength(1024)
+    @IsNotBlank("url")
+    @IsUrl()
     url: string;
 
     @ApiProperty({ required: false, example: 30000 })
