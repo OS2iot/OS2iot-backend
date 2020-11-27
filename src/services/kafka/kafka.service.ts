@@ -60,7 +60,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         });
 
         await this.consumer.on(this.consumer.events.HEARTBEAT, ({ timestamp }) => {
-            this.logger.debug("Heartbeat ... " + timestamp);
+            // this.logger.debug("Heartbeat ... " + timestamp);
             this.healthCheckService.lastHeartbeat = timestamp;
         });
         await this.consumer.on(this.consumer.events.STOP, () => {
