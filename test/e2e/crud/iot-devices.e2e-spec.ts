@@ -1,4 +1,4 @@
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, Logger } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -14,33 +14,20 @@ import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
+    createDeviceProfileData,
+    createServiceProfileData,
     generateSavedApplication,
-    generateSavedConnection,
-    generateSavedDataTarget,
     generateSavedGlobalAdminUser,
     generateSavedHttpDevice,
-    generateSavedIoTDevice,
-    generateSavedLoRaWANDevice,
     generateSavedOrganization,
-    generateSavedPayloadDecoder,
-    generateSavedReceivedMessageAndMetadata,
-    generateSavedSigfoxDevice,
-    generateSavedSigfoxDeviceFromData,
-    generateSavedSigFoxGroup,
     generateValidJwtForUser,
     randomMacAddress,
-    SIGFOX_DEVICE_ID,
-    SIGFOX_DEVICE_ID_2,
 } from "../test-helpers";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
-import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
-import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
@@ -464,282 +451,80 @@ describe("IoTDeviceController (e2e)", () => {
         expect(auditLogFailListener).toHaveBeenCalled();
     });
 
-    test.skip("(GET) /iot-device/:id - SigFox device", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        await generateSavedSigFoxGroup(org);
-        const sigfoxDevice = await generateSavedSigfoxDevice(application);
+    it("(DELETE) /iot-device/:id - LoRaWAN Device", async () => {
+        const application = await generateSavedApplication();
 
-        // Act
-        return await request(app.getHttpServer())
-            .get("/iot-device/" + sigfoxDevice.id)
+        let dpId = await request(app.getHttpServer())
+            .post("/chirpstack/device-profiles/")
             .auth(globalAdminJwt, { type: "bearer" })
-            .send()
-            .expect(200)
+            .send(createDeviceProfileData())
+            .expect(201)
             .expect("Content-Type", /json/)
             .then(response => {
-                // console.log(response.body);
-                expect(response.body).toMatchObject({
-                    name: sigfoxDevice.name,
-                    sigfoxSettings: {
-                        deviceId: sigfoxDevice.deviceId,
-                        deviceTypeId: "5e74c318aa8aec41f9cc6b8d",
-                        endProductCertificate: "P_0006_321A_01",
-                        pac: "04FB9B9DD7F45D4E",
-                        prototype: false,
-                    },
-                });
+                return response.body.id;
             });
-    });
 
-    test.skip("(POST) /iot-device/:id - SigFox device - Create connection", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const sigfoxGroup = await generateSavedSigFoxGroup(org);
-        const dto: CreateIoTDeviceDto = {
-            name: "E2E sigfox",
-            applicationId: application.id,
-            type: IoTDeviceType.SigFox,
-            longitude: 12.34,
-            latitude: 56.78,
-            sigfoxSettings: {
-                deviceId: SIGFOX_DEVICE_ID,
-                connectToExistingDeviceInBackend: true,
-                groupId: sigfoxGroup.id,
+        let spId = await request(app.getHttpServer())
+            .post("/chirpstack/service-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(createServiceProfileData())
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                return response.body.id;
+            });
+
+        const createDto: CreateIoTDeviceDto = {
+            type: IoTDeviceType.LoRaWAN,
+            longitude: 42,
+            latitude: 42,
+            lorawanSettings: {
+                skipFCntCheck: false,
+                fCntUp: 0,
+                nFCntDown: 0,
+                devEUI: randomMacAddress(),
+                serviceProfileID: spId,
+                deviceProfileID: dpId,
+                OTAAapplicationKey: "13371337133713371337133713371337",
+                activationType: ActivationType.OTAA,
             },
+            applicationId: application.id,
+            name: "e2e",
         };
 
-        // Act
-        await request(app.getHttpServer())
+        let device = await request(app.getHttpServer())
             .post("/iot-device/")
             .auth(globalAdminJwt, { type: "bearer" })
-            .send(dto)
-            .expect(201)
-            .expect("Content-Type", /json/)
+            .send(createDto)
             .then(response => {
-                expect(response.body).toMatchObject({
-                    name: "E2E sigfox",
-                });
+                return response.body;
             });
-    });
 
-    test.skip("(PUT) /iot-device/:id - SigFox device - Change name", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const sigfoxGroup = await generateSavedSigFoxGroup(org);
-        // get device from sigfox backend and make a sigfoxdevice that represents it.
-        const backendDevice = await sigfoxApiDeviceService.getByIdSimple(
-            sigfoxGroup,
-            SIGFOX_DEVICE_ID_2
+        let dbDevice = await repository.findOne(device.id);
+        expect(dbDevice).not.toBeNull();
+
+        const chirpstackDevice = await chirpstackDeviceService.getChirpstackDevice(
+            device.deviceEUI
         );
-        const device = await generateSavedSigfoxDeviceFromData(
-            application,
-            backendDevice
-        );
-
-        const dto: UpdateIoTDeviceDto = {
-            name: device.name + " - e2e",
-            applicationId: device.application.id,
-            type: device.type,
-            longitude: backendDevice.location.lng,
-            latitude: backendDevice.location.lat,
-            sigfoxSettings: {
-                deviceId: device.deviceId,
-                deviceTypeId: device.deviceTypeId,
-                connectToExistingDeviceInBackend: true,
-                groupId: sigfoxGroup.id,
-            },
-        };
-        // Act
-        await request(app.getHttpServer())
-            .put("/iot-device/" + device.id)
-            .auth(globalAdminJwt, { type: "bearer" })
-            .send(dto)
-            // Assert
-            .expect(200)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    name: device.name + " - e2e",
-                });
-            });
-    });
-
-    it("(POST) /iot-device/:id/downlink - LORAWAN device - Add downlink", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const lorawanDevice = await generateSavedLoRaWANDevice(application);
-
-        const dto: CreateIoTDeviceDownlinkDto = {
-            data: "3E0A14000000461700000002", // From https://www.elsys.se/en/downlink-generator/
-            port: 6, // one above the normal port for elsys
-            confirmed: true,
-        };
-        let fCnt;
-        // Act
-        await request(app.getHttpServer())
-            .post(`/iot-device/${lorawanDevice.id}/downlink`)
-            .auth(globalAdminJwt, { type: "bearer" })
-            .send(dto)
-            // Assert
-            .expect(201)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    fCnt: expect.any(Number),
-                });
-                fCnt = response.body.fCnt;
-            });
-
-        const queue: any = await chirpstackDeviceService.get(
-            `devices/${lorawanDevice.deviceEUI}/queue`
-        );
-        expect(queue.deviceQueueItems[queue.deviceQueueItems.length - 1]).toMatchObject({
-            devEUI: lorawanDevice.deviceEUI.toLocaleLowerCase(),
-            confirmed: dto.confirmed,
-            fCnt: fCnt,
-            fPort: dto.port,
-            data: "PgoUAAAARhcAAAAC",
-            jsonObject: "",
-        });
-
-        expect(auditLogSuccessListener).toHaveBeenCalled();
-        expect(auditLogFailListener).not.toHaveBeenCalled();
-    });
-
-    it("(POST) /iot-device/:id/downlink - LORAWAN device - bad id", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const lorawanDevice = await generateSavedLoRaWANDevice(application);
-        const dto: CreateIoTDeviceDownlinkDto = {
-            data: "3E0A14000000461700000002", // From https://www.elsys.se/en/downlink-generator/
-            port: 6, // one above the normal port for elsys
-            confirmed: true,
-        };
-
-        // Act
-        await request(app.getHttpServer())
-            .post(`/iot-device/${lorawanDevice.id + 1}/downlink`)
-            .auth(globalAdminJwt, { type: "bearer" })
-            .send(dto)
-            // Assert
-            .expect(404);
-
-        expect(auditLogSuccessListener).not.toHaveBeenCalled();
-        expect(auditLogFailListener).toHaveBeenCalled();
-    });
-
-    it("(GET) /iot-device/:id/downlink - LORAWAN device", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const lorawanDevice = await generateSavedLoRaWANDevice(application);
-        const csDto: CreateChirpstackDeviceQueueItemDto = {
-            deviceQueueItem: {
-                confirmed: true,
-                data: "PgoUAAAARhcAAAAC",
-                devEUI: lorawanDevice.deviceEUI,
-                fPort: 6,
-            },
-        };
-        // clear queue
-        await chirpstackDeviceService.deleteDownlinkQueue(lorawanDevice.deviceEUI);
-        await chirpstackDeviceService.overwriteDownlink(csDto);
-
-        // Act
-        await request(app.getHttpServer())
-            .get(`/iot-device/${lorawanDevice.id}/downlink`)
-            .auth(globalAdminJwt, { type: "bearer" })
-            .send()
-            // Assert
-            .expect(200)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    deviceQueueItems: [
-                        {
-                            devEUI: lorawanDevice.deviceEUI.toLocaleLowerCase(),
-                            confirmed: true,
-                            fCnt: expect.any(Number),
-                            fPort: 6,
-                            data: "PgoUAAAARhcAAAAC",
-                        },
-                    ],
-                    totalCount: 1,
-                });
-            });
-    });
-
-    it("(GET) /iot-device/minimalByPayloadDecoder/:id", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const pd1 = await generateSavedPayloadDecoder(org);
-        const pd2 = await generateSavedPayloadDecoder(org);
-        const it1 = await generateSavedIoTDevice(application);
-        const msg1 = await generateSavedReceivedMessageAndMetadata(it1);
-        const it2 = await generateSavedIoTDevice(application);
-        const it3 = await generateSavedIoTDevice(application);
-        const dt1 = await generateSavedDataTarget(application);
-        await generateSavedConnection(it1, dt1, pd1);
-        await generateSavedConnection(it2, dt1, pd1);
-        await generateSavedConnection(it3, dt1, pd2);
+        expect(chirpstackDevice).not.toBeNull();
 
         // act
-        return await request(app.getHttpServer())
-            .get(`/iot-device/minimalByPayloadDecoder/${pd1.id}?limit=10&offset=0`)
+        await request(app.getHttpServer())
+            .delete("/iot-device/" + device.id)
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(200)
-            .expect("Content-Type", /json/)
             .then(response => {
-                // Assert
-                expect(response.body).toMatchObject({
-                    count: 2,
-                });
-                expect(response.body.data).toContainEqual({
-                    id: it1.id,
-                    name: it1.name,
-                    canRead: true,
-                    organizationId: org.id,
-                    lastActiveTime: msg1.sentTime.toISOString(),
-                });
-                expect(response.body.data).toContainEqual({
-                    id: it2.id,
-                    name: it2.name,
-                    canRead: true,
-                    organizationId: org.id,
-                    lastActiveTime: null,
-                });
+                expect(response.body).toMatchObject({ affected: 1 });
             });
-    });
 
-    test.skip("(POST) /iot-device/:id/downlink - SigFox device - OK", async () => {
-        // Arrange
-        const org = await generateSavedOrganization();
-        const application = await generateSavedApplication(org);
-        const sigfoxDevice = await generateSavedSigfoxDevice(application);
-        const dto: CreateIoTDeviceDownlinkDto = {
-            data: "001e19028f101272",
-        };
+        let dbDeviceAfterDelete = await repository.findOne(device.id);
+        expect(dbDeviceAfterDelete).toBeUndefined();
 
-        // Act
-        await request(app.getHttpServer())
-            .post(`/iot-device/${sigfoxDevice.id}/downlink`)
-            .auth(globalAdminJwt, { type: "bearer" })
-            .send(dto)
-            // Assert
-            .expect(201);
-
-        const deviceAfter = await getManager().findOneOrFail(
-            SigFoxDevice,
-            sigfoxDevice.id
-        );
-        expect(deviceAfter.downlinkPayload).toBe(dto.data);
+        await chirpstackDeviceService.getChirpstackDevice(device.deviceEUI).catch(err => {
+            expect(err).toMatchObject({
+                message: "object does not exist",
+            });
+        });
     });
 });

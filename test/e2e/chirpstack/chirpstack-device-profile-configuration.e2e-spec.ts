@@ -13,6 +13,7 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 
 import {
     clearDatabase,
+    createDeviceProfileData,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
@@ -98,7 +99,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
     it("(GET) /chirpstack/device-profiles/:id - OK", async () => {
         // Arrange
-        const original: CreateDeviceProfileDto = await createDeviceProfileData();
+        const original: CreateDeviceProfileDto = createDeviceProfileData();
         const result = await deviceProfileService.createDeviceProfile(
             original,
             globalAdmin.id
@@ -123,7 +124,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
     it("(GET) /chirpstack/device-profiles/ - OK", async () => {
         // Arrange
-        const original: CreateDeviceProfileDto = await createDeviceProfileData();
+        const original: CreateDeviceProfileDto = createDeviceProfileData();
         const result1 = await deviceProfileService.createDeviceProfile(
             original,
             globalAdmin.id
@@ -200,7 +201,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
     it("(POST) /chirpstack/device-profiles/ - OK", async () => {
         // Arrange
-        const data: CreateDeviceProfileDto = await createDeviceProfileData();
+        const data: CreateDeviceProfileDto = createDeviceProfileData();
 
         // Act
         return await request(app.getHttpServer())
@@ -221,7 +222,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
     it("(PUT) /chirpstack/device-profiles/:id - OK", async () => {
         // Arrange
-        const original: CreateDeviceProfileDto = await createDeviceProfileData();
+        const original: CreateDeviceProfileDto = createDeviceProfileData();
         const result = await deviceProfileService.createDeviceProfile(
             original,
             globalAdmin.id
@@ -246,7 +247,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
     it("(DELETE) /chirpstack/device-profiles/:id - OK", async () => {
         //Arrange
-        const original: CreateDeviceProfileDto = await createDeviceProfileData();
+        const original: CreateDeviceProfileDto = createDeviceProfileData();
         const result = await deviceProfileService.createDeviceProfile(
             original,
             globalAdmin.id
@@ -269,20 +270,4 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
-
-    async function createDeviceProfileData(): Promise<CreateDeviceProfileDto> {
-        const deviceProfileDto: DeviceProfileDto = {
-            name: "e2e",
-            macVersion: "1.0.3",
-            regParamsRevision: "A",
-            maxEIRP: 1,
-        };
-
-        const deviceProfile: CreateDeviceProfileDto = {
-            deviceProfile: deviceProfileDto,
-            internalOrganizationId: 1,
-        };
-
-        return deviceProfile;
-    }
 });

@@ -13,6 +13,7 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 
 import {
     clearDatabase,
+    createServiceProfileData,
     generateSavedGlobalAdminUser,
     generateValidJwtForUser,
 } from "../test-helpers";
@@ -84,7 +85,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     it("(POST) /chirpstack/service-profiles/ - OK", async () => {
         // Arrange
-        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const data: CreateServiceProfileDto = createServiceProfileData();
 
         // Act
         return await request(app.getHttpServer())
@@ -105,7 +106,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     it("(GET) /chirpstack/service-profiles/:id - OK", async () => {
         // Arrange
-        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const data: CreateServiceProfileDto = createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(data);
         const serviceProfileId = result.data.id;
 
@@ -127,7 +128,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     it("(GET) /chirpstack/service-profiles/ - OK", async () => {
         // Arrange
-        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const data: CreateServiceProfileDto = createServiceProfileData();
         const result1 = await serviceProfileService.createServiceProfile(data);
 
         data.serviceProfile.name = `${testname}-changed`;
@@ -165,7 +166,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     it("(PUT) /chirpstack/service-profiles/:id - OK", async () => {
         // Arrange
-        const original: CreateServiceProfileDto = await createServiceProfileData();
+        const original: CreateServiceProfileDto = createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(original);
         const serviceProfileId = result.data.id;
 
@@ -187,7 +188,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
     it("(DELETE) /chirpstack/service-profiles/:id - OK", async () => {
         //Arrange
-        const data: CreateServiceProfileDto = await createServiceProfileData();
+        const data: CreateServiceProfileDto = createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(data);
         const serviceProfileId = result.data.id;
 
@@ -207,33 +208,4 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                 expect(auditLogFailListener).not.toHaveBeenCalled();
             });
     });
-
-    async function createServiceProfileData(): Promise<CreateServiceProfileDto> {
-        const serviceProfileDto: ServiceProfileDto = {
-            name: testname,
-            prAllowed: true,
-            raAllowed: true,
-            reportDevStatusBattery: true,
-            reportDevStatusMargin: true,
-            ulRatePolicy: "DROP",
-            addGWMetaData: true,
-            devStatusReqFreq: 0,
-            dlBucketSize: 0,
-            dlRate: 0,
-            drMax: 0,
-            drMin: 0,
-            hrAllowed: true,
-            minGWDiversity: 0,
-            nwkGeoLoc: true,
-            targetPER: 0,
-            ulBucketSize: 0,
-            ulRate: 0,
-        };
-
-        const serviceProfile: CreateServiceProfileDto = {
-            serviceProfile: serviceProfileDto,
-        };
-
-        return serviceProfile;
-    }
 });

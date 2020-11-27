@@ -125,6 +125,14 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
+    async deleteDevice(deviceEUI: string) {
+        try {
+            return await this.delete(`devices/`, deviceEUI);
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async getDownlinkQueue(deviceEUI: string): Promise<DeviceDownlinkQueueResponseDto> {
         const res = await this.get<DeviceDownlinkQueueResponseDto>(
             `devices/${deviceEUI}/queue`

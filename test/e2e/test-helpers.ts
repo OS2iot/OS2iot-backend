@@ -30,6 +30,10 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
+import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
+import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
+import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
+import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -814,3 +818,48 @@ export async function makeCreateGatewayDto(
 }
 
 export const gatewayNamePrefix = "E2E-test";
+
+export function createServiceProfileData(testname = "e2e"): CreateServiceProfileDto {
+    const serviceProfileDto: ServiceProfileDto = {
+        name: testname,
+        prAllowed: true,
+        raAllowed: true,
+        reportDevStatusBattery: true,
+        reportDevStatusMargin: true,
+        ulRatePolicy: "DROP",
+        addGWMetaData: true,
+        devStatusReqFreq: 0,
+        dlBucketSize: 0,
+        dlRate: 0,
+        drMax: 0,
+        drMin: 0,
+        hrAllowed: true,
+        minGWDiversity: 0,
+        nwkGeoLoc: true,
+        targetPER: 0,
+        ulBucketSize: 0,
+        ulRate: 0,
+    };
+
+    const serviceProfile: CreateServiceProfileDto = {
+        serviceProfile: serviceProfileDto,
+    };
+
+    return serviceProfile;
+}
+
+export function createDeviceProfileData(): CreateDeviceProfileDto {
+    const deviceProfileDto: DeviceProfileDto = {
+        name: "e2e",
+        macVersion: "1.0.3",
+        regParamsRevision: "A",
+        maxEIRP: 1,
+    };
+
+    const deviceProfile: CreateDeviceProfileDto = {
+        deviceProfile: deviceProfileDto,
+        internalOrganizationId: 1,
+    };
+
+    return deviceProfile;
+}

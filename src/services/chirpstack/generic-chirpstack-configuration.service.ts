@@ -83,7 +83,9 @@ export class GenericChirpstackConfigurationService {
 
             return result;
         } catch (err) {
-            this.innerLogger.error(`post got error: ${JSON.stringify(err?.response?.data)}`);
+            this.innerLogger.error(
+                `post got error: ${JSON.stringify(err?.response?.data)}`
+            );
 
             this.throwBadRequestIf400(err);
 
@@ -146,16 +148,20 @@ export class GenericChirpstackConfigurationService {
     async delete<T>(endpoint: string, id?: string): Promise<AxiosResponse> {
         const header = this.setupHeader(endpoint);
         const axiosConfig = this.makeAxiosConfiguration(header);
+        const url = header.url + (id != undefined ? "/" + id : "");
         try {
-            const url = header.url + (id != undefined ? "/" + id : "");
             const result = await this.httpService.delete(url, axiosConfig).toPromise();
 
             this.innerLogger.debug(
-                `delete : ${result.status.toString()} and message: ${result.statusText}`
+                `DELETE ${url} - Status: ${result.status.toString()} and message: ${
+                    result.statusText
+                }`
             );
             return result;
         } catch (err) {
-            this.innerLogger.error(`Delete got error: ${JSON.stringify(err?.response?.data)}`);
+            this.innerLogger.error(
+                `DELETE ${url} - Got error: ${JSON.stringify(err?.response?.data)}`
+            );
             throw new InternalServerErrorException(err?.response?.data);
         }
     }

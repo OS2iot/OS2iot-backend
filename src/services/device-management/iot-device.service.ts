@@ -411,8 +411,16 @@ export class IoTDeviceService {
         return res;
     }
 
-    async delete(id: number): Promise<DeleteResult> {
-        return this.iotDeviceRepository.delete(id);
+    async delete(device: IoTDevice): Promise<DeleteResult> {
+        if (device.type == IoTDeviceType.LoRaWAN) {
+            const lorawanDevice = device as LoRaWANDevice;
+            this.logger.debug(
+                `Deleteing LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
+            );
+            await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+        }
+
+        return this.iotDeviceRepository.delete(device.id);
     }
 
     async deleteMany(ids: number[]): Promise<DeleteResult> {

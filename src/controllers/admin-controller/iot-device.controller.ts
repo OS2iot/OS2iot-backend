@@ -231,7 +231,7 @@ export class IoTDeviceController {
                 false
             );
             checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
-            const result = await this.iotDeviceService.delete(id);
+            const result = await this.iotDeviceService.delete(oldIotDevice);
             AuditLog.success(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
