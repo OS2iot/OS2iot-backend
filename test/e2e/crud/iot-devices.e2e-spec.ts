@@ -15,10 +15,15 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import {
     clearDatabase,
     generateSavedApplication,
+    generateSavedConnection,
+    generateSavedDataTarget,
     generateSavedGlobalAdminUser,
     generateSavedHttpDevice,
+    generateSavedIoTDevice,
     generateSavedLoRaWANDevice,
     generateSavedOrganization,
+    generateSavedPayloadDecoder,
+    generateSavedReceivedMessageAndMetadata,
     generateSavedSigfoxDevice,
     generateSavedSigfoxDeviceFromData,
     generateSavedSigFoxGroup,
@@ -666,6 +671,50 @@ describe("IoTDeviceController (e2e)", () => {
                         },
                     ],
                     totalCount: 1,
+                });
+            });
+    });
+
+    it("(GET) /iot-device/minimalByPayloadDecoder/:id", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        const pd1 = await generateSavedPayloadDecoder(org);
+        const pd2 = await generateSavedPayloadDecoder(org);
+        const it1 = await generateSavedIoTDevice(application);
+        const msg1 = await generateSavedReceivedMessageAndMetadata(it1);
+        const it2 = await generateSavedIoTDevice(application);
+        const it3 = await generateSavedIoTDevice(application);
+        const dt1 = await generateSavedDataTarget(application);
+        await generateSavedConnection(it1, dt1, pd1);
+        await generateSavedConnection(it2, dt1, pd1);
+        await generateSavedConnection(it3, dt1, pd2);
+
+        // act
+        return await request(app.getHttpServer())
+            .get(`/iot-device/minimalByPayloadDecoder/${pd1.id}?limit=10&offset=0`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                // Assert
+                expect(response.body).toMatchObject({
+                    count: 2,
+                });
+                expect(response.body.data).toContainEqual({
+                    id: it1.id,
+                    name: it1.name,
+                    canRead: true,
+                    organizationId: org.id,
+                    lastActiveTime: msg1.sentTime.toISOString(),
+                });
+                expect(response.body.data).toContainEqual({
+                    id: it2.id,
+                    name: it2.name,
+                    canRead: true,
+                    organizationId: org.id,
+                    lastActiveTime: null,
                 });
             });
     });
