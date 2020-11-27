@@ -28,5 +28,5 @@ export class IoTDeviceMinimalRaw {
 
     organizationId: number;
 
-    lastActiveTime: Date;
+    sentTime: Date;
 }

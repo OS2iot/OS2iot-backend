@@ -192,7 +192,7 @@ export class IoTDeviceService {
             return {
                 id: x.id,
                 name: x.name,
-                lastActiveTime: x.lastActiveTime != null ? x.lastActiveTime : null,
+                lastActiveTime: x.sentTime != null ? x.sentTime : null,
                 organizationId: x.organizationId,
                 canRead: this.hasAccessToIoTDevice(x, applications, organizations, req),
             };
