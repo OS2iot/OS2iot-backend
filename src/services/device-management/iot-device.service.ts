@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Point } from "geojson";
-import { DeleteResult, Repository, getManager } from "typeorm";
+import { DeleteResult, Repository, getManager, SelectQueryBuilder } from "typeorm";
 
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
@@ -38,8 +38,13 @@ import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
 import { DeviceModelService } from "./device-model.service";
-import { ListAllIoTDevicesMinimalResponseDto } from "@dto/list-all-iot-devices-minimal-response.dto";
+import {
+    IoTDeviceMinimal,
+    IoTDeviceMinimalRaw,
+    ListAllIoTDevicesMinimalResponseDto,
+} from "@dto/list-all-iot-devices-minimal-response.dto";
 import { of } from "rxjs";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class IoTDeviceService {
@@ -148,11 +153,14 @@ export class IoTDeviceService {
     }
 
     async findAllByPayloadDecoder(
+        req: AuthenticatedRequest,
         payloadDecoderId: number,
         limit: number,
         offset: number
     ): Promise<ListAllIoTDevicesMinimalResponseDto> {
-        const data = this.getQueryForFindAllByPayloadDecoder(payloadDecoderId)
+        const data: Promise<
+            IoTDeviceMinimalRaw[]
+        > = this.getQueryForFindAllByPayloadDecoder(payloadDecoderId)
             .addSelect('"application"."id"', "applicationId")
             .addSelect('"application"."belongsToId"', "organizationId")
             .limit(limit)
@@ -162,35 +170,59 @@ export class IoTDeviceService {
         const count = this.getQueryForFindAllByPayloadDecoder(
             payloadDecoderId
         ).getCount();
+
+        const transformedData: IoTDeviceMinimal[] = await this.mapToIoTDeviceMinimal(
+            data,
+            req
+        );
+
         return {
-            data: await data,
+            data: transformedData,
             count: await count,
         };
     }
 
-    private getQueryForFindAllByPayloadDecoder(payloadDecoderId: number) {
+    private async mapToIoTDeviceMinimal(
+        data: Promise<IoTDeviceMinimalRaw[]>,
+        req: AuthenticatedRequest
+    ): Promise<IoTDeviceMinimal[]> {
+        const applications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        const organizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        return (await data).map(x => {
+            return {
+                id: x.id,
+                name: x.name,
+                lastActiveTime: x.lastActiveTime != null ? x.lastActiveTime : null,
+                organizationId: x.organizationId,
+                canRead: this.hasAccessToIoTDevice(x, applications, organizations, req),
+            };
+        });
+    }
+
+    private hasAccessToIoTDevice(
+        x: IoTDeviceMinimalRaw,
+        apps: number[],
+        orgs: number[],
+        req: AuthenticatedRequest
+    ): boolean {
+        if (req.user.permissions.isGlobalAdmin) {
+            return true;
+        } else if (orgs.some(orgId => orgId == x.organizationId)) {
+            return true;
+        } else if (apps.some(appId => appId == x.applicationId)) {
+            return true;
+        }
+        return false;
+    }
+
+    private getQueryForFindAllByPayloadDecoder(
+        payloadDecoderId: number
+    ): SelectQueryBuilder<IoTDevice> {
         return this.iotDeviceRepository
             .createQueryBuilder("device")
-            .innerJoin(
-                "device.application",
-                "application",
-                'application.id = device."applicationId"'
-            )
-            .innerJoin(
-                "iot_dev_pay_dec_dat_tar_con_iot_dev_iot_dev",
-                "jt",
-                '"jt"."iotDeviceId" = "device"."id"'
-            )
-            .innerJoin(
-                "device.connections",
-                "connection",
-                '"connection"."id" = "jt"."iotDevicePayloadDecoderDataTargetConnectionId"'
-            )
-            .leftJoin(
-                "device.latestReceivedMessage",
-                "receivedMessage",
-                '"receivedMessage"."deviceId" = device.id'
-            )
+            .innerJoin("device.application", "application")
+            .innerJoin("device.connections", "connection")
+            .leftJoin("device.latestReceivedMessage", "receivedMessage")
             .where('"connection"."payloadDecoderId" = :id', { id: payloadDecoderId })
             .select(['"device"."id"', '"device"."name"', '"receivedMessage"."sentTime"']);
     }

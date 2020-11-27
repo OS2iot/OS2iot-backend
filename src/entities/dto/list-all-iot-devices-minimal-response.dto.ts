@@ -18,3 +18,15 @@ export class IoTDeviceMinimal {
 
     lastActiveTime: Date;
 }
+
+export class IoTDeviceMinimalRaw {
+    id: number;
+
+    name: string;
+
+    applicationId: number;
+
+    organizationId: number;
+
+    lastActiveTime: Date;
+}
