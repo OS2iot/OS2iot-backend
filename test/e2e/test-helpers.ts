@@ -427,7 +427,10 @@ export async function generateSavedConnection(
     return await getManager().save(connection);
 }
 
-export function generatePayloadDecoder(org?: Organization): PayloadDecoder {
+export function generatePayloadDecoder(
+    org?: Organization,
+    includeDeviceModel = false
+): PayloadDecoder {
     const decoder = new PayloadDecoder();
     decoder.organization = org;
     decoder.name = "E2E Test Payload Decoder";
@@ -668,6 +671,7 @@ export function generatePayloadDecoder(org?: Organization): PayloadDecoder {
     function decode(payload, metadata) {
       let res = {};
       res.decoded = DecodeElsysPayload(base64ToBytes(payload.data));
+      ${includeDeviceModel ? 'res.deviceModel = metadata.deviceModel.body;' : ''} 
       return res;
     }
     `;
@@ -676,9 +680,10 @@ export function generatePayloadDecoder(org?: Organization): PayloadDecoder {
 }
 
 export async function generateSavedPayloadDecoder(
-    org?: Organization
+    org?: Organization,
+    includeDeviceModel = false
 ): Promise<PayloadDecoder> {
-    const decoder = generatePayloadDecoder(org);
+    const decoder = generatePayloadDecoder(org, includeDeviceModel);
     return await getManager().save(decoder);
 }
 

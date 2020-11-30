@@ -37,6 +37,7 @@ export class OpenDataDkSharingService {
             .innerJoinAndSelect("dataset.dataTarget", "dt")
             .innerJoinAndSelect("dt.connections", "connections")
             .innerJoinAndSelect("connections.iotDevices", "devices")
+            .leftJoinAndSelect("devices.deviceModel", "dm")
             .leftJoinAndSelect("connections.payloadDecoder", "pd")
             .innerJoinAndSelect("devices.latestReceivedMessage", "msg")
             .where("dataset.id = :id", { id: dataset.id })

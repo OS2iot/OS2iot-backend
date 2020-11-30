@@ -10,9 +10,11 @@ import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
+    generateIoTDevice,
     generateSavedApplication,
     generateSavedConnection,
     generateSavedDataTargetWithOpenDataDk,
+    generateSavedDeviceModel,
     generateSavedIoTDevice,
     generateSavedOrganization,
     generateSavedPayloadDecoder,
@@ -216,6 +218,72 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
                         light: 139,
                         motion: 8,
                         vdd: 3645,
+                    },
+                });
+                expect(response.body).toContainEqual({
+                    chan: 3,
+                    codr: "4/5",
+                    data: "AQEXAjEEAIsFCAcOPQ==",
+                    datr: "SF12BW125",
+                    freq: 867100000,
+                    lsnr: 12,
+                    modu: "LORA",
+                    rfch: 0,
+                    rssi: -39,
+                    size: 26,
+                    stat: 1,
+                    tmst: 71333956,
+                    utmms: 1597675976328,
+                });
+
+                expect(response.body).toMatchObject({});
+            });
+    });
+
+    it("(GET) ​​/open-data-dk-sharing​/{organizationId}/data/{shareId} - With Device Model - All OK", async () => {
+        // Arrange
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+        let iotDevice = await generateIoTDevice(application);
+        const deviceModel = await generateSavedDeviceModel(org);
+        iotDevice.deviceModel = deviceModel;
+        iotDevice = await getManager().save(iotDevice);
+        const dt = await generateSavedDataTargetWithOpenDataDk(application);
+        const pd = await generateSavedPayloadDecoder(org, true);
+        await generateSavedConnection(iotDevice, dt, pd);
+        await generateSavedConnection(iotDevice, dt, null);
+
+        const oddk = await getManager().findOne(OpenDataDkDataset);
+
+        // Send data to device
+        await generateSavedReceivedMessageAndMetadata(iotDevice);
+
+        // Act
+        return await request(app.getHttpServer())
+            .get(`/open-data-dk-sharing/${org.id}/data/${oddk.id}`)
+            .send()
+            // Assert
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body).toContainEqual({
+                    decoded: {
+                        temperature: 27.9,
+                        humidity: 49,
+                        light: 139,
+                        motion: 8,
+                        vdd: 3645,
+                    },
+                    deviceModel: {
+                        brandName: "myDevice",
+                        category: ["sensor"],
+                        controlledProperty: ["fillingLevel", "temperature"],
+                        function: ["sensing"],
+                        id: "myDevice-wastecontainer-sensor-345",
+                        manufacturerName: "myDevice Inc.",
+                        modelName: "S4Container 345",
+                        name: "myDevice Sensor for Containers 345",
+                        type: "DeviceModel",
                     },
                 });
                 expect(response.body).toContainEqual({
