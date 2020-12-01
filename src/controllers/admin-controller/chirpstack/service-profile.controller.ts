@@ -60,7 +60,7 @@ export class ServiceProfileController {
             ActionType.CREATE,
             "ChirpstackServiceProfile",
             req.user.userId,
-            createDto.serviceProfile.id,
+            res.data.id,
             createDto.serviceProfile.name
         );
         return res.data;

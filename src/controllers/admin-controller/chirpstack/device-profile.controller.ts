@@ -71,7 +71,7 @@ export class DeviceProfileController {
                 ActionType.CREATE,
                 "ChirpstackDeviceProfile",
                 req.user.userId,
-                createDto.deviceProfile.id,
+                result.data.id,
                 createDto.deviceProfile.name
             );
 
