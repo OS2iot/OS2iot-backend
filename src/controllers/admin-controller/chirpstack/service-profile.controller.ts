@@ -51,6 +51,7 @@ export class ServiceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new ServiceProfile" })
     @ApiBadRequestResponse()
+    @Write()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateServiceProfileDto
@@ -71,6 +72,7 @@ export class ServiceProfileController {
     @ApiOperation({ summary: "Update an existing ServiceProfile" })
     @ApiBadRequestResponse()
     @HttpCode(204)
+    @Write()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
@@ -130,6 +132,7 @@ export class ServiceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
+    @Write()
     async deleteOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string

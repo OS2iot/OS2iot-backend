@@ -53,6 +53,7 @@ export class DeviceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
+    @Write()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
@@ -166,6 +167,7 @@ export class DeviceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
+    @Write()
     async deleteOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string
