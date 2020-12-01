@@ -34,6 +34,8 @@ import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.
 import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -671,7 +673,7 @@ export function generatePayloadDecoder(
     function decode(payload, metadata) {
       let res = {};
       res.decoded = DecodeElsysPayload(base64ToBytes(payload.data));
-      ${includeDeviceModel ? 'res.deviceModel = metadata.deviceModel.body;' : ''} 
+      ${includeDeviceModel ? "res.deviceModel = metadata.deviceModel.body;" : ""} 
       return res;
     }
     `;
@@ -867,4 +869,19 @@ export function createDeviceProfileData(): CreateDeviceProfileDto {
     };
 
     return deviceProfile;
+}
+
+export async function cleanChirpstackApplications(
+    csService: GenericChirpstackConfigurationService,
+    testname: string
+) {
+    await csService
+        .get<ListAllChirpstackApplicationsResponseDto>(`applications?limit=1000`)
+        .then(response => {
+            response.result.forEach(async application => {
+                if (application.serviceProfileName.startsWith(testname)) {
+                    await csService.delete(`applications/${application.id}`);
+                }
+            });
+        });
 }

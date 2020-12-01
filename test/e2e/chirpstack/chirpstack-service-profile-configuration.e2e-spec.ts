@@ -6,12 +6,12 @@ import * as request from "supertest";
 
 import configuration from "@config/configuration";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
-import { ServiceProfileDto } from "@dto/chirpstack/service-profile.dto";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 
 import {
+    cleanChirpstackApplications,
     clearDatabase,
     createServiceProfileData,
     generateSavedGlobalAdminUser,
@@ -73,6 +73,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
     });
 
     afterEach(async () => {
+        await cleanChirpstackApplications(serviceProfileService, testname);
         await serviceProfileService.findAllServiceProfiles(1000, 0).then(response => {
             response.result.forEach(async serviceProfile => {
                 if (serviceProfile.name.startsWith(testname)) {

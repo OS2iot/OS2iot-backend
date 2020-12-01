@@ -12,6 +12,7 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 import {
+    cleanChirpstackApplications,
     clearDatabase,
     createDeviceProfileData,
     generateSavedGlobalAdminUser,
@@ -84,6 +85,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     });
 
     afterEach(async () => {
+        await cleanChirpstackApplications(deviceProfileService, testname);
         await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
             response.result.forEach(async deviceProfile => {
                 if (deviceProfile.name.startsWith(testname)) {
