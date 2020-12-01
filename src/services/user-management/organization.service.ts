@@ -105,7 +105,7 @@ export class OrganizationService {
 
     async findByIdWithRelations(organizationId: number): Promise<Organization> {
         return await this.organizationRepository.findOneOrFail(organizationId, {
-            relations: ["permissions", "applications", "applications.iotDevices"],
+            relations: ["permissions"],
             loadRelationIds: {
                 relations: ["applications.iotDevices", "createdBy", "updatedBy"],
             },

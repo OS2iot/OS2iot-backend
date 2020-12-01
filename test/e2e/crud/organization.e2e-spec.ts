@@ -152,7 +152,6 @@ describe("OrganizationController (e2e)", () => {
                     createdAt: expect.any(String),
                     updatedAt: expect.any(String),
                     name: org.name,
-                    applications: [],
                 });
                 expect(response.body.permissions).toContainEqual({
                     id: expect.any(Number),
