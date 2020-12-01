@@ -20,7 +20,10 @@ import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { ListAllIoTDevicesMinimalResponseDto } from "@dto/list-all-iot-devices-minimal-response.dto";
+import {
+    ListAllIoTDevicesMinimalResponseDto,
+    PayloadDecoderIoDeviceMinimalQuery,
+} from "@dto/list-all-iot-devices-minimal-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
@@ -39,15 +42,14 @@ export class IoTDevicePayloadDecoderController {
     async findAllByPayloadDecoder(
         @Req() req: AuthenticatedRequest,
         @Param("payloadDecoderId", new ParseIntPipe()) payloadDecoderId: number,
-        @Query("limit", new ParseIntPipe()) limit = 10,
-        @Query("offset", new ParseIntPipe()) offset = 0
+        @Query() query: PayloadDecoderIoDeviceMinimalQuery
     ): Promise<ListAllIoTDevicesMinimalResponseDto> {
         try {
             return await this.iotDeviceService.findAllByPayloadDecoder(
                 req,
                 payloadDecoderId,
-                limit,
-                offset
+                +query.limit,
+                +query.offset
             );
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);

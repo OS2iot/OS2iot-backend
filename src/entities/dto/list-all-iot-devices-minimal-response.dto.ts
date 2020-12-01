@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class ListAllIoTDevicesMinimalResponseDto {
     @ApiProperty()
@@ -13,6 +13,8 @@ export class IoTDeviceMinimal {
     name: string;
 
     canRead: boolean;
+
+    applicationId: number;
 
     organizationId: number;
 
@@ -29,4 +31,12 @@ export class IoTDeviceMinimalRaw {
     organizationId: number;
 
     sentTime: Date;
+}
+
+export class PayloadDecoderIoDeviceMinimalQuery {
+    @ApiPropertyOptional()
+    limit?: number = 20;
+
+    @ApiPropertyOptional()
+    offset?: number = 0;
 }

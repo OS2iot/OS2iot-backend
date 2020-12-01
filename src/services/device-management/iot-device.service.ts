@@ -194,6 +194,7 @@ export class IoTDeviceService {
                 name: x.name,
                 lastActiveTime: x.sentTime != null ? x.sentTime : null,
                 organizationId: x.organizationId,
+                applicationId: x.applicationId,
                 canRead: this.hasAccessToIoTDevice(x, applications, organizations, req),
             };
         });
@@ -224,6 +225,7 @@ export class IoTDeviceService {
             .innerJoin("device.connections", "connection")
             .leftJoin("device.latestReceivedMessage", "receivedMessage")
             .where('"connection"."payloadDecoderId" = :id', { id: payloadDecoderId })
+            .orderBy("device.id")
             .select(['"device"."id"', '"device"."name"', '"receivedMessage"."sentTime"']);
     }
 
