@@ -158,10 +158,10 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         try {
             const gw = await this.chirpstackGatewayService.getOne(gatewayId);
-            if (gw.gateway.tags?.organizationId != null) {
+            if (gw.gateway.internalOrganizationId != null) {
                 checkIfUserHasWriteAccessToOrganization(
                     req,
-                    +gw.gateway.tags.organizationId
+                    +gw.gateway.internalOrganizationId
                 );
             }
             const deleteResult = await this.chirpstackGatewayService.deleteGateway(
