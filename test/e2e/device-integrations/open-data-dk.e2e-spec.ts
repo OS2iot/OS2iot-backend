@@ -65,7 +65,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
         await clearDatabase();
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId} - All OK", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId} - All OK", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -119,7 +119,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId} - Optional values are null", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId} - Optional values are null", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -173,7 +173,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId} - Wrong org id", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId} - Wrong org id", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -187,7 +187,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             .expect(404);
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId}/data/{shareId} - All OK", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId}/data/{shareId} - All OK", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -240,7 +240,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId}/data/{shareId} - With Device Model - All OK", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId}/data/{shareId} - With Device Model - All OK", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -306,7 +306,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId}/data/{shareId} - Wrong org id", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId}/data/{shareId} - Wrong org id", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
@@ -330,7 +330,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             .expect(404);
     });
 
-    it("(GET) ​​/open-data-dk-sharing​/{organizationId}/data/{shareId} - Wrong dataset id", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId}/data/{shareId} - Wrong dataset id", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
