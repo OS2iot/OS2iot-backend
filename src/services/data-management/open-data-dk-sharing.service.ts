@@ -74,16 +74,24 @@ export class OpenDataDkSharingService {
             );
             return;
         }
-
-        if (connection.payloadDecoder != null) {
-            const decoded = this.payloadDecoderExecutorService.callUntrustedCode(
-                connection.payloadDecoder.decodingFunction,
-                device,
-                device.latestReceivedMessage.rawData
+        try {
+            if (connection.payloadDecoder != null) {
+                const decoded = this.payloadDecoderExecutorService.callUntrustedCode(
+                    connection.payloadDecoder.decodingFunction,
+                    device,
+                    device.latestReceivedMessage.rawData
+                );
+                results.push(JSON.parse(decoded));
+            } else {
+                results.push(device.latestReceivedMessage.rawData);
+            }
+        } catch (err) {
+            this.logger.error(
+                `Got error during decode of device(${device.id}) with decoder(${connection.payloadDecoder.id}): ${err}`
             );
-            results.push(JSON.parse(decoded));
-        } else {
-            results.push(device.latestReceivedMessage.rawData);
+            results.push({
+                error: `Could not decode data for device(${device.id})`,
+            });
         }
     }
 
