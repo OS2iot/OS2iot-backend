@@ -79,15 +79,27 @@ export class ApplicationService {
         query?: ListAllEntitiesDto,
         allowedOrganisations?: number[]
     ): Promise<ListAllApplicationsResponseDto> {
+        const sorting: { [id: string]: string | number } = {};
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "updatedAt")
+        ) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 allowedOrganisations != null
                     ? { belongsTo: In(allowedOrganisations) }
                     : {},
-            take: query.limit,
-            skip: query.offset,
+            take: +query.limit,
+            skip: +query.offset,
             relations: ["iotDevices"],
-            order: { id: query.sort }, // TODO: Generic sorting possible?
+            order: sorting,
         });
 
         return {
