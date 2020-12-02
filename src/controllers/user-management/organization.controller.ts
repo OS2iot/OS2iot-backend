@@ -9,6 +9,7 @@ import {
     ParseIntPipe,
     Post,
     Put,
+    Query,
     Req,
     UseGuards,
 } from "@nestjs/common";
@@ -39,6 +40,7 @@ import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helpe
 import { OrganizationService } from "@services/user-management/organization.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -120,14 +122,16 @@ export class OrganizationController {
     @Get()
     @ApiOperation({ summary: "Get list of all Organizations" })
     async findAll(
-        @Req() req: AuthenticatedRequest
+        @Req() req: AuthenticatedRequest,
+        @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllOrganizationsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
-            return this.organizationService.findAll();
+            return this.organizationService.findAll(query);
         } else {
             const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
             return this.organizationService.findAllInOrganizationList(
-                allowedOrganizations
+                allowedOrganizations,
+                query
             );
         }
     }

@@ -19,6 +19,7 @@ import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @Injectable()
 export class OrganizationService {
@@ -60,9 +61,14 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async findAll(): Promise<ListAllOrganizationsResponseDto> {
+    async findAll(query?: ListAllEntitiesDto): Promise<ListAllOrganizationsResponseDto> {
+        const sorting: { [id: string]: string | number } = this.getSorting(query);
+
         const [data, count] = await this.organizationRepository.findAndCount({
-            relations: ["permissions", "applications"],
+            relations: ["applications"],
+            take: +query.limit,
+            skip: +query.offset,
+            order: sorting,
         });
 
         return {
@@ -83,20 +89,40 @@ export class OrganizationService {
     }
 
     async findAllInOrganizationList(
-        allowedOrganizations: number[]
+        allowedOrganizations: number[],
+        query?: ListAllEntitiesDto
     ): Promise<ListAllOrganizationsResponseDto> {
+        const sorting: { [id: string]: string | number } = this.getSorting(query);
         if (allowedOrganizations.length === 0) {
             return { count: 0, data: [] };
         }
         const [data, count] = await this.organizationRepository.findAndCount({
             where: { id: In(allowedOrganizations) },
-            relations: ["permissions", "applications"],
+            relations: ["applications"],
+            take: +query.limit,
+            skip: +query.offset,
+            order: sorting,
         });
 
         return {
             count: count,
             data: data,
         };
+    }
+
+    private getSorting(query: ListAllEntitiesDto) {
+        const sorting: { [id: string]: string | number } = {};
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "lastLogin")
+        ) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+        return sorting;
     }
 
     async findById(organizationId: number): Promise<Organization> {
