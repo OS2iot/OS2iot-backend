@@ -20,6 +20,7 @@ import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @Injectable()
 export class UserService {
@@ -237,10 +238,43 @@ export class UserService {
         return await this.userRepository.findByIds(userIds);
     }
 
-    async findAll(): Promise<ListAllUsersResponseDto> {
+    async findAll(query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
+        const sorting: { [id: string]: string | number } = {};
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "lastLogin")
+        ) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+
         const [data, count] = await this.userRepository.findAndCount({
             relations: ["permissions"],
+            take: +query.limit,
+            skip: +query.offset,
+            order: sorting,
         });
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+    }
+
+    async getUsersOnPermissionId(
+        permissionId: number,
+        query: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        const [data, count] = await this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.permissions", "p")
+            .where('"p"."id" = :permissionId', { permissionId: permissionId })
+            .take(+query.limit)
+            .skip(+query.offset)
+            .getManyAndCount();
 
         return {
             data: data.map(x => x as UserResponseDto),

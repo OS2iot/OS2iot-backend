@@ -39,6 +39,7 @@ import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-resp
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { User } from "@entities/user.entity";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -155,7 +156,9 @@ export class UserController {
 
     @Get()
     @ApiOperation({ summary: "Get all users" })
-    async findAll(): Promise<ListAllUsersResponseDto> {
-        return await this.userService.findAll();
+    async findAll(
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        return await this.userService.findAll(query);
     }
 }

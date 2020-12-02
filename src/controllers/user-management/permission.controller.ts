@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, Query } from "@nestjs/common";
 import {
     Body,
     Controller,
@@ -40,6 +40,11 @@ import {
 import { PermissionService } from "@services/user-management/permission.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { UserService } from "@services/user-management/user.service";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
+import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -49,7 +54,10 @@ import { ActionType } from "@entities/audit-log-entry";
 @ApiTags("User Management")
 @Controller("permission")
 export class PermissionController {
-    constructor(private permissionService: PermissionService) {}
+    constructor(
+        private permissionService: PermissionService,
+        private userService: UserService
+    ) {}
 
     @Post()
     @ApiOperation({ summary: "Create new permission entity" })
@@ -189,6 +197,36 @@ export class PermissionController {
             );
 
             return organizationPermission;
+        }
+    }
+
+    @Get(":id/users")
+    @ApiOperation({ summary: "Get user of a permissions entity" })
+    @ApiNotFoundResponse()
+    async getUserOnOnePermissions(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number,
+        @Query() query?: ListAllPaginated
+    ): Promise<ListAllUsersResponseDto> {
+        let users;
+        let permission;
+        try {
+            users = this.userService.getUsersOnPermissionId(id, query);
+            permission = await this.permissionService.getPermission(id);
+        } catch (err) {
+            throw new NotFoundException();
+        }
+
+        if (req.user.permissions.isGlobalAdmin) {
+            return await users;
+        } else {
+            const organizationPermission = permission as OrganizationPermission;
+            checkIfUserHasAdminAccessToOrganization(
+                req,
+                organizationPermission.organization.id
+            );
+
+            return users;
         }
     }
 }
