@@ -1,6 +1,6 @@
 import { Inject, Injectable, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DeleteResult, In, Repository } from "typeorm";
+import { DeleteResult, In, QueryBuilder, Repository } from "typeorm";
 
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
@@ -14,6 +14,7 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { PermissionService } from "@services/user-management/permission.service";
+import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -90,7 +91,6 @@ export class ApplicationService {
         } else {
             sorting["id"] = "ASC";
         }
-
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 allowedOrganisations != null
@@ -101,6 +101,37 @@ export class ApplicationService {
             relations: ["iotDevices"],
             order: sorting,
         });
+
+        return {
+            data: result,
+            count: total,
+        };
+    }
+
+    async getApplicationsOnPermissionId(
+        permissionId: number,
+        query: ListAllApplicationsDto
+    ): Promise<ListAllApplicationsResponseDto> {
+        let orderBy = `application.id`;
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "updatedAt")
+        ) {
+            orderBy = `application.${query.orderOn}`;
+        }
+        let order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const [result, total] = await this.applicationRepository
+            .createQueryBuilder("application")
+            .innerJoin("application.permissions", "perm")
+            .leftJoinAndSelect("application.iotDevices", "iotdevices")
+            .where("perm.id = :permId", { permId: permissionId })
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order)
+            .getManyAndCount();
 
         return {
             data: result,

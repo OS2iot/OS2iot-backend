@@ -46,6 +46,8 @@ import { UserResponseDto } from "@dto/user-response.dto";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
+import { ApplicationService } from "@services/device-management/application.service";
+import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -57,7 +59,8 @@ import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 export class PermissionController {
     constructor(
         private permissionService: PermissionService,
-        private userService: UserService
+        private userService: UserService,
+        private applicationService: ApplicationService
     ) {}
 
     @Post()
@@ -200,6 +203,43 @@ export class PermissionController {
             );
 
             return organizationPermission;
+        }
+    }
+
+    @Get(":id/applications")
+    @ApiOperation({ summary: "Get applications of a permissions entity" })
+    @ApiNotFoundResponse()
+    async getApplicationsOnOnePermissions(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number,
+        @Query() query?: ListAllPaginated
+    ): Promise<ListAllApplicationsResponseDto> {
+        let applicationsPromise;
+        let permission;
+        try {
+            applicationsPromise = this.applicationService.getApplicationsOnPermissionId(
+                id,
+                query
+            );
+            permission = await this.permissionService.getPermission(id);
+        } catch (err) {
+            throw new NotFoundException();
+        }
+
+        if (req.user.permissions.isGlobalAdmin) {
+            return await applicationsPromise;
+        } else {
+            if (permission.type == PermissionType.GlobalAdmin) {
+                throw new ForbiddenException();
+            }
+
+            const organizationPermission = permission as OrganizationPermission;
+            checkIfUserHasAdminAccessToOrganization(
+                req,
+                organizationPermission.organization.id
+            );
+
+            return await applicationsPromise;
         }
     }
 
