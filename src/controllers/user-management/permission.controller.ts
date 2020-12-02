@@ -189,13 +189,12 @@ export class PermissionController {
             throw new NotFoundException();
         }
 
-        if (req.user.permissions.isGlobalAdmin) {
+        if (
+            req.user.permissions.isGlobalAdmin ||
+            permission.type == PermissionType.GlobalAdmin
+        ) {
             return permission;
         } else {
-            if (permission.type == PermissionType.GlobalAdmin) {
-                throw new ForbiddenException();
-            }
-
             const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAdminAccessToOrganization(
                 req,
@@ -226,13 +225,12 @@ export class PermissionController {
             throw new NotFoundException();
         }
 
-        if (req.user.permissions.isGlobalAdmin) {
+        if (
+            req.user.permissions.isGlobalAdmin ||
+            permission.type == PermissionType.GlobalAdmin
+        ) {
             return await applicationsPromise;
         } else {
-            if (permission.type == PermissionType.GlobalAdmin) {
-                throw new ForbiddenException();
-            }
-
             const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAdminAccessToOrganization(
                 req,
@@ -260,13 +258,16 @@ export class PermissionController {
             throw new NotFoundException();
         }
 
-        if (req.user.permissions.isGlobalAdmin) {
+        if (
+            req.user.permissions.isGlobalAdmin ||
+            permission.type == PermissionType.GlobalAdmin
+        ) {
             return await users;
         } else {
             const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAdminAccessToOrganization(
                 req,
-                organizationPermission.organization.id
+                organizationPermission?.organization?.id
             );
 
             return users;
