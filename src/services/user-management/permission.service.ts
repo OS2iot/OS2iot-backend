@@ -1,13 +1,13 @@
-import {
-    BadRequestException,
-    Inject,
-    Injectable,
-    forwardRef,
-    Logger,
-} from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as _ from "lodash";
-import { In, Repository, getManager } from "typeorm";
+import {
+    In,
+    Repository,
+    getManager,
+    createQueryBuilder,
+    SelectQueryBuilder,
+} from "typeorm";
 
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-response.dto";
@@ -32,6 +32,8 @@ import { UserService } from "./user.service";
 import { Application } from "@entities/application.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 
 @Injectable()
 export class PermissionService {
@@ -211,10 +213,45 @@ export class PermissionService {
         return new DeleteResponseDto(res.affected);
     }
 
-    async getAllPermissions(): Promise<ListAllPermissionsResponseDto> {
-        const [data, count] = await getManager().findAndCount(Permission, {
-            relations: ["organization", "users"],
-        });
+    async getAllPermissions(
+        query?: ListAllPermissionsDto,
+        orgs?: number[]
+    ): Promise<ListAllPermissionsResponseDto> {
+        let orderBy = `permission.id`;
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "type" ||
+                query.orderOn == "organisations")
+        ) {
+            if (query.orderOn == "organisations") {
+                orderBy = "org.name";
+            } else {
+                orderBy = `permission.${query.orderOn}`;
+            }
+        }
+        let order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        let qb: SelectQueryBuilder<Permission> = createQueryBuilder(
+            Permission,
+            "permission"
+        )
+            .leftJoinAndSelect("permission.organization", "org")
+            .leftJoinAndSelect("permission.users", "user")
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order);
+
+        if (query.userId) {
+            qb = qb.where("user.id = :userId", { userId: +query.userId });
+        } else if (orgs) {
+            qb.where({ organization: In(orgs) });
+        } else if (query.organisationId) {
+            qb = qb.where("org.id = :orgId", { orgId: +query.organisationId });
+        }
+
+        const [data, count] = await qb.getManyAndCount();
 
         return {
             data: data,
@@ -223,17 +260,10 @@ export class PermissionService {
     }
 
     async getAllPermissionsInOrganizations(
-        orgs: number[]
+        orgs: number[],
+        query?: ListAllEntitiesDto
     ): Promise<ListAllPermissionsResponseDto> {
-        const [data, count] = await getManager().findAndCount(OrganizationPermission, {
-            where: { organization: In(orgs) },
-            relations: ["organization", "users"],
-        });
-
-        return {
-            data: data,
-            count: count,
-        };
+        return this.getAllPermissions(query, orgs);
     }
 
     async getPermission(id: number): Promise<Permission> {

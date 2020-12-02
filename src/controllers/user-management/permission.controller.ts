@@ -45,6 +45,7 @@ import { UserService } from "@services/user-management/user.service";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
+import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -157,14 +158,16 @@ export class PermissionController {
     @Get()
     @ApiOperation({ summary: "Get list of all permissions" })
     async getAllPermissions(
-        @Req() req: AuthenticatedRequest
+        @Req() req: AuthenticatedRequest,
+        @Query() query?: ListAllPermissionsDto
     ): Promise<ListAllPermissionsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
-            return this.permissionService.getAllPermissions();
+            return this.permissionService.getAllPermissions(query);
         } else {
             const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
             return this.permissionService.getAllPermissionsInOrganizations(
-                allowedOrganizations
+                allowedOrganizations,
+                query
             );
         }
     }
