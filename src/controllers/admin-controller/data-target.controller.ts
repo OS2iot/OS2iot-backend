@@ -24,7 +24,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read } from "@auth/roles.decorator";
+import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -166,12 +166,14 @@ export class DataTargetController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing IoT-Device" })
     @ApiBadRequestResponse()
+    @Write()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        checkIfUserHasWriteAccessToApplication(req, id);
         try {
+            const dt = await this.dataTargetService.findOne(id);
+            checkIfUserHasWriteAccessToApplication(req, dt.application.id);
             const result = await this.dataTargetService.delete(id);
 
             if (result.affected === 0) {
@@ -181,6 +183,9 @@ export class DataTargetController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, DataTarget.name, req.user.userId, id);
+            if (err?.status == 403) {
+                throw err;
+            }
             throw new NotFoundException(err);
         }
     }
