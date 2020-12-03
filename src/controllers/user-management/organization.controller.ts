@@ -126,7 +126,7 @@ export class OrganizationController {
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllOrganizationsResponseDto> {
         if (req.user.permissions.isGlobalAdmin) {
-            return this.organizationService.findAll(query);
+            return this.organizationService.findAllPaginated(query);
         } else {
             const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
             return this.organizationService.findAllInOrganizationList(

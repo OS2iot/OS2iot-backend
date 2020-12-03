@@ -61,13 +61,26 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async findAll(query?: ListAllEntitiesDto): Promise<ListAllOrganizationsResponseDto> {
+    async findAll(): Promise<ListAllOrganizationsResponseDto> {
+        const [data, count] = await this.organizationRepository.findAndCount({
+            relations: ["applications", "permissions"],
+        });
+
+        return {
+            count: count,
+            data: data,
+        };
+    }
+
+    async findAllPaginated(
+        query?: ListAllEntitiesDto
+    ): Promise<ListAllOrganizationsResponseDto> {
         const sorting: { [id: string]: string | number } = this.getSorting(query);
 
         const [data, count] = await this.organizationRepository.findAndCount({
             relations: ["applications"],
-            take: +query.limit,
-            skip: +query.offset,
+            take: query?.limit ? query.limit : 100,
+            skip: query?.offset ? query.offset : 0,
             order: sorting,
         });
 
@@ -113,7 +126,7 @@ export class OrganizationService {
     private getSorting(query: ListAllEntitiesDto) {
         const sorting: { [id: string]: string | number } = {};
         if (
-            query.orderOn != null &&
+            query?.orderOn != null &&
             (query.orderOn == "id" ||
                 query.orderOn == "name" ||
                 query.orderOn == "lastLogin")
