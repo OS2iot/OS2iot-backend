@@ -55,7 +55,7 @@ export class UserPermissions {
         const res: number[] = [];
 
         for (const key of map.keys()) {
-            res.push(key);
+            res.push(+key);
         }
 
         return res;

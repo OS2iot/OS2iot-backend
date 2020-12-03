@@ -5,6 +5,8 @@ import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllDeviceModelResponseDto } from "@dto/list-all-device-model-response.dto";
+import { ListAllDeviceModelsDto } from "@dto/list-all-device-models.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ActionType } from "@entities/audit-log-entry";
 import { DeviceModel } from "@entities/device-model.entity";
@@ -54,15 +56,15 @@ export class DeviceModelController {
     @ApiOperation({ summary: "Get all device models" })
     async findAll(
         @Req() req: AuthenticatedRequest,
-        @Query("organizationId", new ParseIntPipe()) organizationId: number
+        @Query() query?: ListAllDeviceModelsDto
     ): Promise<ListAllDeviceModelResponseDto> {
-        if (organizationId != null) {
-            checkIfUserHasReadAccessToOrganization(req, organizationId);
-            return this.service.getAllDeviceModelsByOrgIds([organizationId]);
+        if (query?.organizationId != null) {
+            checkIfUserHasReadAccessToOrganization(req, query?.organizationId);
+            return this.service.getAllDeviceModelsByOrgIds([query?.organizationId], query);
         }
 
         const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastRead();
-        return this.service.getAllDeviceModelsByOrgIds(orgIds);
+        return this.service.getAllDeviceModelsByOrgIds(orgIds, query);
     }
 
     @Get(":id")

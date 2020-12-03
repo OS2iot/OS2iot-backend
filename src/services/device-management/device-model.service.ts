@@ -8,6 +8,7 @@ import { DeleteResult, In, Repository } from "typeorm";
 import * as AJV from "ajv";
 import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @Injectable()
 export class DeviceModelService {
@@ -23,8 +24,19 @@ export class DeviceModelService {
     private avj: AJV.Ajv;
     private readonly SCHEMA_NAME = "device-model";
 
+    private getSorting(query: ListAllEntitiesDto) {
+        const sorting: { [id: string]: string | number } = {};
+        if (query?.orderOn != null && query.orderOn == "id") {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+        return sorting;
+    }
+
     async getAllDeviceModelsByOrgIds(
-        orgIds: number[]
+        orgIds: number[],
+        query?: ListAllEntitiesDto
     ): Promise<ListAllDeviceModelResponseDto> {
         if (orgIds.length == 0) {
             return {
@@ -34,7 +46,12 @@ export class DeviceModelService {
         }
 
         const [data, count] = await this.repository.findAndCount({
-            belongsTo: { id: In(orgIds) },
+            where: {
+                belongsTo: { id: In(orgIds) },
+            },
+            take: query?.limit ? +query.limit : 100,
+            skip: query?.offset ? +query.offset : 0,
+            order: this.getSorting(query),
         });
 
         return {
