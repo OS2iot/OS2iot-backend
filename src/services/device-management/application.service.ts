@@ -1,4 +1,4 @@
-import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, In, QueryBuilder, Repository } from "typeorm";
 
@@ -15,6 +15,7 @@ import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chi
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { PermissionService } from "@services/user-management/permission.service";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class ApplicationService {
@@ -234,6 +235,20 @@ export class ApplicationService {
     }
 
     async delete(id: number): Promise<DeleteResult> {
+        // Don't allow delete if this application contains any sigfox devices.
+        const application = await this.applicationRepository.findOne({
+            where: { id: id },
+            relations: ["iotDevices"],
+        });
+
+        if (
+            application.iotDevices.some(iotDevice => {
+                return iotDevice.type == IoTDeviceType.SigFox;
+            })
+        ) {
+            throw new ConflictException(ErrorCodes.DeleteNotAllowedHasSigfoxDevice);
+        }
+
         return this.applicationRepository.delete(id);
     }
 

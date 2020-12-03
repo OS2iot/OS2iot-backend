@@ -32,4 +32,5 @@ export enum ErrorCodes {
     NoData = "NoData",
     MissingRole = "MissingRole",
     DeleteNotAllowedItemIsInUse = "MESSAGE.DELETE-NOT-ALLOWED-ITEM-IS-IN-USE",
+    DeleteNotAllowedHasSigfoxDevice = "MESSAGE.DELETE-NOT-ALLOWED-HAS-SIGFOX-DEVICE"
 }

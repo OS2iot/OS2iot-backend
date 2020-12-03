@@ -243,7 +243,10 @@ export class ApplicationController {
             AuditLog.success(ActionType.DELETE, Application.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);
         } catch (err) {
-            AuditLog.fail(ActionType.DELETE, Application.name, req.user.userId);
+            AuditLog.fail(ActionType.DELETE, Application.name, req.user.userId, id);
+            if (err.message == ErrorCodes.DeleteNotAllowedHasSigfoxDevice) {
+                throw err;
+            }
             throw new NotFoundException(err);
         }
     }
