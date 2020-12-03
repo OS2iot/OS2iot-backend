@@ -9,6 +9,7 @@ import {
     Request,
     Logger,
     UnauthorizedException,
+    UseFilters,
 } from "@nestjs/common";
 import {
     ApiBearerAuth,
@@ -40,7 +41,9 @@ import { KombitAuthGuard } from "@auth/kombit-auth.guard";
 import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { CustomExceptionFilter } from "@auth/custom-exception-filter";
 
+@UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
