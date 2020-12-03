@@ -33,7 +33,6 @@ import {
 } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
-import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
@@ -43,7 +42,6 @@ import {
     IoTDeviceMinimalRaw,
     ListAllIoTDevicesMinimalResponseDto,
 } from "@dto/list-all-iot-devices-minimal-response.dto";
-import { of } from "rxjs";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
@@ -78,29 +76,21 @@ export class IoTDeviceService {
         return await this.sigfoxRepository.find();
     }
 
-    private getSorting(query: ListAllEntitiesDto) {
-        const sorting: { [id: string]: string } = {};
-        if (
-            query?.orderOn != null &&
-            (query.orderOn == "id" || query.orderOn == "name")
-        ) {
-            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-        } else {
-            sorting["id"] = "ASC";
-        }
-        return sorting;
-    }
-
     async findDevicesForApplication(
         applicationId: number,
         query: ListAllEntitiesDto
     ): Promise<ListAllIoTDevicesResponseDto> {
-        let orderBy = "id";
+        let orderBy = `iot_device.id`;
         if (
             (query?.orderOn != null && query.orderOn == "id") ||
-            query.orderOn == "name"
+            query.orderOn == "name" ||
+            query.orderOn == "active"
         ) {
-            orderBy = query.orderOn;
+            if (query.orderOn == "active") {
+                orderBy = `metadata.sentTime`;
+            } else {
+                orderBy = `iot_device.${query.orderOn}`;
+            }
         }
 
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
@@ -110,10 +100,20 @@ export class IoTDeviceService {
             .where("iot_device.applicationId = :applicationId", {
                 applicationId: applicationId,
             })
+            .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
-            .orderBy("id", direction)
+            .orderBy(orderBy, direction)
             .getManyAndCount();
+
+        // Need to get LoRa details to get battery status ...
+        await Promise.all(
+            data.map(async x => {
+                if (x.type == IoTDeviceType.LoRaWAN) {
+                    x = await this.enrichLoRaWANDevice(x);
+                }
+            })
+        );
 
         return {
             data: data,
@@ -552,7 +552,7 @@ export class IoTDeviceService {
             return <IoTDevice>loraDevice;
         } else if (iotDevice.constructor.name === SigFoxDevice.name) {
             const cast = <SigFoxDevice>iotDevice;
-            const sigfoxDevice = await this.mapSigFoxDevice(dto, cast, isUpdate);
+            const sigfoxDevice = await this.mapSigFoxDevice(dto, cast);
 
             return <IoTDevice>sigfoxDevice;
         }
@@ -562,9 +562,7 @@ export class IoTDeviceService {
 
     private async mapSigFoxDevice(
         dto: CreateIoTDeviceDto,
-        cast: SigFoxDevice,
-        isUpdate: boolean
-    ): Promise<SigFoxDevice> {
+        cast: SigFoxDevice    ): Promise<SigFoxDevice> {
         cast.deviceId = dto?.sigfoxSettings?.deviceId;
         cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
 
@@ -612,22 +610,6 @@ export class IoTDeviceService {
         }
     }
 
-    private async editInSigFoxBackend(
-        dto: CreateIoTDeviceDto,
-        sigfoxDevice: SigFoxDevice,
-        sigfoxGroup: SigFoxGroup
-    ) {
-        const currentSigFoxSettings = await this.sigfoxApiDeviceService.getByIdSimple(
-            sigfoxGroup,
-            sigfoxDevice.deviceId
-        );
-        await this.doEditInSigFoxBackend(
-            currentSigFoxSettings,
-            dto,
-            sigfoxGroup,
-            sigfoxDevice
-        );
-    }
 
     async getAllSigfoxDevicesByGroup(
         group: SigFoxGroup,

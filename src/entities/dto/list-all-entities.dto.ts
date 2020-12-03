@@ -8,5 +8,5 @@ export class ListAllEntitiesDto {
     @ApiProperty({ type: String, required: false })
     sort?: "ASC" | "DESC";
     @ApiProperty({ type: String, required: false })
-    orderOn?: "id" | "name" | "createdAt" | "updatedAt" | "lastLogin" | "type" | "organisations";
+    orderOn?: "id" | "name" | "createdAt" | "updatedAt" | "lastLogin" | "type" | "organisations" | "active";
 }
