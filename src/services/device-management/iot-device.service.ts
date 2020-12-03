@@ -97,7 +97,7 @@ export class IoTDeviceService {
 
         const [data, count] = await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
-            .where("iot_device.applicationId = :applicationId", {
+            .where('"iot_device"."applicationId" = :applicationId', {
                 applicationId: applicationId,
             })
             .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
