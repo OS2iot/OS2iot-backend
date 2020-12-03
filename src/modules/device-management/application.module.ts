@@ -6,6 +6,7 @@ import { OrganizationModule } from "@modules/user-management/organization.module
 import { ApplicationService } from "@services/device-management/application.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
+import { IoTDeviceModule } from "./iot-device.module";
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { PermissionModule } from "@modules/user-management/permission.module";
         forwardRef(() => OrganizationModule),
         ChirpstackAdministrationModule,
         forwardRef(() => PermissionModule),
+        forwardRef(() => IoTDeviceModule),
     ],
     exports: [ApplicationService],
     controllers: [ApplicationController],

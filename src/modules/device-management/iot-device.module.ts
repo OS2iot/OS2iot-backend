@@ -17,7 +17,7 @@ import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-
     imports: [
         SharedModule,
         ChirpstackAdministrationModule,
-        ApplicationModule,
+        forwardRef(() => ApplicationModule),
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
         DeviceModelModule,

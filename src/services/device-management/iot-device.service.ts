@@ -45,6 +45,8 @@ import {
 } from "@dto/list-all-iot-devices-minimal-response.dto";
 import { of } from "rxjs";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -74,6 +76,49 @@ export class IoTDeviceService {
 
     async findAllSigFoxDevices(): Promise<SigFoxDevice[]> {
         return await this.sigfoxRepository.find();
+    }
+
+    private getSorting(query: ListAllEntitiesDto) {
+        const sorting: { [id: string]: string } = {};
+        if (
+            query?.orderOn != null &&
+            (query.orderOn == "id" || query.orderOn == "name")
+        ) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+        return sorting;
+    }
+
+    async findDevicesForApplication(
+        applicationId: number,
+        query: ListAllEntitiesDto
+    ): Promise<ListAllIoTDevicesResponseDto> {
+        let orderBy = "id";
+        if (
+            (query?.orderOn != null && query.orderOn == "id") ||
+            query.orderOn == "name"
+        ) {
+            orderBy = query.orderOn;
+        }
+
+        const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
+
+        const [data, count] = await this.iotDeviceRepository
+            .createQueryBuilder("iot_device")
+            .where("iot_device.applicationId = :applicationId", {
+                applicationId: applicationId,
+            })
+            .skip(query?.offset ? +query.offset : 0)
+            .take(query?.limit ? +query.limit : 100)
+            .orderBy("id", direction)
+            .getManyAndCount();
+
+        return {
+            data: data,
+            count: count,
+        };
     }
 
     async findManyByIds(iotDeviceIds: number[]): Promise<IoTDevice[]> {
