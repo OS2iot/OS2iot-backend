@@ -12,8 +12,8 @@ export class OpenDataDkDataset extends DbBaseEntity {
     @Column()
     name: string;
 
-    @Column({ nullable: true })
-    description?: string;
+    @Column({ nullable: false, default: "" })
+    description: string;
 
     @Column("text", { array: true, nullable: true })
     keywords?: string[];
@@ -27,6 +27,6 @@ export class OpenDataDkDataset extends DbBaseEntity {
     @Column()
     authorEmail: string;
 
-    @Column({ nullable: true })
-    resourceTitle?: string;
+    @Column({ nullable: false, default: "" })
+    resourceTitle: string;
 }

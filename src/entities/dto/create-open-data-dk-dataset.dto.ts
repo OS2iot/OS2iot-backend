@@ -7,10 +7,10 @@ export class CreateOpenDataDkDatasetDto {
     @IsNotEmpty()
     name: string;
 
-    @ApiPropertyOptional({ required: false })
-    @IsOptional()
+    @ApiProperty({ required: true })
     @IsString()
-    description?: string;
+    @IsNotEmpty()
+    description: string;
 
     @ApiPropertyOptional({ required: false })
     @IsOptional()
@@ -32,9 +32,8 @@ export class CreateOpenDataDkDatasetDto {
     @IsEmail()
     authorEmail: string;
 
-    @ApiPropertyOptional({ required: false })
-    @IsOptional()
+    @ApiProperty({ required: true })
     @IsString()
     @IsNotEmpty()
-    resourceTitle?: string;
+    resourceTitle: string;
 }

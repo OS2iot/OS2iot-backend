@@ -407,13 +407,13 @@ export function generateDataTargetWithOpenDataDk(
     dataTarget.timeout = 30000;
     dataTarget.openDataDkDataset = new OpenDataDkDataset();
     dataTarget.openDataDkDataset.name = "E2E";
-    dataTarget.openDataDkDataset.description = minimal ? null : "e2e";
-    dataTarget.openDataDkDataset.keywords = minimal ? null : ["etKeyWord"];
+    dataTarget.openDataDkDataset.description = minimal ? "" : "e2e";
+    dataTarget.openDataDkDataset.keywords = minimal ? [] : ["etKeyWord"];
     dataTarget.openDataDkDataset.license =
         "http://portal.opendata.dk/dataset/open-data-dk-licens";
     dataTarget.openDataDkDataset.authorName = "E2E";
     dataTarget.openDataDkDataset.authorEmail = "e2e@test.dk";
-    dataTarget.openDataDkDataset.resourceTitle = minimal ? null : "Rumsensor2";
+    dataTarget.openDataDkDataset.resourceTitle = minimal ? "" : "Rumsensor2";
     return dataTarget;
 }
 

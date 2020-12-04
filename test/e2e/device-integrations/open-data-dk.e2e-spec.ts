@@ -119,11 +119,11 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
             });
     });
 
-    it("(GET) /open-data-dk-sharing/{organizationId} - Optional values are null", async () => {
+    it("(GET) /open-data-dk-sharing/{organizationId}", async () => {
         // Arrange
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
-        await generateSavedDataTargetWithOpenDataDk(application);
+        await generateSavedDataTargetWithOpenDataDk(application, null, true);
 
         // Act
         return await request(app.getHttpServer())
@@ -148,8 +148,8 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
                             license:
                                 "http://portal.opendata.dk/dataset/open-data-dk-licens",
                             title: "E2E",
-                            // description: "e2e",
-                            // keyword: ["etKeyWord"],
+                            description: "",
+                            keyword: [],
                             issued: expect.any(String),
                             modified: expect.any(String),
                             publisher: { name: "E2E Test Organization" },
@@ -164,7 +164,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
                                     mediaType: "application/json",
                                     format: "JSON",
                                     accessURL: expect.any(String),
-                                    // title: "Rumsensor2",
+                                    title: "",
                                 },
                             ],
                         },
