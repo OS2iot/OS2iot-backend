@@ -230,12 +230,7 @@ describe("DataTargetController (e2e)", () => {
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(404)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    error: "Not Found",
-                });
-            });
+            .expect("Content-Type", /json/);
     });
 
     it("(POST) /data-target/ - create new data target", async () => {
@@ -455,12 +450,7 @@ describe("DataTargetController (e2e)", () => {
             .auth(globalAdminJwt, { type: "bearer" })
             .send()
             .expect(404)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    status: 404,
-                });
-            });
+            .expect("Content-Type", /json/);
 
         expect(auditLogSuccessListener).not.toHaveBeenCalled();
         expect(auditLogFailListener).toHaveBeenCalled();

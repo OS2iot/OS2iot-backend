@@ -104,7 +104,6 @@ describe("AuthController (e2e)", () => {
             .expect(401)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "Unauthorized",
                     statusCode: 401,
                 });
             });
@@ -126,7 +125,6 @@ describe("AuthController (e2e)", () => {
             .expect(401)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "Unauthorized",
                     statusCode: 401,
                 });
             });
@@ -138,7 +136,6 @@ describe("AuthController (e2e)", () => {
             .expect(401)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "Unauthorized",
                     statusCode: 401,
                 });
             });
@@ -153,7 +150,6 @@ describe("AuthController (e2e)", () => {
             .expect(401)
             .then(response => {
                 expect(response.body).toMatchObject({
-                    message: "Unauthorized",
                     statusCode: 401,
                 });
             });

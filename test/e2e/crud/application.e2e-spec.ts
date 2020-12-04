@@ -374,12 +374,7 @@ describe("ApplicationController (e2e)", () => {
             .delete(`/application/${id}`)
             .auth(globalAdminJwt, { type: "bearer" })
             .expect(404)
-            .expect("Content-Type", /json/)
-            .then(response => {
-                expect(response.body).toMatchObject({
-                    status: 404,
-                });
-            });
+            .expect("Content-Type", /json/);
 
         const applicationInDatabase: Application[] = await repository.find();
         expect(applicationInDatabase).toHaveLength(1);
@@ -684,7 +679,7 @@ describe("ApplicationController (e2e)", () => {
         expect(reloadedReadPerm.applications[0]).toMatchObject({
             id: newAppId,
         });
-        
+
         expect(auditLogFailListener).not.toHaveBeenCalled();
         expect(auditLogSuccessListener).toHaveBeenCalled();
     });

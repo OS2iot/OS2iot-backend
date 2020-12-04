@@ -239,8 +239,8 @@ export class PermissionService {
         )
             .leftJoinAndSelect("permission.organization", "org")
             .leftJoinAndSelect("permission.users", "user")
-            .take(+query.limit)
-            .skip(+query.offset)
+            .take(query?.limit ? +query.limit : 100)
+            .skip(query?.offset ? +query.offset : 0)
             .orderBy(orderBy, order);
 
         if (query.userId) {
