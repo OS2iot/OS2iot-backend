@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
@@ -8,6 +8,7 @@ import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class ServiceProfileService extends GenericChirpstackConfigurationService {
@@ -37,6 +38,14 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
             x => x.name.indexOf(id) >= 0
         );
         if (applicationToDelete) {
+            // Check if there is any devices on the application
+            const deviceOnApplication = await this.get<
+                ListAllChirpstackApplicationsResponseDto
+            >(`devices?limit=10&applicationID=${applicationToDelete.id}`);
+            if (deviceOnApplication.totalCount > 0) {
+                throw new ConflictException(ErrorCodes.DeleteNotAllowedHasLoRaWANDevices);
+            }
+
             await this.delete("applications", applicationToDelete.id);
         }
 

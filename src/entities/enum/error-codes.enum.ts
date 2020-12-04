@@ -33,5 +33,6 @@ export enum ErrorCodes {
     MissingRole = "MissingRole",
     DeleteNotAllowedItemIsInUse = "MESSAGE.DELETE-NOT-ALLOWED-ITEM-IS-IN-USE",
     DeleteNotAllowedHasSigfoxDevice = "MESSAGE.DELETE-NOT-ALLOWED-HAS-SIGFOX-DEVICE",
+    DeleteNotAllowedHasLoRaWANDevices = "MESSAGE.DELETE-NOT-ALLOWED-HAS-LORAWAN-DEVICE",
     KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
 }

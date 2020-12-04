@@ -138,23 +138,7 @@ export class ServiceProfileController {
         @Param("id") id: string
     ): Promise<DeleteResponseDto> {
         try {
-            let result = undefined;
-            try {
-                result = await this.serviceProfileService.deleteServiceProfile(id);
-            } catch (err) {
-                this.logger.error(
-                    `Error occured during delete: '${JSON.stringify(
-                        err?.response?.data
-                    )}'`
-                );
-                if (
-                    err?.message ==
-                    "this object is used by other objects, remove them first"
-                ) {
-                    throw new BadRequestException(ErrorCodes.IsUsed);
-                }
-            }
-
+            let result = await this.serviceProfileService.deleteServiceProfile(id);
             if (!result) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
@@ -167,6 +151,14 @@ export class ServiceProfileController {
 
             return new DeleteResponseDto(1);
         } catch (err) {
+            this.logger.error(
+                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
+            );
+            if (
+                err?.message == "this object is used by other objects, remove them first"
+            ) {
+                throw new BadRequestException(ErrorCodes.IsUsed);
+            }
             AuditLog.fail(
                 ActionType.DELETE,
                 "ChirpstackServiceProfile",
