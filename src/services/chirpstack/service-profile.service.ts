@@ -6,6 +6,8 @@ import { ListAllServiceProfilesResponseDto } from "@dto/chirpstack/list-all-serv
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 
 @Injectable()
 export class ServiceProfileService extends GenericChirpstackConfigurationService {
@@ -26,6 +28,18 @@ export class ServiceProfileService extends GenericChirpstackConfigurationService
     }
 
     public async deleteServiceProfile(id: string): Promise<AxiosResponse> {
+        // If any devices have been made using the service profile then an application was made in chirpstack.
+        // We need to remove the application if it exists before deleting the service profile.
+        const applications = await this.get<ListAllChirpstackApplicationsResponseDto>(
+            `applications?search=${id}&limit=100&offset=0`
+        );
+        const applicationToDelete = applications.result.find(
+            x => x.name.indexOf(id) >= 0
+        );
+        if (applicationToDelete) {
+            await this.delete("applications", applicationToDelete.id);
+        }
+
         return await this.delete("service-profiles", id);
     }
 

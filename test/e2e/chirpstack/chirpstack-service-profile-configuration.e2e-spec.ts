@@ -13,12 +13,19 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import {
     cleanChirpstackApplications,
     clearDatabase,
+    createDeviceProfileData,
     createServiceProfileData,
+    generateSavedApplication,
     generateSavedGlobalAdminUser,
+    generateSavedOrganization,
     generateValidJwtForUser,
+    randomMacAddress,
 } from "../test-helpers";
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
 describe("ChirpstackServiceProfileConfiguration", () => {
     let serviceProfileService: ServiceProfileService;
@@ -192,6 +199,44 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         const data: CreateServiceProfileDto = createServiceProfileData();
         const result = await serviceProfileService.createServiceProfile(data);
         const serviceProfileId = result.data.id;
+        const org = await generateSavedOrganization();
+        const application = await generateSavedApplication(org);
+
+        let dpId = await request(app.getHttpServer())
+            .post("/chirpstack/device-profiles/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(createDeviceProfileData())
+            .expect(201)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                return response.body.id;
+            });
+
+        const createDto: CreateIoTDeviceDto = {
+            type: IoTDeviceType.LoRaWAN,
+            longitude: 42,
+            latitude: 42,
+            lorawanSettings: {
+                skipFCntCheck: false,
+                fCntUp: 0,
+                nFCntDown: 0,
+                devEUI: randomMacAddress(),
+                serviceProfileID: serviceProfileId,
+                deviceProfileID: dpId,
+                OTAAapplicationKey: "13371337133713371337133713371337",
+                activationType: ActivationType.OTAA,
+            },
+            applicationId: application.id,
+            name: "e2e",
+        };
+
+        await request(app.getHttpServer())
+            .post("/iot-device/")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(createDto)
+            .then(response => {
+                return response.body;
+            });
 
         // Act
         return await request(app.getHttpServer())
