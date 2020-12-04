@@ -27,6 +27,19 @@ export class PayloadDecoderService {
         });
     }
 
+    private getSorting(query: ListAllEntitiesDto) {
+        const sorting: { [id: string]: string | number } = {};
+        if (
+            query?.orderOn != null &&
+            (query.orderOn == "id" || query.orderOn == "name")
+        ) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        } else {
+            sorting["id"] = "ASC";
+        }
+        return sorting;
+    }
+
     async findAndCountWithPagination(
         query: ListAllEntitiesDto,
         organizationId: number
@@ -35,7 +48,7 @@ export class PayloadDecoderService {
             where: organizationId != null ? { organization: organizationId } : {},
             take: query.limit,
             skip: query.offset,
-            order: { id: query.sort },
+            order: this.getSorting(query),
             relations: ["organization"],
         });
 
