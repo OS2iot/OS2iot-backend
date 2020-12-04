@@ -22,6 +22,9 @@ import {
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackManyDeviceResponseDto } from "@dto/chirpstack/chirpstack-many-device-response";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -294,6 +297,47 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             return res.deviceActivation;
         } catch (err) {
             return new ChirpstackDeviceActivationContentsDto();
+        }
+    }
+
+    async enrichLoRaWANDevice(iotDevice: IoTDevice) {
+        const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
+        loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
+        await this.mapActivationAndKeys(loraDevice);
+        const csData = await this.getChirpstackDevice(loraDevice.deviceEUI);
+        loraDevice.lorawanSettings.devEUI = csData.devEUI;
+        loraDevice.lorawanSettings.deviceProfileID = csData.deviceProfileID;
+        loraDevice.lorawanSettings.serviceProfileID = csData.serviceProfileID;
+        loraDevice.lorawanSettings.skipFCntCheck = csData.skipFCntCheck;
+        loraDevice.lorawanSettings.isDisabled = csData.isDisabled;
+        loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
+        loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
+
+        const csAppliation = await this.getChirpstackApplication(csData.applicationID);
+        loraDevice.lorawanSettings.serviceProfileID =
+            csAppliation.application.serviceProfileID;
+        return loraDevice;
+    }
+
+    private async mapActivationAndKeys(loraDevice: LoRaWANDeviceWithChirpstackDataDto) {
+        const keys = await this.getKeys(loraDevice.deviceEUI);
+        if (keys.nwkKey) {
+            // OTAA
+            loraDevice.lorawanSettings.activationType = ActivationType.OTAA;
+            loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+        } else {
+            const activation = await this.getActivation(loraDevice.deviceEUI);
+            if (activation.devAddr != null) {
+                // ABP
+                loraDevice.lorawanSettings.activationType = ActivationType.ABP;
+                loraDevice.lorawanSettings.devAddr = activation.devAddr;
+                loraDevice.lorawanSettings.fCntUp = activation.fCntUp;
+                loraDevice.lorawanSettings.nFCntDown = activation.nFCntDown;
+                loraDevice.lorawanSettings.networkSessionKey = activation.nwkSEncKey;
+                loraDevice.lorawanSettings.applicationSessionKey = activation.appSKey;
+            } else {
+                loraDevice.lorawanSettings.activationType = ActivationType.NONE;
+            }
         }
     }
 

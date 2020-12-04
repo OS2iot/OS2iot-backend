@@ -1,6 +1,6 @@
 import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DeleteResult, In, QueryBuilder, Repository } from "typeorm";
+import { DeleteResult, getManager, In, QueryBuilder, Repository } from "typeorm";
 
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
@@ -16,6 +16,8 @@ import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { PermissionService } from "@services/user-management/permission.service";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -282,5 +284,50 @@ export class ApplicationService {
         );
 
         return application;
+    }
+
+    async findDevicesForApplication(
+        applicationId: number,
+        query: ListAllEntitiesDto
+    ): Promise<ListAllIoTDevicesResponseDto> {
+        let orderBy = `iot_device.id`;
+        if (
+            (query?.orderOn != null && query.orderOn == "id") ||
+            query.orderOn == "name" ||
+            query.orderOn == "active"
+        ) {
+            if (query.orderOn == "active") {
+                orderBy = `metadata.sentTime`;
+            } else {
+                orderBy = `iot_device.${query.orderOn}`;
+            }
+        }
+
+        const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
+
+        const [data, count] = await getManager()
+            .createQueryBuilder(IoTDevice, "iot_device")
+            .where('"iot_device"."applicationId" = :applicationId', {
+                applicationId: applicationId,
+            })
+            .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
+            .skip(query?.offset ? +query.offset : 0)
+            .take(query?.limit ? +query.limit : 100)
+            .orderBy(orderBy, direction)
+            .getManyAndCount();
+
+        // Need to get LoRa details to get battery status ...
+        await Promise.all(
+            data.map(async x => {
+                if (x.type == IoTDeviceType.LoRaWAN) {
+                    x = await this.chirpstackDeviceService.enrichLoRaWANDevice(x);
+                }
+            })
+        );
+
+        return {
+            data: data,
+            count: count,
+        };
     }
 }

@@ -76,51 +76,6 @@ export class IoTDeviceService {
         return await this.sigfoxRepository.find();
     }
 
-    async findDevicesForApplication(
-        applicationId: number,
-        query: ListAllEntitiesDto
-    ): Promise<ListAllIoTDevicesResponseDto> {
-        let orderBy = `iot_device.id`;
-        if (
-            (query?.orderOn != null && query.orderOn == "id") ||
-            query.orderOn == "name" ||
-            query.orderOn == "active"
-        ) {
-            if (query.orderOn == "active") {
-                orderBy = `metadata.sentTime`;
-            } else {
-                orderBy = `iot_device.${query.orderOn}`;
-            }
-        }
-
-        const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
-
-        const [data, count] = await this.iotDeviceRepository
-            .createQueryBuilder("iot_device")
-            .where('"iot_device"."applicationId" = :applicationId', {
-                applicationId: applicationId,
-            })
-            .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
-            .skip(query?.offset ? +query.offset : 0)
-            .take(query?.limit ? +query.limit : 100)
-            .orderBy(orderBy, direction)
-            .getManyAndCount();
-
-        // Need to get LoRa details to get battery status ...
-        await Promise.all(
-            data.map(async x => {
-                if (x.type == IoTDeviceType.LoRaWAN) {
-                    x = await this.enrichLoRaWANDevice(x);
-                }
-            })
-        );
-
-        return {
-            data: data,
-            count: count,
-        };
-    }
-
     async findManyByIds(iotDeviceIds: number[]): Promise<IoTDevice[]> {
         if (iotDeviceIds == null || iotDeviceIds?.length == 0) {
             return [];
@@ -146,7 +101,7 @@ export class IoTDeviceService {
         if (enrich) {
             if (iotDevice.type == IoTDeviceType.LoRaWAN) {
                 // Add more suplimental info about LoRaWAN devices.
-                return await this.enrichLoRaWANDevice(iotDevice);
+                return await this.chirpstackDeviceService.enrichLoRaWANDevice(iotDevice);
             } else if (iotDevice.type == IoTDeviceType.SigFox) {
                 // Add more info about SigFox devices
                 return await this.enrichSigFoxDevice(iotDevice);
@@ -318,53 +273,6 @@ export class IoTDeviceService {
             )
             .orderBy('metadata."sentTime"', "DESC")
             .getOne();
-    }
-
-    private async enrichLoRaWANDevice(iotDevice: IoTDevice) {
-        const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
-        loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
-        await this.mapActivationAndKeys(loraDevice);
-        const csData = await this.chirpstackDeviceService.getChirpstackDevice(
-            loraDevice.deviceEUI
-        );
-        loraDevice.lorawanSettings.devEUI = csData.devEUI;
-        loraDevice.lorawanSettings.deviceProfileID = csData.deviceProfileID;
-        loraDevice.lorawanSettings.serviceProfileID = csData.serviceProfileID;
-        loraDevice.lorawanSettings.skipFCntCheck = csData.skipFCntCheck;
-        loraDevice.lorawanSettings.isDisabled = csData.isDisabled;
-        loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
-        loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
-
-        const csAppliation = await this.chirpstackDeviceService.getChirpstackApplication(
-            csData.applicationID
-        );
-        loraDevice.lorawanSettings.serviceProfileID =
-            csAppliation.application.serviceProfileID;
-        return loraDevice;
-    }
-
-    private async mapActivationAndKeys(loraDevice: LoRaWANDeviceWithChirpstackDataDto) {
-        const keys = await this.chirpstackDeviceService.getKeys(loraDevice.deviceEUI);
-        if (keys.nwkKey) {
-            // OTAA
-            loraDevice.lorawanSettings.activationType = ActivationType.OTAA;
-            loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
-        } else {
-            const activation = await this.chirpstackDeviceService.getActivation(
-                loraDevice.deviceEUI
-            );
-            if (activation.devAddr != null) {
-                // ABP
-                loraDevice.lorawanSettings.activationType = ActivationType.ABP;
-                loraDevice.lorawanSettings.devAddr = activation.devAddr;
-                loraDevice.lorawanSettings.fCntUp = activation.fCntUp;
-                loraDevice.lorawanSettings.nFCntDown = activation.nFCntDown;
-                loraDevice.lorawanSettings.networkSessionKey = activation.nwkSEncKey;
-                loraDevice.lorawanSettings.applicationSessionKey = activation.appSKey;
-            } else {
-                loraDevice.lorawanSettings.activationType = ActivationType.NONE;
-            }
-        }
     }
 
     async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {
@@ -562,7 +470,8 @@ export class IoTDeviceService {
 
     private async mapSigFoxDevice(
         dto: CreateIoTDeviceDto,
-        cast: SigFoxDevice    ): Promise<SigFoxDevice> {
+        cast: SigFoxDevice
+    ): Promise<SigFoxDevice> {
         cast.deviceId = dto?.sigfoxSettings?.deviceId;
         cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
 
@@ -609,7 +518,6 @@ export class IoTDeviceService {
             }
         }
     }
-
 
     async getAllSigfoxDevicesByGroup(
         group: SigFoxGroup,

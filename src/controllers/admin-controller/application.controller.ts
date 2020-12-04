@@ -47,7 +47,6 @@ import {
 import { ApplicationService } from "@services/device-management/application.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 
@@ -59,10 +58,7 @@ import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class ApplicationController {
-    constructor(
-        private applicationService: ApplicationService,
-        private iotDeviceService: IoTDeviceService
-    ) {}
+    constructor(private applicationService: ApplicationService) {}
 
     private readonly logger = new Logger(ApplicationController.name);
 
@@ -152,7 +148,7 @@ export class ApplicationController {
 
     @Read()
     @Get(":id/iot-devices")
-    @ApiOperation({ summary: "Find one Application by id" })
+    @ApiOperation({ summary: "Find the IoTDevice of an Application" })
     @ApiNotFoundResponse()
     async findIoTDevicesForApplication(
         @Req() req: AuthenticatedRequest,
@@ -162,7 +158,10 @@ export class ApplicationController {
         checkIfUserHasReadAccessToApplication(req, applicationId);
 
         try {
-            return await this.iotDeviceService.findDevicesForApplication(applicationId, query);
+            return await this.applicationService.findDevicesForApplication(
+                applicationId,
+                query
+            );
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
