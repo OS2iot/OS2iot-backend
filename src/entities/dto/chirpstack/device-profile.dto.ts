@@ -1,5 +1,14 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsPositive, IsString, Length, Min } from "class-validator";
+import {
+    IsArray,
+    IsInt,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Length,
+    Min,
+    ValidateIf,
+} from "class-validator";
 
 export class DeviceProfileDto {
     @ApiProperty({ required: true })
@@ -18,13 +27,16 @@ export class DeviceProfileDto {
     regParamsRevision: "A" | "B";
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
+    @Min(0)
+    @IsInt()
     classBTimeout?: number;
 
     @ApiProperty({ required: false })
+    @IsOptional()
+    @Min(0)
+    @IsInt()
     classCTimeout?: number;
-
-    @ApiProperty({ required: false })
-    factoryPresetFreqs?: number[];
 
     @ApiProperty({ required: false })
     @IsOptional()
@@ -58,29 +70,53 @@ export class DeviceProfileDto {
     payloadEncoderScript?: string;
 
     @ApiProperty({ required: false })
-    @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
+    @Min(0)
+    @IsInt()
     pingSlotDR?: number;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
+    @Min(0)
+    @IsInt()
     pingSlotFreq?: number;
 
     @ApiProperty({ required: false })
+    @IsOptional()
     pingSlotPeriod?: number;
 
     @ApiProperty({ required: false })
     rfRegion?: string;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
+    @Min(0)
+    @IsInt()
     rxDROffset1?: number;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
+    @Min(0)
+    @IsInt()
     rxDataRate2?: number;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
+    @Min(0)
+    @IsInt()
     rxDelay1?: number;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
+    @Min(0)
+    @IsInt()
     rxFreq2?: number;
+
+    @ApiProperty({ required: false })
+    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
+    @IsArray()
+    @IsNumber({ maxDecimalPlaces: 0 }, { each: true })
+    factoryPresetFreqs: number[];
 
     @ApiProperty({ required: false })
     supports32BitFCnt?: boolean;
