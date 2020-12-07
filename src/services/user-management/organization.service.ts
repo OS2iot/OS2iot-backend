@@ -4,6 +4,7 @@ import {
     Injectable,
     Logger,
     forwardRef,
+    NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
@@ -159,6 +160,9 @@ export class OrganizationService {
 
     async delete(id: number): Promise<DeleteResponseDto> {
         const res = await this.organizationRepository.delete(id);
+        if (res.affected == 0) {
+            throw new NotFoundException();
+        }
         return new DeleteResponseDto(res.affected);
     }
 }

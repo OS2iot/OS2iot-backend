@@ -54,9 +54,6 @@ export class SearchController {
         if (query == null || query.trim() === "") {
             throw new BadRequestException(ErrorCodes.QueryMustNotBeEmpty);
         }
-        console.time("search");
-        const res = await this.service.findByQuery(req, query, limit, offset);
-        console.timeEnd("search");
-        return res;
+        return await this.service.findByQuery(req, query, limit, offset);
     }
 }

@@ -96,7 +96,7 @@ export class IoTDeviceController {
     }
 
     @Get(":id/downlink")
-    @ApiOperation({ summary: "Get downlink queue for a LoRaWAN device" })
+    @ApiOperation({ summary: "Get downlink queue for a LoRaWAN/SigFox device" })
     async findDownlinkQueue(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number

@@ -1,8 +1,7 @@
 module.exports = {
     moduleNameMapper: {
         "^@services/(.*)": "<rootDir>//src/services/$1",
-        "^@admin-controller/(.*)":
-            "<rootDir>//src/controllers/admin-controller/$1",
+        "^@admin-controller/(.*)": "<rootDir>//src/controllers/admin-controller/$1",
         "^@device-data-controller/(.*)":
             "<rootDir>//src/controllers/device-data-controller/$1",
         "^@user-management-controller/(.*)":
@@ -27,4 +26,5 @@ module.exports = {
     },
     coverageDirectory: "./coverage-e2e",
     setupFiles: ["<rootDir>/.jest/setEnvVars.ts"],
+    collectCoverage: true,
 };

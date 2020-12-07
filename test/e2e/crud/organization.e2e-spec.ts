@@ -23,6 +23,7 @@ import {
     generateValidJwtForUser,
 } from "../test-helpers";
 import { AuditLog } from "@services/audit-log.service";
+import * as _ from "lodash";
 
 describe("OrganizationController (e2e)", () => {
     let app: INestApplication;
@@ -112,6 +113,40 @@ describe("OrganizationController (e2e)", () => {
                         name: "E2E",
                     },
                 ]);
+            });
+    });
+
+    it("(GET) /organization/ - 100", async () => {
+        _.range(100).forEach(
+            async x => await generateSavedOrganization("E2E-" + x.toString())
+        );
+
+        return request(app.getHttpServer())
+            .get("/organization?offset=0&limit=10&orderOn=name&sort=DESC")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(100);
+                expect(response.body.data).toHaveLength(10);
+            });
+    });
+
+    it("(GET) /organization/minimal - 100", async () => {
+        _.range(100).forEach(
+            async x => await generateSavedOrganization("E2E-" + x.toString())
+        );
+
+        return request(app.getHttpServer())
+            .get("/organization/minimal")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send()
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(100);
+                expect(response.body.data).toHaveLength(100);
             });
     });
 
@@ -266,6 +301,21 @@ describe("OrganizationController (e2e)", () => {
             });
     });
 
+    it("(PUT) /organization/:id - Update organization - fail", async () => {
+        const org = await generateSavedOrganization();
+
+        const dto: UpdateOrganizationDto = {
+            name: `${org.name} - changed`,
+        };
+
+        return await request(app.getHttpServer())
+            .put(`/organization/${org.id + 1}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .send(dto)
+            .expect(404)
+            .expect("Content-Type", /json/);
+    });
+
     it("(DELETE) /organization/:id - delete", async () => {
         const org = await generateSavedOrganization();
 
@@ -285,5 +335,15 @@ describe("OrganizationController (e2e)", () => {
 
         expect(auditLogSuccessListener).toHaveBeenCalled();
         expect(auditLogFailListener).not.toHaveBeenCalled();
+    });
+
+    it("(DELETE) /organization/:id - delete - fail", async () => {
+        const org = await generateSavedOrganization();
+
+        await request(app.getHttpServer())
+            .delete(`/organization/${org.id + 1}`)
+            .auth(globalAdminJwt, { type: "bearer" })
+            .expect(404)
+            .expect("Content-Type", /json/);
     });
 });

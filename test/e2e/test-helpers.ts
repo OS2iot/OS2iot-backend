@@ -36,6 +36,7 @@ import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dt
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -360,6 +361,14 @@ export async function generateSavedLoRaWANDevice(
     nameSuffix?: string
 ): Promise<LoRaWANDevice> {
     return await getManager().save(generateLoRaWANDevice(applications, nameSuffix));
+}
+
+export function generateLoRaWanDownlink(): CreateIoTDeviceDownlinkDto {
+    return {
+        data: "3E0A14000000461700000002",
+        port: 6,
+        confirmed: true,
+    };
 }
 
 export async function generateSavedDataTarget(

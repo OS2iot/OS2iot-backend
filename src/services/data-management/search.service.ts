@@ -65,10 +65,8 @@ export class SearchService {
         limit: number,
         offset: number
     ): SearchResultDto[] {
-        console.time("sort");
         const r = _.orderBy(data, ["updatedAt"], ["desc"]);
         const sliced = _.slice(r, offset, offset + limit);
-        console.timeEnd("sort");
         return sliced;
     }
 

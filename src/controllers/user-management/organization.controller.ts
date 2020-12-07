@@ -105,6 +105,9 @@ export class OrganizationController {
             return organization;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Organization.name, req.user.userId, id);
+            if (err.name == "EntityNotFound") {
+                throw new NotFoundException();
+            }
             throw err;
         }
     }

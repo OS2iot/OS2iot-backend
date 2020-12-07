@@ -26,6 +26,7 @@ import {
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import * as _ from "lodash";
 
 describe("PayloadDecoderController (e2e)", () => {
     let app: INestApplication;
@@ -114,6 +115,20 @@ describe("PayloadDecoderController (e2e)", () => {
                         name: "E2E Test Payload Decoder",
                     },
                 ]);
+            });
+    });
+
+    it("(GET) /payload-decoder/ - 100 results", async () => {
+        _.range(100).forEach(async x => await generateSavedPayloadDecoder());
+
+        return await request(app.getHttpServer())
+            .get("/payload-decoder?limit=20&offset=0&orderOn=name&sort=ASC")
+            .auth(globalAdminJwt, { type: "bearer" })
+            .expect(200)
+            .expect("Content-Type", /json/)
+            .then(response => {
+                expect(response.body.count).toBe(100);
+                expect(response.body.data.length).toBe(20);
             });
     });
 
