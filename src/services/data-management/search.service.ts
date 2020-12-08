@@ -76,12 +76,24 @@ export class SearchService {
             ListAllGatewaysResponseDto
         >(`gateways?search=${escapedQuery}`, 1000, 0);
 
-        const mapped = gateways.result.map(x => {
-            const createdAt = new Date(Date.parse(x.createdAt));
-            const updatedAt = new Date(Date.parse(x.updatedAt));
+        const mapped = await Promise.all(
+            gateways.result.map(async x => {
+                const createdAt = new Date(Date.parse(x.createdAt));
+                const updatedAt = new Date(Date.parse(x.updatedAt));
 
-            return new SearchResultDto(x.name, x.id, createdAt, updatedAt, x.id);
-        });
+                const resultDto = new SearchResultDto(
+                    x.name,
+                    x.id,
+                    createdAt,
+                    updatedAt,
+                    x.id
+                );
+                const detailedInfo = await this.gatewayService.getOne(x.id);
+
+                resultDto.organizationId = detailedInfo.gateway.internalOrganizationId;
+                return resultDto;
+            })
+        );
 
         return mapped;
     }
