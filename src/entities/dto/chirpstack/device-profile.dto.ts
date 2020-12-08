@@ -20,6 +20,7 @@ export class DeviceProfileDto {
     macVersion: "1.0.0" | "1.0.1" | "1.0.2" | "1.0.3" | "1.1.0";
 
     @ApiProperty({ required: true })
+    @IsInt()
     @Min(0)
     maxEIRP: number;
 
@@ -38,15 +39,15 @@ export class DeviceProfileDto {
     @IsInt()
     classCTimeout?: number;
 
-    @ApiProperty({ required: false })
-    @IsOptional()
+    @ApiProperty({ required: true })
+    @IsInt()
     @Min(0)
-    geolocBufferTTL?: number;
+    geolocBufferTTL: number;
 
-    @ApiProperty({ required: false })
-    @IsOptional()
+    @ApiProperty({ required: true })
+    @IsInt()
     @Min(0)
-    geolocMinBufferSize?: number;
+    geolocMinBufferSize: number;
 
     @ApiProperty({ required: false })
     maxDutyCycle?: number;
