@@ -223,36 +223,18 @@ export class SearchService {
         ];
         const select = qb;
         if (alias == "device") {
-            return (
-                select
-                    .select(toSelect.concat(['"deviceId"', '"deviceEUI"', '"apiKey"']))
-                    .addSelect('"type"', "deviceType")
-                    .addSelect('"applicationId"', "applicationId")
-                    .leftJoin(
-                        "application",
-                        "app",
-                        '"app"."id" = "device"."applicationId"'
-                    )
-                    .addSelect('"app"."belongsToId"', "organizationId")
-                    .leftJoin("organization", "org", '"org"."id" = "app"."belongsToId"')
-                    .addSelect('"org"."name"', "organizationName")
-                    // .limit(this.SEARCH_RESULT_LIMIT)
-                    .getRawMany()
-            );
+            return select
+                .select(toSelect.concat(['"deviceId"', '"deviceEUI"', '"apiKey"']))
+                .addSelect('"type"', "deviceType")
+                .addSelect('"applicationId"', "applicationId")
+                .leftJoin("application", "app", '"app"."id" = "device"."applicationId"')
+                .addSelect('"app"."belongsToId"', "organizationId")
+                .getRawMany();
         } else if (alias == "app") {
-            return (
-                select
-                    .select(toSelect)
-                    .leftJoin(
-                        "organization",
-                        "org",
-                        `"org"."id" = "${alias}"."belongsToId"`
-                    )
-                    .addSelect('"org"."name"', "organizationName")
-                    .addSelect('"org"."id"', "organizationId")
-                    // .limit(this.SEARCH_RESULT_LIMIT)
-                    .getRawMany()
-            );
+            return select
+                .select(toSelect)
+                .addSelect('"app"."belongsToId"', "organizationId")
+                .getRawMany();
         }
     }
 }
