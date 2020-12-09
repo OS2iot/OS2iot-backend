@@ -17,6 +17,7 @@ describe("HttpPushDataTargetService (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [DataTargetSenderModule],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

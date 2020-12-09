@@ -54,6 +54,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
                 ChirpstackAdministrationModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();
@@ -82,7 +83,7 @@ describe("ChirpstackGatewayController (e2e)", () => {
         const existing = await service.listAllPaginated(1000, 0);
         existing.result.forEach(async element => {
             if (element.name.startsWith(gatewayNamePrefix)) {
-                Logger.debug(`Found ${element.name}, deleting.`);
+                // Logger.debug(`Found ${element.name}, deleting.`);
                 await service.deleteGateway(element.id);
             }
         });

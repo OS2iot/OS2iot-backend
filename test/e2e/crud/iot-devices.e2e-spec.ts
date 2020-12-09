@@ -1,4 +1,4 @@
-import { INestApplication, Logger } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -15,13 +15,12 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import {
     clearDatabase,
     createDeviceProfileData,
+    createLoRaWANDeviceInChirpstack,
     createServiceProfileData,
-    generateLoRaWANDevice,
     generateLoRaWanDownlink,
     generateSavedApplication,
     generateSavedGlobalAdminUser,
     generateSavedHttpDevice,
-    generateSavedLoRaWANDevice,
     generateSavedOrganization,
     generateValidJwtForUser,
     randomMacAddress,
@@ -75,6 +74,7 @@ describe("IoTDeviceController (e2e)", () => {
                 ChirpstackAdministrationModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();
@@ -187,29 +187,7 @@ describe("IoTDeviceController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const app1 = await generateSavedApplication(org, "app1");
-        const mac = randomMacAddress();
-        const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
-        const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
-        const device = await iotDeviceService.create(
-            {
-                name: "E2E-" + mac,
-                type: IoTDeviceType.LoRaWAN,
-                applicationId: app1.id,
-                longitude: 12,
-                latitude: 32,
-                comment: "asdf",
-                commentOnLocation: "fdsa",
-                metadata: JSON.parse("{}"),
-                lorawanSettings: {
-                    activationType: ActivationType.NONE,
-                    devAddr: mac,
-                    devEUI: mac,
-                    deviceProfileID: deviceProfile.result[0].id,
-                    serviceProfileID: serviceProfile.result[0].id,
-                },
-            },
-            globalAdmin.id
-        );
+        const device = await createLoRaWANDeviceInChirpstack(app, globalAdminJwt, app1);
 
         return await request(app.getHttpServer())
             .get("/iot-device/" + device.id)
@@ -282,9 +260,9 @@ describe("IoTDeviceController (e2e)", () => {
         expect(auditLogFailListener).not.toHaveBeenCalled();
     });
 
-    it("(POST) /iot-device/:id/downlink - OK", async () => {
-        const application = await generateSavedApplication();        
-        let device = await createLoRaWANDeviceInChirpstack(
+    it("(POST) /iot-device/:id/downlink - Not allowed, device is not activated", async () => {
+        const application = await generateSavedApplication();
+        const device = await createLoRaWANDeviceInChirpstack(
             app,
             globalAdminJwt,
             application
@@ -295,11 +273,13 @@ describe("IoTDeviceController (e2e)", () => {
             .post(`/iot-device/${device.id}/downlink`)
             .auth(globalAdminJwt, { type: "bearer" })
             .send(dto)
-            .expect(201)
+            .expect(400)
             .expect("Content-Type", /json/);
 
-        expect(auditLogSuccessListener).toHaveBeenCalled();
-        expect(auditLogFailListener).not.toHaveBeenCalled();
+        // Service profile + device profile + device
+        expect(auditLogSuccessListener).toHaveBeenCalledTimes(3);
+        // Downlink
+        expect(auditLogFailListener).toHaveBeenCalledTimes(1);
     });
 
     it("(PUT) /iot-device/:id", async () => {
@@ -477,13 +457,13 @@ describe("IoTDeviceController (e2e)", () => {
     it("(DELETE) /iot-device/:id - LoRaWAN Device", async () => {
         const application = await generateSavedApplication();
 
-        let device = await createLoRaWANDeviceInChirpstack(
+        const device = await createLoRaWANDeviceInChirpstack(
             app,
             globalAdminJwt,
             application
         );
 
-        let dbDevice = await repository.findOne(device.id);
+        const dbDevice = await repository.findOne(device.id);
         expect(dbDevice).not.toBeNull();
 
         const chirpstackDevice = await chirpstackDeviceService.getChirpstackDevice(
@@ -501,7 +481,7 @@ describe("IoTDeviceController (e2e)", () => {
                 expect(response.body).toMatchObject({ affected: 1 });
             });
 
-        let dbDeviceAfterDelete = await repository.findOne(device.id);
+        const dbDeviceAfterDelete = await repository.findOne(device.id);
         expect(dbDeviceAfterDelete).toBeUndefined();
 
         await chirpstackDeviceService.getChirpstackDevice(device.deviceEUI).catch(err => {
@@ -511,56 +491,3 @@ describe("IoTDeviceController (e2e)", () => {
         });
     });
 });
-
-async function createLoRaWANDeviceInChirpstack(
-    app: INestApplication,
-    globalAdminJwt: string,
-    application: Application
-) {
-    let dpId = await request(app.getHttpServer())
-        .post("/chirpstack/device-profiles/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createDeviceProfileData())
-        .expect(201)
-        .expect("Content-Type", /json/)
-        .then(response => {
-            return response.body.id;
-        });
-
-    let spId = await request(app.getHttpServer())
-        .post("/chirpstack/service-profiles/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createServiceProfileData())
-        .expect(201)
-        .expect("Content-Type", /json/)
-        .then(response => {
-            return response.body.id;
-        });
-
-    const createDto: CreateIoTDeviceDto = {
-        type: IoTDeviceType.LoRaWAN,
-        longitude: 42,
-        latitude: 42,
-        lorawanSettings: {
-            skipFCntCheck: false,
-            fCntUp: 0,
-            nFCntDown: 0,
-            devEUI: randomMacAddress(),
-            serviceProfileID: spId,
-            deviceProfileID: dpId,
-            OTAAapplicationKey: "13371337133713371337133713371337",
-            activationType: ActivationType.OTAA,
-        },
-        applicationId: application.id,
-        name: "e2e",
-    };
-
-    let device = await request(app.getHttpServer())
-        .post("/iot-device/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createDto)
-        .then(response => {
-            return response.body;
-        });
-    return device;
-}

@@ -9,6 +9,7 @@ describe("DefaultController", () => {
         const app: TestingModule = await Test.createTestingModule({
             controllers: [DefaultController],
         }).compile();
+        moduleFixture.useLogger(false);
 
         appController = app.get<DefaultController>(DefaultController);
     });

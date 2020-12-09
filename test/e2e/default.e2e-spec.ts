@@ -11,6 +11,7 @@ describe("DefaultController (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [DefaultModule],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

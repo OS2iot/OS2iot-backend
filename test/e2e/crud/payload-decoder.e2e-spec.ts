@@ -56,6 +56,7 @@ describe("PayloadDecoderController (e2e)", () => {
                 PayloadDecoderModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

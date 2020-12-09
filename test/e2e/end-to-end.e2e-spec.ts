@@ -53,6 +53,7 @@ describe("End-to-End (e2e)", () => {
                 PayloadDecoderModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         httpService = app.get<HttpService>(HttpService);

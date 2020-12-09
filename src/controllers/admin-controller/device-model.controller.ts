@@ -60,7 +60,10 @@ export class DeviceModelController {
     ): Promise<ListAllDeviceModelResponseDto> {
         if (query?.organizationId != null) {
             checkIfUserHasReadAccessToOrganization(req, query?.organizationId);
-            return this.service.getAllDeviceModelsByOrgIds([query?.organizationId], query);
+            return this.service.getAllDeviceModelsByOrgIds(
+                [query?.organizationId],
+                query
+            );
         }
 
         const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastRead();

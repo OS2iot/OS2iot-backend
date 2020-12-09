@@ -51,6 +51,7 @@ describe("PermissionController (e2e)", () => {
                 AuthModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

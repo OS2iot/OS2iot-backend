@@ -8,6 +8,7 @@ describe("DefaultServiceService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [HealthCheckService],
         }).compile();
+        moduleFixture.useLogger(false);
 
         service = module.get<HealthCheckService>(HealthCheckService);
     });

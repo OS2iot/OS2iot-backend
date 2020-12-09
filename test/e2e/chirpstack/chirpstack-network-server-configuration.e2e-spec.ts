@@ -13,6 +13,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [ChirpstackAdministrationModule],
         }).compile();
+        moduleFixture.useLogger(false);
         app = moduleFixture.createNestApplication();
         await app.init();
 

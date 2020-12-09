@@ -39,6 +39,7 @@ describe("KombitStrategy (e2e)", () => {
                 }),
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

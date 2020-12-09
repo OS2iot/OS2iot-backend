@@ -56,6 +56,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                 ChirpstackAdministrationModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
         app = moduleFixture.createNestApplication();
         await app.init();
 
@@ -202,7 +203,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         const org = await generateSavedOrganization();
         const application = await generateSavedApplication(org);
 
-        let dpId = await request(app.getHttpServer())
+        const dpId = await request(app.getHttpServer())
             .post("/chirpstack/device-profiles/")
             .auth(globalAdminJwt, { type: "bearer" })
             .send(createDeviceProfileData())

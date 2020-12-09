@@ -124,7 +124,7 @@ export class ApplicationService {
         ) {
             orderBy = `application.${query.orderOn}`;
         }
-        let order: "DESC" | "ASC" =
+        const order: "DESC" | "ASC" =
             query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
@@ -287,33 +287,19 @@ export class ApplicationService {
     }
 
     async findDevicesForApplication(
-        applicationId: number,
+        appId: number,
         query: ListAllEntitiesDto
     ): Promise<ListAllIoTDevicesResponseDto> {
-        let orderBy = `iot_device.id`;
-        if (
-            (query?.orderOn != null && query.orderOn == "id") ||
-            query.orderOn == "name" ||
-            query.orderOn == "active"
-        ) {
-            if (query.orderOn == "active") {
-                orderBy = `metadata.sentTime`;
-            } else {
-                orderBy = `iot_device.${query.orderOn}`;
-            }
-        }
-
+        const orderByColumn = this.getSortingForIoTDevices(query);
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
 
         const [data, count] = await getManager()
             .createQueryBuilder(IoTDevice, "iot_device")
-            .where('"iot_device"."applicationId" = :applicationId', {
-                applicationId: applicationId,
-            })
+            .where('"iot_device"."applicationId" = :id', { id: appId })
             .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
-            .orderBy(orderBy, direction)
+            .orderBy(orderByColumn, direction)
             .getManyAndCount();
 
         // Need to get LoRa details to get battery status ...
@@ -329,5 +315,21 @@ export class ApplicationService {
             data: data,
             count: count,
         };
+    }
+
+    private getSortingForIoTDevices(query: ListAllEntitiesDto) {
+        let orderBy = `iot_device.id`;
+        if (
+            (query?.orderOn != null && query.orderOn == "id") ||
+            query.orderOn == "name" ||
+            query.orderOn == "active"
+        ) {
+            if (query.orderOn == "active") {
+                orderBy = `metadata.sentTime`;
+            } else {
+                orderBy = `iot_device.${query.orderOn}`;
+            }
+        }
+        return orderBy;
     }
 }

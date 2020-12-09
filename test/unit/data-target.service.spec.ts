@@ -35,6 +35,7 @@ describe("DataTargetService", () => {
                 },
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         service = module.get<DataTargetService>(DataTargetService);
     });

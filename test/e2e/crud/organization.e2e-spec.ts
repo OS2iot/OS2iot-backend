@@ -53,6 +53,7 @@ describe("OrganizationController (e2e)", () => {
                 AuthModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();
@@ -131,7 +132,7 @@ describe("OrganizationController (e2e)", () => {
                 expect(response.body.count).toBe(100);
                 expect(response.body.data).toHaveLength(10);
             });
-    });
+    }, 10000);
 
     it("(GET) /organization/minimal - 100", async () => {
         _.range(100).forEach(
@@ -148,7 +149,7 @@ describe("OrganizationController (e2e)", () => {
                 expect(response.body.count).toBe(100);
                 expect(response.body.data).toHaveLength(100);
             });
-    });
+    }, 10000);
 
     it("(GET) /organization/ - Only get allowed orgs", async () => {
         const org = await generateSavedOrganization();

@@ -5,14 +5,14 @@ import { Injectable, Logger } from "@nestjs/common";
 export class AuditLog {
     static readonly logger = new Logger(AuditLog.name, false);
 
-    static async log(
+    static log(
         actionType: ActionType,
         type: string,
         userId: number,
         id: number | string = null,
         name: string = null,
         completed = false
-    ): Promise<void> {
+    ): void {
         const auditLogEntry: AuditLogEntry = {
             userId: userId,
             timestamp: new Date(),
@@ -25,23 +25,23 @@ export class AuditLog {
         this.logger.log(JSON.stringify(auditLogEntry));
     }
 
-    static async success(
+    static success(
         actionType: ActionType,
         type: string,
         userId: number,
         id: number | string = null,
         name: string = null
-    ): Promise<void> {
+    ): void {
         this.log(actionType, type, userId, id, name, true);
     }
 
-    static async fail(
+    static fail(
         actionType: ActionType,
         type: string,
         userId: number,
         id: number | string = null,
         name: string = null
-    ): Promise<void> {
+    ): void {
         this.log(actionType, type, userId, id, name, false);
     }
 }

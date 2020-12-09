@@ -51,6 +51,7 @@ describe("DataTargetController (e2e)", () => {
                 DataTargetModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

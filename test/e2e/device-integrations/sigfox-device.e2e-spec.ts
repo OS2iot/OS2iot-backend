@@ -49,6 +49,7 @@ describe("SigfoxDeviceService (e2e)", () => {
                 SigfoxDeviceModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
 

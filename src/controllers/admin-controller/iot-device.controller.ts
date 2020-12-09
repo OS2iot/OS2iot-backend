@@ -165,7 +165,6 @@ export class IoTDeviceController {
                 id
             );
             if (!device) {
-                AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
                 throw new NotFoundException();
             }
             checkIfUserHasWriteAccessToApplication(req, device?.application?.id);

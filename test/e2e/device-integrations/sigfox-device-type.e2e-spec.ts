@@ -53,6 +53,7 @@ describe("SigfoxDeviceTypeController (e2e)", () => {
                 SigfoxDeviceTypeModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
 

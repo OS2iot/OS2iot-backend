@@ -45,6 +45,7 @@ describe(`${OpenDataDkSharingModule.name} (e2e)`, () => {
                 OpenDataDkSharingModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

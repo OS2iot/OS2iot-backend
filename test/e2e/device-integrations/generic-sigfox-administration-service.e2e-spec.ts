@@ -28,6 +28,7 @@ describe("GenericSigfoxAdministationService (e2e)", () => {
                 SigFoxAdministrationModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
 

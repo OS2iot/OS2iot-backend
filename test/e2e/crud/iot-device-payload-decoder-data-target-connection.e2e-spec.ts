@@ -59,6 +59,7 @@ describe("IoTDevicePayloadDecoderDataTargetConnection (e2e)", () => {
                 IoTDevicePayloadDecoderDataTargetConnectionModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

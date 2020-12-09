@@ -53,6 +53,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 ChirpstackAdministrationModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
         app = moduleFixture.createNestApplication();
         await app.init();
 

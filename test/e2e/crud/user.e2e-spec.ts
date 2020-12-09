@@ -49,6 +49,7 @@ describe("UserController (e2e)", () => {
                 UserModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

@@ -1,4 +1,5 @@
 import { BadRequestException, HttpService, Injectable, Logger } from "@nestjs/common";
+import { AxiosResponse } from "axios";
 
 import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceActivationDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
@@ -128,7 +129,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async deleteDevice(deviceEUI: string) {
+    async deleteDevice(deviceEUI: string): Promise<AxiosResponse> {
         try {
             return await this.delete(`devices/`, deviceEUI);
         } catch (err) {
@@ -300,7 +301,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async enrichLoRaWANDevice(iotDevice: IoTDevice) {
+    async enrichLoRaWANDevice(
+        iotDevice: IoTDevice
+    ): Promise<LoRaWANDeviceWithChirpstackDataDto> {
         const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
         loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
         await this.mapActivationAndKeys(loraDevice);

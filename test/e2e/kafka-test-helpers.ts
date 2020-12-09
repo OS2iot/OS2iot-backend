@@ -40,7 +40,7 @@ export async function setupKafkaListener(
             topic: string;
             message: KafkaMessage;
         }) => {
-            Logger.debug(`Got new message in topic: ${topic}`);
+            // Logger.debug(`Got new message in topic: ${topic}`);
             kafkaMessages.push([topic, message]);
         },
     });

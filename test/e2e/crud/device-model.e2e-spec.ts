@@ -15,7 +15,6 @@ import {
     generateSavedApplication,
     generateSavedDeviceModel,
     generateSavedGlobalAdminUser,
-    generateSavedIoTDevice,
     generateSavedOrganization,
     generateValidJwtForUser,
 } from "../test-helpers";
@@ -58,6 +57,7 @@ describe(`${DeviceModelController.name} (e2e)`, () => {
                 DeviceModelModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

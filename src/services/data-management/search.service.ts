@@ -26,29 +26,9 @@ export class SearchService {
         const urlDecoded = decodeURIComponent(query);
         const trimmedQuery = urlDecoded.trim();
 
-        const gatewayPromise = this.findGateways(trimmedQuery)
-            .then(x => {
-                return this.addTypeToResults(x, SearchResultType.Gateway);
-            })
-            .catch(err => {
-                this.logger.error(`Failed to search for Gateway, error: ${err}`);
-            });
-
-        const applicationPromise = this.findApplications(req, trimmedQuery)
-            .then(x => {
-                return this.addTypeToResults(x, SearchResultType.Application);
-            })
-            .catch(err => {
-                this.logger.error(`Failed to search for Application, error: ${err}`);
-            });
-
-        const devicePromise = this.findIoTDevices(req, trimmedQuery)
-            .then(x => {
-                return this.addTypeToResults(x, SearchResultType.IoTDevice);
-            })
-            .catch(err => {
-                this.logger.error(`Failed to search for IOTDevice, error: ${err}`);
-            });
+        const gatewayPromise = this.findGatewaysAndMapType(trimmedQuery);
+        const applicationPromise = this.findApplicationsAndMapType(req, trimmedQuery);
+        const devicePromise = this.findDevicesAndMapType(req, trimmedQuery);
 
         const results = _.flatMap(
             await Promise.all([applicationPromise, devicePromise, gatewayPromise])
@@ -58,6 +38,36 @@ export class SearchService {
             data: this.limitAndOrder(results, limit, offset),
             count: results.length,
         };
+    }
+
+    private findDevicesAndMapType(req: AuthenticatedRequest, trimmedQuery: string) {
+        return this.findIoTDevices(req, trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.IoTDevice);
+            })
+            .catch(err => {
+                this.logger.error(`Failed to search for IOTDevice, error: ${err}`);
+            });
+    }
+
+    private findApplicationsAndMapType(req: AuthenticatedRequest, trimmedQuery: string) {
+        return this.findApplications(req, trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.Application);
+            })
+            .catch(err => {
+                this.logger.error(`Failed to search for Application, error: ${err}`);
+            });
+    }
+
+    private findGatewaysAndMapType(trimmedQuery: string) {
+        return this.findGateways(trimmedQuery)
+            .then(x => {
+                return this.addTypeToResults(x, SearchResultType.Gateway);
+            })
+            .catch(err => {
+                this.logger.error(`Failed to search for Gateway, error: ${err}`);
+            });
     }
 
     private limitAndOrder(

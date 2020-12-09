@@ -217,21 +217,8 @@ export class PermissionService {
         query?: ListAllPermissionsDto,
         orgs?: number[]
     ): Promise<ListAllPermissionsResponseDto> {
-        let orderBy = `permission.id`;
-        if (
-            query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "type" ||
-                query.orderOn == "organisations")
-        ) {
-            if (query.orderOn == "organisations") {
-                orderBy = "org.name";
-            } else {
-                orderBy = `permission.${query.orderOn}`;
-            }
-        }
-        let order: "DESC" | "ASC" =
+        const orderBy = this.getSorting(query);
+        const order: "DESC" | "ASC" =
             query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
         let qb: SelectQueryBuilder<Permission> = createQueryBuilder(
             Permission,
@@ -257,6 +244,24 @@ export class PermissionService {
             data: data,
             count: count,
         };
+    }
+
+    private getSorting(query: ListAllPermissionsDto) {
+        let orderBy = `permission.id`;
+        if (
+            query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "type" ||
+                query.orderOn == "organisations")
+        ) {
+            if (query.orderOn == "organisations") {
+                orderBy = "org.name";
+            } else {
+                orderBy = `permission.${query.orderOn}`;
+            }
+        }
+        return orderBy;
     }
 
     async getAllPermissionsInOrganizations(

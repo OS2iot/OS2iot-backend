@@ -156,9 +156,7 @@ export class UserController {
 
     @Get()
     @ApiOperation({ summary: "Get all users" })
-    async findAll(
-        @Query() query?: ListAllEntitiesDto
-    ): Promise<ListAllUsersResponseDto> {
+    async findAll(@Query() query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         return await this.userService.findAll(query);
     }
 }

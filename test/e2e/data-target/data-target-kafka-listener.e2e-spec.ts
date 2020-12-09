@@ -47,6 +47,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
                 KafkaModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         httpService = app.get<HttpService>(HttpService);

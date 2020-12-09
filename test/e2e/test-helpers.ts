@@ -1,5 +1,6 @@
 import { JwtService } from "@nestjs/jwt";
 import { getManager } from "typeorm";
+import * as request from "supertest";
 
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
@@ -37,6 +38,10 @@ import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
+import { INestApplication } from "@nestjs/common";
+import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -870,6 +875,10 @@ export function createDeviceProfileData(): CreateDeviceProfileDto {
         macVersion: "1.0.3",
         regParamsRevision: "A",
         maxEIRP: 1,
+        geolocBufferTTL: 1,
+        geolocMinBufferSize: 1,
+        factoryPresetFreqs: [1, 2],
+        supportsJoin: true,
     };
 
     const deviceProfile: CreateDeviceProfileDto = {
@@ -883,7 +892,7 @@ export function createDeviceProfileData(): CreateDeviceProfileDto {
 export async function cleanChirpstackApplications(
     csService: GenericChirpstackConfigurationService,
     testname: string
-) {
+): Promise<void> {
     await csService
         .get<ListAllChirpstackApplicationsResponseDto>(`applications?limit=1000`)
         .then(response => {
@@ -893,4 +902,57 @@ export async function cleanChirpstackApplications(
                 }
             });
         });
+}
+
+export async function createLoRaWANDeviceInChirpstack(
+    app: INestApplication,
+    globalAdminJwt: string,
+    application: Application
+) {
+    const dpId = await request(app.getHttpServer())
+        .post("/chirpstack/device-profiles/")
+        .auth(globalAdminJwt, { type: "bearer" })
+        .send(createDeviceProfileData())
+        .expect(201)
+        .expect("Content-Type", /json/)
+        .then(response => {
+            return response.body.id;
+        });
+
+    const spId = await request(app.getHttpServer())
+        .post("/chirpstack/service-profiles/")
+        .auth(globalAdminJwt, { type: "bearer" })
+        .send(createServiceProfileData())
+        .expect(201)
+        .expect("Content-Type", /json/)
+        .then(response => {
+            return response.body.id;
+        });
+
+    const createDto: CreateIoTDeviceDto = {
+        type: IoTDeviceType.LoRaWAN,
+        longitude: 42,
+        latitude: 42,
+        lorawanSettings: {
+            skipFCntCheck: false,
+            fCntUp: 0,
+            nFCntDown: 0,
+            devEUI: randomMacAddress(),
+            serviceProfileID: spId,
+            deviceProfileID: dpId,
+            OTAAapplicationKey: "13371337133713371337133713371337",
+            activationType: ActivationType.OTAA,
+        },
+        applicationId: application.id,
+        name: "e2e",
+    };
+
+    const device = await request(app.getHttpServer())
+        .post("/iot-device/")
+        .auth(globalAdminJwt, { type: "bearer" })
+        .send(createDto)
+        .then(response => {
+            return response.body;
+        });
+    return device;
 }

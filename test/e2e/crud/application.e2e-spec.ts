@@ -14,6 +14,7 @@ import { AuthModule } from "@modules/user-management/auth.module";
 
 import {
     clearDatabase,
+    createLoRaWANDeviceInChirpstack,
     generateSavedApplication,
     generateSavedGlobalAdminUser,
     generateSavedOrganization,
@@ -67,6 +68,7 @@ describe("ApplicationController (e2e)", () => {
                 IoTDeviceModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();
@@ -585,30 +587,7 @@ describe("ApplicationController (e2e)", () => {
         // Arrange
         const org = await generateSavedOrganization();
         const app1 = await generateSavedApplication(org, "app1");
-        const mac = randomMacAddress();
-        const deviceProfile = await deviceProfileService.findAllDeviceProfiles(100, 0);
-        const serviceProfile = await serviceProfileService.findAllServiceProfiles(100, 0);
-        const device = await iotDeviceService.create(
-            {
-                name: "E2E-" + mac,
-                type: IoTDeviceType.LoRaWAN,
-                applicationId: app1.id,
-                longitude: 12,
-                latitude: 32,
-                comment: "asdf",
-                commentOnLocation: "fdsa",
-                metadata: JSON.parse("{}"),
-                lorawanSettings: {
-                    activationType: ActivationType.NONE,
-                    devAddr: mac,
-                    devEUI: mac,
-                    deviceProfileID: deviceProfile.result[0].id,
-                    serviceProfileID: serviceProfile.result[0].id,
-                },
-            },
-            globalAdmin.id
-        );
-
+        const device = await createLoRaWANDeviceInChirpstack(app, globalAdminJwt, app1);
         // Act
         return request(app.getHttpServer())
             .get("/application/" + app1.id)

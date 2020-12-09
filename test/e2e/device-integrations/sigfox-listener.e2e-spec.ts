@@ -44,6 +44,7 @@ describe("SigFoxListenerController (e2e)", () => {
                 SigFoxListenerModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

@@ -45,6 +45,7 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
                 IoTDeviceModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
 

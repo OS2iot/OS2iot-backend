@@ -21,6 +21,7 @@ describe("DataTargetService", () => {
                 },
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         service = module.get<HttpPushDataTargetService>(HttpPushDataTargetService);
     });

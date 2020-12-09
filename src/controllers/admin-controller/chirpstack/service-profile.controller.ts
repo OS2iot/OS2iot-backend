@@ -138,7 +138,7 @@ export class ServiceProfileController {
         @Param("id") id: string
     ): Promise<DeleteResponseDto> {
         try {
-            let result = await this.serviceProfileService.deleteServiceProfile(id);
+            const result = await this.serviceProfileService.deleteServiceProfile(id);
             if (!result) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }

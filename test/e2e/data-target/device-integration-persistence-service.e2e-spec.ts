@@ -46,6 +46,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
                 DeviceIntegrationPersistenceModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

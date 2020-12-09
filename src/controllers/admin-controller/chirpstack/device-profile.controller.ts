@@ -47,6 +47,7 @@ import { ActionType } from "@entities/audit-log-entry";
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
+    CHIRPSTACK_IN_USE_ERROR = "this object is used by other objects, remove them first";
     private readonly logger = new Logger(DeviceProfileController.name);
 
     @Post()
@@ -173,22 +174,7 @@ export class DeviceProfileController {
         @Param("id") id: string
     ): Promise<DeleteResponseDto> {
         try {
-            let result = undefined;
-            try {
-                result = await this.deviceProfileService.deleteDeviceProfile(id, req);
-            } catch (err) {
-                this.logger.error(
-                    `Error occured during delete: '${JSON.stringify(
-                        err?.response?.data
-                    )}'`
-                );
-                if (
-                    err?.message ==
-                    "this object is used by other objects, remove them first"
-                ) {
-                    throw new BadRequestException(ErrorCodes.IsUsed);
-                }
-            }
+            const result = await this.deviceProfileService.deleteDeviceProfile(id, req);
 
             if (!result) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -207,6 +193,9 @@ export class DeviceProfileController {
                 req.user.userId,
                 id
             );
+            if (err?.message == this.CHIRPSTACK_IN_USE_ERROR) {
+                throw new BadRequestException(ErrorCodes.IsUsed);
+            }
             throw err;
         }
     }

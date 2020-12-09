@@ -33,7 +33,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
+import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto as UpdateConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { checkIfUserHasWriteAccessToApplication } from "@helpers/security-helper";
@@ -199,23 +199,10 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
-        @Body()
-        updateDto: UpdateIoTDevicePayloadDecoderDataTargetConnectionDto
+        @Body() updateDto: UpdateConnectionDto
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         try {
-            const newIotDevice = await this.iotDeviceService.findOne(
-                updateDto.iotDeviceIds[0]
-            );
-            checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
-            const oldConnection = await this.service.findOne(id);
-            await this.checkUserHasWriteAccessToAllIotDevices(
-                updateDto.iotDeviceIds,
-                req
-            );
-            const oldIds = oldConnection.iotDevices.map(x => x.id);
-            if (updateDto.iotDeviceIds != oldIds) {
-                await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
-            }
+            await this.checkIfUpdateIsAllowed(updateDto, req, id);
             const result = await this.service.update(id, updateDto, req.user.userId);
 
             AuditLog.success(
@@ -232,6 +219,24 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
                 req.user.userId,
                 id
             );
+            throw err;
+        }
+    }
+
+    private async checkIfUpdateIsAllowed(
+        updateDto: UpdateConnectionDto,
+        req: AuthenticatedRequest,
+        id: number
+    ) {
+        const newIotDevice = await this.iotDeviceService.findOne(
+            updateDto.iotDeviceIds[0]
+        );
+        checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
+        const oldConnection = await this.service.findOne(id);
+        await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
+        const oldIds = oldConnection.iotDevices.map(x => x.id);
+        if (updateDto.iotDeviceIds != oldIds) {
+            await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
         }
     }
 
@@ -244,22 +249,12 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        const oldConnection = await this.service.findOne(id);
         try {
+            const oldConnection = await this.service.findOne(id);
             await this.checkUserHasWriteAccessToAllIotDevices(
                 oldConnection.iotDevices.map(x => x.id),
                 req
             );
-        } catch (err) {
-            AuditLog.fail(
-                ActionType.DELETE,
-                IoTDevicePayloadDecoderDataTargetConnection.name,
-                req.user.userId,
-                id
-            );
-            throw err;
-        }
-        try {
             const result = await this.service.delete(id);
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -278,7 +273,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
                 req.user.userId,
                 id
             );
-            throw new NotFoundException(err);
+            throw err;
         }
     }
 }

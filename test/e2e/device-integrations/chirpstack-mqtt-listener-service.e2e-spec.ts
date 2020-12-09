@@ -41,6 +41,7 @@ describe("ChirpstackMQTTListenerService (e2e)", () => {
                 KafkaModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();

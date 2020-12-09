@@ -7,9 +7,6 @@ import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interf
  * This class exposes general functionality used for the DataTarget
  */
 export abstract class BaseDataTargetService {
-    constructor() {
-        this.baseLogger.debug(`Initialized ${BaseDataTargetService.name}`);
-    }
     protected readonly baseLogger = new Logger(BaseDataTargetService.name);
 
     success(receiver: string): DataTargetSendStatus {

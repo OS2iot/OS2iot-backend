@@ -29,6 +29,7 @@ describe("DataTarget Controller", () => {
                 },
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         controller = module.get<DataTargetController>(DataTargetController);
     });

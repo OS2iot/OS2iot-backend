@@ -53,6 +53,7 @@ describe("SigfoxGroupController (e2e)", () => {
                 SigFoxGroupModule,
             ],
         }).compile();
+        moduleFixture.useLogger(false);
 
         app = moduleFixture.createNestApplication();
         await app.init();
