@@ -9,26 +9,23 @@ import {
 } from "@dto/sigfox/external/sigfox-api-device-type-response.dto";
 import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-reference.dto";
 import { UpdateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-type-request.dto";
+import { ActionType } from "@entities/audit-log-entry";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     checkIfUserHasReadAccessToOrganization,
     checkIfUserHasWriteAccessToOrganization,
 } from "@helpers/security-helper";
 import {
-    BadRequestException,
     Body,
     Controller,
     Get,
     HttpCode,
-    Logger,
     Param,
     ParseIntPipe,
     Post,
     Put,
     Query,
     Req,
-    UnauthorizedException,
     UseGuards,
 } from "@nestjs/common";
 import {
@@ -37,11 +34,11 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiNoContentResponse,
-    ApiOkResponse,
     ApiOperation,
     ApiProduces,
     ApiTags,
 } from "@nestjs/swagger";
+import { AuditLog } from "@services/audit-log.service";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigfoxApiUsersService } from "@services/sigfox/sigfox-api-users.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
@@ -58,8 +55,6 @@ export class SigfoxDeviceTypeController {
         private usersService: SigfoxApiUsersService,
         private sigfoxGroupService: SigFoxGroupService
     ) {}
-
-    private readonly logger = new Logger(SigfoxDeviceTypeController.name);
 
     @Get()
     @ApiProduces("application/json")
@@ -102,11 +97,24 @@ export class SigfoxDeviceTypeController {
         @Body() dto: CreateSigFoxApiDeviceTypeRequestDto,
         @Query("groupId", new ParseIntPipe()) groupId: number
     ): Promise<SigFoxApiIdReferenceDto> {
-        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
-            groupId
-        );
-        checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
-        return await this.service.create(group, dto);
+        try {
+            const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
+                groupId
+            );
+            checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+            const res = await this.service.create(group, dto);
+            AuditLog.success(
+                ActionType.CREATE,
+                "SigfoxDeviceType",
+                req.user.userId,
+                res.id,
+                dto.name
+            );
+            return res;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, "SigfoxDeviceType", req.user.userId);
+            throw err;
+        }
     }
 
     @Put(":id")
@@ -120,10 +128,28 @@ export class SigfoxDeviceTypeController {
         @Body() dto: UpdateSigFoxApiDeviceTypeRequestDto,
         @Query("groupId", new ParseIntPipe()) groupId: number
     ): Promise<void> {
-        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
-            groupId
-        );
-        checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
-        await this.service.update(group, id, dto);
+        try {
+            const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
+                groupId
+            );
+            checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+            await this.service.update(group, id, dto);
+            AuditLog.success(
+                ActionType.UPDATE,
+                "SigfoxDeviceType",
+                req.user.userId,
+                id,
+                dto.name
+            );
+        } catch (err) {
+            AuditLog.fail(
+                ActionType.UPDATE,
+                "SigfoxDeviceType",
+                req.user.userId,
+                id,
+                dto.name
+            );
+            throw err;
+        }
     }
 }
