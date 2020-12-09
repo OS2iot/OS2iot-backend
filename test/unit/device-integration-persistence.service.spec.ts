@@ -88,7 +88,6 @@ describe("DeviceIntegrationPersistenceService", () => {
                 },
             ],
         }).compile();
-        moduleFixture.useLogger(false);
 
         service = module.get<DeviceIntegrationPersistenceService>(
             DeviceIntegrationPersistenceService

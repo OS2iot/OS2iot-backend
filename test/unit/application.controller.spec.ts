@@ -21,7 +21,6 @@ describe("Application Controller", () => {
                 },
             ],
         }).compile();
-        moduleFixture.useLogger(false);
 
         controller = module.get<ApplicationController>(ApplicationController);
     });

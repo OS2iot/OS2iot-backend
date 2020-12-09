@@ -33,9 +33,6 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
             authnRequestBinding: "HTTP-Redirect",
             acceptedClockSkewMs: 1000, // Allow some slack in clock sync
         });
-
-        this.logger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`);
-        this.logger.debug(`EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`);
     }
 
     private readonly logger = new Logger(KombitStrategy.name);

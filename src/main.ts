@@ -8,6 +8,7 @@ import * as dotenv from "dotenv";
 
 import { setupNestJs } from "@loaders/nestjs";
 import { setupSwagger } from "@loaders/swagger";
+import configuration from "@config/configuration";
 
 async function bootstrap() {
     // Load .env file as environment before startup.
@@ -23,6 +24,12 @@ async function bootstrap() {
 
     const app = await setupNestJs(config, server);
     setupSwagger(app, config.SWAGGER_PREFIX);
+
+    BuiltInLogger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`, "Kombit");
+    BuiltInLogger.debug(
+        `EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`,
+        "Kombit"
+    );
 
     // The .listen call must happen after swagger is setup.
     // await app.listen(config.NEST_PORT);

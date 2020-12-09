@@ -87,14 +87,14 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         // Assert
         const allMessages = await receivedMessageRepository.find();
         expect(allMessages).toHaveLength(1);
-        Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
+        // Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
         expect(allMessages[0]).toMatchObject({
             rawData: kafkaPayload.body.rawPayload,
         });
 
         const allMetadata = await receivedMessageMetadataRepository.find();
         expect(allMetadata).toHaveLength(1);
-        Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
+        // Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
         expect(allMetadata[0]).toHaveProperty("sentTime");
     });
 
@@ -117,7 +117,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
             relations: ["device"],
         });
         expect(allMessages).toHaveLength(1);
-        Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
+        // Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
         expect(allMessages[0]).toMatchObject({
             sentTime: new Date(11000),
             rawData: kafkaPayload.body.rawPayload,
@@ -151,14 +151,14 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
         // Assert
         const allMessages = await receivedMessageRepository.find();
         expect(allMessages).toHaveLength(1);
-        Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
+        // Logger.debug(`Messages: ${JSON.stringify(allMessages)}`);
         expect(allMessages[0]).toMatchObject({
             rawData: kafkaPayload.body.rawPayload,
         });
 
         const allMetadata = await receivedMessageMetadataRepository.find();
         expect(allMetadata).toHaveLength(1);
-        Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
+        // Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
         expect(allMetadata[0]).toHaveProperty("sentTime");
     });
 });
