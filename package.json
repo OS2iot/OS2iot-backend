@@ -61,7 +61,7 @@
         "rxjs": "^6.6.3",
         "swagger-ui-express": "^4.1.4",
         "typeorm": "^0.2.26",
-        "uuid": "^8.3.0",
+        "uuid": "^8.3.1",
         "vm2": "^3.9.2",
         "wait-for-expect": "^3.0.2"
     },
