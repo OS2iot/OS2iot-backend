@@ -34,7 +34,6 @@ export class DeviceProfileDto {
     classBTimeout?: number;
 
     @ApiProperty({ required: false })
-    @IsOptional()
     @Min(0)
     @IsInt()
     classCTimeout?: number;
