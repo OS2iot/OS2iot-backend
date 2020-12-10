@@ -23,6 +23,7 @@ import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-deco
 import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import waitForExpect from "wait-for-expect";
+import { NoOpLogger } from "./no-op-logger";
 
 describe("End-to-End (e2e)", () => {
     let app: INestApplication;
@@ -53,7 +54,7 @@ describe("End-to-End (e2e)", () => {
                 PayloadDecoderModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         httpService = app.get<HttpService>(HttpService);

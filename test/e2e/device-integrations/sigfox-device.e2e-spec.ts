@@ -1,5 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
@@ -49,7 +50,7 @@ describe("SigfoxDeviceService (e2e)", () => {
                 SigfoxDeviceModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
 

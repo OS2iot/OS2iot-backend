@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
 import { getManager, Repository } from "typeorm";
@@ -53,10 +54,11 @@ describe("SigfoxGroupController (e2e)", () => {
                 SigFoxGroupModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();
+        app.useLogger(new NoOpLogger())
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("GenericHTTPDeviceRepository");

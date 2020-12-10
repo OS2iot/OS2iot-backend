@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 
 import { DefaultController } from "@admin-controller/default.controller";
+import { NoOpLogger } from "test/e2e/no-op-logger";
 
 describe("DefaultController", () => {
     let appController: DefaultController;
@@ -9,7 +10,7 @@ describe("DefaultController", () => {
         const app: TestingModule = await Test.createTestingModule({
             controllers: [DefaultController],
         }).compile();
-        moduleFixture.useLogger(false);
+        app.useLogger(new NoOpLogger());
 
         appController = app.get<DefaultController>(DefaultController);
     });

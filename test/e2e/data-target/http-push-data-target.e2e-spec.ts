@@ -1,5 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { SendStatus } from "@enum/send-status.enum";
@@ -17,7 +18,7 @@ describe("HttpPushDataTargetService (e2e)", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [DataTargetSenderModule],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();

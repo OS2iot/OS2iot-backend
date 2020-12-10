@@ -1,5 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
@@ -45,7 +46,7 @@ describe("PeriodicSigFoxCleanupService (e2e)", () => {
                 IoTDeviceModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
 

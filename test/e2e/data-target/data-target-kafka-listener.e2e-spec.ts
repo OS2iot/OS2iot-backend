@@ -1,6 +1,7 @@
 import { HttpService, INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { RecordMetadata } from "kafkajs";
@@ -47,7 +48,7 @@ describe("DataTargetKafkaListener (e2e)", () => {
                 KafkaModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         httpService = app.get<HttpService>(HttpService);

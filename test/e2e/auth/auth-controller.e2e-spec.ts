@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
 import configuration from "@config/configuration";
@@ -42,7 +43,7 @@ describe("AuthController (e2e)", () => {
                 }),
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();

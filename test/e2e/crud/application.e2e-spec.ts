@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from "supertest";
 import { Repository, getManager } from "typeorm";
@@ -68,7 +69,7 @@ describe("ApplicationController (e2e)", () => {
                 IoTDeviceModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();

@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
 import * as request from "supertest";
@@ -49,7 +50,7 @@ describe("UserController (e2e)", () => {
                 UserModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();

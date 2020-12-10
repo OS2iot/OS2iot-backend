@@ -1,6 +1,7 @@
 import { INestApplication, Logger } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -46,7 +47,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
                 DeviceIntegrationPersistenceModule,
             ],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
 
         app = moduleFixture.createNestApplication();
         await app.init();
@@ -130,7 +131,7 @@ describe("DeviceIntegrationPersistenceService (e2e)", () => {
             relations: ["device"],
         });
         expect(allMetadata).toHaveLength(10);
-        Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
+        // Logger.debug(`Metadata: ${JSON.stringify(allMetadata)}`);
         expect(allMetadata[0]).toMatchObject({
             sentTime: new Date(2000),
             device: {

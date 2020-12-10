@@ -1,5 +1,6 @@
 import { INestApplication, Logger } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { NoOpLogger } from "../no-op-logger";
 
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
@@ -13,7 +14,7 @@ describe("ChirpstackSetupNetworkServerService", () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [ChirpstackAdministrationModule],
         }).compile();
-        moduleFixture.useLogger(false);
+        moduleFixture.useLogger(new NoOpLogger());
         app = moduleFixture.createNestApplication();
         await app.init();
 
