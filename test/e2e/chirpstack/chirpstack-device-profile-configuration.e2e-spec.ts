@@ -6,13 +6,13 @@ import * as request from "supertest";
 
 import configuration from "@config/configuration";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
-import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 import {
     cleanChirpstackApplications,
+    cleanChirpstackDeviceProfiles,
     clearDatabase,
     createDeviceProfileData,
     generateSavedGlobalAdminUser,
@@ -83,20 +83,13 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
     afterAll(async () => {
         // Ensure clean shutdown
         await app.close();
+        await cleanChirpstackApplications(deviceProfileService, testname);
+        await cleanChirpstackDeviceProfiles(deviceProfileService, testname, fakeUser);
     });
 
     afterEach(async () => {
         await cleanChirpstackApplications(deviceProfileService, testname);
-        await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
-            response.result.forEach(async deviceProfile => {
-                if (deviceProfile.name.startsWith(testname)) {
-                    await deviceProfileService.deleteDeviceProfile(
-                        deviceProfile.id,
-                        fakeUser
-                    );
-                }
-            });
-        });
+        await cleanChirpstackDeviceProfiles(deviceProfileService, testname, fakeUser);
         jest.clearAllMocks();
     });
 
@@ -119,7 +112,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 // Assert
                 expect(response.body).toMatchObject({
                     deviceProfile: {
-                        name: testname,
+                        name: original.deviceProfile.name,
                     },
                 });
             });
@@ -132,9 +125,11 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
             original,
             globalAdmin.id
         );
+        const name1 = `${original.deviceProfile.name}`;
 
         const changed = original;
-        changed.deviceProfile.name = `${testname}-changed`;
+        const name2 = `${changed.deviceProfile.name}-changed`;
+        changed.deviceProfile.name = name2;
         const result2 = await deviceProfileService.createDeviceProfile(
             changed,
             globalAdmin.id
@@ -150,7 +145,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
                 // Assert
                 expect(response.body.result).toContainEqual({
                     id: result1.data.id,
-                    name: testname,
+                    name: name1,
                     networkServerID: expect.any(String),
                     networkServerName: "OS2iot",
                     organizationID: expect.any(String),
@@ -163,7 +158,7 @@ describe("ChirpstackDeviceProfileConfiguration", () => {
 
                 expect(response.body.result).toContainEqual({
                     id: result2.data.id,
-                    name: `${testname}-changed`,
+                    name: name2,
                     networkServerID: expect.any(String),
                     networkServerName: "OS2iot",
                     organizationID: expect.any(String),

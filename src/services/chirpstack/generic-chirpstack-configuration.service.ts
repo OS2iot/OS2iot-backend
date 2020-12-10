@@ -140,7 +140,11 @@ export class GenericChirpstackConfigurationService {
 
             return result.data;
         } catch (err) {
-            this.innerLogger.error(`get got error: ${JSON.stringify(err?.response)}`);
+            this.innerLogger.error(
+                `GET: ${err?.config?.url} Status: ${
+                    err?.response?.status
+                }. Error response: '${JSON.stringify(err?.response?.data)}'`
+            );
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }

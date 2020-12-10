@@ -42,6 +42,8 @@ import { INestApplication } from "@nestjs/common";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -842,7 +844,7 @@ export const gatewayNamePrefix = "E2E-test";
 
 export function createServiceProfileData(testname = "e2e"): CreateServiceProfileDto {
     const serviceProfileDto: ServiceProfileDto = {
-        name: testname,
+        name: testname + randomMacAddress(),
         prAllowed: true,
         raAllowed: true,
         reportDevStatusBattery: true,
@@ -871,7 +873,7 @@ export function createServiceProfileData(testname = "e2e"): CreateServiceProfile
 
 export function createDeviceProfileData(): CreateDeviceProfileDto {
     const deviceProfileDto: DeviceProfileDto = {
-        name: "e2e",
+        name: "e2e" + randomMacAddress(),
         macVersion: "1.0.3",
         regParamsRevision: "A",
         maxEIRP: 1,
@@ -902,6 +904,23 @@ export async function cleanChirpstackApplications(
                 }
             });
         });
+}
+
+export async function cleanChirpstackDeviceProfiles(
+    deviceProfileService: DeviceProfileService,
+    testname: string,
+    fakeUser: AuthenticatedRequest
+) {
+    await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
+        response.result.forEach(async deviceProfile => {
+            if (deviceProfile.name.startsWith(testname)) {
+                await deviceProfileService.deleteDeviceProfile(
+                    deviceProfile.id,
+                    fakeUser
+                );
+            }
+        });
+    });
 }
 
 export async function createLoRaWANDeviceInChirpstack(

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
@@ -9,6 +9,7 @@ import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dt
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
@@ -20,6 +21,9 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         dto: CreateDeviceProfileDto,
         userId: number
     ): Promise<AxiosResponse> {
+        if (await this.isNameInUse(dto.deviceProfile.name)) {
+            throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
+        }
         dto.deviceProfile = await this.updateDto(dto.deviceProfile);
         dto.deviceProfile.tags = this.addOrganizationToTags(dto);
         dto.deviceProfile.tags = this.addUserIdToTags(dto, userId);
@@ -50,9 +54,19 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         id: string,
         req: AuthenticatedRequest
     ): Promise<AxiosResponse> {
+        if (await this.isNameInUse(data.deviceProfile.name, id)) {
+            throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
+        }
         data.deviceProfile.tags = await this.updateTags(id, req);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
         return await this.put("device-profiles", data, id);
+    }
+
+    private async isNameInUse(name: string, id?: string): Promise<Boolean> {
+        const deviceProfiles = await this.findAllDeviceProfiles(1000, 0);
+        return deviceProfiles.result
+            .filter(x => (id ? x.id != id : true))
+            .some(x => x.name.toLocaleLowerCase() == name.toLocaleLowerCase());
     }
 
     private async updateTags(

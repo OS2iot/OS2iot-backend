@@ -119,6 +119,9 @@ export class DeviceProfileController {
                 updateDto.deviceProfile.id,
                 updateDto.deviceProfile.name
             );
+            if (err?.status >= 400 && err?.status < 500) {
+                throw err;
+            }
             throw new InternalServerErrorException(err?.response?.data);
         }
     }
