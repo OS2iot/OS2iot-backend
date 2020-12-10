@@ -135,7 +135,7 @@ export class ChirpstackGatewayController {
                 ActionType.UPDATE,
                 "ChirpstackGateway",
                 req.user.userId,
-                dto.gateway.id,
+                gatewayId,
                 dto.gateway.name
             );
             return gateway;
@@ -144,7 +144,7 @@ export class ChirpstackGatewayController {
                 ActionType.UPDATE,
                 "ChirpstackGateway",
                 req.user.userId,
-                dto.gateway.id,
+                gatewayId,
                 dto.gateway.name
             );
             throw err;
