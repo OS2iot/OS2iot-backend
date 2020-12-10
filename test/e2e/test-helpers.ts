@@ -844,7 +844,7 @@ export const gatewayNamePrefix = "E2E-test";
 
 export function createServiceProfileData(testname = "e2e"): CreateServiceProfileDto {
     const serviceProfileDto: ServiceProfileDto = {
-        name: testname + randomMacAddress(),
+        name: testname,
         prAllowed: true,
         raAllowed: true,
         reportDevStatusBattery: true,

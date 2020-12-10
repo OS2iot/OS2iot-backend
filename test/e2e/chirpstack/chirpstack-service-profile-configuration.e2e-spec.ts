@@ -140,8 +140,9 @@ describe("ChirpstackServiceProfileConfiguration", () => {
         // Arrange
         const data: CreateServiceProfileDto = createServiceProfileData();
         const result1 = await serviceProfileService.createServiceProfile(data);
+        const originalName = `${data.serviceProfile.name}`;
 
-        data.serviceProfile.name = `${testname}-changed`;
+        data.serviceProfile.name = `${originalName}-changed`;
         const result2 = await serviceProfileService.createServiceProfile(data);
 
         // Act
@@ -154,7 +155,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
                 // Assert
                 expect(response.body.result).toContainEqual({
                     id: result1.data.id,
-                    name: testname,
+                    name: originalName,
                     networkServerID: expect.any(String),
                     networkServerName: "",
                     organizationID: expect.any(String),
@@ -164,7 +165,7 @@ describe("ChirpstackServiceProfileConfiguration", () => {
 
                 expect(response.body.result).toContainEqual({
                     id: result2.data.id,
-                    name: `${testname}-changed`,
+                    name: `${originalName}-changed`,
                     networkServerID: expect.any(String),
                     networkServerName: "",
                     organizationID: expect.any(String),
