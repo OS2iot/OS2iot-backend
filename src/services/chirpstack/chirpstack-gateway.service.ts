@@ -97,8 +97,16 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         );
         await Promise.all(
             results.result.map(async x => {
-                const gw = await this.getOne(x.id);
-                x.internalOrganizationId = gw.gateway.internalOrganizationId;
+                try {
+                    const gw = await this.getOne(x.id);
+                    x.internalOrganizationId = gw.gateway.internalOrganizationId;
+                } catch (err) {
+                    this.logger.error(
+                        `Failed to fetch gateway details for id ${x.id}`,
+                        err
+                    );
+                    x.internalOrganizationId = null;
+                }
             })
         );
         if (organizationId !== undefined) {
