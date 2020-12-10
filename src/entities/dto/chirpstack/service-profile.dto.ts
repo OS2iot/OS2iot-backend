@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsString, Length, MaxLength } from "class-validator";
+import { IsIn, IsInt, IsString, Length, Max, MaxLength, Min } from "class-validator";
 
 export class ServiceProfileDto {
     @ApiProperty({ required: false })
@@ -31,9 +31,15 @@ export class ServiceProfileDto {
     dlRatePolicy?: string;
 
     @ApiProperty({ required: false })
+    @IsInt() 
+    @Min(0)
+    @Max(5)
     drMax?: number;
 
     @ApiProperty({ required: true })
+    @IsInt() 
+    @Min(0)
+    @Max(5)
     drMin?: number;
 
     @ApiProperty({ required: false })
