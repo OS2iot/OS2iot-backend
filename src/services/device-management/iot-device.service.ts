@@ -648,6 +648,15 @@ export class IoTDeviceService {
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
 
+        if (
+            !isUpdate &&
+            (await this.chirpstackDeviceService.isDeviceAlreadyCreated(
+                dto.lorawanSettings.devEUI
+            ))
+        ) {
+            throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
+        }
+
         try {
             const chirpstackDeviceDto = await this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
                 dto.lorawanSettings,
@@ -666,7 +675,10 @@ export class IoTDeviceService {
             await this.doActivation(dto, isUpdate);
         } catch (err) {
             this.logger.error(err);
-            throw new BadRequestException("Could not create device in Chirpstack", err);
+            if (err?.response?.data?.error == "object already exists") {
+                throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
+            }
+            throw err;
         }
 
         return lorawanDevice;

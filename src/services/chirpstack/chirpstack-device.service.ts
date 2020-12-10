@@ -344,7 +344,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    private async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {
+    async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {
         const devices = await this.getAllChirpstackDevices();
         const alreadyExists = devices.some(x => {
             return x.devEUI.toLowerCase() == deviceEUI.toLowerCase();

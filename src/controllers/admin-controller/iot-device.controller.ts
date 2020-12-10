@@ -147,6 +147,11 @@ export class IoTDeviceController {
             return device;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+            this.logger.error(
+                `Failed to create IoTDevice from dto: ${JSON.stringify(
+                    createDto
+                )}. Error: ${err}`
+            );
             throw err;
         }
     }
