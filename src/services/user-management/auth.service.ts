@@ -8,12 +8,16 @@ import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { UserService } from "./user.service";
 import { Profile } from "passport-saml";
 import { JwtResponseDto } from "@dto/jwt-response.dto";
-import { XMLObject, XMLOutput } from "@dto/user-management/xml-object";
+import { XMLOutput } from "@dto/user-management/xml-object";
+import configuration from "@config/configuration";
 
 @Injectable()
 export class AuthService {
-    constructor(private usersService: UserService, private jwtService: JwtService) {}
+    constructor(private usersService: UserService, private jwtService: JwtService) {
+        this.KOMBIT_ROLE_URI = configuration()["kombit"]["roleUri"];
+    }
     private readonly logger = new Logger(AuthService.name);
+    private readonly KOMBIT_ROLE_URI: string;
 
     async validateUser(username: string, password: string): Promise<UserResponseDto> {
         const user = await this.usersService.findOneUserByEmailWithPassword(username);
@@ -75,9 +79,7 @@ export class AuthService {
                 ].some((privilegeGroups: XMLOutput) =>
                     privilegeGroups["Privilege"].some(
                         (privileges: XMLOutput) =>
-                            privileges["_"].indexOf(
-                                "http://os2iot.dk/roles/usersystemrole/adgang/"
-                            ) > -1
+                            privileges["_"].indexOf(this.KOMBIT_ROLE_URI) > -1
                     )
                 );
             })

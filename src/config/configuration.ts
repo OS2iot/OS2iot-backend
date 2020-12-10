@@ -20,6 +20,9 @@ export default (): any => {
                 process.env.KOMBIT_ENTRYPOINT ||
                 "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
             certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
+            roleUri:
+                process.env.KOMBIT_ROLE_NAME ||
+                "http://os2iot.dk/roles/usersystemrole/adgang/",
         },
     };
 };
