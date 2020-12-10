@@ -1,5 +1,7 @@
 # OS2IoT-backend
 
+[![Build Status](https://dev.azure.com/tbk0196/OS2IoT-backend/_apis/build/status/OS2iot.OS2IoT-backend?branchName=master)](https://dev.azure.com/tbk0196/OS2IoT-backend/_build/latest?definitionId=2&branchName=master)
+
 ## Development mode (without docker)
 
 ## Installation
