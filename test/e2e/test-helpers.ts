@@ -910,7 +910,7 @@ export async function cleanChirpstackDeviceProfiles(
     deviceProfileService: DeviceProfileService,
     testname: string,
     fakeUser: AuthenticatedRequest
-) {
+): Promise<void> {
     await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
         response.result.forEach(async deviceProfile => {
             if (deviceProfile.name.startsWith(testname)) {
@@ -927,7 +927,7 @@ export async function createLoRaWANDeviceInChirpstack(
     app: INestApplication,
     globalAdminJwt: string,
     application: Application
-) {
+): Promise<LoRaWANDevice> {
     const dpId = await request(app.getHttpServer())
         .post("/chirpstack/device-profiles/")
         .auth(globalAdminJwt, { type: "bearer" })

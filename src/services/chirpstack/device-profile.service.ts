@@ -62,7 +62,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return await this.put("device-profiles", data, id);
     }
 
-    private async isNameInUse(name: string, id?: string): Promise<Boolean> {
+    private async isNameInUse(name: string, id?: string): Promise<boolean> {
         const deviceProfiles = await this.findAllDeviceProfiles(1000, 0);
         return deviceProfiles.result
             .filter(x => (id ? x.id != id : true))

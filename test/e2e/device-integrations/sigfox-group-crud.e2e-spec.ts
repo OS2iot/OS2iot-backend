@@ -58,7 +58,7 @@ describe("SigfoxGroupController (e2e)", () => {
 
         app = moduleFixture.createNestApplication();
         await app.init();
-        app.useLogger(new NoOpLogger())
+        app.useLogger(new NoOpLogger());
 
         // Get a reference to the repository such that we can CRUD on it.
         repository = moduleFixture.get("GenericHTTPDeviceRepository");

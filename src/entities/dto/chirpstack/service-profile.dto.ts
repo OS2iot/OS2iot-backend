@@ -31,13 +31,13 @@ export class ServiceProfileDto {
     dlRatePolicy?: string;
 
     @ApiProperty({ required: false })
-    @IsInt() 
+    @IsInt()
     @Min(0)
     @Max(5)
     drMax?: number;
 
     @ApiProperty({ required: true })
-    @IsInt() 
+    @IsInt()
     @Min(0)
     @Max(5)
     drMin?: number;
