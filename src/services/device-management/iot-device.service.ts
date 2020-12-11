@@ -33,7 +33,6 @@ import {
 } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
-import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
 import { DeviceModelService } from "./device-model.service";
@@ -43,8 +42,6 @@ import {
     ListAllIoTDevicesMinimalResponseDto,
 } from "@dto/list-all-iot-devices-minimal-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -116,8 +113,13 @@ export class IoTDeviceService {
     ): Promise<SigFoxDeviceWithBackendDataDto> {
         const sigfoxDevice = iotDevice as SigFoxDeviceWithBackendDataDto;
 
+        const application = await this.applicationService.findOneWithOrganisation(
+            iotDevice.application.id
+        );
+
         const sigfoxGroup = await this.sigfoxGroupService.findOneByGroupId(
-            sigfoxDevice.groupId
+            sigfoxDevice.groupId,
+            application.belongsTo.id
         );
 
         const thisDevice = await this.getDataFromSigFoxAboutDevice(

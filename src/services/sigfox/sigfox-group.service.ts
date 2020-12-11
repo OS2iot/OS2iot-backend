@@ -6,7 +6,7 @@ import {
     UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { FindOneOptions, Repository, FindConditions } from "typeorm";
 
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
 import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
@@ -119,12 +119,20 @@ export class SigFoxGroupService {
         });
     }
 
-    async findOneByGroupId(groupId: string): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail({
-            where: { sigfoxGroupId: groupId },
+    async findOneByGroupId(groupId: string, orgId?: number): Promise<SigFoxGroup> {
+        const conditions: FindConditions<SigFoxGroup> = {
+            sigfoxGroupId: groupId,
+        };
+        const options: FindOneOptions<SigFoxGroup> = {
             relations: ["belongsTo"],
             select: ["id", "username", "password", "sigfoxGroupId"],
-        });
+        };
+        if (orgId) {
+            conditions.belongsTo = {
+                id: orgId,
+            };
+        }
+        return await this.repository.findOneOrFail(conditions, options);
     }
 
     async create(
