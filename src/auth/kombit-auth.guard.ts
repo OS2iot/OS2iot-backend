@@ -31,8 +31,12 @@ export class KombitAuthGuard extends AuthGuard("kombit") {
             this.logger.error(`Login with KOMBIT failed, got error: ${err}`, err);
 
             if (redirectTarget) {
+                const redirectError =
+                    err?.message == ErrorCodes.UserInactive
+                        ? ErrorCodes.UserInactive
+                        : ErrorCodes.KOMBITLoginFailed;
                 throw new RedirectingException(
-                    `${redirectTarget}?error=${ErrorCodes.KOMBITLoginFailed}`
+                    `${redirectTarget}?error=${redirectError}`
                 );
             } else {
                 throw new UnauthorizedException(ErrorCodes.MissingRole);
