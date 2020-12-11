@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
+    IsInt,
     IsNumber,
     IsOptional,
     IsString,
@@ -37,11 +38,11 @@ export class CreateDataTargetDto {
     @IsUrl()
     url: string;
 
-    @ApiProperty({ required: false, example: 30000 })
-    @IsOptional()
+    @ApiProperty({ required: true, example: 30000 })
+    @IsInt()
     timeout: number;
 
-    @ApiProperty({ required: false, default: "derp", example: null })
+    @ApiProperty({ required: false, default: "", example: null })
     authorizationHeader: string;
 
     @ApiPropertyOptional({ required: false })
