@@ -59,7 +59,7 @@
         "reflect-metadata": "^0.1.13",
         "rimraf": "^3.0.2",
         "rxjs": "^6.6.3",
-        "swagger-ui-express": "^4.1.4",
+        "swagger-ui-express": "^4.1.5",
         "typeorm": "^0.2.26",
         "uuid": "^8.3.1",
         "vm2": "^3.9.2",
