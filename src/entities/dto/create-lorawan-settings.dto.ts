@@ -1,5 +1,5 @@
 import { ApiProperty, PickType } from "@nestjs/swagger";
-import { IsOptional, IsString, Length, Matches } from "class-validator";
+import { IsHexadecimal, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Min, ValidateIf } from "class-validator";
 
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
@@ -19,39 +19,45 @@ export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsD
 
     /* OTAA */
     @ApiProperty({ required: false })
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.OTAA)
     @IsString()
-    @IsOptional()
     @Length(32, 32)
-    @Matches(/[0-9A-Fa-f]{32}/)
+    @IsHexadecimal()
     OTAAapplicationKey?: string;
 
     /* ABP */
     @ApiProperty({ required: false })
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)
     @IsString()
-    @IsOptional()
     @Length(8, 8)
-    @Matches(/[0-9A-Fa-f]{8}/)
+    @IsHexadecimal()
     devAddr?: string;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)
+    @IsNumber()
+    @IsInt()
+    @Min(0)    
     fCntUp?: number;
 
     @ApiProperty({ required: false })
-    @IsOptional()
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)
+    @IsNumber()
+    @IsInt()
+    @Min(0)
     nFCntDown?: number;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)
     @IsString()
-    @IsOptional()
     @Length(32, 32)
-    @Matches(/[0-9A-Fa-f]{32}/)
+    @IsHexadecimal()
     networkSessionKey?: string;
 
     @ApiProperty({ required: false })
+    @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)
     @IsString()
-    @IsOptional()
     @Length(32, 32)
-    @Matches(/[0-9A-Fa-f]{32}/)
+    @IsHexadecimal()
     applicationSessionKey?: string;
 }

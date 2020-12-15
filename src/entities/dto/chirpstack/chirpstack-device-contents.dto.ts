@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, IsUUID, Matches } from "class-validator";
+import { IsHexadecimal, IsOptional, IsString, IsUUID, Length, Matches } from "class-validator";
 
 export class ChirpstackDeviceContentsDto {
     @ApiHideProperty()
@@ -13,7 +13,8 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiProperty({ required: true })
     @IsString()
-    @Matches(/[0-9A-Fa-f]{16}/)
+    @IsHexadecimal()
+    @Length(16,16)
     devEUI: string;
 
     @ApiProperty({ required: true })
