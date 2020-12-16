@@ -1,16 +1,16 @@
 import { Logger } from "@nestjs/common";
 
 export class NoOpLogger extends Logger {
-    error(message: any, trace?: string, context?: string): void {
+    error(message: unknown | string, trace?: string, context?: string): void {
         // intentionally left blank
     }
-    log(message: any, context?: string): void {
+    log(message: unknown | string, context?: string): void {
         // intentionally left blank
     }
-    warn(message: any, context?: string): void {
+    warn(message: unknown | string, context?: string): void {
         // intentionally left blank
     }
-    debug(message: any, context?: string): void {
+    debug(message: unknown | string, context?: string): void {
         // intentionally left blank
     }
 }
