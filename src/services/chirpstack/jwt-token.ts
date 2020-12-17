@@ -1,4 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
+import configuration from "@config/configuration";
+import { Injectable } from "@nestjs/common";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as nJwt from "njwt";
@@ -16,9 +17,12 @@ export class JwtToken {
             username: "admin", // username the client claims to be
         };
 
-        const jwt = nJwt.create(claims, "verysecret", "HS256");
+        const jwt = nJwt.create(
+            claims,
+            configuration()["chirpstack"]["jwtsecret"],
+            "HS256"
+        );
         const token = jwt.compact();
-        // Logger.verbose(`JWT token for Chirpstack: ${token}`);
         return token;
     }
 }

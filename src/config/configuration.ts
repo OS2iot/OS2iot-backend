@@ -24,5 +24,8 @@ export default (): any => {
                 process.env.KOMBIT_ROLE_NAME ||
                 "http://os2iot.dk/roles/usersystemrole/adgang/",
         },
+        chirpstack: {
+            jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
+        },
     };
 };
