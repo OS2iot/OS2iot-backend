@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+    IsInt,
     IsOptional,
     IsString,
     Max,
@@ -63,6 +64,7 @@ export class CreateIoTDeviceDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
+    @IsInt()
     deviceModelId?: number;
 
     @ApiProperty({ required: false })
