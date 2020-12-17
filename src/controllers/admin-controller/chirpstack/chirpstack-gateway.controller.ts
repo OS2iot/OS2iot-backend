@@ -35,6 +35,7 @@ import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helpe
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ChirpstackGetAll } from "@dto/chirpstack/chirpstack-get-all.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -87,11 +88,9 @@ export class ChirpstackGatewayController {
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
     async getAll(
-        @Query() query?: ChirpstackPaginatedListDto
+        @Query() query?: ChirpstackGetAll
     ): Promise<ListAllGatewaysResponseDto> {
-        return await this.chirpstackGatewayService.listAllPaginated(
-            query.limit,
-            query.offset,
+        return await this.chirpstackGatewayService.getAll(
             query.organizationId
         );
     }

@@ -93,7 +93,7 @@ describe("SearchController (e2e)", () => {
         await clearDatabase();
 
         // Delete all gateways created in E2E tests:
-        const existing = await chirpstackGatewayService.listAllPaginated(1000, 0);
+        const existing = await chirpstackGatewayService.getAll(1000, 0);
         existing.result.forEach(async element => {
             if (element.name.startsWith(gatewayNamePrefix)) {
                 // Logger.debug(`Found ${element.name}, deleting.`);

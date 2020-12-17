@@ -25,6 +25,7 @@ import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
 import * as _ from "lodash";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -78,25 +79,42 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return tags;
     }
 
-    async listAllPaginated(
-        limit?: number,
-        offset?: number,
-        organizationId?: number
-    ): Promise<ListAllGatewaysResponseDto> {
-        // Default parameters if not set
-        if (!offset) {
-            offset = 0;
+    async getAll(organizationId?: number): Promise<ListAllGatewaysResponseDto> {
+        const limit = 1000;
+        let allResults: GatewayResponseDto[] = [];
+        let totalCount = 0;
+        let lastResults;
+        do {
+            // Default parameters if not set
+            lastResults = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
+                "gateways",
+                limit,
+                allResults.length
+            );
+            allResults = _.union(allResults, lastResults.result);
+            totalCount = lastResults.totalCount;
+        } while (totalCount > allResults.length && lastResults.result.length > 0);
+
+        await this.enrichWithOrganizationId(allResults);
+        if (organizationId !== undefined) {
+            const filteredResults = _.filter(allResults, x => {
+                return x.internalOrganizationId === +organizationId;
+            });
+            return {
+                result: filteredResults,
+                totalCount: filteredResults.length,
+            };
         }
-        if (!limit) {
-            limit = 100;
-        }
-        const results = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
-            "gateways",
-            limit,
-            offset
-        );
+
+        return {
+            result: allResults,
+            totalCount: totalCount,
+        };
+    }
+
+    private async enrichWithOrganizationId(results: GatewayResponseDto[]) {
         await Promise.all(
-            results.result.map(async x => {
+            results.map(async x => {
                 try {
                     const gw = await this.getOne(x.id);
                     x.internalOrganizationId = gw.gateway.internalOrganizationId;
@@ -109,17 +127,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                 }
             })
         );
-        if (organizationId !== undefined) {
-            const filteredResults = _.filter(results.result, x => {
-                return x.internalOrganizationId === +organizationId;
-            });
-            return {
-                result: filteredResults,
-                totalCount: filteredResults.length,
-            };
-        }
-
-        return results;
     }
 
     async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
