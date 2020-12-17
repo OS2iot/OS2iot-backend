@@ -41,6 +41,7 @@
         "ajv": "^6.12.6",
         "axios-cache-adapter": "^2.5.0",
         "bcryptjs": "^2.4.3",
+        "bluebird": "^3.7.2",
         "class-transformer": "^0.3.1",
         "class-validator": "^0.12.2",
         "compression": "^1.7.4",
@@ -67,6 +68,7 @@
     "devDependencies": {
         "@nestjs/cli": "^7.5.4",
         "@nestjs/testing": "^7.6.1",
+        "@types/bluebird": "^3.5.33",
         "@types/compression": "^1.7.0",
         "@types/cookie-parser": "^1.4.2",
         "@types/cron": "^1.7.2",

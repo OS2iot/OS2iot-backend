@@ -7,7 +7,7 @@ import {
     NotFoundException,
 } from "@nestjs/common";
 import { AxiosResponse } from "axios";
-
+import * as BluebirdPromise from "bluebird";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
@@ -113,19 +113,25 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
 
     private async enrichWithOrganizationId(results: GatewayResponseDto[]) {
-        await Promise.all(
-            results.map(async x => {
-                try {
-                    const gw = await this.getOne(x.id);
-                    x.internalOrganizationId = gw.gateway.internalOrganizationId;
-                } catch (err) {
-                    this.logger.error(
-                        `Failed to fetch gateway details for id ${x.id}`,
-                        err
-                    );
-                    x.internalOrganizationId = null;
+        await BluebirdPromise.all(
+            BluebirdPromise.map(
+                results,
+                async x => {
+                    try {
+                        const gw = await this.getOne(x.id);
+                        x.internalOrganizationId = gw.gateway.internalOrganizationId;
+                    } catch (err) {
+                        this.logger.error(
+                            `Failed to fetch gateway details for id ${x.id}`,
+                            err
+                        );
+                        x.internalOrganizationId = null;
+                    }
+                },
+                {
+                    concurrency: 50,
                 }
-            })
+            )
         );
     }
 
