@@ -30,8 +30,11 @@ export class SearchService {
         const applicationPromise = this.findApplicationsAndMapType(req, trimmedQuery);
         const devicePromise = this.findDevicesAndMapType(req, trimmedQuery);
 
-        const results = _.flatMap(
-            await Promise.all([applicationPromise, devicePromise, gatewayPromise])
+        const results = _.filter(
+            _.flatMap(
+                await Promise.all([applicationPromise, devicePromise, gatewayPromise])
+            ),
+            x => x != null
         );
 
         return {
