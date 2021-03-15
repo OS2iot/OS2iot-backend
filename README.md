@@ -7,4 +7,4 @@ Documentation is available at: https://os2iot.readthedocs.io/en/latest/ or [OS2I
 
 Start using docker-compose see: https://github.com/OS2iot/OS2IoT-docker 
 
-See [OS2iot-docs](https://github.com/OS2iot/OS2IoT-docs/blob/master/CONTRIBUTING.md)for contributing
+See [OS2iot-docs](https://github.com/OS2iot/OS2IoT-docs/blob/master/CONTRIBUTING.md) for contributing
