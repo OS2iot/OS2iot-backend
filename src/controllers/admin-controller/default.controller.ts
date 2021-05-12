@@ -12,10 +12,10 @@ export class DefaultController {
         return "OS2IoT backend - See /api/v1/docs for Swagger";
     }
 
-    @Get("/heathcheck")
+    @Get("/healthcheck")
     @ApiOkResponse()
     @ApiInternalServerErrorResponse()
-    getHeathCheck(): string {
+    getHealthCheck(): string {
         const isKafkaOk = this.healthCheckService.isKafkaOk();
         // This is the healthcheck for k8s
         if (!isKafkaOk) {
