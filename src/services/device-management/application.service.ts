@@ -1,7 +1,8 @@
+import { IoTDeviceService } from './iot-device.service';
+import { LoRaWANDevice } from '@entities/lorawan-device.entity';
 import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, getManager, In, QueryBuilder, Repository } from "typeorm";
-
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
@@ -18,6 +19,7 @@ import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { AuditLog } from "@services/audit-log.service";
 
 @Injectable()
 export class ApplicationService {
@@ -25,11 +27,11 @@ export class ApplicationService {
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
-        private organizationService: OrganizationService,
+        private organizationService: OrganizationService,        
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
-    ) {}
+    ) { }
 
     async findAndCountInList(
         query?: ListAllEntitiesDto,
@@ -63,9 +65,9 @@ export class ApplicationService {
             where:
                 organizationIds.length > 0
                     ? [
-                          { id: In(allowedApplications) },
-                          { belongsTo: In(organizationIds) },
-                      ]
+                        { id: In(allowedApplications) },
+                        { belongsTo: In(organizationIds) },
+                    ]
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,
@@ -237,18 +239,27 @@ export class ApplicationService {
     }
 
     async delete(id: number): Promise<DeleteResult> {
-        // Don't allow delete if this application contains any sigfox devices.
         const application = await this.applicationRepository.findOne({
             where: { id: id },
             relations: ["iotDevices"],
         });
 
+        // Don't allow delete if this application contains any sigfox devices.
         if (
             application.iotDevices.some(iotDevice => {
                 return iotDevice.type == IoTDeviceType.SigFox;
             })
         ) {
             throw new ConflictException(ErrorCodes.DeleteNotAllowedHasSigfoxDevice);
+        }
+
+        // Delete all LoRaWAN devices in ChirpStack
+        const loRaWANDevices = application.iotDevices
+            .filter(device => device.type === IoTDeviceType.LoRaWAN);
+
+        for (let device of loRaWANDevices) {
+            const lwDevice = device as LoRaWANDevice;            
+            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);            
         }
 
         return this.applicationRepository.delete(id);
