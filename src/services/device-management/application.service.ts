@@ -1,4 +1,3 @@
-import { IoTDeviceService } from './iot-device.service';
 import { LoRaWANDevice } from '@entities/lorawan-device.entity';
 import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -15,11 +14,9 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { PermissionService } from "@services/user-management/permission.service";
-import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
-import { AuditLog } from "@services/audit-log.service";
 
 @Injectable()
 export class ApplicationService {
