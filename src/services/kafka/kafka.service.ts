@@ -30,7 +30,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         const kafkaConfig = {
             clientId: process.env.KAFKA_CLIENTID || "os2iot-client",
             brokers: [
-                `${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
+                `${process.env.KAFKA_HOSTNAME || "localhost"}:${
                     process.env.KAFKA_PORT || "9093"
                 }`,
             ],
