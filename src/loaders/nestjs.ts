@@ -3,8 +3,8 @@ import {
     INestApplication,
     ValidationPipe,
     Logger as BuiltInLogger,
+    LogLevel,
 } from "@nestjs/common";
-import { Logger } from "nestjs-pino";
 import { NestFactory } from "@nestjs/core";
 import * as compression from "compression";
 import { AppModule } from "@modules/app.module";
@@ -12,16 +12,18 @@ import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapte
 import * as cookieParser from "cookie-parser";
 import { Express } from "express";
 
+
 export async function setupNestJs(
     config: {
         NEST_PORT: number;
         API_PREFIX: string;
         CURRENT_VERSION_PREFIX: string;
         SWAGGER_PREFIX: string;
+        LOG_LEVEL: LogLevel[];
     },
     server: Express
 ): Promise<INestApplication> {
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server), { logger: config.LOG_LEVEL });
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(
         new ValidationPipe({

@@ -28,5 +28,6 @@ export default (): any => {
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
         },
+		logLevels: process.env.LOG_LEVELS || ['log', 'error', 'warn', 'debug']
     };
 };

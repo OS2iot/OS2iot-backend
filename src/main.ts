@@ -19,6 +19,7 @@ async function bootstrap() {
         API_PREFIX: "/api",
         CURRENT_VERSION_PREFIX: "/api" + "/v1",
         SWAGGER_PREFIX: "/api" + "/v1" + "/docs",
+        LOG_LEVEL: configuration()["logLevels"]
     };
     const server = express();
 
