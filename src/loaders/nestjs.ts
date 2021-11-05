@@ -35,7 +35,7 @@ export async function setupNestJs(
     app.use(cookieParser());
 
     BuiltInLogger.log(
-        `Kafka: ${process.env.KAFKA_HOSTNAME || "host.docker.internal"}:${
+        `Kafka: ${process.env.KAFKA_HOSTNAME || "localhost"}:${
             process.env.KAFKA_PORT || "9092"
         }`
     );
