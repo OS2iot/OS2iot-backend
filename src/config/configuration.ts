@@ -1,4 +1,6 @@
-export default (): any => {
+import { GetLogLevels } from "@helpers/env-variable-helper";
+
+export default (): any => {	
     return {
         port: parseInt(process.env.PORT, 10) || 3000,
         database: {
@@ -28,6 +30,6 @@ export default (): any => {
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
         },
-		logLevels: process.env.LOG_LEVELS || ['log', 'error', 'warn', 'debug']
+		logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels('debug')
     };
 };
