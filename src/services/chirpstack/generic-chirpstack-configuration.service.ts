@@ -19,7 +19,7 @@ import { JwtToken } from "./jwt-token";
 @Injectable()
 export class GenericChirpstackConfigurationService {
     baseUrl = `http://${
-        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME || "host.docker.internal"
+        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME || "localhost"
     }:${process.env.CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
 
     networkServer = `${
