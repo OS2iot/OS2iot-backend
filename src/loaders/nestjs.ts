@@ -19,11 +19,11 @@ export async function setupNestJs(
         API_PREFIX: string;
         CURRENT_VERSION_PREFIX: string;
         SWAGGER_PREFIX: string;
-        LOG_LEVEL: LogLevel[];
+        LOG_LEVELS: LogLevel[];
     },
     server: Express
 ): Promise<INestApplication> {
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(server), { logger: config.LOG_LEVEL });
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server), { logger: config.LOG_LEVELS });
     app.setGlobalPrefix(config.CURRENT_VERSION_PREFIX);
     app.useGlobalPipes(
         new ValidationPipe({
