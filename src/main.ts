@@ -19,6 +19,7 @@ async function bootstrap() {
         API_PREFIX: "/api",
         CURRENT_VERSION_PREFIX: "/api" + "/v1",
         SWAGGER_PREFIX: "/api" + "/v1" + "/docs",
+        LOG_LEVELS: configuration()["logLevels"]
     };
     const server = express();
 
@@ -44,9 +45,5 @@ async function bootstrap() {
     } catch (err) {
         BuiltInLogger.log("Could not setup https, skipping.");
     }
-
-    //const url = await httpServer.;
-    // Logger.log(`Swagger on: ${url}${config.SWAGGER_PREFIX}`);
-    // Logger.log(`Application started on: ${url}${config.CURRENT_VERSION_PREFIX}`);
 }
 void bootstrap();
