@@ -24,7 +24,7 @@ export class ApplicationService {
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
-        private organizationService: OrganizationService,        
+        private organizationService: OrganizationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
@@ -255,8 +255,8 @@ export class ApplicationService {
             .filter(device => device.type === IoTDeviceType.LoRaWAN);
 
         for (let device of loRaWANDevices) {
-            const lwDevice = device as LoRaWANDevice;            
-            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);            
+            const lwDevice = device as LoRaWANDevice;
+            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
         }
 
         return this.applicationRepository.delete(id);
@@ -304,7 +304,7 @@ export class ApplicationService {
         const [data, count] = await getManager()
             .createQueryBuilder(IoTDevice, "iot_device")
             .where('"iot_device"."applicationId" = :id', { id: appId })
-            .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata")
+            .leftJoinAndSelect("iot_device.latestReceivedMessage", "metadata")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
             .orderBy(orderByColumn, direction)
