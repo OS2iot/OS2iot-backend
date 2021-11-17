@@ -164,7 +164,7 @@ export class DataTargetController {
     }
 
     @Delete(":id")
-    @ApiOperation({ summary: "Delete an existing IoT-Device" })
+    @ApiOperation({ summary: "Delete an existing data-target" })
     @ApiBadRequestResponse()
     @Write()
     async delete(

@@ -25,6 +25,7 @@ import { WritePermission } from "@entities/write-permission.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { Multicast } from "@entities/multicast.entity";
 
 @Module({
     imports: [
@@ -52,6 +53,7 @@ import { AuditLog } from "@services/audit-log.service";
             SigFoxGroup,
             User,
             WritePermission,
+            Multicast,
         ]),
     ],
     providers: [AuditLog],

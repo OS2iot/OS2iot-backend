@@ -1,4 +1,4 @@
-import { LoRaWANDevice } from '@entities/lorawan-device.entity';
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, getManager, In, QueryBuilder, Repository } from "typeorm";
@@ -24,11 +24,11 @@ export class ApplicationService {
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
-        private organizationService: OrganizationService,        
+        private organizationService: OrganizationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
-    ) { }
+    ) {}
 
     async findAndCountInList(
         query?: ListAllEntitiesDto,
@@ -62,9 +62,9 @@ export class ApplicationService {
             where:
                 organizationIds.length > 0
                     ? [
-                        { id: In(allowedApplications) },
-                        { belongsTo: In(organizationIds) },
-                    ]
+                          { id: In(allowedApplications) },
+                          { belongsTo: In(organizationIds) },
+                      ]
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,
@@ -156,6 +156,7 @@ export class ApplicationService {
             relations: [
                 "iotDevices",
                 "dataTargets",
+                "multicasts",
                 "iotDevices.receivedMessagesMetadata",
                 "belongsTo",
             ],
@@ -208,6 +209,7 @@ export class ApplicationService {
         );
         mappedApplication.iotDevices = [];
         mappedApplication.dataTargets = [];
+        mappedApplication.multicasts = [];
         mappedApplication.createdBy = userId;
         mappedApplication.updatedBy = userId;
         const app = await this.applicationRepository.save(mappedApplication);
@@ -251,12 +253,13 @@ export class ApplicationService {
         }
 
         // Delete all LoRaWAN devices in ChirpStack
-        const loRaWANDevices = application.iotDevices
-            .filter(device => device.type === IoTDeviceType.LoRaWAN);
+        const loRaWANDevices = application.iotDevices.filter(
+            device => device.type === IoTDeviceType.LoRaWAN
+        );
 
         for (let device of loRaWANDevices) {
-            const lwDevice = device as LoRaWANDevice;            
-            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);            
+            const lwDevice = device as LoRaWANDevice;
+            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
         }
 
         return this.applicationRepository.delete(id);
