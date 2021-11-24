@@ -16,6 +16,7 @@ export class RolesGuard implements CanActivate {
             return true;
         }
         const request = context.switchToHttp().getRequest();
+        // TODO: This should either be JWT or Api key request.
         const user: AuthenticatedUser = request.user;
         this.logger.verbose(
             JSON.stringify({

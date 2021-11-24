@@ -16,7 +16,7 @@ export class ApiKeyService {
 
     async findOne(apiKey: string): Promise<ApiKey> {
         return await this.apiKeyRepository.findOne({
-            keyHash: apiKey,
+            where: { key: apiKey },
         });
     }
 }

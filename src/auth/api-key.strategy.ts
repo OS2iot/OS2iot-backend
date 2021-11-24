@@ -33,10 +33,11 @@ export class ApiKeyStrategy extends PassportStrategy(
     ): Promise<AuthenticatedApiKey> {
         const apiKeyDb = await this.authService.validateApiKey(apiKey);
         if (!apiKeyDb) {
-            // TODO: Add when api key storage is implemented
-            // throw new UnauthorizedException(ErrorCodes.ApiKeyAuthFailed);
+            throw new UnauthorizedException(ErrorCodes.ApiKeyAuthFailed);
         }
 
+        // TODO: We should not need to create a user id for the api key as it's not a user.
+        // TODO: However, it's expected almost everywhere
         const userId = 1;
         const permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
             userId
@@ -46,6 +47,7 @@ export class ApiKeyStrategy extends PassportStrategy(
             userId,
             username: "",
             permissions,
+            fooApiField: "THIS IS AN API KEY REQUEST",
         };
 
         return user;
