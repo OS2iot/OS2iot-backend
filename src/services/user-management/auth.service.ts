@@ -1,19 +1,25 @@
-import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import * as bcrypt from "bcryptjs";
-import * as xml2js from "xml2js";
+import configuration from "@config/configuration";
+import { JwtResponseDto } from "@dto/jwt-response.dto";
+import { XMLOutput } from "@dto/user-management/xml-object";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { UserService } from "./user.service";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import bcrypt from "bcryptjs";
 import { Profile } from "passport-saml";
-import { JwtResponseDto } from "@dto/jwt-response.dto";
-import { XMLOutput } from "@dto/user-management/xml-object";
-import configuration from "@config/configuration";
+import xml2js from "xml2js";
+import { ApiKeyService } from "../api-key-management/api-key.service";
+import { UserService } from "./user.service";
+import { ApiKey } from "@entities/api-key.entity";
 
 @Injectable()
 export class AuthService {
-    constructor(private usersService: UserService, private jwtService: JwtService) {
+    constructor(
+        private usersService: UserService,
+        private jwtService: JwtService,
+        private apiKeyService: ApiKeyService
+    ) {
         this.KOMBIT_ROLE_URI = configuration()["kombit"]["roleUri"];
     }
     private readonly logger = new Logger(AuthService.name);
@@ -137,5 +143,10 @@ export class AuthService {
         return {
             accessToken: this.jwtService.sign(payload),
         };
+    }
+
+    async validateApiKey(apiKey: string): Promise<ApiKey> {
+        // TODO: Hash the key value before lookup
+        return await this.apiKeyService.findOne(apiKey);
     }
 }

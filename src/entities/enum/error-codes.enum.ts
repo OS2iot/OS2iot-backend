@@ -35,4 +35,5 @@ export enum ErrorCodes {
     DeleteNotAllowedHasSigfoxDevice = "MESSAGE.DELETE-NOT-ALLOWED-HAS-SIGFOX-DEVICE",
     DeleteNotAllowedHasLoRaWANDevices = "MESSAGE.DELETE-NOT-ALLOWED-HAS-LORAWAN-DEVICE",
     KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
+    ApiKeyAuthFailed = "MESSAGE.API-KEY-AUTH-FAILED",
 }

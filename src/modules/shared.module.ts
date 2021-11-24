@@ -25,10 +25,12 @@ import { WritePermission } from "@entities/write-permission.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ApiKey } from "@entities/api-key.entity";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
+            ApiKey,
             Application,
             DataTarget,
             GenericHTTPDevice,

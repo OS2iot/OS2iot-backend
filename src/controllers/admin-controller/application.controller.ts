@@ -27,7 +27,6 @@ import {
 } from "@nestjs/swagger";
 import { ApiResponse } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateApplicationDto } from "@dto/create-application.dto";
@@ -49,10 +48,11 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 
 @ApiTags("Application")
 @Controller("application")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()
