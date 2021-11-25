@@ -1,52 +1,46 @@
+import { multicastGroup } from "@enum/multicast-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
-import {
-    IsInt,
-    IsNumber,
-    IsString,
-    MaxLength,
-    Min,
-    MinLength,
-} from "class-validator";
+import { IsHexadecimal, IsInt, IsNumber, IsString, MaxLength, Min, MinLength } from "class-validator";
 
 export class CreateMulticastDto {
     @ApiProperty({ required: true })
     @IsString()
     @MinLength(1)
     @MaxLength(50)
-    groupName: string;
+    name: string;
 
     @ApiProperty({ required: true, example: 1 })
     @IsNumber()
     @Min(1)
-    applicationId: number;
+    applicationID: number;
 
     @ApiProperty({ required: true })
-    @IsString()
+    @IsHexadecimal()
     @MinLength(8)
     @MaxLength(8)
-    address: string;
+    mcAddr: string;
 
     @ApiProperty({ required: true })
-    @IsString()
+    @IsHexadecimal()
     @MaxLength(32)
     @MinLength(32)
-    networkSessionKey: string;
+    mcNwkSKey: string;
 
     @ApiProperty({ required: true })
-    @IsString()
+    @IsHexadecimal()
     @MaxLength(32)
     @MinLength(32)
-    applicationSessionKey: string;
+    mcAppSKey: string;
 
     @ApiProperty({ required: true, example: 300 })
     @IsInt()
     @Min(0)
-    frameCounter: number;
+    fCnt: number;
 
     @ApiProperty({ required: true, example: 300 })
     @IsInt()
     @Min(0)
-    dataRate: number;
+    dr: number;
 
     @ApiProperty({ required: true, example: 300 })
     @IsInt()
@@ -57,5 +51,8 @@ export class CreateMulticastDto {
     @IsString()
     @MaxLength(32)
     @MinLength(1)
-    groupType: string;
+    groupType: multicastGroup;
+
+    @ApiProperty({ required: true })
+    multicastId: string;
 }

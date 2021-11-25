@@ -1,11 +1,11 @@
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 import { Application } from "@entities/application.entity";
-import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "./iot-device.entity";
+import { multicastGroup } from "@enum/multicast-type.enum";
 
 @Entity("multicast")
-export class Multicast extends DbBaseEntity {
+export class Multicast {
     @Column()
     groupName: string;
 
@@ -27,7 +27,7 @@ export class Multicast extends DbBaseEntity {
     frequency: number;
 
     @Column()
-    groupType: string;
+    groupType: multicastGroup;
 
     @ManyToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,4 +39,21 @@ export class Multicast extends DbBaseEntity {
 
     @ManyToMany(() => IoTDevice, iotDevices => iotDevices.multicasts)
     iotDevices: IoTDevice[];
+
+    @PrimaryColumn()
+    multicastId: string;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @ManyToOne("User", { nullable: true })
+    @JoinColumn()
+    createdBy?: number;
+
+    @ManyToOne("User", { nullable: true })
+    @JoinColumn()
+    updatedBy?: number;
 }

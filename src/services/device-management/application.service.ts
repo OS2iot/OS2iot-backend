@@ -257,7 +257,7 @@ export class ApplicationService {
             device => device.type === IoTDeviceType.LoRaWAN
         );
 
-        for (let device of loRaWANDevices) {
+        for (const device of loRaWANDevices) {
             const lwDevice = device as LoRaWANDevice;
             await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
         }

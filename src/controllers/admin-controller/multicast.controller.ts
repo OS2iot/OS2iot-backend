@@ -10,7 +10,6 @@ import {
     UseGuards,
     Query,
     UnauthorizedException,
-    ParseIntPipe,
     NotFoundException,
     Header,
 } from "@nestjs/common";
@@ -56,10 +55,10 @@ export class MulticastController {
     @ApiBadRequestResponse()
     async create(
         @Req() req: AuthenticatedRequest,
-        @Body() createMulticastDto: CreateMulticastDto
+        @Body() createMulticastDto: CreateMulticastDto // the object which is sent from frontend
     ): Promise<Multicast> {
         try {
-            checkIfUserHasWriteAccessToApplication(req, createMulticastDto.applicationId);
+            checkIfUserHasWriteAccessToApplication(req, createMulticastDto.applicationID); // check for write access. Inspired from datatarget.
             const multicast = await this.multicastService.create(
                 createMulticastDto,
                 req.user.userId
@@ -68,7 +67,7 @@ export class MulticastController {
                 ActionType.CREATE,
                 Multicast.name,
                 req.user.userId,
-                multicast.id,
+                multicast.multicastId,
                 multicast.groupName
             );
             return multicast;
@@ -107,10 +106,10 @@ export class MulticastController {
     @ApiOperation({ summary: "Find Multicast by id" })
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
+        @Param("id") id: string
     ): Promise<Multicast> {
         try {
-            const multicast = await this.multicastService.findOne(id);
+            const multicast = await this.multicastService.findOne(id); // finds multicast from db by id
             checkIfUserHasReadAccessToApplication(req, multicast.application.id);
             return multicast;
         } catch (err) {
@@ -124,21 +123,21 @@ export class MulticastController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number,
+        @Param("id") id: string,
         @Body() updateDto: UpdateMulticastDto
     ): Promise<Multicast> {
-        const oldMulticast = await this.multicastService.findOne(id);
+        const oldMulticast = await this.multicastService.findOne(id); // get's the existing multicast and checks if user has access to it.
         try {
             checkIfUserHasWriteAccessToApplication(req, oldMulticast.application.id);
-            if (oldMulticast.application.id != updateDto.applicationId) {
-                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+            if (oldMulticast.application.id != updateDto.applicationID) {
+                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationID);
             }
         } catch (err) {
             AuditLog.fail(
                 ActionType.UPDATE,
                 Multicast.name,
                 req.user.userId,
-                oldMulticast.id,
+                oldMulticast.multicastId,
                 oldMulticast.groupName
             );
             throw err;
@@ -153,7 +152,7 @@ export class MulticastController {
             ActionType.UPDATE,
             Multicast.name,
             req.user.userId,
-            multicast.id,
+            multicast.multicastId,
             multicast.groupName
         );
         return multicast;
@@ -165,12 +164,12 @@ export class MulticastController {
     @Write()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
+        @Param("id") id: string
     ): Promise<DeleteResponseDto> {
         try {
             const dt = await this.multicastService.findOne(id);
             checkIfUserHasWriteAccessToApplication(req, dt.application.id);
-            const result = await this.multicastService.delete(id);
+            const result = await this.multicastService.multicastDelete(id);
 
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
