@@ -226,7 +226,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         multicast.multicastGroup.fCnt = multicastDto.fCnt;
         multicast.multicastGroup.frequency = multicastDto.frequency;
         multicast.multicastGroup.groupType = multicastDto.groupType;
-        multicast.multicastGroup.applicationID = multicastDto.applicationID.toString();
+        multicast.multicastGroup.applicationID = "1"; // chirpstack can only have one application, and that application has id = 1 - therefore hardcoded here.
 
         return multicast;
     }
