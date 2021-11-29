@@ -26,6 +26,7 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { Multicast } from "@entities/multicast.entity";
+import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 
 @Module({
     imports: [
@@ -54,6 +55,7 @@ import { Multicast } from "@entities/multicast.entity";
             User,
             WritePermission,
             Multicast,
+            LorawanMulticastDefinition
         ]),
     ],
     providers: [AuditLog],

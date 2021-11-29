@@ -12,6 +12,7 @@ import {
     UnauthorizedException,
     NotFoundException,
     Header,
+    ParseIntPipe,
 } from "@nestjs/common";
 import { MulticastService } from "../../services/device-management/multicast.service";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
@@ -67,7 +68,7 @@ export class MulticastController {
                 ActionType.CREATE,
                 Multicast.name,
                 req.user.userId,
-                multicast.multicastId,
+                multicast.lorawanMulticastDefinition.chirpstackGroupId,
                 multicast.groupName
             );
             return multicast;
@@ -106,7 +107,7 @@ export class MulticastController {
     @ApiOperation({ summary: "Find Multicast by id" })
     async findOne(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: string
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<Multicast> {
         try {
             const multicast = await this.multicastService.findOne(id); // finds multicast from db by id
@@ -123,7 +124,7 @@ export class MulticastController {
     @ApiBadRequestResponse()
     async update(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: string,
+        @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdateMulticastDto
     ): Promise<Multicast> {
         const oldMulticast = await this.multicastService.findOne(id); // get's the existing multicast and checks if user has access to it.
@@ -137,7 +138,7 @@ export class MulticastController {
                 ActionType.UPDATE,
                 Multicast.name,
                 req.user.userId,
-                oldMulticast.multicastId,
+                oldMulticast.lorawanMulticastDefinition.chirpstackGroupId,
                 oldMulticast.groupName
             );
             throw err;
@@ -152,7 +153,7 @@ export class MulticastController {
             ActionType.UPDATE,
             Multicast.name,
             req.user.userId,
-            multicast.multicastId,
+            multicast.lorawanMulticastDefinition.chirpstackGroupId,
             multicast.groupName
         );
         return multicast;
@@ -164,7 +165,7 @@ export class MulticastController {
     @Write()
     async delete(
         @Req() req: AuthenticatedRequest,
-        @Param("id") id: string
+        @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
             const dt = await this.multicastService.findOne(id);

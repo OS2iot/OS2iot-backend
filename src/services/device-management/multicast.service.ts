@@ -12,7 +12,7 @@ import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import { ApplicationService } from "./application.service";
 import { AxiosResponse } from "axios";
 import { ChirpstackMulticastContentsDto } from "@dto/chirpstack/chirpstack-multicast-contents.dto";
-import { multicastGroup } from "@enum/multicast-type.enum";
+import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
@@ -39,6 +39,10 @@ export class MulticastService extends GenericChirpstackConfigurationService {
             .getRepository(Multicast)
             .createQueryBuilder("multicast")
             .innerJoinAndSelect("multicast.application", "application")
+            .innerJoinAndSelect(
+                "multicast.lorawanMulticastDefinition",
+                "lorawan-multicast"
+            )
             .limit(query.limit)
             .offset(query.offset)
             .orderBy(query.orderOn, "ASC");
@@ -73,9 +77,9 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         return queryBuilder;
     }
 
-    async findOne(id: string): Promise<Multicast> {
+    async findOne(id: number): Promise<Multicast> {
         return await this.multicastRepository.findOneOrFail(id, {
-            relations: ["application"],
+            relations: ["application", "lorawanMulticastDefinition"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
             },
@@ -88,6 +92,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     ): Promise<Multicast> {
         //since the multicast is gonna be created in both the DB with relations and in chirpstack, two different objects is gonna be used.
         const dbMulticast = new Multicast(); // to db
+        dbMulticast.lorawanMulticastDefinition = new LorawanMulticastDefinition();
         const chirpStackMulticast = new CreateMulticastChirpStackDto(); // to chirpstack. The chirpStackMulticast contains the contentsDto.
         chirpStackMulticast.multicastGroup = new ChirpstackMulticastContentsDto();
 
@@ -106,6 +111,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         mappedDbMulticast.iotDevices = []; // by default, no iotDevices is connected to multicast.
         mappedDbMulticast.createdBy = userId;
         mappedDbMulticast.updatedBy = userId;
+        mappedDbMulticast.lorawanMulticastDefinition.createdBy = userId;
+        mappedDbMulticast.lorawanMulticastDefinition.updatedBy = userId;
 
         const result = await this.post(this.multicastGroupUrl, mappedChirpStackMulticast); // This creates the multicast in chirpstack. Chirpstack creates the Id as a string
 
@@ -113,39 +120,38 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
         // if post is succesful then id should be created. This id is also used for the db object so that they have the same Id.
         if (result.status === 200) {
-            mappedDbMulticast.multicastId = result.data.id;
+            mappedDbMulticast.lorawanMulticastDefinition.chirpstackGroupId =
+                result.data.id;
             return await this.multicastRepository.save(mappedDbMulticast); // save to db
         }
     }
 
     async update(
-        id: string,
+        id: number,
         updateMulticastDto: UpdateMulticastDto,
         userId: number
     ): Promise<Multicast> {
-        const existingMulticast = await this.multicastRepository.findOneOrFail(id); // finds existing multicast in db by id.
+        const existingMulticast = await this.findOne(id);
 
         const mappedMulticast = await this.mapMulticastDtoToDbMulticast(
             // maps the new updated multicast to db object.
             updateMulticastDto,
             existingMulticast
         );
-
         const existingChirpStackMulticast = await this.getChirpstackMulticast(
             // get's the existing multicast in chirpstack by id
-            existingMulticast.multicastId
+            existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
         );
         const mappedChirpStackMulticast = await this.mapMulticastDtoToChirpStackMulticast(
             // maps the new updated multicast to chirpstack object.
             updateMulticastDto,
             existingChirpStackMulticast
         );
-
         const result = await this.put(
             // updates in chirpstack.
             this.multicastGroupUrl,
             mappedChirpStackMulticast,
-            existingMulticast.multicastId
+            existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
         );
 
         this.handlePossibleError(result, updateMulticastDto);
@@ -166,9 +172,12 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         return res;
     }
 
-    async multicastDelete(id: string): Promise<DeleteResult> {
+    async multicastDelete(id: number): Promise<DeleteResult> {
         // deletes multicast in both chirpstack and multicast by id
-        const result = await this.deleteMulticastChirpstack(id);
+        const existingMulticast = await this.findOne(id); // finds existing multicast in db by id.
+        const result = await this.deleteMulticastChirpstack(
+            existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
+        );
         if (result.status === 200) {
             return this.multicastRepository.delete(id);
         }
@@ -182,22 +191,25 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         }
     }
 
-    private async mapMulticastDtoToDbMulticast( // maps the incoming dto to db object. 
+    private async mapMulticastDtoToDbMulticast(
+        // maps the incoming dto to db object.
         multicastDto: CreateMulticastDto | UpdateMulticastDto,
         multicast: Multicast
     ): Promise<Multicast> {
         multicast.groupName = multicastDto.name;
-        multicast.address = multicastDto.mcAddr;
-        multicast.applicationSessionKey = multicastDto.mcAppSKey;
-        multicast.networkSessionKey = multicastDto.mcNwkSKey;
-        multicast.dataRate = multicastDto.dr;
-        multicast.frameCounter = multicastDto.fCnt;
-        multicast.frequency = multicastDto.frequency;
-        multicast.groupType = multicastDto.groupType;
+        multicast.lorawanMulticastDefinition.address = multicastDto.mcAddr;
+        multicast.lorawanMulticastDefinition.applicationSessionKey =
+            multicastDto.mcAppSKey;
+        multicast.lorawanMulticastDefinition.networkSessionKey = multicastDto.mcNwkSKey;
+        multicast.lorawanMulticastDefinition.dataRate = multicastDto.dr;
+        multicast.lorawanMulticastDefinition.frameCounter = multicastDto.fCnt;
+        multicast.lorawanMulticastDefinition.frequency = multicastDto.frequency;
+        multicast.lorawanMulticastDefinition.groupType = multicastDto.groupType;
 
         if (multicastDto.applicationID != null) {
             try {
-                multicast.application = await this.applicationService.findOneWithoutRelations( // maps to application by id
+                multicast.application = await this.applicationService.findOneWithoutRelations(
+                    // maps to application by id
                     multicastDto.applicationID
                 );
             } catch (err) {
@@ -214,7 +226,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         return multicast;
     }
 
-    private async mapMulticastDtoToChirpStackMulticast( // maps incoming dto to chirpstack object
+    private async mapMulticastDtoToChirpStackMulticast(
+        // maps incoming dto to chirpstack object
         multicastDto: CreateMulticastDto | UpdateMulticastDto,
         multicast: CreateMulticastChirpStackDto
     ): Promise<CreateMulticastChirpStackDto> {
