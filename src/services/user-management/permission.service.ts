@@ -230,11 +230,11 @@ export class PermissionService {
             .skip(query?.offset ? +query.offset : 0)
             .orderBy(orderBy, order);
 
-        if (query.userId) {
+        if (query?.userId) {
             qb = qb.where("user.id = :userId", { userId: +query.userId });
         } else if (orgs) {
             qb.where({ organization: In(orgs) });
-        } else if (query.organisationId) {
+        } else if (query?.organisationId) {
             qb = qb.where("org.id = :orgId", { orgId: +query.organisationId });
         }
 
@@ -246,10 +246,10 @@ export class PermissionService {
         };
     }
 
-    private getSorting(query: ListAllPermissionsDto) {
+    private getSorting(query: ListAllPermissionsDto | undefined) {
         let orderBy = `permission.id`;
         if (
-            query.orderOn != null &&
+            query?.orderOn != null &&
             (query.orderOn == "id" ||
                 query.orderOn == "name" ||
                 query.orderOn == "type" ||
@@ -351,6 +351,10 @@ export class PermissionService {
         });
 
         return res;
+    }
+
+    async findManyByIds(ids: number[]): Promise<Permission[]> {
+        return await this.permissionRepository.findByIds(ids);
     }
 
     private isOrganizationAdmin(permissions: PermissionMinimalDto[]) {

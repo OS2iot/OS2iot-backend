@@ -26,6 +26,7 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ApiKey } from "@entities/api-key.entity";
+import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 
 @Module({
     imports: [
@@ -54,6 +55,7 @@ import { ApiKey } from "@entities/api-key.entity";
             SigFoxGroup,
             User,
             WritePermission,
+            ApiKeyPermission,
         ]),
     ],
     providers: [AuditLog],
