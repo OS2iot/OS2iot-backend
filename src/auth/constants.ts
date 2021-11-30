@@ -10,3 +10,4 @@ export const ApiKeyStrategyName = "api-key";
 export const ApiKeyHeader = "X-API-KEY";
 export const LocalStrategyName = "local";
 export const JwtStrategyName = "jwt";
+export const RolesMetaData = "roles";
