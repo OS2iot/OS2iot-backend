@@ -4,13 +4,15 @@ import { MulticastController } from "../../controllers/admin-controller/multicas
 import { SharedModule } from "@modules/shared.module";
 import { ApplicationModule } from "./application.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
+import { IoTDeviceModule } from "./iot-device.module";
 
 @Module({
     imports: [
         SharedModule,
         ApplicationModule,
         HttpModule,
-        ChirpstackAdministrationModule
+        ChirpstackAdministrationModule,
+        IoTDeviceModule
     ],
     exports: [MulticastService],
     controllers: [MulticastController],

@@ -1,13 +1,11 @@
 import {
     Column,
-    CreateDateColumn,
     Entity,
     JoinColumn,
+    JoinTable,
     ManyToMany,
     ManyToOne,
     OneToOne,
-    PrimaryColumn,
-    UpdateDateColumn,
 } from "typeorm";
 
 import { Application } from "@entities/application.entity";
@@ -29,9 +27,14 @@ export class Multicast extends DbBaseEntity {
     application: Application;
 
     @ManyToMany(() => IoTDevice, iotDevices => iotDevices.multicasts)
+    @JoinTable()
     iotDevices: IoTDevice[];
 
-    @OneToOne(type => LorawanMulticastDefinition, lorawanMulticastDefinition => lorawanMulticastDefinition.multicast, {cascade: true})
+    @OneToOne(
+        type => LorawanMulticastDefinition,
+        lorawanMulticastDefinition => lorawanMulticastDefinition.multicast,
+        { cascade: true }
+    )
     @JoinColumn()
     lorawanMulticastDefinition: LorawanMulticastDefinition;
 }
