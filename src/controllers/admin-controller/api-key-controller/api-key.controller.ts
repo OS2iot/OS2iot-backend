@@ -5,7 +5,6 @@ import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
 import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-response.dto";
 import { ListAllApiKeysDto } from "@dto/api-key/list-all-api-keys.dto";
-import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ApiKey } from "@entities/api-key.entity";
@@ -20,7 +19,6 @@ import {
     Param,
     ParseIntPipe,
     Post,
-    Put,
     Query,
     Req,
     UseGuards,
@@ -65,30 +63,6 @@ export class ApiKeyController {
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, ApiKey.name, req.user.userId);
-            throw err;
-        }
-    }
-
-    @Put(":id")
-    @ApiOperation({ summary: "Update API key" })
-    async updateApiKey(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number,
-        @Body() dto: UpdateApiKeyDto
-    ): Promise<ApiKeyResponseDto> {
-        try {
-            const result = await this.apiKeyService.update(id, dto, req.user.userId);
-
-            AuditLog.success(
-                ActionType.UPDATE,
-                ApiKey.name,
-                req.user.userId,
-                result.id,
-                result.name
-            );
-            return result;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, ApiKey.name, req.user.userId, id);
             throw err;
         }
     }

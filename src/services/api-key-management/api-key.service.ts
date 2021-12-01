@@ -2,7 +2,6 @@ import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
 import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-response.dto";
 import { ListAllApiKeysDto } from "@dto/api-key/list-all-api-keys.dto";
-import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ApiKey } from "@entities/api-key.entity";
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
@@ -63,7 +62,6 @@ export class ApiKeyService {
 
         const [data, count] = await dbQuery.getManyAndCount();
 
-        // TODO: Transform data to dto before returning to client. Remember permissions field
         return {
             data,
             count,
@@ -85,32 +83,6 @@ export class ApiKeyService {
             apiKey.permissions = permissionsDb.map(
                 pm => ({ ...pm, apiKeys: null } as ApiKeyPermission)
             );
-        }
-
-        return await this.apiKeyRepository.save(apiKey);
-    }
-
-    async update(
-        id: number,
-        dto: UpdateApiKeyDto,
-        userId: number
-    ): Promise<ApiKeyResponseDto> {
-        const apiKey = await this.findByIdWithRelations(id);
-        apiKey.name = dto.name;
-        apiKey.updatedBy = userId;
-
-        if (!!dto.permissionIds) {
-            if (!dto.permissionIds.length) {
-                apiKey.permissions = [];
-            } else {
-                const permissionsDb = await this.permissionService.findManyByIds(
-                    dto.permissionIds
-                );
-                // TODO: SET PERMISSIONS API KEY
-                // apiKey.permissions = permissionsDb.map(
-                //     pm => ({ ...pm, apiKey } as ApiKeyPermission)
-                // );
-            }
         }
 
         return await this.apiKeyRepository.save(apiKey);
