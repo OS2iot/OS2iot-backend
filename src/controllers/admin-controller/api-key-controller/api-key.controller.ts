@@ -11,9 +11,14 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
+    checkIfUserHasAdminAccessToAnyOrganization,
+    checkIfUserHasAdminAccessToOrganization,
+} from "@helpers/security-helper";
+import {
     Body,
     Controller,
     Delete,
+    ForbiddenException,
     Get,
     NotFoundException,
     Param,
@@ -33,6 +38,7 @@ import {
 } from "@nestjs/swagger";
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -42,7 +48,10 @@ import { AuditLog } from "@services/audit-log.service";
 @ApiTags("API Key Management")
 @Controller("api-key")
 export class ApiKeyController {
-    constructor(private apiKeyService: ApiKeyService) {}
+    constructor(
+        private apiKeyService: ApiKeyService,
+        private organizationService: OrganizationService
+    ) {}
 
     @Post()
     @ApiOperation({ summary: "Create new API key" })
@@ -50,6 +59,8 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateApiKeyDto
     ): Promise<ApiKeyResponseDto> {
+        await this.checkIfUserHasAccessToPermissions(req, dto.permissions);
+
         try {
             const result = await this.apiKeyService.create(dto, req.user.userId);
 
@@ -74,6 +85,8 @@ export class ApiKeyController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
+            await this.checkIfUserHasAccessToApiKey(req, id);
+
             const result = await this.apiKeyService.delete(id);
 
             AuditLog.success(ActionType.DELETE, ApiKey.name, req.user.userId, id);
@@ -90,6 +103,8 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllApiKeysDto
     ): Promise<ListAllApiKeysResponseDto> {
+        checkIfUserHasAdminAccessToOrganization(req, query.organisationId);
+
         try {
             return this.apiKeyService.findAllByOrganizationId(query);
         } catch (err) {
@@ -104,10 +119,36 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<ApiKeyResponseDto> {
+        await this.checkIfUserHasAccessToApiKey(req, id);
+
         try {
             return await this.apiKeyService.findOneById(id);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
+    }
+
+    private async checkIfUserHasAccessToApiKey(req: AuthenticatedRequest, id: number) {
+        const apiKey = await this.apiKeyService.findOneByIdWithPermissions(id);
+        await this.checkIfUserHasAccessToPermissions(
+            req,
+            apiKey.permissions.map(x => x.id)
+        );
+    }
+
+    private async checkIfUserHasAccessToPermissions(
+        req: AuthenticatedRequest,
+        permissionIds: number[]
+    ) {
+        if (!permissionIds?.length) throw new ForbiddenException();
+
+        const apiKeyOrganizations = await this.organizationService.findByPermissionIds(
+            permissionIds
+        );
+
+        checkIfUserHasAdminAccessToAnyOrganization(
+            req,
+            apiKeyOrganizations.map(x => x.id)
+        );
     }
 }

@@ -1,7 +1,6 @@
+import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { ForbiddenException } from "@nestjs/common";
 import * as _ from "lodash";
-
-import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 
 export function checkIfUserHasWriteAccessToApplication(
     req: AuthenticatedRequest,
@@ -58,6 +57,25 @@ export function checkIfUserHasAdminAccessToOrganization(
         req.user.permissions.getAllOrganizationsWithAtLeastAdmin(),
         organizationId
     );
+}
+
+export function checkIfUserHasAdminAccessToAnyOrganization(
+    req: AuthenticatedRequest,
+    organisationIds: number[]
+): void {
+    if (req.user.permissions.isGlobalAdmin) {
+        return;
+    }
+
+    const userAdminOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+
+    for (const id of organisationIds) {
+        if (_.includes(userAdminOrganizations, id)) {
+            return;
+        }
+    }
+
+    throw new ForbiddenException();
 }
 
 export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {

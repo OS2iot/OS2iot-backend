@@ -3,13 +3,13 @@ import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
 import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-response.dto";
 import { ListAllApiKeysDto } from "@dto/api-key/list-all-api-keys.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { ApiKey } from "@entities/api-key.entity";
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 
 @Injectable()
 export class ApiKeyService {
@@ -21,15 +21,22 @@ export class ApiKeyService {
     ) {}
     private readonly logger = new Logger(ApiKeyService.name, true);
 
-    async findOne(key: string): Promise<ApiKey> {
-        return await this.apiKeyRepository.findOne({
+    findOne(key: string): Promise<ApiKey> {
+        return this.apiKeyRepository.findOne({
             where: { key },
         });
     }
 
-    async findOneById(id: number): Promise<ApiKey> {
-        return await this.apiKeyRepository.findOne({
+    findOneById(id: number): Promise<ApiKey> {
+        return this.apiKeyRepository.findOne({
             where: { id },
+        });
+    }
+
+    findOneByIdWithPermissions(id: number): Promise<ApiKey> {
+        return this.apiKeyRepository.findOne({
+            where: { id },
+            relations: ["permissions"],
         });
     }
 
@@ -91,11 +98,5 @@ export class ApiKeyService {
     async delete(id: number): Promise<DeleteResponseDto> {
         const res = await this.apiKeyRepository.delete(id);
         return new DeleteResponseDto(res.affected);
-    }
-
-    private async findByIdWithRelations(id: number): Promise<ApiKey> {
-        return await this.apiKeyRepository.findOneOrFail(id, {
-            relations: ["permissions"],
-        });
     }
 }
