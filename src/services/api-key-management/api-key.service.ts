@@ -10,6 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
+import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 
 @Injectable()
 export class ApiKeyService {
@@ -45,9 +46,13 @@ export class ApiKeyService {
         let dbQuery = this.apiKeyRepository
             .createQueryBuilder("api_key")
             .innerJoinAndSelect("api_key.permissions", "perm")
-            .where("perm.id IN (:...permIds)", { permIds })
+            .innerJoinAndSelect("perm.organization", "org")
             .take(query.limit ? +query.limit : 100)
             .skip(query.offset ? +query.offset : 0);
+
+        if (permIds.length) {
+            dbQuery = dbQuery.where("perm.id IN (:...permIds)", { permIds });
+        }
 
         if (query.orderOn && query.sort) {
             dbQuery = dbQuery.orderBy(
@@ -72,15 +77,14 @@ export class ApiKeyService {
         apiKey.updatedBy = userId;
         apiKey.createdBy = userId;
 
-        if (dto.permissionIds?.length > 0) {
+        if (dto.permissions?.length > 0) {
             const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissionIds
+                dto.permissions
             );
 
-            // TODO: SET PERMISSIONS API KEY
-            // apiKey.permissions = permissionsDb.map(
-            //     pm => ({ ...pm, apiKey } as ApiKeyPermission)
-            // );
+            apiKey.permissions = permissionsDb.map(
+                pm => ({ ...pm, apiKeys: null } as ApiKeyPermission)
+            );
         }
 
         return await this.apiKeyRepository.save(apiKey);

@@ -12,7 +12,7 @@ export class ApiKey extends DbBaseEntity {
     @Column()
     name: string;
 
-    @ManyToMany(_ => ApiKeyPermission, pm => pm.apiKeys)
+    @ManyToMany(_ => ApiKeyPermission, apiKeyPm => apiKeyPm.apiKeys)
     @JoinTable()
     permissions: ApiKeyPermission[];
 }

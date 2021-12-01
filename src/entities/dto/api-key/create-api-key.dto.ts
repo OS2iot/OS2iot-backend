@@ -1,18 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Length } from "class-validator";
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsString, Length } from "class-validator";
 
 export class CreateApiKeyDto {
     @ApiProperty({ required: true })
     @IsString()
-    @Length(1, 50)
+    @Length(2, 50)
     name: string;
 
-    @ApiProperty({
-        required: true,
-        type: "array",
-        items: {
-            type: "number",
-        },
-    })
-    permissionIds: number[];
+    @ApiProperty({ required: true })
+    @IsArray()
+    @ArrayNotEmpty()
+    @ArrayUnique()
+    permissions: number[];
 }
