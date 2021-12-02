@@ -13,6 +13,7 @@ import {
     NotFoundException,
     Header,
     ParseIntPipe,
+    Logger,
 } from "@nestjs/common";
 import { MulticastService } from "../../services/device-management/multicast.service";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
@@ -40,6 +41,9 @@ import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
 import { ListAllMulticastsResponseDto } from "@dto/list-all-multicasts-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { MulticastDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-multicast-downlink-queue-response.dto";
+import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
+import { CreateChirpstackMulticastQueueItemResponse } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 
 @ApiTags("Multicast")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,6 +54,7 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 @Controller("multicast")
 export class MulticastController {
     constructor(private readonly multicastService: MulticastService) {}
+    private readonly logger = new Logger(MulticastController.name);
 
     @Post()
     @ApiOperation({ summary: "Create a new multicast" })
@@ -115,6 +120,53 @@ export class MulticastController {
             return multicast;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    @Get(":id/downlink-multicast")
+    @ApiOperation({ summary: "Get downlink queue for multicast" })
+    async findMulticastDownlinkQueue(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<MulticastDownlinkQueueResponseDto> {
+        let multicast = undefined;
+        try {
+            multicast = await this.multicastService.findOne(id);
+        } catch (err) {
+            this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+        }
+
+        if (!multicast) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+        checkIfUserHasReadAccessToApplication(req, multicast.application.id);
+
+        return this.multicastService.getDownlinkQueue(
+            multicast.lorawanMulticastDefinition.chirpstackGroupId
+        );
+    }
+
+    @Post(":id/downlink-multicast")
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Schedule downlink multicast" })
+    @ApiBadRequestResponse()
+    async createDownlink(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number,
+        @Body() dto: CreateMulticastDownlinkDto
+    ): Promise<void | CreateChirpstackMulticastQueueItemResponse> {
+        try {
+            const multicast = await this.multicastService.findOne(id);
+            if (!multicast) {
+                throw new NotFoundException();
+            }
+            checkIfUserHasWriteAccessToApplication(req, multicast.application.id);
+            const result = await this.multicastService.createDownlink(dto, multicast);
+            AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
+            throw err;
         }
     }
 

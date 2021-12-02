@@ -17,6 +17,12 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 import { AddDeviceToMulticastDto } from "@dto/chirpstack-add-device-multicast.dto";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { MulticastDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-multicast-downlink-queue-response.dto";
+import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
+import {
+    CreateChirpstackMulticastQueueItemDto,
+    CreateChirpstackMulticastQueueItemResponse,
+} from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
@@ -257,7 +263,10 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
     private handlePossibleError(
         result: AxiosResponse,
-        dto: CreateMulticastDto | UpdateMulticastDto
+        dto:
+            | CreateMulticastDto
+            | UpdateMulticastDto
+            | CreateChirpstackMulticastQueueItemDto
     ): void {
         if (result.status != 200) {
             this.logger.error(
@@ -365,5 +374,62 @@ export class MulticastService extends GenericChirpstackConfigurationService {
                 added.push(frontendDevice);
             }
         });
+    }
+
+    async getDownlinkQueue(
+        multicastID: string
+    ): Promise<MulticastDownlinkQueueResponseDto> {
+        const res = await this.get<MulticastDownlinkQueueResponseDto>(
+            `multicast-groups/${multicastID}/queue`
+        );
+        return res;
+    }
+
+    public async createDownlink(
+        dto: CreateMulticastDownlinkDto,
+        multicast: Multicast
+    ): Promise<CreateChirpstackMulticastQueueItemResponse> {
+        const csDto: CreateChirpstackMulticastQueueItemDto = {
+            multicastQueueItem: {
+                fPort: dto.port,
+                multicastID: multicast.lorawanMulticastDefinition.chirpstackGroupId,
+                data: this.hexBytesToBase64(dto.data),
+            },
+        };
+
+        try {
+            return this.overwriteDownlink(csDto);
+        } catch (err) {
+            this.handlePossibleError(err, csDto);
+        }
+    }
+    async overwriteDownlink(
+        dto: CreateChirpstackMulticastQueueItemDto
+    ): Promise<CreateChirpstackMulticastQueueItemResponse> {
+        await this.deleteDownlinkQueue(dto.multicastQueueItem.multicastID);
+        try {
+            const res = await this.post<CreateChirpstackMulticastQueueItemDto>(
+                `multicast-groups/${dto.multicastQueueItem.multicastID}/queue`,
+                dto
+            );
+            return res.data;
+        } catch (err) {
+            const fcntError =
+                "enqueue downlink payload error: get next downlink fcnt for deveui error";
+            if (err?.response?.data?.error?.startsWith(fcntError)) {
+                throw new BadRequestException(
+                    ErrorCodes.DeviceIsNotActivatedInChirpstack
+                );
+            }
+
+            throw err;
+        }
+    }
+    async deleteDownlinkQueue(multicastID: string): Promise<void> {
+        await this.delete(`multicast-groups/${multicastID}/queue`);
+    }
+
+    private hexBytesToBase64(hexBytes: string): string {
+        return Buffer.from(hexBytes, "hex").toString("base64");
     }
 }

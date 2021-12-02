@@ -1,7 +1,15 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { multicastGroup } from "@enum/multicast-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsHexadecimal, IsInt, IsNumber, IsString, MaxLength, Min, MinLength } from "class-validator";
+import {
+    IsHexadecimal,
+    IsInt,
+    IsNumber,
+    IsString,
+    MaxLength,
+    Min,
+    MinLength,
+} from "class-validator";
 
 export class CreateMulticastDto {
     @ApiProperty({ required: true })
@@ -58,5 +66,5 @@ export class CreateMulticastDto {
     multicastId: string;
 
     @ApiProperty({ required: false })
-    iotDevices: IoTDevice[]; // lorawan is an extention of iotdevice
+    iotDevices: IoTDevice[];
 }
