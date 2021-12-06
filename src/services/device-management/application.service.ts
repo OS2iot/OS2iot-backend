@@ -17,6 +17,8 @@ import { PermissionService } from "@services/user-management/permission.service"
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { Multicast } from "@entities/multicast.entity";
+import { MulticastService } from "./multicast.service";
 
 @Injectable()
 export class ApplicationService {
@@ -25,6 +27,7 @@ export class ApplicationService {
         private applicationRepository: Repository<Application>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
+        private multicastService: MulticastService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
@@ -240,7 +243,7 @@ export class ApplicationService {
     async delete(id: number): Promise<DeleteResult> {
         const application = await this.applicationRepository.findOne({
             where: { id: id },
-            relations: ["iotDevices"],
+            relations: ["iotDevices", "multicasts"],
         });
 
         // Don't allow delete if this application contains any sigfox devices.
@@ -260,6 +263,16 @@ export class ApplicationService {
         for (const device of loRaWANDevices) {
             const lwDevice = device as LoRaWANDevice;
             await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
+        }
+
+        //delete all multicats
+        const multicasts = application.multicasts;
+        for (const multicast of multicasts) {
+            const dbMulticast = await this.multicastService.findOne(multicast.id);
+
+            await this.multicastService.deleteMulticastChirpstack(
+                dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
+            );
         }
 
         return this.applicationRepository.delete(id);

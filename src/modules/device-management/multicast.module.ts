@@ -1,4 +1,4 @@
-import { HttpModule, HttpService, Module } from "@nestjs/common";
+import { forwardRef, HttpModule, HttpService, Module } from "@nestjs/common";
 import { MulticastService } from "../../services/device-management/multicast.service";
 import { MulticastController } from "../../controllers/admin-controller/multicast.controller";
 import { SharedModule } from "@modules/shared.module";
@@ -9,7 +9,7 @@ import { IoTDeviceModule } from "./iot-device.module";
 @Module({
     imports: [
         SharedModule,
-        ApplicationModule,
+        forwardRef(() => ApplicationModule), // because of circular reference
         HttpModule,
         ChirpstackAdministrationModule,
         IoTDeviceModule

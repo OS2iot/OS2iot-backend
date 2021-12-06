@@ -197,7 +197,7 @@ export class MulticastController {
         }
 
         const multicast = await this.multicastService.update(
-            id,
+            oldMulticast,
             updateDto,
             req.user.userId
         );
@@ -220,9 +220,9 @@ export class MulticastController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
-            const dt = await this.multicastService.findOne(id);
-            checkIfUserHasWriteAccessToApplication(req, dt.application.id);
-            const result = await this.multicastService.multicastDelete(id);
+            const multicast = await this.multicastService.findOne(id);
+            checkIfUserHasWriteAccessToApplication(req, multicast.application.id);
+            const result = await this.multicastService.multicastDelete(id, multicast);
 
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
