@@ -14,9 +14,6 @@ export class ChirpstackMulticastContentsDto {
     @ApiProperty({ required: true })
     groupType: multicastGroup;
     @ApiProperty({ required: true })
-    @Matches(/[0-9A-Fa-f]{16}/)
-    id: string;
-    @ApiProperty({ required: true })
     mcAddr: string;
     @ApiProperty({ required: true })
     mcAppSKey: string;

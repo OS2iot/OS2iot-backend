@@ -15,6 +15,7 @@ import { OrganizationApplicationPermission } from "@entities/organization-applic
 import { Organization } from "@entities/organization.entity";
 import { Multicast } from "./multicast.entity";
 
+
 @Entity("application")
 @Unique(["name"])
 export class Application extends DbBaseEntity {

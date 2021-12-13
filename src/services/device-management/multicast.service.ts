@@ -112,13 +112,12 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         userId: number
     ): Promise<Multicast> {
         //since the multicast is gonna be created in both the DB with relations and in chirpstack, two different objects is gonna be used.
-        const dbMulticast = new Multicast(); // to db
+        const dbMulticast = new Multicast();
         dbMulticast.lorawanMulticastDefinition = new LorawanMulticastDefinition();
-        const chirpStackMulticast = new CreateMulticastChirpStackDto(); // To chirpstack. The chirpStackMulticast contains the contentsDto.
+        const chirpStackMulticast = new CreateMulticastChirpStackDto();
         chirpStackMulticast.multicastGroup = new ChirpstackMulticastContentsDto();
 
         const mappedDbMulticast = await this.mapMulticastDtoToDbMulticast(
-            // map to db object
             createMulticastDto,
             dbMulticast
         );
@@ -127,9 +126,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         mappedDbMulticast.lorawanMulticastDefinition.createdBy = userId;
         mappedDbMulticast.lorawanMulticastDefinition.updatedBy = userId;
 
-        if (createMulticastDto.iotDevices !== undefined) {
-            // if devices are added
-            const lorawanDevices = this.checkForLorawan(createMulticastDto); // check for lorawan devices
+        if (!!createMulticastDto.iotDevices) {
+            const lorawanDevices = this.checkForLorawan(createMulticastDto);
             if (lorawanDevices.length > 0) {
                 if (await this.checkForDifferentAppID(lorawanDevices)) {
                     // If they all have same serviceID / appID then proceed.
@@ -144,7 +142,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
                 }
             }
         }
-        return await this.multicastRepository.save(mappedDbMulticast); // save to db
+        return await this.multicastRepository.save(mappedDbMulticast);
     }
 
     async createMulticastInChirpstack(
@@ -154,87 +152,54 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         mappedDbMulticast: Multicast
     ): Promise<void> {
         const mappedChirpStackMulticast = await this.mapMulticastDtoToChirpStackMulticast(
-            // map to chirpstack object.
             createMulticastDto,
             chirpStackMulticast,
             lorawanDevices[0] // used for setting appID
         );
 
-        const result = await this.post(this.multicastGroupUrl, mappedChirpStackMulticast); // This creates the multicast in chirpstack. Chirpstack creates the Id as a string
+        const result = await this.post(this.multicastGroupUrl, mappedChirpStackMulticast); // This creates the multicast in chirpstack. Chirpstack returns an id as a string
 
-        await this.addDevices(createMulticastDto, result); // iotDevices is added in a seperate endpoint.
+        await this.addDevices(createMulticastDto, result); // iotDevices are added to multicast in a seperate endpoint.
 
-        this.handlePossibleError(result, createMulticastDto); // if chirpstack fails the multicast post call, this will throw exception
-        // if post is succesful then id should be created. This id is also used for the db object so that they have the same Id.
+        this.handlePossibleError(result, createMulticastDto);
+
         if (result.status === 200) {
             mappedDbMulticast.lorawanMulticastDefinition.chirpstackGroupId =
                 result.data.id;
         }
     }
 
-    // eslint-disable-next-line max-lines-per-function
     async update(
         existingMulticast: Multicast,
         updateMulticastDto: UpdateMulticastDto,
         userId: number
     ): Promise<Multicast> {
-        const oldMulticast: Multicast = { ...existingMulticast }; // take copy of old multicast
+        const oldMulticast: Multicast = { ...existingMulticast };
         const mappedMulticast = await this.mapMulticastDtoToDbMulticast(
             updateMulticastDto,
             existingMulticast
         );
-        const lorawanDevices = this.checkForLorawan(updateMulticastDto); // check for lorawandevices in the new and old multicast
-        const oldLorawanDevices = this.checkForLorawan(oldMulticast); // this one is neccesary if you wants to remove all devices from multicast.
+        const lorawanDevices = this.checkForLorawan(updateMulticastDto);
+        const oldLorawanDevices = this.checkForLorawan(oldMulticast);
         if (lorawanDevices.length > 0 || oldLorawanDevices.length > 0) {
-            // check if new lorawan devices is included. Otherwise, just update db
-            if (existingMulticast.lorawanMulticastDefinition.chirpstackGroupId === null) {
-                // First check if a chirpstack multicast is already created. If it isn't, create a whole new multicast in chirpstack. Otherwise, update.
-                const chirpStackMulticast = new CreateMulticastChirpStackDto(); // To chirpstack. The chirpStackMulticast contains the contentsDto.
-                chirpStackMulticast.multicastGroup = new ChirpstackMulticastContentsDto();
-
-                if (await this.checkForDifferentAppID(lorawanDevices)) {
-                    await this.createMulticastInChirpstack(
-                        updateMulticastDto,
-                        chirpStackMulticast,
-                        lorawanDevices,
-                        mappedMulticast
-                    );
-                } else {
-                    throw new BadRequestException(ErrorCodes.DifferentServiceprofile);
-                }
-            } else {
-                // update
-                const existingChirpStackMulticast = await this.getChirpstackMulticast(
-                    // get's the existing multicast in chirpstack by id
-                    existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
+            // check if new lorawan devices is included. If so, either create or update in chirpstack. Otherwise, just update db
+            if (!existingMulticast.lorawanMulticastDefinition.chirpstackGroupId) {
+                await this.createIfNotInChirpstack(
+                    lorawanDevices,
+                    updateMulticastDto,
+                    mappedMulticast
                 );
-                if (await this.checkForDifferentAppID(lorawanDevices)) {
-                    //check for the lorawandevices has the same ID.
-                    if (
-                        await this.validateNewDevicesAppID(
-                            // check if the new devices has the same service profile as the multicast.
-                            existingChirpStackMulticast,
-                            lorawanDevices
-                        )
-                    ) {
-                        await this.updateMulticastToChirpstack(
-                            updateMulticastDto,
-                            existingChirpStackMulticast,
-                            lorawanDevices,
-                            oldMulticast
-                        );
-                    } else {
-                        throw new BadRequestException(
-                            ErrorCodes.NewDevicesWrongServiceProfile
-                        );
-                    }
-                } else {
-                    throw new BadRequestException(ErrorCodes.DifferentServiceprofile);
-                }
+            } else {
+                await this.updateLogic(
+                    existingMulticast,
+                    lorawanDevices,
+                    updateMulticastDto,
+                    oldMulticast
+                );
             }
         }
         mappedMulticast.updatedBy = userId;
-        return await this.multicastRepository.save(mappedMulticast); // saves in db
+        return await this.multicastRepository.save(mappedMulticast);
     }
 
     async updateMulticastToChirpstack(
@@ -244,14 +209,12 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         existingMulticast: Multicast
     ): Promise<void> {
         const mappedChirpStackMulticast = await this.mapMulticastDtoToChirpStackMulticast(
-            // maps to chirpstack
             updateMulticastDto,
             existingChirpStackMulticast,
             lorawanDevices[0]
         );
 
         const result = await this.put(
-            // updates in chirpstack.
             this.multicastGroupUrl,
             mappedChirpStackMulticast,
             existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
@@ -260,7 +223,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
         const added: IoTDevice[] = [];
         const removed: IoTDevice[] = [];
-        this.compareDevices(existingMulticast, updateMulticastDto, added, removed); // compares the new and old multicast
+        this.compareDevices(existingMulticast, updateMulticastDto, added, removed);
         await this.updateDevices(
             // add's and removes devices from chirpstack
             removed,
@@ -331,7 +294,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     async getChirpstackMulticast(
         multicastId: string
     ): Promise<CreateMulticastChirpStackDto> {
-        const res = await this.get<CreateMulticastChirpStackDto>( // get's multicast from chirpstack by id
+        const res = await this.get<CreateMulticastChirpStackDto>(
             `multicast-groups/${multicastId}`
         );
 
@@ -342,7 +305,6 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         id: number,
         existingMulticast: Multicast
     ): Promise<DeleteResult> {
-        // deletes multicast in both chirpstack and multicast by id
         const loraDevices = this.checkForLorawan(existingMulticast);
         if (loraDevices.length > 0) {
             await this.deleteMulticastChirpstack(
@@ -354,14 +316,13 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
     async deleteMulticastChirpstack(id: string): Promise<AxiosResponse> {
         try {
-            return await this.delete(this.multicastGroupUrl, id); // deletes in chirpstack by id
+            return await this.delete(this.multicastGroupUrl, id);
         } catch (err) {
             throw err;
         }
     }
 
     private async mapMulticastDtoToDbMulticast(
-        // maps the incoming dto to db object.
         multicastDto: CreateMulticastDto | UpdateMulticastDto,
         multicast: Multicast
     ): Promise<Multicast> {
@@ -376,10 +337,9 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         multicast.lorawanMulticastDefinition.groupType = multicastDto.groupType;
         multicast.iotDevices = multicastDto.iotDevices;
 
-        if (multicastDto.applicationID != null) {
+        if (multicastDto.applicationID !== null) {
             try {
                 multicast.application = await this.applicationService.findOneWithoutRelations(
-                    // maps to application by id
                     multicastDto.applicationID
                 );
             } catch (err) {
@@ -397,7 +357,6 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     }
 
     private async mapMulticastDtoToChirpStackMulticast(
-        // maps incoming dto to chirpstack object
         multicastDto: CreateMulticastDto | UpdateMulticastDto,
         multicast: CreateMulticastChirpStackDto,
         device: LoRaWANDevice
@@ -410,10 +369,11 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         multicast.multicastGroup.fCnt = multicastDto.fCnt;
         multicast.multicastGroup.frequency = multicastDto.frequency;
         multicast.multicastGroup.groupType = multicastDto.groupType;
-        if (device !== undefined) {
+        if (!!device) {
             // if devices is included, at this point we know that devices is validated. Therefore we can use appID
             multicast.multicastGroup.applicationID = device.chirpstackApplicationId.toString();
-        } else { // used for update when all devices are removed
+        } else {
+            // used for update when all devices are removed
             multicast.multicastGroup.applicationID =
                 multicast.multicastGroup.applicationID;
         }
@@ -428,7 +388,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
             | UpdateMulticastDto
             | CreateChirpstackMulticastQueueItemDto
     ): void {
-        if (result.status != 200) {
+        if (result.status !== 200) {
             this.logger.error(
                 `Error from Chirpstack: '${JSON.stringify(
                     dto
@@ -462,7 +422,6 @@ export class MulticastService extends GenericChirpstackConfigurationService {
             }
         });
         added.forEach(async device => {
-            // if the added devices is a lorawan then add to chirpstack
             if (device.type === IoTDeviceType.LoRaWAN) {
                 let lorawanDevice: LoRaWANDevice = new LoRaWANDevice();
                 lorawanDevice = device as LoRaWANDevice;
@@ -488,7 +447,6 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     ) {
         multicastDto.iotDevices.forEach(async device => {
             if (device.type === IoTDeviceType.LoRaWAN) {
-                // if the device type is LoRaWAN, then it should be send to chirpstack
                 let lorawanDevice: LoRaWANDevice = new LoRaWANDevice();
                 lorawanDevice = device as LoRaWANDevice; // cast to LoRaWANDevice since it has DeviceEUI
                 const addDevice = new AddDeviceToMulticastDto();
@@ -517,7 +475,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         oldMulticast.iotDevices.forEach(dbDevice => {
             // if a device in the old multicast is not in the new one, then delete
             if (
-                newMulticast.iotDevices.findIndex(device => device.id == dbDevice.id) ===
+                newMulticast.iotDevices.findIndex(device => device.id === dbDevice.id) ===
                 -1
             ) {
                 removed.push(dbDevice);
@@ -528,7 +486,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
             // if a device in the new multicast is not in the old one, then add
             if (
                 oldMulticast.iotDevices.findIndex(
-                    device => device.id == frontendDevice.id
+                    device => device.id === frontendDevice.id
                 ) === -1
             ) {
                 added.push(frontendDevice);
@@ -591,5 +549,56 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
     private hexBytesToBase64(hexBytes: string): string {
         return Buffer.from(hexBytes, "hex").toString("base64");
+    }
+
+    private async createIfNotInChirpstack(
+        lorawanDevices: LoRaWANDevice[],
+        updateMulticastDto: UpdateMulticastDto,
+        mappedMulticast: Multicast
+    ): Promise<void> {
+        const chirpStackMulticast = new CreateMulticastChirpStackDto();
+        chirpStackMulticast.multicastGroup = new ChirpstackMulticastContentsDto();
+
+        if (await this.checkForDifferentAppID(lorawanDevices)) {
+            await this.createMulticastInChirpstack(
+                updateMulticastDto,
+                chirpStackMulticast,
+                lorawanDevices,
+                mappedMulticast
+            );
+        } else {
+            throw new BadRequestException(ErrorCodes.DifferentServiceprofile);
+        }
+    }
+
+    private async updateLogic(
+        existingMulticast: Multicast,
+        lorawanDevices: LoRaWANDevice[],
+        updateMulticastDto: UpdateMulticastDto,
+        oldMulticast: Multicast
+    ): Promise<void> {
+        const existingChirpStackMulticast = await this.getChirpstackMulticast(
+            existingMulticast.lorawanMulticastDefinition.chirpstackGroupId
+        );
+        if (await this.checkForDifferentAppID(lorawanDevices)) {
+            if (
+                await this.validateNewDevicesAppID(
+                    // check if the new devices has the same service profile as the multicast.
+                    existingChirpStackMulticast,
+                    lorawanDevices
+                )
+            ) {
+                await this.updateMulticastToChirpstack(
+                    updateMulticastDto,
+                    existingChirpStackMulticast,
+                    lorawanDevices,
+                    oldMulticast
+                );
+            } else {
+                throw new BadRequestException(ErrorCodes.NewDevicesWrongServiceProfile);
+            }
+        } else {
+            throw new BadRequestException(ErrorCodes.DifferentServiceprofile);
+        }
     }
 }

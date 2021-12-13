@@ -61,10 +61,10 @@ export class MulticastController {
     @ApiBadRequestResponse()
     async create(
         @Req() req: AuthenticatedRequest,
-        @Body() createMulticastDto: CreateMulticastDto // the object which is sent from frontend
+        @Body() createMulticastDto: CreateMulticastDto
     ): Promise<Multicast> {
         try {
-            checkIfUserHasWriteAccessToApplication(req, createMulticastDto.applicationID); // check for write access. Inspired from datatarget.
+            checkIfUserHasWriteAccessToApplication(req, createMulticastDto.applicationID);
             const multicast = await this.multicastService.create(
                 createMulticastDto,
                 req.user.userId
@@ -115,7 +115,7 @@ export class MulticastController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<Multicast> {
         try {
-            const multicast = await this.multicastService.findOne(id); // finds multicast from db by id
+            const multicast = await this.multicastService.findOne(id);
             checkIfUserHasReadAccessToApplication(req, multicast.application.id);
             return multicast;
         } catch (err) {
@@ -179,10 +179,10 @@ export class MulticastController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() updateDto: UpdateMulticastDto
     ): Promise<Multicast> {
-        const oldMulticast = await this.multicastService.findOne(id); // get's the existing multicast and checks if user has access to it.
+        const oldMulticast = await this.multicastService.findOne(id);
         try {
             checkIfUserHasWriteAccessToApplication(req, oldMulticast.application.id);
-            if (oldMulticast.application.id != updateDto.applicationID) {
+            if (oldMulticast.application.id !== updateDto.applicationID) {
                 checkIfUserHasWriteAccessToApplication(req, updateDto.applicationID);
             }
         } catch (err) {
@@ -231,7 +231,7 @@ export class MulticastController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, Multicast.name, req.user.userId, id);
-            if (err?.status == 403) {
+            if (err?.status === 403) {
                 throw err;
             }
             throw new NotFoundException(err);
