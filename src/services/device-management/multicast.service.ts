@@ -56,6 +56,9 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         query?: ListAllMulticastsDto,
         applicationIds?: number[]
     ): Promise<ListAllMulticastsResponseDto> {
+        const orderByColumn = this.getSortingForMulticasts(query);
+        const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
+
         let queryBuilder = getConnection()
             .getRepository(Multicast)
             .createQueryBuilder("multicast")
@@ -64,9 +67,9 @@ export class MulticastService extends GenericChirpstackConfigurationService {
                 "multicast.lorawanMulticastDefinition",
                 "lorawan-multicast"
             )
-            .limit(query.limit)
-            .offset(query.offset)
-            .orderBy(query.orderOn, "ASC");
+            .skip(query?.offset ? +query.offset : 0)
+            .take(query?.limit ? +query.limit : 100)
+            .orderBy(orderByColumn, direction);
 
         // Only apply applicationId filter, if one is given.
         queryBuilder = this.filterByApplication(query, queryBuilder, applicationIds);
@@ -77,6 +80,16 @@ export class MulticastService extends GenericChirpstackConfigurationService {
             data: result,
             count: total,
         };
+    }
+    private getSortingForMulticasts(query: ListAllMulticastsDto) {
+        let orderBy = `multicast.id`;
+        if (
+            (query?.orderOn != null && query.orderOn == "id") ||
+            query.orderOn == "groupName"
+        ) {
+            orderBy = `multicast.${query.orderOn}`;
+        }
+        return orderBy;
     }
     private filterByApplication(
         query: ListAllMulticastsDto,

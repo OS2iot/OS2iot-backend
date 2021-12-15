@@ -16,5 +16,6 @@ export class ListAllEntitiesDto {
         | "lastLogin"
         | "type"
         | "organisations"
-        | "active";
+        | "active"
+        | "groupName"
 }
