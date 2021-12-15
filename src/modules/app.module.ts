@@ -47,7 +47,8 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
                 username: configService.get<string>("database.username"),
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
-                synchronize: true,
+                // Don't sync database 1-1 with code. Make migrations necessary
+                synchronize: false,
                 logging: false,
                 autoLoadEntities: true,
                 retryAttempts: 0,

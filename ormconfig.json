@@ -5,7 +5,11 @@
     "username": "os2iot",
     "password": "toi2so",
     "database": "os2iot",
-    "synchronize": true,
-    "logging": true,
-    "autoLoadEntities": true
+    "synchronize": false,
+    "logging": false,
+    "entities": ["src/entities/*.ts", "dist/entities/**/*.js"],
+    "migrations": ["dist/migration/*.js"],
+    "cli": {
+        "migrationsDir": "src/migration"
+    }
 }
