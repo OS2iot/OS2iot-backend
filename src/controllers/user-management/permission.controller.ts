@@ -23,19 +23,19 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-response.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
-import { Permission } from "@entities/permission.entity";
+import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import {
-    checkIfUserHasAdminAccessToOrganization,
     checkIfUserIsGlobalAdmin,
+    checkIfUserHasAccessToOrganization,
+    OrganizationAccessScope,
 } from "@helpers/security-helper";
 import { PermissionService } from "@services/user-management/permission.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -48,10 +48,11 @@ import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 import { ApplicationService } from "@services/device-management/application.service";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import { UserAdmin } from "@auth/roles.decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@OrganizationAdmin()
+@UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
@@ -70,7 +71,7 @@ export class PermissionController {
         @Body() dto: CreatePermissionDto
     ): Promise<Permission> {
         try {
-            checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
+            checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.UserAdministrationWrite);
 
             const result = await this.permissionService.createNewPermission(
                 dto,
@@ -104,9 +105,10 @@ export class PermissionController {
                 checkIfUserIsGlobalAdmin(req);
             } else {
                 const organizationPermission = permission as OrganizationPermission;
-                checkIfUserHasAdminAccessToOrganization(
+                checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id
+                    organizationPermission.organization.id,
+                    OrganizationAccessScope.UserAdministrationWrite
                 );
             }
 
@@ -142,9 +144,10 @@ export class PermissionController {
                 throw new BadRequestException("You cannot delete GlobalAdmin");
             } else {
                 const organizationPermission = permission as OrganizationPermission;
-                checkIfUserHasAdminAccessToOrganization(
+                checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id
+                    organizationPermission.organization.id,
+                    OrganizationAccessScope.UserAdministrationWrite
                 );
             }
 
@@ -167,7 +170,7 @@ export class PermissionController {
         if (req.user.permissions.isGlobalAdmin) {
             return this.permissionService.getAllPermissions(query);
         } else {
-            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
             return this.permissionService.getAllPermissionsInOrganizations(
                 allowedOrganizations,
                 query
@@ -196,9 +199,10 @@ export class PermissionController {
             return permission;
         } else {
             const organizationPermission = permission as OrganizationPermission;
-            checkIfUserHasAdminAccessToOrganization(
+            checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id
+                organizationPermission.organization.id,
+                OrganizationAccessScope.UserAdministrationWrite
             );
 
             return organizationPermission;
@@ -232,9 +236,10 @@ export class PermissionController {
             return await applicationsPromise;
         } else {
             const organizationPermission = permission as OrganizationPermission;
-            checkIfUserHasAdminAccessToOrganization(
+            checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id
+                organizationPermission.organization.id,
+                OrganizationAccessScope.UserAdministrationWrite
             );
 
             return await applicationsPromise;
@@ -265,9 +270,10 @@ export class PermissionController {
             return await users;
         } else {
             const organizationPermission = permission as OrganizationPermission;
-            checkIfUserHasAdminAccessToOrganization(
+            checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission?.organization?.id
+                organizationPermission?.organization?.id,
+                OrganizationAccessScope.UserAdministrationWrite
             );
 
             return users;

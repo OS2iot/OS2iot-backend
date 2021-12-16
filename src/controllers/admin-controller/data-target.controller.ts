@@ -24,7 +24,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -35,8 +35,8 @@ import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-    checkIfUserHasReadAccessToApplication,
-    checkIfUserHasWriteAccessToApplication,
+    checkIfUserHasAccessToApplication,
+    ApplicationAccessScope,
 } from "@helpers/security-helper";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -85,7 +85,7 @@ export class DataTargetController {
     ): Promise<DataTarget> {
         try {
             const dataTarget = await this.dataTargetService.findOne(id);
-            checkIfUserHasReadAccessToApplication(req, dataTarget.application.id);
+            checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
             return dataTarget;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -100,9 +100,10 @@ export class DataTargetController {
         @Body() createDataTargetDto: CreateDataTargetDto
     ): Promise<DataTarget> {
         try {
-            checkIfUserHasWriteAccessToApplication(
+            checkIfUserHasAccessToApplication(
                 req,
-                createDataTargetDto.applicationId
+                createDataTargetDto.applicationId,
+                ApplicationAccessScope.Write
             );
             const dataTarget = await this.dataTargetService.create(
                 createDataTargetDto,
@@ -133,9 +134,9 @@ export class DataTargetController {
     ): Promise<DataTarget> {
         const oldDataTarget = await this.dataTargetService.findOne(id);
         try {
-            checkIfUserHasWriteAccessToApplication(req, oldDataTarget.application.id);
+            checkIfUserHasAccessToApplication(req, oldDataTarget.application.id, ApplicationAccessScope.Write);
             if (oldDataTarget.application.id != updateDto.applicationId) {
-                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+                checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
             }
         } catch (err) {
             AuditLog.fail(
@@ -166,14 +167,14 @@ export class DataTargetController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing IoT-Device" })
     @ApiBadRequestResponse()
-    @Write()
+    @ApplicationAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
             const dt = await this.dataTargetService.findOne(id);
-            checkIfUserHasWriteAccessToApplication(req, dt.application.id);
+            checkIfUserHasAccessToApplication(req, dt.application.id, ApplicationAccessScope.Write);
             const result = await this.dataTargetService.delete(id);
 
             if (result.affected === 0) {

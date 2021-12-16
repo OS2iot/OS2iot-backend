@@ -11,7 +11,7 @@ import {
 import { DbBaseEntity } from "@entities/base.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
 
 @Entity("application")

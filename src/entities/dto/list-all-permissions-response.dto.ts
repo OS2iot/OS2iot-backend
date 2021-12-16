@@ -1,4 +1,4 @@
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 
 import { ListAllEntitiesResponseDto } from "./list-all-entities-response.dto";
 

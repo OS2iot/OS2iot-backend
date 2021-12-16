@@ -6,15 +6,11 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllDeviceModelResponseDto } from "@dto/list-all-device-model-response.dto";
 import { ListAllDeviceModelsDto } from "@dto/list-all-device-models.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ActionType } from "@entities/audit-log-entry";
 import { DeviceModel } from "@entities/device-model.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    checkIfUserHasReadAccessToOrganization,
-    checkIfUserHasWriteAccessToOrganization,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import {
     BadRequestException,
     Body,
@@ -59,14 +55,14 @@ export class DeviceModelController {
         @Query() query?: ListAllDeviceModelsDto
     ): Promise<ListAllDeviceModelResponseDto> {
         if (query?.organizationId != null) {
-            checkIfUserHasReadAccessToOrganization(req, query?.organizationId);
+            checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.UserAdministrationRead);
             return this.service.getAllDeviceModelsByOrgIds(
                 [query?.organizationId],
                 query
             );
         }
 
-        const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastRead();
+        const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastUserAdminRead();
         return this.service.getAllDeviceModelsByOrgIds(orgIds, query);
     }
 
@@ -81,7 +77,7 @@ export class DeviceModelController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
-        checkIfUserHasReadAccessToOrganization(req, deviceModel.belongsTo.id);
+        checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.UserAdministrationRead);
         return deviceModel;
     }
 
@@ -94,7 +90,7 @@ export class DeviceModelController {
         @Body() dto: CreateDeviceModelDto
     ): Promise<DeviceModel> {
         try {
-            checkIfUserHasWriteAccessToOrganization(req, dto.belongsToId);
+            checkIfUserHasAccessToOrganization(req, dto.belongsToId, OrganizationAccessScope.ApplicationWrite);
 
             const res = await this.service.create(dto, req.user.userId);
             AuditLog.success(
@@ -121,7 +117,7 @@ export class DeviceModelController {
     ): Promise<DeviceModel> {
         try {
             const deviceModel = await this.service.getByIdWithRelations(id);
-            checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+            checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
             const res = await this.service.update(deviceModel, dto, req.user.userId);
             AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
             return res;
@@ -141,7 +137,7 @@ export class DeviceModelController {
     ): Promise<DeleteResponseDto> {
         try {
             const deviceModel = await this.service.getByIdWithRelations(id);
-            checkIfUserHasWriteAccessToOrganization(req, deviceModel.belongsTo.id);
+            checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
             const res = await this.service.delete(id);
             AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
             return new DeleteResponseDto(res.affected);

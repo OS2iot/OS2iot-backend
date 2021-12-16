@@ -15,15 +15,13 @@ import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
 import { UserPermissions } from "@dto/permission-organization-application.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { GlobalAdminPermission } from "@entities/permissions/global-admin-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
-import { Permission } from "@entities/permission.entity";
-import { ReadPermission } from "@entities/read-permission.entity";
+import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
+import { ReadPermission } from "@entities/permissions/read-permission.entity";
 import { User } from "@entities/user.entity";
-import { WritePermission } from "@entities/write-permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OrganizationService } from "@services/user-management/organization.service";
@@ -34,6 +32,10 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
+import { isOrganizationApplicationPermission } from "@helpers/security-helper";
+import { OrganizationGatewayAdminPermission } from "@entities/permissions/organization-gateway-admin-permission.entity";
+import { OrganizationUserAdminPermission } from "@entities/permissions/organization-user-admin-permission.entity";
+import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
 
 @Injectable()
 export class PermissionService {
@@ -48,42 +50,56 @@ export class PermissionService {
         private applicationService: ApplicationService
     ) {}
 
-    READ_SUFFIX = " - Read";
-    WRITE_SUFFIX = " - Write";
-    ADMIN_SUFFIX = " - OrganizationAdmin";
-
     async createDefaultPermissions(
         org: Organization,
         userId: number
     ): Promise<OrganizationPermission[]> {
-        const readPermission = new ReadPermission(org.name + this.READ_SUFFIX, org, true);
-        const writePermission = new WritePermission(
-            org.name + this.WRITE_SUFFIX,
+        const { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission } = this.instantiateDefaultPermissions(org, userId);
+
+        // Use the manager since otherwise, we'd need a repository for each of them
+        const entityManager = getManager();
+        const r = await entityManager.save<OrganizationPermission>([
+            readPermission,
+            orgApplicationAdminPermission,
+            orgAdminPermission,
+            orgGatewayAadminPermission,
+        ]);
+        r.forEach(val =>
+            AuditLog.success(ActionType.CREATE, Permission.name, userId, val.id, val.name)
+        );
+        return r;
+    }
+
+    private instantiateDefaultPermissions(org: Organization, userId: number) {
+        const nameSuffixSeparator = " - ";
+        const readSuffix = `${nameSuffixSeparator}${PermissionType.Read}`;
+        const organizationUserAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationUserAdmin}`;
+        const organizationGatewayAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationGatewayAdmin}`;
+        const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationApplicationAdmin}`;
+
+        const readPermission = new ReadPermission(org.name + readSuffix, org, true);
+        const orgApplicationAdminPermission = new OrganizationApplicationAdminPermission(
+            org.name + organizationApplicationAdminSuffix,
             org,
             true
         );
-        const adminPermission = new OrganizationAdminPermission(
-            org.name + this.ADMIN_SUFFIX,
+        const orgAdminPermission = new OrganizationUserAdminPermission(
+            org.name + organizationUserAdminSuffix,
+            org
+        );
+        const orgGatewayAadminPermission = new OrganizationGatewayAdminPermission(
+            org.name + organizationGatewayAdminSuffix,
             org
         );
         readPermission.createdBy = userId;
         readPermission.updatedBy = userId;
-        writePermission.createdBy = userId;
-        writePermission.updatedBy = userId;
-        adminPermission.createdBy = userId;
-        adminPermission.updatedBy = userId;
-
-        // Use the manager since otherwise, we'd need a repository for each of them
-        const entityManager = getManager();
-        const r = await entityManager.save([
-            adminPermission,
-            writePermission,
-            readPermission,
-        ]);
-        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[0].id, r[0].name);
-        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[1].id, r[1].name);
-        AuditLog.success(ActionType.CREATE, Permission.name, userId, r[2].id, r[2].name);
-        return r;
+        orgApplicationAdminPermission.createdBy = userId;
+        orgApplicationAdminPermission.updatedBy = userId;
+        orgAdminPermission.createdBy = userId;
+        orgAdminPermission.updatedBy = userId;
+        orgGatewayAadminPermission.createdBy = userId;
+        orgGatewayAadminPermission.updatedBy = userId;
+        return { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission };
     }
 
     async findOrCreateGlobalAdminPermission(): Promise<GlobalAdminPermission> {
@@ -99,41 +115,40 @@ export class PermissionService {
         dto: CreatePermissionDto,
         userId: number
     ): Promise<Permission> {
-        let permission;
         const org: Organization = await this.organizationService.findById(
             dto.organizationId
         );
 
-        switch (dto.level) {
-            case PermissionType.OrganizationAdmin: {
-                permission = new OrganizationAdminPermission(dto.name, org);
-                break;
-            }
-            case PermissionType.Write: {
-                permission = new WritePermission(
-                    dto.name,
-                    org,
-                    dto.automaticallyAddNewApplications
-                );
-                break;
-            }
-            case PermissionType.Read: {
-                permission = new ReadPermission(
-                    dto.name,
-                    org,
-                    dto.automaticallyAddNewApplications
-                );
-                break;
-            }
-            default:
-                throw new BadRequestException("Bad PermissionLevel");
-        }
+        const permission = this.createPermission(dto, org);
 
         await this.mapToPermission(permission, dto);
         permission.createdBy = userId;
         permission.updatedBy = userId;
 
         return await getManager().save(permission);
+    }
+
+    private createPermission(dto: CreatePermissionDto, org: Organization): Permission {
+        switch (dto.level) {
+            case PermissionType.OrganizationApplicationAdmin: {
+                return new OrganizationApplicationAdminPermission(dto.name, org);
+            }
+            case PermissionType.OrganizationGatewayAdmin: {
+                return new OrganizationGatewayAdminPermission(dto.name, org);
+            }
+            case PermissionType.OrganizationUserAdmin: {
+                return new OrganizationUserAdminPermission(dto.name, org);
+            }
+            case PermissionType.Read: {
+                return new ReadPermission(
+                    dto.name,
+                    org,
+                    dto.automaticallyAddNewApplications
+                );
+            }
+            default:
+                throw new BadRequestException("Bad PermissionLevel");
+        }
     }
 
     async autoAddPermissionsToApplication(app: Application): Promise<void> {
@@ -192,15 +207,12 @@ export class PermissionService {
         permission: Permission,
         dto: UpdatePermissionDto
     ): Promise<void> {
-        if (
-            permission.type == PermissionType.Read ||
-            permission.type == PermissionType.Write
-        ) {
-            (permission as OrganizationApplicationPermission).applications = await this.applicationService.findManyByIds(
+        if (isOrganizationApplicationPermission(permission)) {
+            permission.applications = await this.applicationService.findManyByIds(
                 dto.applicationIds
             );
 
-            (permission as OrganizationApplicationPermission).automaticallyAddNewApplications =
+            permission.automaticallyAddNewApplications =
                 dto.automaticallyAddNewApplications;
         }
         if (dto?.userIds?.length >= 0) {
@@ -313,7 +325,7 @@ export class PermissionService {
             .leftJoinAndSelect("permission.organization", "organization")
             .leftJoinAndSelect("organization.applications", "application")
             .where("permission.type = :permType AND user.id = :id", {
-                permType: PermissionType.OrganizationAdmin,
+                permType: PermissionType.OrganizationApplicationAdmin,
                 id: userId,
             })
             .select([
@@ -326,7 +338,7 @@ export class PermissionService {
 
     async findPermissionGroupedByLevelForUser(userId: number): Promise<UserPermissions> {
         let permissions = await this.findPermissionsForUser(userId);
-        if (this.isOrganizationAdmin(permissions)) {
+        if (this.isOrganizationApplicationAdmin(permissions)) {
             // For organization admins, we need to fetch all applications they have permissions to
             const permissionsForOrgAdmin = await this.findPermissionsForOrgAdminWithApplications(
                 userId
@@ -339,27 +351,28 @@ export class PermissionService {
         permissions.forEach(p => {
             if (p.permission_type == PermissionType.GlobalAdmin) {
                 res.isGlobalAdmin = true;
-            } else if (p.permission_type == PermissionType.OrganizationAdmin) {
-                res.organizationAdminPermissions.add(p.organization_id);
+            } else if (p.permission_type == PermissionType.OrganizationApplicationAdmin) {
+                 this.addOrUpdateApplicationIds(res.orgToApplicationAdminPermissions, p);
                 // Also grant writePermission to the application
-                this.addOrUpdate(res.writePermissions, p);
-            } else if (p.permission_type == PermissionType.Write) {
-                this.addOrUpdate(res.writePermissions, p);
+            } else if (p.permission_type == PermissionType.OrganizationGatewayAdmin) {
+                res.orgToGatewayAdminPermissions.add(p.organization_id);
+            } else if (p.permission_type == PermissionType.OrganizationUserAdmin) {
+                res.orgToUserAdminPermissions.add(p.organization_id);
             } else if (p.permission_type == PermissionType.Read) {
-                this.addOrUpdate(res.readPermissions, p);
+                this.addOrUpdateApplicationIds(res.orgToReadPermissions, p);
             }
         });
 
         return res;
     }
 
-    private isOrganizationAdmin(permissions: PermissionMinimalDto[]) {
+    private isOrganizationApplicationAdmin(permissions: PermissionMinimalDto[]) {
         return permissions.some(
-            x => x.permission_type == PermissionType.OrganizationAdmin
+            x => x.permission_type == PermissionType.OrganizationApplicationAdmin
         );
     }
 
-    private addOrUpdate(permissions: Map<number, number[]>, p: PermissionMinimalDto) {
+    private addOrUpdateApplicationIds(permissions: Map<number, number[]>, p: PermissionMinimalDto) {
         if (!permissions.has(p.organization_id)) {
             permissions.set(p.organization_id, []);
         }

@@ -25,7 +25,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
@@ -42,7 +42,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 @Controller("chirpstack/service-profiles")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
+@UserAdmin()
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
     private readonly logger = new Logger(ServiceProfileController.name);
@@ -51,7 +51,7 @@ export class ServiceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new ServiceProfile" })
     @ApiBadRequestResponse()
-    @Write()
+    @UserAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateServiceProfileDto
@@ -72,7 +72,7 @@ export class ServiceProfileController {
     @ApiOperation({ summary: "Update an existing ServiceProfile" })
     @ApiBadRequestResponse()
     @HttpCode(204)
-    @Write()
+    @UserAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
@@ -132,7 +132,7 @@ export class ServiceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
-    @Write()
+    @UserAdmin()
     async deleteOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string

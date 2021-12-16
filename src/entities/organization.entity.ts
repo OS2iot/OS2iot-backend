@@ -2,9 +2,9 @@ import { Column, Entity, OneToMany, Unique } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
+import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 
 import { SigFoxGroup } from "./sigfox-group.entity";
 import { DeviceModel } from "./device-model.entity";

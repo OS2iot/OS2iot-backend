@@ -25,7 +25,7 @@ import {
 import { QueryFailedError } from "typeorm";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { OrganizationAdmin, Read } from "@auth/roles.decorator";
+import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
@@ -43,7 +43,6 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@OrganizationAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")

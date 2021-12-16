@@ -9,8 +9,8 @@ import { getManager } from "typeorm";
 import configuration from "@config/configuration";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
-import { ReadPermission } from "@entities/read-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
+import { ReadPermission } from "@entities/permissions/read-permission.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthModule } from "@modules/user-management/auth.module";
@@ -116,12 +116,16 @@ describe("PermissionController (e2e)", () => {
                             type: PermissionType.GlobalAdmin,
                         }),
                         expect.objectContaining({
-                            name: org.name + " - OrganizationAdmin",
-                            type: PermissionType.OrganizationAdmin,
+                            name: org.name + " - OrganizationAppAdmin",
+                            type: PermissionType.OrganizationApplicationAdmin,
                         }),
                         expect.objectContaining({
-                            name: org.name + " - Write",
-                            type: PermissionType.Write,
+                            name: org.name + " - OrganizationGatewayAdmin",
+                            type: PermissionType.OrganizationGatewayAdmin,
+                        }),
+                        expect.objectContaining({
+                            name: org.name + " - OrganizationUserAdmin",
+                            type: PermissionType.OrganizationUserAdmin,
                             automaticallyAddNewApplications: true,
                         }),
                         expect.objectContaining({

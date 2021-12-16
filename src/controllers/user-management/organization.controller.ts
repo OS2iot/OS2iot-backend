@@ -23,8 +23,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { GlobalAdmin, Read } from "@auth/roles.decorator";
-import { OrganizationAdmin } from "@auth/roles.decorator";
+import { GlobalAdmin, Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
@@ -36,7 +35,7 @@ import { CreateOrganizationDto } from "@dto/user-management/create-organization.
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasAdminAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -44,7 +43,7 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@OrganizationAdmin()
+@UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
@@ -88,7 +87,7 @@ export class OrganizationController {
         @Body() updateOrganizationDto: UpdateOrganizationDto
     ): Promise<Organization> {
         try {
-            checkIfUserHasAdminAccessToOrganization(req, id);
+            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
 
             const organization = await this.organizationService.update(
                 id,
@@ -131,7 +130,7 @@ export class OrganizationController {
         if (req.user.permissions.isGlobalAdmin) {
             return this.organizationService.findAllPaginated(query);
         } else {
-            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
             return this.organizationService.findAllInOrganizationList(
                 allowedOrganizations,
                 query
@@ -146,7 +145,7 @@ export class OrganizationController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<Organization> {
-        checkIfUserHasAdminAccessToOrganization(req, id);
+        checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
         try {
             return await this.organizationService.findByIdWithRelations(id);
         } catch (err) {
@@ -162,7 +161,7 @@ export class OrganizationController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
-            checkIfUserHasAdminAccessToOrganization(req, id);
+            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
 
             const result = await this.organizationService.delete(id);
 

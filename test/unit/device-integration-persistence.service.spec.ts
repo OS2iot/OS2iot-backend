@@ -8,7 +8,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { Organization } from "@entities/organization.entity";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";

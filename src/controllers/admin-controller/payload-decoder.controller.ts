@@ -26,7 +26,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -36,10 +36,7 @@ import { ListAllPayloadDecoderResponseDto } from "@dto/list-all-payload-decoders
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    checkIfUserHasReadAccessToOrganization,
-    checkIfUserHasWriteAccessToOrganization,
-} from "@helpers/security-helper";
+import { OrganizationAccessScope, checkIfUserHasAccessToOrganization } from "@helpers/security-helper";
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -90,7 +87,7 @@ export class PayloadDecoderController {
     }
 
     @Post()
-    @Write()
+    @ApplicationAdmin()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Payload Decoder" })
     @ApiBadRequestResponse()
@@ -99,7 +96,7 @@ export class PayloadDecoderController {
         @Body() createDto: CreatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
         try {
-            checkIfUserHasWriteAccessToOrganization(req, createDto.organizationId);
+            checkIfUserHasAccessToOrganization(req, createDto.organizationId, OrganizationAccessScope.ApplicationWrite);
 
             // TODO: Valider at funktionen er gyldig
             const payloadDecoder = await this.payloadDecoderService.create(
@@ -121,7 +118,7 @@ export class PayloadDecoderController {
     }
 
     @Put(":id")
-    @Write()
+    @ApplicationAdmin()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing Payload Decoder" })
     @ApiBadRequestResponse()
@@ -131,10 +128,10 @@ export class PayloadDecoderController {
         @Body() updateDto: UpdatePayloadDecoderDto
     ): Promise<PayloadDecoder> {
         try {
-            checkIfUserHasWriteAccessToOrganization(req, updateDto.organizationId);
+            checkIfUserHasAccessToOrganization(req, updateDto.organizationId, OrganizationAccessScope.ApplicationWrite);
             const oldDecoder = await this.payloadDecoderService.findOne(id);
             if (oldDecoder?.organization?.id) {
-                checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
+                checkIfUserHasAccessToOrganization(req, oldDecoder.organization.id, OrganizationAccessScope.ApplicationWrite);
             }
             // TODO: Valider at funktionen er gyldig
             const payloadDecoder = await this.payloadDecoderService.update(
@@ -158,7 +155,7 @@ export class PayloadDecoderController {
     }
 
     @Delete(":id")
-    @Write()
+    @ApplicationAdmin()
     @ApiOperation({ summary: "Delete an existing Payload Decoder" })
     @ApiNotFoundResponse()
     async delete(
@@ -168,7 +165,7 @@ export class PayloadDecoderController {
         try {
             const oldDecoder = await this.payloadDecoderService.findOne(id);
             if (oldDecoder?.organization?.id) {
-                checkIfUserHasWriteAccessToOrganization(req, oldDecoder.organization.id);
+                checkIfUserHasAccessToOrganization(req, oldDecoder.organization.id, OrganizationAccessScope.ApplicationWrite);
             }
 
             const result = await this.payloadDecoderService.delete(id);

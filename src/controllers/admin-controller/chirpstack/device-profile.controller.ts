@@ -25,7 +25,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, Write } from "@auth/roles.decorator";
+import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
@@ -35,7 +35,7 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 
@@ -43,7 +43,6 @@ import { ActionType } from "@entities/audit-log-entry";
 @Controller("chirpstack/device-profiles")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
@@ -54,16 +53,13 @@ export class DeviceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
-    @Write()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
     ): Promise<CreateChirpstackProfileResponseDto> {
+        checkIfUserHasAccessToOrganization(req, createDto.internalOrganizationId, OrganizationAccessScope.ApplicationWrite);
+
         try {
-            checkIfUserHasWriteAccessToOrganization(
-                req,
-                createDto.internalOrganizationId
-            );
             const result = await this.deviceProfileService.createDeviceProfile(
                 createDto,
                 req.user.userId
@@ -95,12 +91,17 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Update an existing DeviceProfile" })
     @ApiBadRequestResponse()
     @HttpCode(204)
-    @Write()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
         @Body() updateDto: UpdateDeviceProfileDto
     ): Promise<void> {
+        checkIfUserHasAccessToOrganization(
+            req,
+            updateDto.deviceProfile.internalOrganizationId,
+            OrganizationAccessScope.ApplicationWrite
+        );
+
         try {
             await this.deviceProfileService.updateDeviceProfile(updateDto, id, req);
             AuditLog.success(
@@ -171,7 +172,6 @@ export class DeviceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
-    @Write()
     async deleteOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string
