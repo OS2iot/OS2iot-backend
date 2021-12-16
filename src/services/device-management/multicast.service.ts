@@ -523,7 +523,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         const csDto: CreateChirpstackMulticastQueueItemDto = {
             multicastQueueItem: {
                 fPort: dto.port,
-                multicastID: multicast.lorawanMulticastDefinition.chirpstackGroupId,
+                multicastGroupID: multicast.lorawanMulticastDefinition.chirpstackGroupId,
                 data: this.hexBytesToBase64(dto.data),
             },
         };
@@ -537,10 +537,10 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     async overwriteDownlink(
         dto: CreateChirpstackMulticastQueueItemDto
     ): Promise<CreateChirpstackMulticastQueueItemResponse> {
-        await this.deleteDownlinkQueue(dto.multicastQueueItem.multicastID);
+        await this.deleteDownlinkQueue(dto.multicastQueueItem.multicastGroupID);
         try {
             const res = await this.post<CreateChirpstackMulticastQueueItemDto>(
-                `multicast-groups/${dto.multicastQueueItem.multicastID}/queue`,
+                `multicast-groups/${dto.multicastQueueItem.multicastGroupID}/queue`,
                 dto
             );
             return res.data;

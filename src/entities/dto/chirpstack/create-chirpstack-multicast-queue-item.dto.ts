@@ -5,7 +5,7 @@ export interface CreateChirpstackMulticastQueueItemDto {
 export interface MulticastQueueItem {
     fPort: number;
     data: string;
-    multicastID: string;
+    multicastGroupID: string;
 }
 
 export interface CreateChirpstackMulticastQueueItemResponse {
