@@ -24,7 +24,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, UserAdmin } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
@@ -88,7 +88,7 @@ export class SigfoxGroupController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a SigFox Group connection" })
     @ApiCreatedResponse()
-    @UserAdmin()
+    @ApplicationAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() query: CreateSigFoxGroupRequestDto
@@ -118,7 +118,7 @@ export class SigfoxGroupController {
     @Put(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Update a SigFox Groups" })
-    @UserAdmin()
+    @ApplicationAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,

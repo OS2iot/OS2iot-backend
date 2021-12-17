@@ -52,7 +52,6 @@ import { UserAdmin } from "@auth/roles.decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
@@ -66,6 +65,7 @@ export class PermissionController {
 
     @Post()
     @ApiOperation({ summary: "Create new permission entity" })
+    @UserAdmin()
     async createPermission(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreatePermissionDto
@@ -94,6 +94,7 @@ export class PermissionController {
 
     @Put(":id")
     @ApiOperation({ summary: "Update permission" })
+    @UserAdmin()
     async updatePermission(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
@@ -134,6 +135,7 @@ export class PermissionController {
 
     @Delete(":id")
     @ApiOperation({ summary: "Delete a permission entity" })
+    @UserAdmin()
     async deletePermission(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number

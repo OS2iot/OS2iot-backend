@@ -1,5 +1,5 @@
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, UserAdmin } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
@@ -86,7 +86,7 @@ export class SigfoxDeviceTypeController {
     }
 
     @Post()
-    @UserAdmin()
+    @ApplicationAdmin()
     @ApiCreatedResponse()
     @ApiBadRequestResponse()
     async create(
@@ -115,7 +115,7 @@ export class SigfoxDeviceTypeController {
     }
 
     @Put(":id")
-    @UserAdmin()
+    @ApplicationAdmin()
     @ApiNoContentResponse()
     @ApiBadRequestResponse()
     @HttpCode(204)

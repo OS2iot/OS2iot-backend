@@ -120,7 +120,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         } else {
             return await this.service.findAllByPayloadDecoderId(
                 id,
-                req.user.permissions.getAllOrganizationsWithAtLeastUserAdminRead()
+                req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead()
             );
         }
     }

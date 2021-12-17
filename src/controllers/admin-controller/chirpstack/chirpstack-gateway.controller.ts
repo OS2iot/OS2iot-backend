@@ -21,7 +21,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read } from "@auth/roles.decorator";
+import { Read, GatewayAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
@@ -48,6 +48,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @GatewayAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateGatewayDto
@@ -111,6 +112,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @GatewayAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string,
@@ -146,6 +148,7 @@ export class ChirpstackGatewayController {
     }
 
     @Delete(":gatewayId")
+    @GatewayAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string

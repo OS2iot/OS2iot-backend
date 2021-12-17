@@ -43,7 +43,6 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
@@ -55,6 +54,7 @@ export class OrganizationController {
     @GlobalAdmin()
     @Post()
     @ApiOperation({ summary: "Create a new Organization" })
+    @UserAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createOrganizationDto: CreateOrganizationDto
@@ -81,6 +81,7 @@ export class OrganizationController {
     @Put(":id")
     @ApiOperation({ summary: "Update an Organization" })
     @ApiNotFoundResponse()
+    @UserAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
@@ -156,6 +157,7 @@ export class OrganizationController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an Organization" })
     @ApiNotFoundResponse()
+    @UserAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number

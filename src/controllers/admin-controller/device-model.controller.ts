@@ -55,14 +55,14 @@ export class DeviceModelController {
         @Query() query?: ListAllDeviceModelsDto
     ): Promise<ListAllDeviceModelResponseDto> {
         if (query?.organizationId != null) {
-            checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.UserAdministrationRead);
+            checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.ApplicationRead);
             return this.service.getAllDeviceModelsByOrgIds(
                 [query?.organizationId],
                 query
             );
         }
 
-        const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastUserAdminRead();
+        const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
         return this.service.getAllDeviceModelsByOrgIds(orgIds, query);
     }
 
@@ -77,7 +77,7 @@ export class DeviceModelController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
-        checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.UserAdministrationRead);
+        checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationRead);
         return deviceModel;
     }
 

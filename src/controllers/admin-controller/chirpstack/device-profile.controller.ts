@@ -25,7 +25,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
@@ -43,6 +43,7 @@ import { ActionType } from "@entities/audit-log-entry";
 @Controller("chirpstack/device-profiles")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
+@ApplicationAdmin()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
@@ -53,6 +54,7 @@ export class DeviceProfileController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
+    @ApplicationAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateDeviceProfileDto
@@ -91,6 +93,7 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Update an existing DeviceProfile" })
     @ApiBadRequestResponse()
     @HttpCode(204)
+    @ApplicationAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string,
@@ -172,6 +175,7 @@ export class DeviceProfileController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
+    @ApplicationAdmin()
     async deleteOne(
         @Req() req: AuthenticatedRequest,
         @Param("id") id: string

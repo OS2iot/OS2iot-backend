@@ -25,7 +25,7 @@ import {
 import { QueryFailedError } from "typeorm";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read } from "@auth/roles.decorator";
+import { Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
@@ -61,6 +61,7 @@ export class UserController {
 
     @Post()
     @ApiOperation({ summary: "Create a new User" })
+    @UserAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createUserDto: CreateUserDto
@@ -100,6 +101,7 @@ export class UserController {
 
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
+    @UserAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
@@ -110,8 +112,7 @@ export class UserController {
                 checkIfUserIsGlobalAdmin(req);
             }
             // Don't leak the passwordHash
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.updateUser(
+            const { passwordHash: _, ...user } = await this.userService.updateUser(
                 id,
                 dto,
                 req.user.userId
@@ -140,8 +141,7 @@ export class UserController {
         const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
             // Don't leak the passwordHash
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.findOne(
+            const { passwordHash: _, ...user } = await this.userService.findOne(
                 id,
                 getExtendedInfo,
                 getExtendedInfo
