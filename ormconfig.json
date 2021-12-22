@@ -7,8 +7,8 @@
     "database": "os2iot",
     "synchronize": false,
     "logging": false,
-    "entities": ["src/entities/*.ts", "dist/entities/**/*.js"],
-    "migrations": ["dist/migration/*.js"],
+    "entities": ["src/entities/*.ts"],
+    "migrations": ["src/migration/*.ts"],
     "cli": {
         "migrationsDir": "src/migration"
     }
