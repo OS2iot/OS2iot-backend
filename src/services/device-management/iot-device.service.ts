@@ -310,7 +310,6 @@ export class IoTDeviceService {
             iotDevice,
             false
         );
-        mappedIotDevice.multicasts = [];
         mappedIotDevice.createdBy = userId;
         mappedIotDevice.updatedBy = userId;
 

@@ -19,8 +19,7 @@ export class Multicast extends DbBaseEntity {
     groupName: string;
 
     @ManyToOne(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Application,
+        _ => Application,
         application => application.multicasts,
         { onDelete: "CASCADE" }
     )

@@ -73,8 +73,7 @@ export class MulticastController {
                 ActionType.CREATE,
                 Multicast.name,
                 req.user.userId,
-                multicast.lorawanMulticastDefinition.chirpstackGroupId,
-                multicast.groupName
+                multicast.id
             );
             return multicast;
         } catch (err) {
@@ -89,15 +88,16 @@ export class MulticastController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllMulticastsDto
     ): Promise<ListAllMulticastsResponseDto> {
+        const applicationId = +query.applicationId;
         if (req.user.permissions.isGlobalAdmin) {
             return await this.multicastService.findAndCountAllWithPagination(query);
         } else {
             if (query.applicationId) {
-                query.applicationId = +query.applicationId;
+                query.applicationId = applicationId;
             }
 
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-            if (+query.applicationId && !allowed.some(x => x === +query.applicationId)) {
+            if (applicationId && !allowed.some(x => x === applicationId)) {
                 throw new UnauthorizedException();
             }
 
