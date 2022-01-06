@@ -73,7 +73,8 @@ export class MulticastController {
                 ActionType.CREATE,
                 Multicast.name,
                 req.user.userId,
-                multicast.id
+                multicast.id,
+                multicast.groupName
             );
             return multicast;
         } catch (err) {
