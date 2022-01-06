@@ -139,6 +139,15 @@ export class OrganizationController {
         }
     }
 
+    @Get("all")
+    @ApiOperation({ summary: "Get list of all Organizations" })
+    async findAllNoReq(
+        @Req() req: AuthenticatedRequest,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllOrganizationsResponseDto> {
+        return this.organizationService.findAllPaginated(query);
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one Organization" })
     @ApiNotFoundResponse()
