@@ -31,6 +31,7 @@ import { SearchModule } from "./search.module";
 import { DeviceModelModule } from "./device-management/device-model.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
 import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
+import { MulticastModule } from "./device-management/multicast.module";
 
 @Module({
     imports: [
@@ -52,7 +53,7 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
                 autoLoadEntities: true,
                 retryAttempts: 0,
                 maxQueryExecutionTime: 1000, // Log queries slower than 1000 ms
-                ssl: configService.get<boolean>("database.ssl")
+                ssl: configService.get<boolean>("database.ssl"),
             }),
         }),
         // LoggerModule.forRoot({
@@ -87,6 +88,7 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
         SearchModule,
         TestPayloadDecoderModule,
         OpenDataDkSharingModule,
+        MulticastModule,
     ],
     controllers: [],
     providers: [],
