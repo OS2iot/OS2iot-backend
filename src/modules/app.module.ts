@@ -48,7 +48,8 @@ import { MulticastModule } from "./device-management/multicast.module";
                 username: configService.get<string>("database.username"),
                 password: configService.get<string>("database.password"),
                 database: "os2iot",
-                synchronize: true,
+                // Don't sync database 1-1 with code. Make migrations necessary
+                synchronize: false,
                 logging: false,
                 autoLoadEntities: true,
                 retryAttempts: 0,
