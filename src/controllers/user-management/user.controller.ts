@@ -132,6 +132,29 @@ export class UserController {
         }
     }
 
+    // @Put("setEmail")
+    // @ApiOperation({ summary: "Change user Email" })
+    // async updateEmail(
+    //     @Req() req: AuthenticatedRequest,
+    //     @Body() email: string
+    // ): Promise<UserResponseDto> {
+    //     try {
+    //         // Don't leak the passwordHash
+    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            
+    //         AuditLog.success(
+    //             ActionType.UPDATE,
+    //             User.name,
+    //             req.user.userId,
+    //         );
+
+    //         return;
+    //     } catch (err) {
+    //         AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId, id);
+    //         throw err;
+    //     }
+    // }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     async find(
