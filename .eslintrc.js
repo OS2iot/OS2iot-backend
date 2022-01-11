@@ -27,7 +27,7 @@ module.exports = {
     },
     overrides: [
         {
-            files: ["test/**/*.ts"],
+            files: ["test/**/*.ts", "src/migration/*.ts"],
             rules: {
                 "max-lines-per-function": "off",
             },
