@@ -310,7 +310,6 @@ export class IoTDeviceService {
             iotDevice,
             false
         );
-
         mappedIotDevice.createdBy = userId;
         mappedIotDevice.updatedBy = userId;
 
@@ -649,7 +648,6 @@ export class IoTDeviceService {
         isUpdate: boolean
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
-
         if (
             !isUpdate &&
             (await this.chirpstackDeviceService.isDeviceAlreadyCreated(
@@ -658,7 +656,6 @@ export class IoTDeviceService {
         ) {
             throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
         }
-
         try {
             const chirpstackDeviceDto = await this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
                 dto.lorawanSettings,
@@ -680,7 +677,6 @@ export class IoTDeviceService {
             }
             throw err;
         }
-
         return lorawanDevice;
     }
 

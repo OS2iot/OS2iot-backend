@@ -13,6 +13,8 @@ import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
+import { Multicast } from "./multicast.entity";
+
 
 @Entity("application")
 @Unique(["name"])
@@ -38,6 +40,14 @@ export class Application extends DbBaseEntity {
         { onDelete: "CASCADE" }
     )
     dataTargets: DataTarget[];
+
+    @OneToMany(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        type => Multicast,
+        multicasts => multicasts.application,
+        { onDelete: "CASCADE" }
+    )
+    multicasts: Multicast[];
 
     @ManyToOne(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

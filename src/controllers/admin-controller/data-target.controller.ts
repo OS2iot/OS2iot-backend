@@ -135,7 +135,7 @@ export class DataTargetController {
         const oldDataTarget = await this.dataTargetService.findOne(id);
         try {
             checkIfUserHasAccessToApplication(req, oldDataTarget.application.id, ApplicationAccessScope.Write);
-            if (oldDataTarget.application.id != updateDto.applicationId) {
+            if (oldDataTarget.application.id !== updateDto.applicationId) {
                 checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
             }
         } catch (err) {
@@ -165,7 +165,7 @@ export class DataTargetController {
     }
 
     @Delete(":id")
-    @ApiOperation({ summary: "Delete an existing IoT-Device" })
+    @ApiOperation({ summary: "Delete an existing DataTarget" })
     @ApiBadRequestResponse()
     @ApplicationAdmin()
     async delete(
@@ -184,7 +184,7 @@ export class DataTargetController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, DataTarget.name, req.user.userId, id);
-            if (err?.status == 403) {
+            if (err?.status === 403) {
                 throw err;
             }
             throw new NotFoundException(err);

@@ -23,6 +23,8 @@ import { User } from "@entities/user.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { Multicast } from "@entities/multicast.entity";
+import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
 import { OrganizationUserAdminPermission } from "@entities/permissions/organization-user-admin-permission.entity";
 import { OrganizationGatewayAdminPermission } from "@entities/permissions/organization-gateway-admin-permission.entity";
@@ -54,6 +56,8 @@ import { OrganizationGatewayAdminPermission } from "@entities/permissions/organi
             SigFoxDevice,
             SigFoxGroup,
             User,
+            Multicast,
+            LorawanMulticastDefinition,
         ]),
     ],
     providers: [AuditLog],

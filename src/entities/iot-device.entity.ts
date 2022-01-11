@@ -4,6 +4,7 @@ import {
     Column,
     Entity,
     JoinColumn,
+    JoinTable,
     ManyToMany,
     ManyToOne,
     OneToMany,
@@ -18,6 +19,7 @@ import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { DeviceModel } from "./device-model.entity";
+import { Multicast } from "./multicast.entity";
 
 @Entity("iot_device")
 @TableInheritance({
@@ -86,6 +88,10 @@ export abstract class IoTDevice extends DbBaseEntity {
     })
     @JoinColumn()
     deviceModel?: DeviceModel;
+
+    @ManyToMany(() => Multicast)
+    @JoinTable()
+    multicasts: Multicast[];
 
     toString(): string {
         return `IoTDevices: id: ${this.id} - name: ${this.name}`;
