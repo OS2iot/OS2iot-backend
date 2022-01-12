@@ -29,14 +29,14 @@ import {
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { Multicast } from "@entities/multicast.entity";
 import {
-    checkIfUserHasReadAccessToApplication,
-    checkIfUserHasWriteAccessToApplication,
+    checkIfUserHasAccessToApplication,
+    ApplicationAccessScope,
 } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
 import { ListAllMulticastsResponseDto } from "@dto/list-all-multicasts-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -64,7 +64,11 @@ export class MulticastController {
         @Body() createMulticastDto: CreateMulticastDto
     ): Promise<Multicast> {
         try {
-            checkIfUserHasWriteAccessToApplication(req, createMulticastDto.applicationID);
+            checkIfUserHasAccessToApplication(
+                req,
+                createMulticastDto.applicationID,
+                ApplicationAccessScope.Write
+            );
             const multicast = await this.multicastService.create(
                 createMulticastDto,
                 req.user.userId
@@ -117,7 +121,11 @@ export class MulticastController {
     ): Promise<Multicast> {
         try {
             const multicast = await this.multicastService.findOne(id);
-            checkIfUserHasReadAccessToApplication(req, multicast.application.id);
+            checkIfUserHasAccessToApplication(
+                req,
+                multicast.application.id,
+                ApplicationAccessScope.Read
+            );
             return multicast;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -140,7 +148,11 @@ export class MulticastController {
         if (!multicast) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
-        checkIfUserHasReadAccessToApplication(req, multicast.application.id);
+        checkIfUserHasAccessToApplication(
+            req,
+            multicast.application.id,
+            ApplicationAccessScope.Read
+        );
 
         return this.multicastService.getDownlinkQueue(
             multicast.lorawanMulticastDefinition.chirpstackGroupId
@@ -161,7 +173,11 @@ export class MulticastController {
             if (!multicast) {
                 throw new NotFoundException();
             }
-            checkIfUserHasWriteAccessToApplication(req, multicast.application.id);
+            checkIfUserHasAccessToApplication(
+                req,
+                multicast.application.id,
+                ApplicationAccessScope.Write
+            );
             const result = await this.multicastService.createDownlink(dto, multicast);
             AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
             return result;
@@ -182,9 +198,17 @@ export class MulticastController {
     ): Promise<Multicast> {
         const oldMulticast = await this.multicastService.findOne(id);
         try {
-            checkIfUserHasWriteAccessToApplication(req, oldMulticast.application.id);
+            checkIfUserHasAccessToApplication(
+                req,
+                oldMulticast.application.id,
+                ApplicationAccessScope.Write
+            );
             if (oldMulticast.application.id !== updateDto.applicationID) {
-                checkIfUserHasWriteAccessToApplication(req, updateDto.applicationID);
+                checkIfUserHasAccessToApplication(
+                    req,
+                    updateDto.applicationID,
+                    ApplicationAccessScope.Write
+                );
             }
         } catch (err) {
             AuditLog.fail(
@@ -215,14 +239,18 @@ export class MulticastController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing multicast" })
     @ApiBadRequestResponse()
-    @Write()
+    @ApplicationAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
             const multicast = await this.multicastService.findOne(id);
-            checkIfUserHasWriteAccessToApplication(req, multicast.application.id);
+            checkIfUserHasAccessToApplication(
+                req,
+                multicast.application.id,
+                ApplicationAccessScope.Write
+            );
             const result = await this.multicastService.multicastDelete(id, multicast);
 
             if (result.affected === 0) {

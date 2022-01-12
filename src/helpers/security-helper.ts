@@ -105,7 +105,6 @@ export function isOrganizationPermission(p: Permission): p is OrganizationPermis
     ].some(x => x === p.type);
 }
 
-// TODO: Mark - NOT TESTED
 export function isOrganizationApplicationPermission(p: {
     type: PermissionType;
 }): p is OrganizationApplicationPermission {
