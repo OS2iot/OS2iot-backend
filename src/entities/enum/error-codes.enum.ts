@@ -36,4 +36,6 @@ export enum ErrorCodes {
     DeleteNotAllowedHasLoRaWANDevices = "MESSAGE.DELETE-NOT-ALLOWED-HAS-LORAWAN-DEVICE",
     KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
     ApiKeyAuthFailed = "MESSAGE.API-KEY-AUTH-FAILED",
+    DifferentServiceprofile = "MESSAGE.DIFFERENT-SERVICE-PROFILE",
+    NewDevicesWrongServiceProfile = "MESSAGE.WRONG-SERVICE-PROFILE",
 }

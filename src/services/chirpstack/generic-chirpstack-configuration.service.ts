@@ -35,12 +35,13 @@ export class GenericChirpstackConfigurationService {
         let url = this.baseUrl + "/api/" + endPoint;
 
         // If limits are supplied, add these as query params
-        if (limit != null && offset != null) {            
-            url += `${endPoint.indexOf("?") >= 0 ? "&" : "?"
-                }limit=${limit}&offset=${offset}`;
+        if (limit != null && offset != null) {
+            url += `${
+                endPoint.indexOf("?") >= 0 ? "&" : "?"
+            }limit=${limit}&offset=${offset}`;
         }
-        
-        let headerDto: HeaderDto = {
+
+        const headerDto: HeaderDto = {
             url,
             timeout,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,

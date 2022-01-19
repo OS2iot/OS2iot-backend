@@ -8,7 +8,13 @@
     "scripts": {
         "prebuild": "rimraf dist",
         "build": "nest build",
+        "generate-migration": "npm run typeorm migration:generate -- -n",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "prestart": "npm run run-migrations",
+        "prestart:debug": "npm run run-migrations",
+        "prestart:dev": "npm run run-migrations",
+        "prestart:prod": "npm run run-migrations",
+        "run-migrations": "npm run typeorm migration:run",
         "start": "nest start",
         "start:dev": "nest start --watch",
         "start:debug": "nest start --debug --watch",
@@ -19,7 +25,7 @@
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./jest-e2e.js --detectOpenHandles --colors",
-        "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig.json",
+        "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig.js",
         "typeorm-e2e": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig-e2e.json"
     },
     "dependencies": {

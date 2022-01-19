@@ -27,6 +27,8 @@ import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ApiKey } from "@entities/api-key.entity";
 import { ApiKeyPermission } from "@entities/api-key-permission.entity";
+import { Multicast } from "@entities/multicast.entity";
+import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 
 @Module({
     imports: [
@@ -56,6 +58,8 @@ import { ApiKeyPermission } from "@entities/api-key-permission.entity";
             User,
             WritePermission,
             ApiKeyPermission,
+            Multicast,
+            LorawanMulticastDefinition
         ]),
     ],
     providers: [AuditLog],
