@@ -40,6 +40,7 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { User } from "@entities/user.entity";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -99,6 +100,29 @@ export class UserController {
         }
     }
 
+    @Put("setEmail")
+    @ApiOperation({ summary: "Change user Email" })
+    async updateEmail(
+        @Req() req: AuthenticatedRequest,
+        @Body() dto: CreateNewKombitUserDto
+    ): Promise<UserResponseDto> {
+        try {
+            const user = await this.find(req.user.userId);
+
+            if (!user.email) {
+                const updatedUser = this.userService.updateEmail(dto, user);
+
+                AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
+                return updatedUser;
+            } else {
+                throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
+            }
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
+            throw err;
+        }
+    }
+
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
     async update(
@@ -131,29 +155,6 @@ export class UserController {
             throw err;
         }
     }
-
-    // @Put("setEmail")
-    // @ApiOperation({ summary: "Change user Email" })
-    // async updateEmail(
-    //     @Req() req: AuthenticatedRequest,
-    //     @Body() email: string
-    // ): Promise<UserResponseDto> {
-    //     try {
-    //         // Don't leak the passwordHash
-    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            
-    //         AuditLog.success(
-    //             ActionType.UPDATE,
-    //             User.name,
-    //             req.user.userId,
-    //         );
-
-    //         return;
-    //     } catch (err) {
-    //         AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId, id);
-    //         throw err;
-    //     }
-    // }
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })

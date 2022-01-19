@@ -21,6 +21,7 @@ import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
 
 @Injectable()
 export class UserService {
@@ -232,6 +233,11 @@ export class UserService {
                 mappedUser
             );
         }
+    }
+
+    async updateEmail(dto: CreateNewKombitUserDto, user: UserResponseDto): Promise<User> {
+        user.email = dto.email;
+        return await this.userRepository.save(user);
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {

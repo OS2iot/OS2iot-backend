@@ -1,4 +1,5 @@
 export enum ErrorCodes {
+    EmailAlreadyExists = "MESSAGE.EMAIL-ALREADY-EXISTS",
     IdDoesNotExists = "MESSAGE.ID-DOES-NOT-EXIST",
     IdMissing = "MESSAGE.ID-MISSING-FROM-REQUEST",
     NameInvalidOrAlreadyInUse = "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
