@@ -1,7 +1,15 @@
-import { Column, Entity, JoinTable, ManyToMany, Unique } from "typeorm";
+import {
+    Column,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    Unique,
+} from "typeorm";
 
 import { DbBaseEntity } from "@entities/base.entity";
 import { Permission } from "@entities/permission.entity";
+import { Organization } from "./organization.entity";
 
 @Entity("user")
 @Unique(["email"])
@@ -24,8 +32,16 @@ export class User extends DbBaseEntity {
     @Column({ nullable: true })
     nameId: string;
 
+    @Column({ nullable: true })
+    awaitingConfirmation: boolean;
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ManyToMany(type => Permission, permission => permission.users)
     @JoinTable()
     permissions: Permission[];
+
+    @ManyToOne(_ => Organization, organization => organization.users, {
+        nullable: true,
+    })
+    organization: Organization;
 }

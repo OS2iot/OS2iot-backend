@@ -21,6 +21,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { User } from "@entities/user.entity";
 
 @Injectable()
 export class OrganizationService {
@@ -58,6 +59,12 @@ export class OrganizationService {
         const org = await this.findByIdWithRelations(id);
         org.name = dto.name;
         org.updatedBy = userId;
+
+        return await this.organizationRepository.save(org);
+    }
+
+    async updateAwaitingUsers(org: Organization, user: User): Promise<Organization> {
+        org.users.push(user);
 
         return await this.organizationRepository.save(org);
     }
@@ -149,6 +156,11 @@ export class OrganizationService {
             loadRelationIds: {
                 relations: ["applications.iotDevices", "createdBy", "updatedBy"],
             },
+        });
+    }
+    async findByIdWithUsers(organizationId: number): Promise<Organization> {
+        return await this.organizationRepository.findOneOrFail(organizationId, {
+            relations: ["users"],
         });
     }
 

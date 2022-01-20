@@ -6,7 +6,6 @@ import {
     InternalServerErrorException,
     NotFoundException,
     Param,
-    ParseBoolPipe,
     ParseIntPipe,
     Post,
     Put,
@@ -41,6 +40,7 @@ import { ActionType } from "@entities/audit-log-entry";
 import { User } from "@entities/user.entity";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -50,7 +50,10 @@ import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-u
 @ApiTags("User Management")
 @Controller("user")
 export class UserController {
-    constructor(private userService: UserService) {}
+    constructor(
+        private userService: UserService,
+        private organizationService: OrganizationService
+    ) {}
 
     private readonly logger = new Logger(UserController.name);
 
@@ -100,17 +103,29 @@ export class UserController {
         }
     }
 
-    @Put("setEmail")
-    @ApiOperation({ summary: "Change user Email" })
-    async updateEmail(
+    @Put("createNewKombitUser")
+    @ApiOperation({ summary: "Create kombit-user Email" })
+    async newKombitUser(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateNewKombitUserDto
     ): Promise<UserResponseDto> {
         try {
-            const user = await this.find(req.user.userId);
+            const user = await this.userService.findOne(req.user.userId);
 
             if (!user.email) {
-                const updatedUser = this.userService.updateEmail(dto, user);
+                const updatedUser = await this.userService.newKombitUser(dto, user);
+
+                dto.organizations.forEach(async organization => {
+                    const dbOrg = await this.organizationService.findByIdWithUsers(
+                        organization.id
+                    );
+                    if (!dbOrg.users.find(user => user.id === updatedUser.id)) {
+                        await this.organizationService.updateAwaitingUsers(
+                            dbOrg,
+                            updatedUser
+                        );
+                    }
+                });
 
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
                 return updatedUser;

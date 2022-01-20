@@ -235,8 +235,9 @@ export class UserService {
         }
     }
 
-    async updateEmail(dto: CreateNewKombitUserDto, user: UserResponseDto): Promise<User> {
+    async newKombitUser(dto: CreateNewKombitUserDto, user: User): Promise<User> {
         user.email = dto.email;
+        user.awaitingConfirmation = true;
         return await this.userRepository.save(user);
     }
 
