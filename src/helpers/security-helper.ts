@@ -59,6 +59,7 @@ export function checkIfUserHasAdminAccessToOrganization(
     );
 }
 
+// Checks if the user has admin access to ANY of the supplied organizations
 export function checkIfUserHasAdminAccessToAnyOrganization(
     req: AuthenticatedRequest,
     organisationIds: number[]
@@ -76,6 +77,24 @@ export function checkIfUserHasAdminAccessToAnyOrganization(
     }
 
     throw new ForbiddenException();
+}
+
+// Checks if the user has admin access to ALL of the supplied organizations
+export function checkIfUserHasAdminAccessToAllOrganizations(
+    req: AuthenticatedRequest,
+    organisationIds: number[]
+): void {
+    if (req.user.permissions.isGlobalAdmin) {
+        return;
+    }
+
+    const userAdminOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+
+    for (const id of organisationIds) {        
+        if (!_.includes(userAdminOrganizations, id)) {
+            throw new ForbiddenException();
+        }
+    }    
 }
 
 export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {

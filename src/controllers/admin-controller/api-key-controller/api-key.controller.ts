@@ -1,3 +1,4 @@
+import { PermissionService } from '@services/user-management/permission.service';
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { OrganizationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
@@ -11,6 +12,7 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
+	checkIfUserHasAdminAccessToAllOrganizations,
     checkIfUserHasAdminAccessToAnyOrganization,
     checkIfUserHasAdminAccessToOrganization,
 } from "@helpers/security-helper";
@@ -39,10 +41,12 @@ import {
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { Read, Write } from "@auth/roles.decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @OrganizationAdmin()
+@Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("API Key Management")
@@ -50,7 +54,8 @@ import { OrganizationService } from "@services/user-management/organization.serv
 export class ApiKeyController {
     constructor(
         private apiKeyService: ApiKeyService,
-        private organizationService: OrganizationService
+        private organizationService: OrganizationService,
+		private permissionService: PermissionService
     ) {}
 
     @Post()
@@ -146,7 +151,7 @@ export class ApiKeyController {
             permissionIds
         );
 
-        checkIfUserHasAdminAccessToAnyOrganization(
+        checkIfUserHasAdminAccessToAllOrganizations(
             req,
             apiKeyOrganizations.map(x => x.id)
         );

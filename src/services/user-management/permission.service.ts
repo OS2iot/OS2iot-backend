@@ -45,7 +45,7 @@ export class PermissionService {
         @Inject(forwardRef(() => UserService))
         private userService: UserService,
         @Inject(forwardRef(() => ApplicationService))
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService		
     ) {}
 
     READ_SUFFIX = " - Read";
@@ -304,6 +304,29 @@ export class PermissionService {
             .getRawMany();
     }
 
+    async findPermissionsForApiKey(apiKeyId: number): Promise<PermissionMinimalDto[]> {
+		return await this.permissionRepository
+            .createQueryBuilder("permission")
+            .leftJoin("permission.apiKeys", "apiKey")
+            .leftJoinAndSelect(
+                "application_permissions_permission",
+                "application_permission",
+                '"permission"."id" = "application_permission"."permissionId"'
+            )
+            .leftJoinAndSelect(
+                "application",
+                "application",
+                '"application"."id"="application_permission"."applicationId" '
+            )
+            .where("apiKey.id = :id", { id: apiKeyId })
+            .select([
+                "permission.type as permission_type",
+                "permission.organization as organization_id",
+                "application.id as application_id",
+            ])
+            .getRawMany();
+	}
+
     async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
@@ -334,24 +357,33 @@ export class PermissionService {
             permissions = _.union(permissions, permissionsForOrgAdmin);
         }
 
-        const res = new UserPermissions();
-
-        permissions.forEach(p => {
-            if (p.permission_type == PermissionType.GlobalAdmin) {
-                res.isGlobalAdmin = true;
-            } else if (p.permission_type == PermissionType.OrganizationAdmin) {
-                res.organizationAdminPermissions.add(p.organization_id);
-                // Also grant writePermission to the application
-                this.addOrUpdate(res.writePermissions, p);
-            } else if (p.permission_type == PermissionType.Write) {
-                this.addOrUpdate(res.writePermissions, p);
-            } else if (p.permission_type == PermissionType.Read) {
-                this.addOrUpdate(res.readPermissions, p);
-            }
-        });
-
-        return res;
+        return this.createUserPermissionsFromPermissions(permissions);
     }
+
+	async findPermissionGroupedByLevelForApiKey(apiKeyId: number): Promise<UserPermissions> {
+        let permissions = await this.findPermissionsForApiKey(apiKeyId);        
+        return this.createUserPermissionsFromPermissions(permissions);
+    }
+
+	createUserPermissionsFromPermissions(permissions: PermissionMinimalDto[]) {
+		const res = new UserPermissions();
+
+		permissions.forEach(p => {
+			if (p.permission_type == PermissionType.GlobalAdmin) {
+				res.isGlobalAdmin = true;
+			} else if (p.permission_type == PermissionType.OrganizationAdmin) {
+				res.organizationAdminPermissions.add(p.organization_id);
+				// Also grant writePermission to the application
+				this.addOrUpdate(res.writePermissions, p);
+			} else if (p.permission_type == PermissionType.Write) {
+				this.addOrUpdate(res.writePermissions, p);
+			} else if (p.permission_type == PermissionType.Read) {
+				this.addOrUpdate(res.readPermissions, p);
+			}
+		});
+
+		return res;
+	}
 
     async findManyByIds(ids: number[]): Promise<Permission[]> {
         return await this.permissionRepository.findByIds(ids);

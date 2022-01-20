@@ -1,3 +1,4 @@
+import { ApiKeyService } from '@services/api-key-management/api-key.service';
 import { AuthenticatedApiKey } from "@dto/internal/authenticated-api-key";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
@@ -16,7 +17,7 @@ export class ApiKeyStrategy extends PassportStrategy(
 ) {
     constructor(
         private authService: AuthService,
-        private permissionService: PermissionService
+        private permissionService: PermissionService		
     ) {
         super(
             {
@@ -36,20 +37,22 @@ export class ApiKeyStrategy extends PassportStrategy(
             throw new UnauthorizedException(ErrorCodes.ApiKeyAuthFailed);
         }
 
-        // TODO: We should not need to create a user id for the api key as it's not a user.
-        // TODO: However, it's expected almost everywhere
-        const userId = 1;
-        const permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
-            userId
+		// Get the permissions and the UserID from the API Key instead of the user		
+		const permissions = await this.permissionService.findPermissionGroupedByLevelForApiKey(
+            apiKeyDb.id
         );
+		
+		// const permissions = dbApiKey.permissions as Permission[];
+		const userId = apiKeyDb.systemUser.id;
 
+		// Set the permissions and the userId on the returned user 
         const user: AuthenticatedApiKey = {
             userId,
-            username: "",
+            username: apiKeyDb.systemUser.name,
             permissions,
             fooApiField: "THIS IS AN API KEY REQUEST",
         };
 
-        return user;
+        return user;	
     }
 }

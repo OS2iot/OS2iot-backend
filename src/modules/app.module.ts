@@ -1,8 +1,7 @@
+import { ApiKeyModule } from '@modules/api-key-management/api-key.module';
 import { HttpModule, Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { LoggerModule } from "nestjs-pino";
-
 import configuration from "@config/configuration";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
 import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
@@ -90,6 +89,7 @@ import { MulticastModule } from "./device-management/multicast.module";
         TestPayloadDecoderModule,
         OpenDataDkSharingModule,
         MulticastModule,
+		ApiKeyModule
     ],
     controllers: [],
     providers: [],

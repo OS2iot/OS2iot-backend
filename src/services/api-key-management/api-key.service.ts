@@ -1,3 +1,4 @@
+import { User } from '@entities/user.entity';
 import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
 import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-response.dto";
@@ -24,6 +25,7 @@ export class ApiKeyService {
     findOne(key: string): Promise<ApiKey> {
         return this.apiKeyRepository.findOne({
             where: { key },
+			relations: ["systemUser"]
         });
     }
 
@@ -76,11 +78,20 @@ export class ApiKeyService {
     }
 
     async create(dto: CreateApiKeyDto, userId: number): Promise<ApiKeyResponseDto> {
-        const apiKey = new ApiKey();
+        // Create the key
+		const apiKey = new ApiKey();
         apiKey.key = uuidv4();
         apiKey.name = dto.name;
         apiKey.updatedBy = userId;
         apiKey.createdBy = userId;
+
+		// Create the system user
+		const systemUser = new User();
+		systemUser.active = false;
+		systemUser.isSystemUser = true;
+		systemUser.passwordHash = uuidv4(); // Random password, user can never log in
+		systemUser.name = apiKey.name;		
+		apiKey.systemUser = systemUser;
 
         if (dto.permissions?.length > 0) {
             const permissionsDb = await this.permissionService.findManyByIds(

@@ -1,4 +1,5 @@
-import { Column, Entity, JoinTable, ManyToMany, Unique } from "typeorm";
+import { ApiKey } from '@entities/api-key.entity';
+import { Column, Entity, JoinTable, ManyToMany, OneToOne, Unique } from "typeorm";
 
 import { DbBaseEntity } from "@entities/base.entity";
 import { Permission } from "@entities/permission.entity";
@@ -28,4 +29,13 @@ export class User extends DbBaseEntity {
     @ManyToMany(type => Permission, permission => permission.users)
     @JoinTable()
     permissions: Permission[];
+
+	@OneToOne(type => ApiKey, a => a.systemUser, {
+        nullable: true,
+        cascade: false		
+    })
+	apiKeyRef: ApiKey;
+
+	@Column({default: false})
+	isSystemUser: boolean;
 }
