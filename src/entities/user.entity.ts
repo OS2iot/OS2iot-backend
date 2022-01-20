@@ -40,8 +40,9 @@ export class User extends DbBaseEntity {
     @JoinTable()
     permissions: Permission[];
 
-    @ManyToOne(_ => Organization, organization => organization.users, {
+    @ManyToMany(_ => Organization, organization => organization.users, {
         nullable: true,
     })
-    organization: Organization;
+    @JoinTable()
+    organizations: Organization[];
 }

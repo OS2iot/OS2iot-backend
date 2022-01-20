@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, Unique } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, Unique } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
@@ -54,7 +54,7 @@ export class Organization extends DbBaseEntity {
     })
     deviceModels?: DeviceModel[];
 
-    @OneToMany(_ => User, user => user.organization, {
+    @ManyToMany(_ => User, user => user.organizations, {
         nullable: true,
     })
     users?: User[];

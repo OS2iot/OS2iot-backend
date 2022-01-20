@@ -108,25 +108,24 @@ export class UserController {
     async newKombitUser(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateNewKombitUserDto
-    ): Promise<UserResponseDto> {
+    ): Promise<User> {
         try {
             const user = await this.userService.findOne(req.user.userId);
 
             if (!user.email) {
                 const updatedUser = await this.userService.newKombitUser(dto, user);
 
-                dto.organizations.forEach(async organization => {
+                for (let index = 0; index < dto.organizations.length; index++) {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
-                        organization.id
+                        dto.organizations[index].id
                     );
                     if (!dbOrg.users.find(user => user.id === updatedUser.id)) {
-                        await this.organizationService.updateAwaitingUsers(
+                        const org = await this.organizationService.updateAwaitingUsers(
                             dbOrg,
                             updatedUser
                         );
                     }
-                });
-
+                }
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
                 return updatedUser;
             } else {
