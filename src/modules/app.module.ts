@@ -1,4 +1,3 @@
-import { ApiKeyModule } from '@modules/api-key-management/api-key.module';
 import { HttpModule, Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -88,8 +87,7 @@ import { MulticastModule } from "./device-management/multicast.module";
         SearchModule,
         TestPayloadDecoderModule,
         OpenDataDkSharingModule,
-        MulticastModule,
-		ApiKeyModule
+        MulticastModule
     ],
     controllers: [],
     providers: [],
