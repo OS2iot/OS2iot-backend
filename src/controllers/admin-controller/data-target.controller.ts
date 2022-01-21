@@ -23,7 +23,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
@@ -44,7 +44,7 @@ import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Data Target")
 @Controller("data-target")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()

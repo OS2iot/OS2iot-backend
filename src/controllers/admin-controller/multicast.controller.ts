@@ -34,7 +34,7 @@ import {
 } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import { RolesGuard } from "@auth/roles.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
@@ -46,7 +46,7 @@ import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
 import { CreateChirpstackMulticastQueueItemResponse } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 
 @ApiTags("Multicast")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()
