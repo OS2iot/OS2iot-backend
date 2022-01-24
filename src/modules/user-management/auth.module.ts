@@ -13,6 +13,8 @@ import { AuthService } from "@services/user-management/auth.service";
 import { AuthController } from "@user-management-controller/auth.controller";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { HandleRedirectUrlParameterMiddleware } from "@auth/handle-redirect-url-parameter.middleware";
+import { ApiKeyStrategy } from "@auth/api-key.strategy";
+import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
 
 @Module({
     imports: [
@@ -31,8 +33,9 @@ import { HandleRedirectUrlParameterMiddleware } from "@auth/handle-redirect-url-
         forwardRef(() => UserModule),
         forwardRef(() => PermissionModule),
         forwardRef(() => OrganizationModule),
+        forwardRef(() => ApiKeyModule)
     ],
-    providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy],
+    providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy, ApiKeyStrategy],
     exports: [AuthService],
     controllers: [AuthController],
 })

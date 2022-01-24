@@ -1,21 +1,22 @@
+import { AuthenticatedUser } from "@dto/internal/authenticated-user";
+import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
-import { ExtractJwt, Strategy } from "passport-jwt";
-
-import { AuthenticatedUser } from "@dto/internal/authenticated-user";
-import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
 import { PermissionService } from "@services/user-management/permission.service";
 import { UserService } from "@services/user-management/user.service";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { JwtStrategyName } from "./constants";
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, JwtStrategyName) {
     constructor(
         private permissionService: PermissionService,
         private userService: UserService,
         private configService: ConfigService
     ) {
         super({
+            // Configure the strategy to look for the JWT token in the Authorization header
             jwtFromRequest: ExtractJwt.fromExtractors([
                 ExtractJwt.fromAuthHeaderAsBearerToken(),
                 ExtractJwt.fromUrlQueryParameter("secret_token"),

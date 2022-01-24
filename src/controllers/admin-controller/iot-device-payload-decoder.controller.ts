@@ -16,7 +16,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
@@ -29,7 +29,7 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @ApiTags("IoT Device")
 @Controller("iot-device/minimalByPayloadDecoder")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()

@@ -1,8 +1,3 @@
-import { HttpModule, Module, RequestMethod } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { LoggerModule } from "nestjs-pino";
-
 import configuration from "@config/configuration";
 import { PayloadDecoderKafkaModule } from "@modules/data-management/payload-decoder-kafka.module";
 import { DataTargetKafkaModule } from "@modules/data-target/data-target-kafka.module";
@@ -11,6 +6,11 @@ import { DefaultModule } from "@modules/default.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
+import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
+import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
+import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
+import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
+import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
 import { SigFoxListenerModule } from "@modules/device-integrations/sigfox-listener.module";
 import { ApplicationModule } from "@modules/device-management/application.module";
 import { DataTargetModule } from "@modules/device-management/data-target.module";
@@ -21,17 +21,15 @@ import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
-import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
-import { SigfoxDeviceTypeModule } from "@modules/device-integrations/sigfox-device-type.module";
-import { SigFoxGroupModule } from "@modules/device-integrations/sigfox-group.module";
-import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
-import { SigfoxDeviceModule } from "@modules/device-integrations/sigfox-device.module";
+import { HttpModule, Module } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
-import { SearchModule } from "./search.module";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { DeviceModelModule } from "./device-management/device-model.module";
-import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
-import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { MulticastModule } from "./device-management/multicast.module";
+import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
+import { SearchModule } from "./search.module";
+import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
 
 @Module({
     imports: [
