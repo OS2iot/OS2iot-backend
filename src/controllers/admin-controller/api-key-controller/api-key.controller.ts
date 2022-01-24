@@ -1,6 +1,5 @@
-import { PermissionService } from '@services/user-management/permission.service';
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { OrganizationAdmin } from "@auth/roles.decorator";
+import { OrganizationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
@@ -12,8 +11,7 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-	checkIfUserHasAdminAccessToAllOrganizations,
-    checkIfUserHasAdminAccessToAnyOrganization,
+    checkIfUserHasAdminAccessToAllOrganizations,
     checkIfUserHasAdminAccessToOrganization,
 } from "@helpers/security-helper";
 import {
@@ -41,7 +39,6 @@ import {
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
-import { Read, Write } from "@auth/roles.decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -54,8 +51,7 @@ import { Read, Write } from "@auth/roles.decorator";
 export class ApiKeyController {
     constructor(
         private apiKeyService: ApiKeyService,
-        private organizationService: OrganizationService,
-		private permissionService: PermissionService
+        private organizationService: OrganizationService
     ) {}
 
     @Post()

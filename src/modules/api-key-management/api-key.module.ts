@@ -7,7 +7,7 @@ import { ApiKeyService } from "@services/api-key-management/api-key.service";
 
 @Module({
     imports: [
-        SharedModule,		
+        SharedModule,
         forwardRef(() => PermissionModule),
         forwardRef(() => OrganizationModule),
     ],

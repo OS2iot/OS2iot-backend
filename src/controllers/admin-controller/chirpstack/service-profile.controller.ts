@@ -1,4 +1,4 @@
-import { ComposeAuthGuard } from './../../../auth/compose-auth.guard';
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import {
     BadRequestException,
     Body,

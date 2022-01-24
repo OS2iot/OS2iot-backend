@@ -1,9 +1,8 @@
-import { ApiKey } from './api-key.entity';
-import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
-
 import { DbBaseEntity } from "@entities/base.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
+import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
+import { ApiKey } from "./api-key.entity";
 
 @Entity()
 @TableInheritance({
@@ -30,10 +29,6 @@ export abstract class Permission extends DbBaseEntity {
     )
     users: User[];
 
-	@ManyToMany(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-        () => ApiKey,
-        apiKey => apiKey.permissions
-    )
-    apiKeys: ApiKey[];	
+    @ManyToMany(() => ApiKey, apiKey => apiKey.permissions)
+    apiKeys: ApiKey[];
 }
