@@ -41,6 +41,8 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { UpdateUserOrgsDto } from "@dto/user-management/update-user-orgs.dto";
+import { UserService } from "@services/user-management/user.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -50,7 +52,10 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 @ApiTags("User Management")
 @Controller("organization")
 export class OrganizationController {
-    constructor(private organizationService: OrganizationService) {}
+    constructor(
+        private organizationService: OrganizationService,
+        private userService: UserService
+    ) {}
     private readonly logger = new Logger(OrganizationController.name);
 
     @GlobalAdmin()
@@ -75,6 +80,32 @@ export class OrganizationController {
             return organization;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, Organization.name, req.user.userId);
+            throw err;
+        }
+    }
+
+    @Put("updateUserOrgs")
+    @ApiOperation({ summary: "Updates the users organizations" })
+    @ApiNotFoundResponse()
+    async updateUserOrgs(
+        @Req() req: AuthenticatedRequest,
+        @Body() updateUserOrgsDto: UpdateUserOrgsDto
+    ): Promise<UpdateUserOrgsDto> {
+        try {
+            const user = await this.userService.findOne(req.user.userId);
+
+            for (let index = 0; index < updateUserOrgsDto.organizations.length; index++) {
+                const dbOrg = await this.organizationService.findByIdWithUsers(
+                    updateUserOrgsDto.organizations[index].id
+                );
+
+                await this.organizationService.updateAwaitingUsers(dbOrg, user);
+            }
+
+            AuditLog.success(ActionType.UPDATE, Organization.name, req.user.userId);
+            return updateUserOrgsDto;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, Organization.name, req.user.userId);
             throw err;
         }
     }

@@ -119,12 +119,11 @@ export class UserController {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
                         dto.organizations[index].id
                     );
-                    if (!dbOrg.users.find(user => user.id === updatedUser.id)) {
-                        const org = await this.organizationService.updateAwaitingUsers(
-                            dbOrg,
-                            updatedUser
-                        );
-                    }
+
+                    await this.organizationService.updateAwaitingUsers(
+                        dbOrg,
+                        updatedUser
+                    );
                 }
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
                 return updatedUser;

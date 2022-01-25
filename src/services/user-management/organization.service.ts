@@ -64,8 +64,9 @@ export class OrganizationService {
     }
 
     async updateAwaitingUsers(org: Organization, user: User): Promise<Organization> {
-        org.users.push(user);
-
+        if (!org.users.find(dbUser => dbUser.id === user.id)) {
+            org.users.push(user);
+        }
         return await this.organizationRepository.save(org);
     }
 

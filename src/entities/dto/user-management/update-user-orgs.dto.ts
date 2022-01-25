@@ -1,13 +1,8 @@
 import { Organization } from "@entities/organization.entity";
 import { ApiProperty } from "@nestjs/swagger";
-import { ArrayMinSize, IsEmail, IsNotEmpty } from "class-validator";
+import { ArrayMinSize } from "class-validator";
 
-export class CreateNewKombitUserDto {
-    @ApiProperty({ required: true })
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
-    
+export class UpdateUserOrgsDto {
     @ApiProperty({ required: true })
     @ArrayMinSize(1)
     organizations: Organization[];
