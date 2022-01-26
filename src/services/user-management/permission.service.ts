@@ -45,7 +45,7 @@ export class PermissionService {
         @Inject(forwardRef(() => UserService))
         private userService: UserService,
         @Inject(forwardRef(() => ApplicationService))
-        private applicationService: ApplicationService		
+        private applicationService: ApplicationService
     ) {}
 
     READ_SUFFIX = " - Read";
@@ -361,11 +361,11 @@ export class PermissionService {
     }
 
 	async findPermissionGroupedByLevelForApiKey(apiKeyId: number): Promise<UserPermissions> {
-        let permissions = await this.findPermissionsForApiKey(apiKeyId);        
+        const permissions = await this.findPermissionsForApiKey(apiKeyId);
         return this.createUserPermissionsFromPermissions(permissions);
     }
 
-	createUserPermissionsFromPermissions(permissions: PermissionMinimalDto[]) {
+	private createUserPermissionsFromPermissions(permissions: PermissionMinimalDto[]): UserPermissions {
 		const res = new UserPermissions();
 
 		permissions.forEach(p => {

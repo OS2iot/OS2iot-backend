@@ -28,7 +28,4 @@ export abstract class Permission extends DbBaseEntity {
         user => user.permissions
     )
     users: User[];
-
-    @ManyToMany(() => ApiKey, apiKey => apiKey.permissions)
-    apiKeys: ApiKey[];
 }

@@ -8,7 +8,4 @@ import { Organization } from "./organization.entity";
 export abstract class ApiKeyPermission extends Permission {
     @ManyToMany(_ => ApiKey, key => key.permissions, { onDelete: "CASCADE" })
     apiKeys: ApiKey[];
-
-    @ManyToOne(() => Organization, { onDelete: "CASCADE" })
-    organization: Organization;
 }
