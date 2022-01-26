@@ -281,10 +281,9 @@ export class PermissionService {
         });
     }
 
-    async findPermissionsForUser(userId: number): Promise<PermissionMinimalDto[]> {
-        return await this.permissionRepository
+    buildPermissionsQuery(): SelectQueryBuilder<Permission> {
+        return this.permissionRepository
             .createQueryBuilder("permission")
-            .leftJoin("permission.users", "user")
             .leftJoinAndSelect(
                 "application_permissions_permission",
                 "application_permission",
@@ -295,55 +294,60 @@ export class PermissionService {
                 "application",
                 '"application"."id"="application_permission"."applicationId" '
             )
-            .where("user.id = :id", { id: userId })
             .select([
                 "permission.type as permission_type",
                 "permission.organization as organization_id",
                 "application.id as application_id",
-            ])
+            ]);
+    }
+
+    async findPermissionsForUser(userId: number): Promise<PermissionMinimalDto[]> {
+        return await this.buildPermissionsQuery()
+            .leftJoin("permission.users", "user")
+            .where("user.id = :id", { id: userId })
             .getRawMany();
     }
 
     async findPermissionsForApiKey(apiKeyId: number): Promise<PermissionMinimalDto[]> {
-		return await this.permissionRepository
-            .createQueryBuilder("permission")
+        return await this.buildPermissionsQuery()
             .leftJoin("permission.apiKeys", "apiKey")
-            .leftJoinAndSelect(
-                "application_permissions_permission",
-                "application_permission",
-                '"permission"."id" = "application_permission"."permissionId"'
-            )
-            .leftJoinAndSelect(
-                "application",
-                "application",
-                '"application"."id"="application_permission"."applicationId" '
-            )
             .where("apiKey.id = :id", { id: apiKeyId })
-            .select([
-                "permission.type as permission_type",
-                "permission.organization as organization_id",
-                "application.id as application_id",
-            ])
             .getRawMany();
-	}
+    }
 
     async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
-        return await this.permissionRepository
-            .createQueryBuilder("permission")
+        return await this.buildPermissionsWithApplicationsQuery()
             .leftJoin("permission.users", "user")
-            .leftJoinAndSelect("permission.organization", "organization")
-            .leftJoinAndSelect("organization.applications", "application")
             .where("permission.type = :permType AND user.id = :id", {
                 permType: PermissionType.OrganizationAdmin,
                 id: userId,
             })
+            .getRawMany();
+    }
+
+    buildPermissionsWithApplicationsQuery(): SelectQueryBuilder<Permission> {
+        return this.permissionRepository
+            .createQueryBuilder("permission")
+            .leftJoinAndSelect("permission.organization", "organization")
+            .leftJoinAndSelect("organization.applications", "application")
             .select([
                 "permission.type as permission_type",
                 "permission.organization as organization_id",
                 "application.id as application_id",
-            ])
+            ]);
+    }
+
+    async findPermissionsForApiKeyOrgAdminWithApplications(
+        apiKeyId: number
+    ): Promise<PermissionMinimalDto[]> {
+        return await this.buildPermissionsWithApplicationsQuery()
+            .leftJoin("permission.apiKeys", "apiKey")
+            .where("permission.type = :permType AND apiKey.id = :id", {
+                permType: PermissionType.OrganizationAdmin,
+                id: apiKeyId,
+            })
             .getRawMany();
     }
 
@@ -360,30 +364,41 @@ export class PermissionService {
         return this.createUserPermissionsFromPermissions(permissions);
     }
 
-	async findPermissionGroupedByLevelForApiKey(apiKeyId: number): Promise<UserPermissions> {
-        const permissions = await this.findPermissionsForApiKey(apiKeyId);
+    async findPermissionGroupedByLevelForApiKey(
+        apiKeyId: number
+    ): Promise<UserPermissions> {
+        let permissions = await this.findPermissionsForApiKey(apiKeyId);
+        if (this.isOrganizationAdmin(permissions)) {
+            // For organization admins, we need to fetch all applications they have permissions to
+            const permissionsForOrgAdmin = await this.findPermissionsForApiKeyOrgAdminWithApplications(
+                apiKeyId
+            );
+            permissions = _.union(permissions, permissionsForOrgAdmin);
+        }
         return this.createUserPermissionsFromPermissions(permissions);
     }
 
-	private createUserPermissionsFromPermissions(permissions: PermissionMinimalDto[]): UserPermissions {
-		const res = new UserPermissions();
+    private createUserPermissionsFromPermissions(
+        permissions: PermissionMinimalDto[]
+    ): UserPermissions {
+        const res = new UserPermissions();
 
-		permissions.forEach(p => {
-			if (p.permission_type == PermissionType.GlobalAdmin) {
-				res.isGlobalAdmin = true;
-			} else if (p.permission_type == PermissionType.OrganizationAdmin) {
-				res.organizationAdminPermissions.add(p.organization_id);
-				// Also grant writePermission to the application
-				this.addOrUpdate(res.writePermissions, p);
-			} else if (p.permission_type == PermissionType.Write) {
-				this.addOrUpdate(res.writePermissions, p);
-			} else if (p.permission_type == PermissionType.Read) {
-				this.addOrUpdate(res.readPermissions, p);
-			}
-		});
+        permissions.forEach(p => {
+            if (p.permission_type == PermissionType.GlobalAdmin) {
+                res.isGlobalAdmin = true;
+            } else if (p.permission_type == PermissionType.OrganizationAdmin) {
+                res.organizationAdminPermissions.add(p.organization_id);
+                // Also grant writePermission to the application
+                this.addOrUpdate(res.writePermissions, p);
+            } else if (p.permission_type == PermissionType.Write) {
+                this.addOrUpdate(res.writePermissions, p);
+            } else if (p.permission_type == PermissionType.Read) {
+                this.addOrUpdate(res.readPermissions, p);
+            }
+        });
 
-		return res;
-	}
+        return res;
+    }
 
     async findManyByIds(ids: number[]): Promise<Permission[]> {
         return await this.permissionRepository.findByIds(ids);
