@@ -42,7 +42,6 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 @Controller("chirpstack/service-profiles")
 @UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
     private readonly logger = new Logger(ServiceProfileController.name);

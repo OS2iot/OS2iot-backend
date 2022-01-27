@@ -40,7 +40,6 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 @Controller("chirpstack/gateway")
 @UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class ChirpstackGatewayController {
     constructor(private chirpstackGatewayService: ChirpstackGatewayService) {}
 
@@ -48,6 +47,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @Write()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateGatewayDto
@@ -97,6 +97,7 @@ export class ChirpstackGatewayController {
     @Get(":gatewayId")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
+    @Read()
     async getOne(
         @Param("gatewayId") gatewayId: string
     ): Promise<SingleGatewayResponseDto> {
@@ -115,6 +116,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @Write()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string,
@@ -150,6 +152,7 @@ export class ChirpstackGatewayController {
     }
 
     @Delete(":gatewayId")
+    @Write()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string

@@ -43,7 +43,6 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 @Controller("chirpstack/device-profiles")
 @UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 
