@@ -118,9 +118,9 @@ export class ApiKeyService {
         apiKey.name = dto.name;
         apiKey.updatedBy = userId;
 
-        if (dto.permissions?.length) {
+        if (dto.permissionIds?.length) {
             const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissions
+                dto.permissionIds
             );
             apiKey.permissions = permissionsDb.map(pm => ({
                 ...pm,

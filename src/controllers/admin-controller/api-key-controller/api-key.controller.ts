@@ -90,7 +90,7 @@ export class ApiKeyController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: UpdateApiKeyDto
     ): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToPermissions(req, dto.permissions);
+        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
         try {
             const result = await this.apiKeyService.update(id, dto, req.user.userId);

@@ -17,5 +17,5 @@ export class UpdateApiKeyDto {
     @IsArray()
     @ArrayNotEmpty()
     @ArrayUnique()
-    permissions: number[];
+    permissionIds: number[];
 }
