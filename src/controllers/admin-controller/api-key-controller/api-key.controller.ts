@@ -27,6 +27,7 @@ import {
     Query,
     Req,
     UseGuards,
+    Put,
 } from "@nestjs/common";
 import {
     ApiBearerAuth,
@@ -35,10 +36,12 @@ import {
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
+    ApiBadRequestResponse,
 } from "@nestjs/swagger";
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -60,7 +63,7 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateApiKeyDto
     ): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToPermissions(req, dto.permissions);
+        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
         try {
             const result = await this.apiKeyService.create(dto, req.user.userId);
@@ -75,6 +78,33 @@ export class ApiKeyController {
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, ApiKey.name, req.user.userId);
+            throw err;
+        }
+    }
+
+    @Put(":id")
+    @ApiOperation({ summary: "Update API key" })
+    @ApiBadRequestResponse()
+    async updateApiKey(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number,
+        @Body() dto: UpdateApiKeyDto
+    ): Promise<ApiKeyResponseDto> {
+        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
+
+        try {
+            const result = await this.apiKeyService.update(id, dto, req.user.userId);
+
+            AuditLog.success(
+                ActionType.UPDATE,
+                ApiKey.name,
+                req.user.userId,
+                result.id,
+                result.name
+            );
+            return result;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, ApiKey.name, req.user.userId, id);
             throw err;
         }
     }
@@ -123,14 +153,14 @@ export class ApiKeyController {
         await this.checkIfUserHasAccessToApiKey(req, id);
 
         try {
-            return await this.apiKeyService.findOneById(id);
+            return await this.apiKeyService.findOneByIdWithPermissions(id);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
     }
 
     private async checkIfUserHasAccessToApiKey(req: AuthenticatedRequest, id: number) {
-        const apiKey = await this.apiKeyService.findOneByIdWithPermissions(id);
+        const apiKey = await this.apiKeyService.findOneByIdWithRelations(id);
         await this.checkIfUserHasAccessToPermissions(
             req,
             apiKey.permissions.map(x => x.id)

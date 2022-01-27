@@ -11,6 +11,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
+import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class ApiKeyService {
@@ -29,16 +31,17 @@ export class ApiKeyService {
         });
     }
 
-    findOneById(id: number): Promise<ApiKey> {
-        return this.apiKeyRepository.findOne({
-            where: { id },
-        });
-    }
-
     findOneByIdWithPermissions(id: number): Promise<ApiKey> {
         return this.apiKeyRepository.findOne({
             where: { id },
-            relations: ["permissions"],
+            relations: [nameof<ApiKey>("permissions")],
+        });
+    }
+
+    findOneByIdWithRelations(id: number): Promise<ApiKey> {
+        return this.apiKeyRepository.findOne({
+            where: { id },
+            relations: [nameof<ApiKey>("permissions"), nameof<ApiKey>("systemUser")],
         });
     }
 
@@ -93,14 +96,41 @@ export class ApiKeyService {
         systemUser.name = apiKey.name;
         apiKey.systemUser = systemUser;
 
-        if (dto.permissions?.length > 0) {
+        if (dto.permissionIds?.length > 0) {
             const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissions
+                dto.permissionIds
             );
 
             apiKey.permissions = permissionsDb.map(
                 pm => ({ ...pm, apiKeys: null } as ApiKeyPermission)
             );
+        }
+
+        return await this.apiKeyRepository.save(apiKey);
+    }
+
+    async update(
+        id: number,
+        dto: UpdateApiKeyDto,
+        userId: number
+    ): Promise<ApiKeyResponseDto> {
+        const apiKey = await this.findOneByIdWithRelations(id);
+        apiKey.name = dto.name;
+        apiKey.updatedBy = userId;
+
+        if (dto.permissionIds?.length) {
+            const permissionsDb = await this.permissionService.findManyByIds(
+                dto.permissionIds
+            );
+            apiKey.permissions = permissionsDb.map(pm => ({
+                ...pm,
+                apiKeys: [],
+            }));
+        }
+
+        if (dto.name !== apiKey.name) {
+            apiKey.systemUser.name = dto.name;
+            apiKey.name = dto.name;
         }
 
         return await this.apiKeyRepository.save(apiKey);

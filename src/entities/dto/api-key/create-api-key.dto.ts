@@ -7,9 +7,15 @@ export class CreateApiKeyDto {
     @Length(2, 50)
     name: string;
 
-    @ApiProperty({ required: true })
+    @ApiProperty({
+        required: true,
+        type: "array",
+        items: {
+            type: "number",
+        },
+    })
     @IsArray()
     @ArrayNotEmpty()
     @ArrayUnique()
-    permissions: number[];
+    permissionIds: number[];
 }
