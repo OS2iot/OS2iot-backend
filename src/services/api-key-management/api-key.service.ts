@@ -31,7 +31,7 @@ export class ApiKeyService {
         });
     }
 
-    findOneById(id: number): Promise<ApiKey> {
+    findOneByIdWithPermissions(id: number): Promise<ApiKey> {
         return this.apiKeyRepository.findOne({
             where: { id },
             relations: [nameof<ApiKey>("permissions")],
@@ -96,9 +96,9 @@ export class ApiKeyService {
         systemUser.name = apiKey.name;
         apiKey.systemUser = systemUser;
 
-        if (dto.permissions?.length > 0) {
+        if (dto.permissionIds?.length > 0) {
             const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissions
+                dto.permissionIds
             );
 
             apiKey.permissions = permissionsDb.map(

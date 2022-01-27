@@ -63,7 +63,7 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateApiKeyDto
     ): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToPermissions(req, dto.permissions);
+        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
         try {
             const result = await this.apiKeyService.create(dto, req.user.userId);
@@ -153,7 +153,7 @@ export class ApiKeyController {
         await this.checkIfUserHasAccessToApiKey(req, id);
 
         try {
-            return await this.apiKeyService.findOneById(id);
+            return await this.apiKeyService.findOneByIdWithPermissions(id);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
