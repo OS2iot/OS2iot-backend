@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber } from "class-validator";
+import { IsDefined, IsNumber } from "class-validator";
 
 export class CreateDeviceModelDto {
     @ApiProperty({ required: true })
@@ -7,5 +7,7 @@ export class CreateDeviceModelDto {
     belongsToId: number;
 
     @ApiProperty({ required: true })
+    // @IsJSON or @IsString does not work. Will be validated during the flow
+    @IsDefined()
     body: JSON;
 }

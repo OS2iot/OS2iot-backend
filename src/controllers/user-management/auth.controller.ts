@@ -142,8 +142,7 @@ export class AuthController {
     @UseGuards(LocalAuthGuard)
     async login(
         @Request() req: AuthenticatedRequestLocalStrategy,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Body() body: LoginDto
+        @Body() _: LoginDto
     ): Promise<any> {
         const { email, id } = req.user;
         return this.authService.issueJwt(email, id, false);
