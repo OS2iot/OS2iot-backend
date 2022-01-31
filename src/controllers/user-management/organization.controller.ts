@@ -35,7 +35,6 @@ import { CreateOrganizationDto } from "@dto/user-management/create-organization.
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -47,14 +46,13 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
 @Controller("organization")
+@GlobalAdmin()
 export class OrganizationController {
     constructor(private organizationService: OrganizationService) {}
     private readonly logger = new Logger(OrganizationController.name);
 
-    @GlobalAdmin()
     @Post()
     @ApiOperation({ summary: "Create a new Organization" })
-    @UserAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createOrganizationDto: CreateOrganizationDto
@@ -81,15 +79,12 @@ export class OrganizationController {
     @Put(":id")
     @ApiOperation({ summary: "Update an Organization" })
     @ApiNotFoundResponse()
-    @UserAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() updateOrganizationDto: UpdateOrganizationDto
     ): Promise<Organization> {
         try {
-            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
-
             const organization = await this.organizationService.update(
                 id,
                 updateOrganizationDto,
@@ -124,6 +119,7 @@ export class OrganizationController {
 
     @Get()
     @ApiOperation({ summary: "Get list of all Organizations" })
+    @UserAdmin()
     async findAll(
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
@@ -142,11 +138,11 @@ export class OrganizationController {
     @Get(":id")
     @ApiOperation({ summary: "Get one Organization" })
     @ApiNotFoundResponse()
+    @UserAdmin()
     async findOne(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<Organization> {
-        checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
         try {
             return await this.organizationService.findByIdWithRelations(id);
         } catch (err) {
@@ -157,14 +153,11 @@ export class OrganizationController {
     @Delete(":id")
     @ApiOperation({ summary: "Delete an Organization" })
     @ApiNotFoundResponse()
-    @UserAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
         try {
-            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
-
             const result = await this.organizationService.delete(id);
 
             AuditLog.success(ActionType.DELETE, Organization.name, req.user.userId, id);
