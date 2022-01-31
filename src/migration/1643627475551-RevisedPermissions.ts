@@ -23,15 +23,15 @@ type UserPermissions = {
     permissionId: number;
 }[];
 
-export class RevisedPermissions1641898407691 implements MigrationInterface {
-    name = "RevisedPermissions1641898407691";
+export class RevisedPermissions1643627475551 implements MigrationInterface {
+    name = "RevisedPermissions1643627475551";
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TYPE "public"."permission_type_enum" RENAME TO "permission_type_enum_old"`
         );
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions')`
+            `CREATE TYPE "permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
 
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
@@ -48,7 +48,7 @@ export class RevisedPermissions1641898407691 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions')`
+            `CREATE TYPE "permission_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
 
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
@@ -69,7 +69,7 @@ export class RevisedPermissions1641898407691 implements MigrationInterface {
     private async migrateUp(queryRunner: QueryRunner): Promise<void> {
         // Create a temporary enum which is a union of both old and new enum values
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions')`
+            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
@@ -234,7 +234,7 @@ returning id, "permission"."clonedFromId"`;
     private async migrateDown(queryRunner: QueryRunner): Promise<void> {
         // Create a temporary enum which is a union of both old and new enum values
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions')`
+            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`

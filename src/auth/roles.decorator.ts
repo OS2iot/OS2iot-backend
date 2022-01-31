@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { SetMetadata } from "@nestjs/common";
-
 import { PermissionType } from "@enum/permission-type.enum";
+import { SetMetadata } from "@nestjs/common";
+import { RolesMetaData } from "./constants";
 
-export const Read = () => SetMetadata("roles", PermissionType.Read);
-export const UserAdmin = () => SetMetadata("roles", PermissionType.OrganizationUserAdmin);
-export const GatewayAdmin = () => SetMetadata("roles", PermissionType.OrganizationGatewayAdmin);
-export const ApplicationAdmin = () => SetMetadata("roles", PermissionType.OrganizationApplicationAdmin);
-export const GlobalAdmin = () => SetMetadata("roles", PermissionType.GlobalAdmin);
+export const Read = () => SetMetadata(RolesMetaData, PermissionType.Read);
+export const UserAdmin = () => SetMetadata(RolesMetaData, PermissionType.OrganizationUserAdmin);
+export const GatewayAdmin = () => SetMetadata(RolesMetaData, PermissionType.OrganizationGatewayAdmin);
+export const ApplicationAdmin = () => SetMetadata(RolesMetaData, PermissionType.OrganizationApplicationAdmin);
+export const GlobalAdmin = () => SetMetadata(RolesMetaData, PermissionType.GlobalAdmin);

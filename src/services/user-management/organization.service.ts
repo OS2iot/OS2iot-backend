@@ -1,15 +1,5 @@
-import {
-    BadRequestException,
-    Inject,
-    Injectable,
-    Logger,
-    forwardRef,
-    NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
-
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import {
     ListAllMinimalOrganizationsResponseDto,
     ListAllOrganizationsResponseDto,
@@ -18,9 +8,17 @@ import { CreateOrganizationDto } from "@dto/user-management/create-organization.
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-
+import {
+    BadRequestException,
+    forwardRef,
+    Inject,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { In, Repository } from "typeorm";
 import { PermissionService } from "./permission.service";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 @Injectable()
 export class OrganizationService {
@@ -156,6 +154,14 @@ export class OrganizationService {
         return await this.organizationRepository.findOneOrFail(organizationId, {
             relations: ["permissions"],
         });
+    }
+
+    findByPermissionIds(permissionIds: number[]): Promise<Organization[]> {
+        return this.organizationRepository
+            .createQueryBuilder("organization")
+            .innerJoin("organization.permissions", "perm")
+            .where("perm.id IN (:...permissionIds)", { permissionIds })
+            .getMany();
     }
 
     async delete(id: number): Promise<DeleteResponseDto> {

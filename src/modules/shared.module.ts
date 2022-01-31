@@ -23,6 +23,8 @@ import { User } from "@entities/user.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ApiKey } from "@entities/api-key.entity";
+import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
@@ -32,6 +34,7 @@ import { OrganizationGatewayAdminPermission } from "@entities/permissions/organi
 @Module({
     imports: [
         TypeOrmModule.forFeature([
+            ApiKey,
             Application,
             DataTarget,
             GenericHTTPDevice,
@@ -56,6 +59,7 @@ import { OrganizationGatewayAdminPermission } from "@entities/permissions/organi
             SigFoxDevice,
             SigFoxGroup,
             User,
+            ApiKeyPermission,
             Multicast,
             LorawanMulticastDefinition,
         ]),

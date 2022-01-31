@@ -1,8 +1,8 @@
-import { CanActivate, ExecutionContext, Injectable, Logger } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-
 import { AuthenticatedUser } from "@dto/internal/authenticated-user";
 import { PermissionType } from "@enum/permission-type.enum";
+import { CanActivate, ExecutionContext, Injectable, Logger } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { RolesMetaData } from "./constants";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -11,10 +11,20 @@ export class RolesGuard implements CanActivate {
     private readonly logger = new Logger(RolesGuard.name);
 
     canActivate(context: ExecutionContext): boolean {
-        const roleRequired = this.reflector.get<string>("roles", context.getHandler());
+        const roleRequiredMethod = this.reflector.get<string>(
+            RolesMetaData,
+            context.getHandler()
+        );
+        const roleRequiredClass = this.reflector.get<string>(
+            RolesMetaData,
+            context.getClass()
+        );
+        const roleRequired = roleRequiredMethod ?? roleRequiredClass;
+
         if (!roleRequired) {
             return true;
         }
+
         const request = context.switchToHttp().getRequest();
         const user: AuthenticatedUser = request.user;
         this.logger.verbose(

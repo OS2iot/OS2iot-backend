@@ -1,19 +1,25 @@
-import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import * as bcrypt from "bcryptjs";
-import * as xml2js from "xml2js";
-import { UserResponseDto } from "@dto/user-response.dto";
-import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
-import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { UserService } from "./user.service";
-import { Profile } from "passport-saml";
+import configuration from "@config/configuration";
 import { JwtResponseDto } from "@dto/jwt-response.dto";
 import { XMLOutput } from "@dto/user-management/xml-object";
-import configuration from "@config/configuration";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { ApiKey } from "@entities/api-key.entity";
+import { JwtPayloadDto } from "@entities/dto/internal/jwt-payload.dto";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { compare } from "bcryptjs";
+import { Profile } from "passport-saml";
+import * as xml2js from "xml2js";
+import { ApiKeyService } from "../api-key-management/api-key.service";
+import { UserService } from "./user.service";
 
 @Injectable()
 export class AuthService {
-    constructor(private usersService: UserService, private jwtService: JwtService) {
+    constructor(
+        private usersService: UserService,
+        private jwtService: JwtService,
+        private apiKeyService: ApiKeyService
+    ) {
         this.KOMBIT_ROLE_URI = configuration()["kombit"]["roleUri"];
     }
     private readonly logger = new Logger(AuthService.name);
@@ -26,7 +32,7 @@ export class AuthService {
                 throw new UnauthorizedException(ErrorCodes.UserInactive);
             }
 
-            const res = await bcrypt.compare(password, user.passwordHash);
+            const res = await compare(password, user.passwordHash);
             if (res === true) {
                 await this.usersService.updateLastLoginToNow(user);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -137,5 +143,15 @@ export class AuthService {
         return {
             accessToken: this.jwtService.sign(payload),
         };
+    }
+
+    async validateApiKey(apiKey: string): Promise<ApiKey> {
+        const apiKeyDb = await this.apiKeyService.findOne(apiKey);
+
+        if (!apiKeyDb) {
+            this.logger.warn(`Login with API key: Key not found`);
+        }
+
+        return apiKeyDb;
     }
 }

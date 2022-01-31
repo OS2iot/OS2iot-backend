@@ -20,10 +20,8 @@ import {
     ApiTags,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, GatewayAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
-import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
@@ -36,10 +34,11 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ChirpstackGetAll } from "@dto/chirpstack/chirpstack-get-all.dto";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ChirpstackGatewayController {
     constructor(private chirpstackGatewayService: ChirpstackGatewayService) {}
@@ -94,6 +93,7 @@ export class ChirpstackGatewayController {
     @Get(":gatewayId")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
+    @Read()
     async getOne(
         @Param("gatewayId") gatewayId: string
     ): Promise<SingleGatewayResponseDto> {
