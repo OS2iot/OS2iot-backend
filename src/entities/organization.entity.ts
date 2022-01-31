@@ -54,7 +54,7 @@ export class Organization extends DbBaseEntity {
     })
     deviceModels?: DeviceModel[];
 
-    @ManyToMany(_ => User, user => user.organizations, {
+    @ManyToMany(_ => User, user => user.requestedOrganizations, {
         nullable: true,
     })
     users?: User[];

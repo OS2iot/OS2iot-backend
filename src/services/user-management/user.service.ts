@@ -63,7 +63,7 @@ export class UserService {
         getPermissionOrganisationInfo = false,
         getPermissionUsersInfo = false
     ): Promise<User> {
-        const relations = ["permissions", "organizations"];
+        const relations = ["permissions", "requestedOrganizations"];
         if (getPermissionOrganisationInfo) {
             relations.push("permissions.organization");
         }

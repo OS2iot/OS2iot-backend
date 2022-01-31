@@ -94,9 +94,9 @@ export class OrganizationController {
         try {
             const user = await this.userService.findOne(req.user.userId);
 
-            for (let index = 0; index < updateUserOrgsDto.organizations.length; index++) {
+            for (let index = 0; index < updateUserOrgsDto.requestedOrganizations.length; index++) {
                 const dbOrg = await this.organizationService.findByIdWithUsers(
-                    updateUserOrgsDto.organizations[index].id
+                    updateUserOrgsDto.requestedOrganizations[index].id
                 );
 
                 await this.organizationService.updateAwaitingUsers(dbOrg, user);

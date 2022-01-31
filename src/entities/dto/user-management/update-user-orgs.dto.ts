@@ -5,5 +5,5 @@ import { ArrayMinSize } from "class-validator";
 export class UpdateUserOrgsDto {
     @ApiProperty({ required: true })
     @ArrayMinSize(1)
-    organizations: Organization[];
+    requestedOrganizations: Organization[];
 }

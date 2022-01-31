@@ -10,5 +10,5 @@ export class CreateNewKombitUserDto {
     
     @ApiProperty({ required: true })
     @ArrayMinSize(1)
-    organizations: Organization[];
+    requestedOrganizations: Organization[];
 }

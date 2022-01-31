@@ -115,9 +115,9 @@ export class UserController {
             if (!user.email) {
                 const updatedUser = await this.userService.newKombitUser(dto, user);
 
-                for (let index = 0; index < dto.organizations.length; index++) {
+                for (let index = 0; index < dto.requestedOrganizations.length; index++) {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
-                        dto.organizations[index].id
+                        dto.requestedOrganizations[index].id
                     );
 
                     await this.organizationService.updateAwaitingUsers(
