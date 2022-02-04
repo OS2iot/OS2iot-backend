@@ -134,7 +134,7 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllApiKeysDto
     ): Promise<ListAllApiKeysResponseDto> {
-        checkIfUserHasAdminAccessToOrganization(req, query.organisationId);
+        checkIfUserHasAdminAccessToOrganization(req, query.organizationId);
 
         try {
             return this.apiKeyService.findAllByOrganizationId(query);
