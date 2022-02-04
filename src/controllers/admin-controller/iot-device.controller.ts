@@ -15,6 +15,7 @@ import {
     UseGuards,
     ParseArrayPipe,
     ValidationPipe,
+    NotImplementedException,
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
@@ -209,20 +210,24 @@ export class IoTDeviceController {
                         return res;
                     }
 
-                    res.deviceIds.push(device.data.id);
-                    res.deviceNames.push(device.data.name);
+                    device.data.id && res.deviceIds.push(device.data.id);
+                    device.data.name && res.deviceNames.push(device.data.name);
                     return res;
                 },
                 { deviceIds: [], deviceNames: [] }
             );
 
-            AuditLog.success(
-                ActionType.CREATE,
-                IoTDevice.name,
-                req.user.userId,
-                deviceIds.join(", "),
-                deviceNames.join(", ")
-            );
+            if (!deviceIds.length) {
+                AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+            } else {
+                AuditLog.success(
+                    ActionType.CREATE,
+                    IoTDevice.name,
+                    req.user.userId,
+                    deviceIds.join(", "),
+                    deviceNames.join(", ")
+                );
+            }
             return devices;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
@@ -235,44 +240,45 @@ export class IoTDeviceController {
         }
     }
 
-    // @Post("updateMany")
-    // @Header("Cache-Control", "none")
-    // @ApiOperation({ summary: "Update existing IoT-Devices" })
-    // @ApiBadRequestResponse()
-    // async updateMany(
-    //     @Req() req: AuthenticatedRequest,
-    //     @Body() updateDto: UpdateIoTDeviceDto
-    // ): Promise<IoTDevice> {
-    //     // Old application
-    //     const oldIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-    //         id,
-    //         false
-    //     );
-    //     try {
-    //         checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
-    //         if (updateDto.applicationId !== oldIotDevice.application.id) {
-    //             // New application
-    //             checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
-    //         }
-    //     } catch (err) {
-    //         AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
-    //         throw err;
-    //     }
+    @Post("updateMany")
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Update existing IoT-Devices" })
+    @ApiBadRequestResponse()
+    async updateMany(
+        @Req() req: AuthenticatedRequest,
+        @Body() updateDto: CreateIoTDeviceBatchDto
+    ): Promise<IoTDevice> {
+        throw new NotImplementedException();
+        // Old applications
+        // const oldIotDevice = await this.iotDeviceService.findManyWithApplicationAndMetadata(
+        //     updateDto.data.map(iotDevice => iotDevice.applicationId),
+        //     false
+        // );
+        // try {
+        //     checkIfUserHasWriteAccessToApplication(req, oldIotDevice.application.id);
+        //     if (updateDto.applicationId !== oldIotDevice.application.id) {
+        //         // New application
+        //         checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
+        //     }
+        // } catch (err) {
+        //     AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+        //     throw err;
+        // }
 
-    //     const iotDevice = await this.iotDeviceService.update(
-    //         id,
-    //         updateDto,
-    //         req.user.userId
-    //     );
-    //     AuditLog.success(
-    //         ActionType.UPDATE,
-    //         IoTDevice.name,
-    //         req.user.userId,
-    //         iotDevice.id,
-    //         iotDevice.name
-    //     );
-    //     return iotDevice;
-    // }
+        // const iotDevice = await this.iotDeviceService.update(
+        //     id,
+        //     updateDto,
+        //     req.user.userId
+        // );
+        // AuditLog.success(
+        //     ActionType.UPDATE,
+        //     IoTDevice.name,
+        //     req.user.userId,
+        //     iotDevice.id,
+        //     iotDevice.name
+        // );
+        // return iotDevice;
+    }
 
     @Put(":id")
     @Header("Cache-Control", "none")

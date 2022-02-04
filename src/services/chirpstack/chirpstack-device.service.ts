@@ -42,24 +42,23 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     DEFAULT_DESCRIPTION = "Created by OS2IoT";
 
     async findOrCreateDefaultApplication(
-        dto: CreateChirpstackDeviceDto
+        dto: CreateChirpstackDeviceDto,
+        applications: ListAllChirpstackApplicationsResponseDto = null
     ): Promise<number> {
         const organizationID = await this.getDefaultOrganizationId();
         // Fetch applications
-        const applications = await this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
-            `applications?limit=100&organizationID=${organizationID}`
-        );
+        applications =
+            applications ??
+            (await this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
+                `applications?limit=100&organizationID=${organizationID}`
+            ));
         // if default exist use it
-        let applicationId;
-        applications.result.forEach(element => {
-            if (
+        let applicationId = applications.result.find(
+            element =>
                 element.serviceProfileID.toLowerCase() ===
                     dto.device.serviceProfileID.toLowerCase() &&
                 element.name.startsWith(this.defaultApplicationName)
-            ) {
-                applicationId = element.id;
-            }
-        });
+        )?.id;
         // otherwise create default
         if (!applicationId) {
             applicationId = await this.createDefaultApplication(

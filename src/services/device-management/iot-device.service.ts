@@ -1,5 +1,6 @@
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
@@ -44,7 +45,6 @@ import * as _ from "lodash";
 import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
-import { LoRaWANDeviceId } from "@dto/lorawan-device-id.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -110,6 +110,20 @@ export class IoTDeviceService {
         }
 
         return iotDevice;
+    }
+
+    async findManyWithApplicationAndMetadata(
+        ids: number[],
+        enrich?: boolean
+    ): Promise<
+        (
+            | IoTDevice
+            | LoRaWANDeviceWithChirpstackDataDto
+            | SigFoxDeviceWithBackendDataDto
+        )[]
+    > {
+        // TODO: Implement
+        return []
     }
 
     async enrichSigFoxDevice(
@@ -543,9 +557,13 @@ export class IoTDeviceService {
     private async mapChildDtoToIoTDevice(
         iotDevicesDtoMap: CreateIoTDeviceMapDto[],
         isUpdate: boolean
-    ): Promise<IoTDevice> {
-        // Pre-fetch lorawan device EUI's, if any
+    ): Promise<void> {
+        // Pre-fetch lorawan settings, if any
         const loraDeviceEuis = await this.getLorawanDeviceEuis(iotDevicesDtoMap);
+        const loraOrganizationId = await this.chirpstackDeviceService.getDefaultOrganizationId();
+        const loraApplications = await this.chirpstackDeviceService.getAllApplicationsWithPagination(
+            loraOrganizationId
+        );
 
         for (const map of iotDevicesDtoMap) {
             try {
@@ -555,10 +573,11 @@ export class IoTDeviceService {
                         map.iotDeviceDto,
                         cast,
                         isUpdate,
-                        loraDeviceEuis
+                        loraDeviceEuis,
+                        loraApplications
                     );
 
-                    return loraDevice;
+                    map.iotDevice = loraDevice;
                 } else if (map.iotDevice.constructor.name === SigFoxDevice.name) {
                     const cast = map.iotDevice as SigFoxDevice;
                     const sigfoxDevice = await this.mapSigFoxDevice(
@@ -566,7 +585,7 @@ export class IoTDeviceService {
                         cast
                     );
 
-                    return sigfoxDevice;
+                    map.iotDevice = sigfoxDevice;
                 }
             } catch (error) {
                 map.error = {
@@ -601,6 +620,21 @@ export class IoTDeviceService {
               await this.ioTLoRaWANDeviceService.getDeviceEuisByIds(iotLorawanDevices);
 
         return loraDeviceEuis.map(loraDevice => ({ devEUI: loraDevice.deviceEUI }));
+    }
+
+    private getLorawanServiceProfileIds(
+        iotDevicesDtoMap: CreateIoTDeviceMapDto[]
+    ): string[] {
+        return iotDevicesDtoMap.reduce((res: string[], { iotDevice, iotDeviceDto }) => {
+            if (
+                iotDevice.constructor.name === LoRaWANDevice.name &&
+                iotDeviceDto.lorawanSettings
+            ) {
+                res.push(iotDeviceDto.lorawanSettings.serviceProfileID);
+            }
+
+            return res;
+        }, []);
     }
 
     private async mapSigFoxDevice(
@@ -780,7 +814,8 @@ export class IoTDeviceService {
         dto: CreateIoTDeviceDto,
         lorawanDevice: LoRaWANDevice,
         isUpdate: boolean,
-        lorawanDeviceEuis: ChirpstackDeviceId[] = null
+        lorawanDeviceEuis: ChirpstackDeviceId[] = null,
+        loraApplications: ListAllChirpstackApplicationsResponseDto = null
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
 
@@ -802,7 +837,8 @@ export class IoTDeviceService {
 
             // Save application
             const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
-                chirpstackDeviceDto
+                chirpstackDeviceDto,
+                loraApplications
             );
             lorawanDevice.chirpstackApplicationId = applicationId;
             chirpstackDeviceDto.device.applicationID = applicationId.toString();

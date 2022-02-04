@@ -15,6 +15,7 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { JwtToken } from "./jwt-token";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -192,6 +193,14 @@ export class GenericChirpstackConfigurationService {
 
             throw new InternalServerErrorException(err?.response?.data);
         }
+    }
+
+    async getAllApplicationsWithPagination(
+        organizationID: string
+    ): Promise<ListAllChirpstackApplicationsResponseDto> {
+        return this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
+            `applications?limit=100&organizationID=${organizationID}`
+        );
     }
 
     async getAllWithPagination<T>(
