@@ -23,7 +23,7 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-floating-promises": "warn",
         "max-lines-per-function": ["error", 80],
-        "max-lines-per-function": ["warn", 40],
+        "max-lines-per-function": ["warn", 55],
     },
     overrides: [
         {
