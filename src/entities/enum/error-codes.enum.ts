@@ -38,4 +38,7 @@ export enum ErrorCodes {
     ApiKeyAuthFailed = "MESSAGE.API-KEY-AUTH-FAILED",
     DifferentServiceprofile = "MESSAGE.DIFFERENT-SERVICE-PROFILE",
     NewDevicesWrongServiceProfile = "MESSAGE.WRONG-SERVICE-PROFILE",
+    TooMuchData = "MESSAGE.TOO-MUCH-DATA",
+    ApplicationDoesNotExist = "MESSAGE.APPLICATION-DOES-NOT-EXIST",
+    FailedToCreateOrUpdateIotDevice = "MESSAGE.FAILED-TO-CREATE-OR-UPDATE-IOT-DEVICE",
 }

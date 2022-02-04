@@ -1,3 +1,33 @@
+import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
+import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
+import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { CreateIoTDeviceMapDto } from "@dto/iot-device/create-iot-device-map.dto";
+import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
+import {
+    IoTDeviceMinimal,
+    IoTDeviceMinimalRaw,
+    ListAllIoTDevicesMinimalResponseDto,
+} from "@dto/list-all-iot-devices-minimal-response.dto";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
+import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
+import {
+    SigFoxApiDeviceContent,
+    SigFoxApiDeviceResponse,
+} from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
+import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
+import { ErrorCodes } from "@entities/enum/error-codes.enum";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { SigFoxDevice } from "@entities/sigfox-device.entity";
+import { SigFoxGroup } from "@entities/sigfox-group.entity";
+import { iotDeviceTypeMap } from "@enum/device-type-mapping";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import {
     BadRequestException,
     Injectable,
@@ -5,43 +35,16 @@ import {
     NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Point } from "geojson";
-import { DeleteResult, Repository, getManager, SelectQueryBuilder } from "typeorm";
-
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
-import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { SigFoxDevice } from "@entities/sigfox-device.entity";
-import { iotDeviceTypeMap } from "@enum/device-type-mapping";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ApplicationService } from "@services/device-management/application.service";
-import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
+import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
-import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
-import {
-    SigFoxApiDeviceContent,
-    SigFoxApiDeviceResponse,
-} from "@dto/sigfox/external/sigfox-api-device-response.dto";
-import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
-import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
-import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
-import { DeviceModel } from "@entities/device-model.entity";
+import * as _ from "lodash";
+import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
-import {
-    IoTDeviceMinimal,
-    IoTDeviceMinimalRaw,
-    ListAllIoTDevicesMinimalResponseDto,
-} from "@dto/list-all-iot-devices-minimal-response.dto";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+import { LoRaWANDeviceId } from "@dto/lorawan-device-id.dto";
 
 @Injectable()
 export class IoTDeviceService {
@@ -59,7 +62,8 @@ export class IoTDeviceService {
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
         private sigfoxGroupService: SigFoxGroupService,
-        private deviceModelService: DeviceModelService
+        private deviceModelService: DeviceModelService,
+        private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -292,9 +296,8 @@ export class IoTDeviceService {
     }
 
     async findLoRaWANDeviceByDeviceEUI(deviceEUI: string): Promise<LoRaWANDevice> {
-        // TODO: Fix potentiel SQL injection.
         return await this.loRaWANDeviceRepository.findOne({
-            where: `"deviceEUI" ILIKE '${deviceEUI}'`,
+            deviceEUI: ILike(deviceEUI),
         });
     }
 
@@ -302,19 +305,67 @@ export class IoTDeviceService {
         createIoTDeviceDto: CreateIoTDeviceDto,
         userId: number
     ): Promise<IoTDevice> {
-        const childType = iotDeviceTypeMap[createIoTDeviceDto.type];
-        const iotDevice = new childType();
+        const iotDevice = await this.createMany([createIoTDeviceDto], userId);
 
-        const mappedIotDevice = await this.mapDtoToIoTDevice(
-            createIoTDeviceDto,
-            iotDevice,
-            false
+        // if (iotDevice[0].error) throw new BadRequestException(iotDevice[0].error);
+        return (
+            iotDevice[0].data ?? {
+                application: null,
+                id: 1234,
+                connections: null,
+                createdAt: null,
+                latestReceivedMessage: null,
+                metadata: null,
+                multicasts: null,
+                name: "BulkTesss",
+                receivedMessagesMetadata: null,
+                updatedAt: null,
+                type: null,
+            }
         );
-        mappedIotDevice.createdBy = userId;
-        mappedIotDevice.updatedBy = userId;
+    }
+
+    async createMany(
+        createIoTDeviceDtos: CreateIoTDeviceDto[],
+        userId: number
+    ): Promise<IotDeviceBatchResponseDto[]> {
+        const iotDevicesMaps: CreateIoTDeviceMapDto[] = [];
+
+        createIoTDeviceDtos.forEach(createIotDevice => {
+            try {
+                const childType = iotDeviceTypeMap[createIotDevice.type];
+                const iotDevice = new childType();
+                iotDevicesMaps.push({ iotDeviceDto: createIotDevice, iotDevice });
+            } catch (error) {
+                iotDevicesMaps.push({ iotDeviceDto: createIotDevice, error });
+            }
+        });
+
+        // TODO: Different service profiles equal different chirpstack applications!
+        // Necessary to think about though?
+
+        await this.mapDtoToIoTDevice(this.getValidIotDeviceMaps(iotDevicesMaps), false);
+
+        for (const mappedIotDevice of this.getValidIotDeviceMaps(iotDevicesMaps)) {
+            if (mappedIotDevice.iotDevice) {
+                mappedIotDevice.iotDevice.createdBy = userId;
+                mappedIotDevice.iotDevice.updatedBy = userId;
+            }
+        }
 
         const entityManager = getManager();
-        return entityManager.save(mappedIotDevice);
+        const validIotDevices = this.getValidIotDeviceMaps(iotDevicesMaps).map(
+            iotDeviceMap => iotDeviceMap.iotDevice
+        );
+        const dbIotDevices = await entityManager.save(validIotDevices);
+
+        return iotDevicesMaps.map(iotDeviceMap => ({
+            data:
+                dbIotDevices.find(
+                    dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id
+                ) ?? iotDeviceMap.iotDevice,
+            error: iotDeviceMap.error,
+        }));
     }
 
     async save(iotDevice: IoTDevice): Promise<IoTDevice> {
@@ -354,13 +405,12 @@ export class IoTDeviceService {
         userId: number
     ): Promise<IoTDevice> {
         const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(id);
+        const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = [
+            { iotDevice: existingIoTDevice, iotDeviceDto: updateDto },
+        ];
+        await this.mapDtoToIoTDevice(iotDeviceDtoMap, true);
 
-        const mappedIoTDevice = await this.mapDtoToIoTDevice(
-            updateDto,
-            existingIoTDevice,
-            true
-        );
-
+        const mappedIoTDevice = iotDeviceDtoMap[0].iotDevice;
         mappedIoTDevice.updatedBy = userId;
         const res = this.iotDeviceRepository.save(mappedIoTDevice);
 
@@ -371,7 +421,7 @@ export class IoTDeviceService {
         if (device.type == IoTDeviceType.LoRaWAN) {
             const lorawanDevice = device as LoRaWANDevice;
             this.logger.debug(
-                `Deleteing LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
+                `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
             );
             await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
         }
@@ -384,89 +434,173 @@ export class IoTDeviceService {
     }
 
     private async mapDtoToIoTDevice(
-        createIoTDeviceDto: CreateIoTDeviceDto,
-        iotDevice: IoTDevice,
+        iotDeviceMaps: CreateIoTDeviceMapDto[],
         isUpdate: boolean
-    ): Promise<IoTDevice> {
-        iotDevice.name = createIoTDeviceDto.name;
+    ): Promise<void> {
+        const applicationIds = iotDeviceMaps.reduce((res: number[], { iotDeviceDto }) => {
+            if (iotDeviceDto.applicationId) {
+                res.push(iotDeviceDto.applicationId);
+            }
 
-        await this.setApplication(createIoTDeviceDto, iotDevice);
+            return res;
+        }, []);
+        const applications = await this.getApplicationsByIds(applicationIds);
 
-        if (createIoTDeviceDto.longitude != null && createIoTDeviceDto.latitude != null) {
-            iotDevice.location = {
-                type: "Point",
-                coordinates: [createIoTDeviceDto.longitude, createIoTDeviceDto.latitude],
-            } as Point;
-        } else {
-            iotDevice.location = null;
+        for (const { iotDevice, iotDeviceDto } of iotDeviceMaps) {
+            try {
+                const application = applications.find(
+                    app => app.id === iotDeviceDto.applicationId
+                );
+                iotDevice.name = iotDeviceDto.name;
+                iotDevice.application = application;
+
+                if (iotDeviceDto.longitude != null && iotDeviceDto.latitude != null) {
+                    iotDevice.location = {
+                        type: "Point",
+                        coordinates: [iotDeviceDto.longitude, iotDeviceDto.latitude],
+                    };
+                } else {
+                    iotDevice.location = null;
+                }
+
+                iotDevice.comment = iotDeviceDto.comment;
+                iotDevice.commentOnLocation = iotDeviceDto.commentOnLocation;
+                iotDevice.metadata = iotDeviceDto.metadata;
+            } catch (error) {
+                iotDeviceMaps.push({ iotDeviceDto, error });
+            }
         }
 
-        iotDevice.comment = createIoTDeviceDto.comment;
-        iotDevice.commentOnLocation = createIoTDeviceDto.commentOnLocation;
-        iotDevice.metadata = createIoTDeviceDto.metadata;
-        iotDevice.deviceModel = await this.mapDeviceModel(iotDevice, createIoTDeviceDto);
-
-        iotDevice = await this.mapChildDtoToIoTDevice(
-            createIoTDeviceDto,
-            iotDevice,
+        await this.mapDeviceModels(this.getValidIotDeviceMaps(iotDeviceMaps));
+        await this.mapChildDtoToIoTDevice(
+            this.getValidIotDeviceMaps(iotDeviceMaps),
             isUpdate
         );
-
-        return iotDevice;
     }
 
-    async mapDeviceModel(
-        iotDevice: IoTDevice,
-        createIoTDeviceDto: CreateIoTDeviceDto
-    ): Promise<DeviceModel> {
-        if (createIoTDeviceDto.deviceModelId == undefined) {
-            return null;
-        }
-        const deviceModel = await this.deviceModelService.getByIdWithRelations(
-            createIoTDeviceDto.deviceModelId
-        );
-        const deviceModelOrganisationId = deviceModel.belongsTo.id;
-        const application = await this.applicationService.findOneWithOrganisation(
-            iotDevice.application.id
-        );
-        if (deviceModelOrganisationId != application.belongsTo.id) {
-            throw new BadRequestException(ErrorCodes.OrganizationDoesNotMatch);
-        }
+    private groupByDeviceProfile(
+        iotDevicesMap: CreateIoTDeviceMapDto[]
+    ): typeof iotDevicesMap[] {
+        const groups: Record<string, typeof iotDevicesMap> = {};
+        const result: typeof iotDevicesMap[] = [];
 
-        return deviceModel;
+        iotDevicesMap.forEach(map => {
+            const { deviceModelId } = map.iotDeviceDto;
+            if (!(deviceModelId in groups)) {
+                groups[deviceModelId] = [];
+                result.push(groups[deviceModelId]);
+            }
+            groups[deviceModelId].push(map);
+        });
+
+        return result;
     }
 
-    private async setApplication(
-        createIoTDeviceDto: CreateIoTDeviceDto,
-        iotDevice: IoTDevice
-    ) {
-        if (createIoTDeviceDto.applicationId != null) {
-            iotDevice.application = await this.applicationService.findOneWithoutRelations(
-                createIoTDeviceDto.applicationId
+    async mapDeviceModels(iotDevicesDtoMap: CreateIoTDeviceMapDto[]): Promise<void> {
+        const iotDevicesDtoByDeviceProfiles = this.groupByDeviceProfile(iotDevicesDtoMap);
+        const iotDevicesWithProfiles = _.flatMap(
+            // Check if the client sent a device profile. Since they're grouped by profile,
+            // the profile of the first device in the group is the same as the rest
+            iotDevicesDtoByDeviceProfiles.filter(
+                map => map[0]?.iotDeviceDto.deviceModelId
+            )
+        );
+        const deviceModels = await this.deviceModelService.getByIdsWithRelations(
+            iotDevicesWithProfiles.map(iotDevice => iotDevice.iotDeviceDto.deviceModelId)
+        );
+        const applications = await this.applicationService.findManyWithOrganisation(
+            iotDevicesWithProfiles.map(({ iotDevice }) => iotDevice.application.id)
+        );
+
+        for (const map of iotDevicesWithProfiles) {
+            const applicationMatch = applications.find(
+                application => application.id === map.iotDevice.application.id
             );
-        } else {
-            iotDevice.application = null;
+
+            if (!applicationMatch) {
+                map.error = {
+                    message: ErrorCodes.ApplicationDoesNotExist,
+                };
+                continue;
+            }
+
+            const deviceModelMatch = deviceModels.find(
+                model => model.id === map.iotDeviceDto.deviceModelId
+            );
+
+            if (deviceModelMatch?.belongsTo.id !== applicationMatch.belongsTo.id) {
+                map.error = { message: ErrorCodes.OrganizationDoesNotMatch };
+            }
         }
+    }
+
+    private async getApplicationsByIds(applicationIds: number[]) {
+        return applicationIds.length
+            ? await this.applicationService.findManyByIds(applicationIds)
+            : [];
     }
 
     private async mapChildDtoToIoTDevice(
-        dto: CreateIoTDeviceDto,
-        iotDevice: IoTDevice,
+        iotDevicesDtoMap: CreateIoTDeviceMapDto[],
         isUpdate: boolean
     ): Promise<IoTDevice> {
-        if (iotDevice.constructor.name === LoRaWANDevice.name) {
-            const cast = <LoRaWANDevice>iotDevice;
-            const loraDevice = await this.mapLoRaWANDevice(dto, cast, isUpdate);
+        // Pre-fetch lorawan device EUI's, if any
+        const loraDeviceEuis = await this.getLorawanDeviceEuis(iotDevicesDtoMap);
 
-            return <IoTDevice>loraDevice;
-        } else if (iotDevice.constructor.name === SigFoxDevice.name) {
-            const cast = <SigFoxDevice>iotDevice;
-            const sigfoxDevice = await this.mapSigFoxDevice(dto, cast);
+        for (const map of iotDevicesDtoMap) {
+            try {
+                if (map.iotDevice.constructor.name === LoRaWANDevice.name) {
+                    const cast = map.iotDevice as LoRaWANDevice;
+                    const loraDevice = await this.mapLoRaWANDevice(
+                        map.iotDeviceDto,
+                        cast,
+                        isUpdate,
+                        loraDeviceEuis
+                    );
 
-            return <IoTDevice>sigfoxDevice;
+                    return loraDevice;
+                } else if (map.iotDevice.constructor.name === SigFoxDevice.name) {
+                    const cast = map.iotDevice as SigFoxDevice;
+                    const sigfoxDevice = await this.mapSigFoxDevice(
+                        map.iotDeviceDto,
+                        cast
+                    );
+
+                    return sigfoxDevice;
+                }
+            } catch (error) {
+                map.error = {
+                    message:
+                        (error as Error)?.message ??
+                        ErrorCodes.FailedToCreateOrUpdateIotDevice,
+                };
+            }
         }
+    }
 
-        return iotDevice;
+    private async getLorawanDeviceEuis(
+        iotDevicesDtoMap: CreateIoTDeviceMapDto[]
+    ): Promise<ChirpstackDeviceId[] | null> {
+        const iotLorawanDevices = iotDevicesDtoMap.reduce(
+            (res: string[], { iotDevice, iotDeviceDto }) => {
+                if (
+                    iotDevice.constructor.name === LoRaWANDevice.name &&
+                    iotDeviceDto.lorawanSettings
+                ) {
+                    res.push(iotDeviceDto.lorawanSettings.devEUI);
+                }
+
+                return res;
+            },
+            []
+        );
+
+        const loraDeviceEuis = !iotLorawanDevices.length
+            ? null
+            : // Fetch from the database instead of from Chirpstack to free up load
+              await this.ioTLoRaWANDeviceService.getDeviceEuisByIds(iotLorawanDevices);
+
+        return loraDeviceEuis.map(loraDevice => ({ devEUI: loraDevice.deviceEUI }));
     }
 
     private async mapSigFoxDevice(
@@ -645,19 +779,23 @@ export class IoTDeviceService {
     private async mapLoRaWANDevice(
         dto: CreateIoTDeviceDto,
         lorawanDevice: LoRaWANDevice,
-        isUpdate: boolean
+        isUpdate: boolean,
+        lorawanDeviceEuis: ChirpstackDeviceId[] = null
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
+
         if (
             !isUpdate &&
             (await this.chirpstackDeviceService.isDeviceAlreadyCreated(
-                dto.lorawanSettings.devEUI
+                dto.lorawanSettings.devEUI,
+                lorawanDeviceEuis
             ))
         ) {
             throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
         }
+
         try {
-            const chirpstackDeviceDto = await this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
+            const chirpstackDeviceDto = this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
                 dto.lorawanSettings,
                 dto.name
             );
@@ -670,13 +808,16 @@ export class IoTDeviceService {
             chirpstackDeviceDto.device.applicationID = applicationId.toString();
 
             await this.chirpstackDeviceService.createOrUpdateDevice(chirpstackDeviceDto);
-
+            lorawanDeviceEuis.push(chirpstackDeviceDto.device);
             await this.doActivation(dto, isUpdate);
         } catch (err) {
             this.logger.error(err);
+
+            // This will also be thrown if a chirpstack device with the same name already exists
             if (err?.response?.data?.error == "object already exists") {
                 throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
             }
+
             throw err;
         }
         return lorawanDevice;
@@ -726,5 +867,11 @@ export class IoTDeviceService {
         } else {
             throw new BadRequestException(ErrorCodes.MissingABPInfo);
         }
+    }
+
+    private getValidIotDeviceMaps(
+        iotDeviceMap: CreateIoTDeviceMapDto[]
+    ): CreateIoTDeviceMapDto[] {
+        return iotDeviceMap.filter(map => !map.error && map.iotDevice);
     }
 }

@@ -154,6 +154,12 @@ export class ApplicationService {
         });
     }
 
+    async findManyWithOrganisation(ids: number[]): Promise<Application[]> {
+        return await this.applicationRepository.findByIds(ids, {
+            relations: ["belongsTo"],
+        });
+    }
+
     async findOne(id: number): Promise<Application> {
         const app = await this.applicationRepository.findOneOrFail(id, {
             relations: [

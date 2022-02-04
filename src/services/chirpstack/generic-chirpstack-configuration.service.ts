@@ -30,8 +30,7 @@ export class GenericChirpstackConfigurationService {
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
 
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
-        // Default timeout value in ms
-        const timeout = 30000;
+        const timeoutMs = 30 * 1000;
         let url = this.baseUrl + "/api/" + endPoint;
 
         // If limits are supplied, add these as query params
@@ -43,7 +42,7 @@ export class GenericChirpstackConfigurationService {
 
         const headerDto: HeaderDto = {
             url,
-            timeout,
+            timeout: timeoutMs,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };

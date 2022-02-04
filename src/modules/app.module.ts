@@ -30,6 +30,7 @@ import { MulticastModule } from "./device-management/multicast.module";
 import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { SearchModule } from "./search.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
+import { IoTLoRaWANDeviceModule } from "./device-management/iot-lorawan-device.module";
 
 @Module({
     imports: [
@@ -88,6 +89,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
         TestPayloadDecoderModule,
         OpenDataDkSharingModule,
         MulticastModule,
+        IoTLoRaWANDeviceModule,
     ],
     controllers: [],
     providers: [],
