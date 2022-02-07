@@ -6,6 +6,7 @@ import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateIoTDeviceMapDto } from "@dto/iot-device/create-iot-device-map.dto";
 import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
+import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
 import {
     IoTDeviceMinimal,
     IoTDeviceMinimalRaw,
@@ -45,6 +46,11 @@ import * as _ from "lodash";
 import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+
+type IoTDeviceOrSpecialized =
+    | IoTDevice
+    | LoRaWANDeviceWithChirpstackDataDto
+    | SigFoxDeviceWithBackendDataDto;
 
 @Injectable()
 export class IoTDeviceService {
@@ -89,9 +95,7 @@ export class IoTDeviceService {
     async findOneWithApplicationAndMetadata(
         id: number,
         enrich?: boolean
-    ): Promise<
-        IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto
-    > {
+    ): Promise<IoTDeviceOrSpecialized> {
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
         // Therefore we use the QueryBuilder ...
         const iotDevice = await this.queryDatabaseForIoTDevice(id);
@@ -113,17 +117,9 @@ export class IoTDeviceService {
     }
 
     async findManyWithApplicationAndMetadata(
-        ids: number[],
-        enrich?: boolean
-    ): Promise<
-        (
-            | IoTDevice
-            | LoRaWANDeviceWithChirpstackDataDto
-            | SigFoxDeviceWithBackendDataDto
-        )[]
-    > {
-        // TODO: Implement
-        return []
+        ids: number[]
+    ): Promise<IoTDeviceOrSpecialized[]> {
+        return this.queryDatabaseForIoTDevices(ids);
     }
 
     async enrichSigFoxDevice(
@@ -266,11 +262,10 @@ export class IoTDeviceService {
         return thisDevice;
     }
 
-    private async queryDatabaseForIoTDevice(id: number) {
-        return await this.iotDeviceRepository
+    private buildIoTDeviceWithRelationsQuery(): SelectQueryBuilder<IoTDevice> {
+        return this.iotDeviceRepository
             .createQueryBuilder("iot_device")
             .loadAllRelationIds({ relations: ["createdBy", "updatedBy"] })
-            .where("iot_device.id = :id", { id: id })
             .innerJoinAndSelect(
                 "iot_device.application",
                 "application",
@@ -291,8 +286,19 @@ export class IoTDeviceService {
                 "device_model",
                 'device_model.id = iot_device."deviceModelId"'
             )
-            .orderBy('metadata."sentTime"', "DESC")
+            .orderBy('metadata."sentTime"', "DESC");
+    }
+
+    private async queryDatabaseForIoTDevice(id: number) {
+        return await this.buildIoTDeviceWithRelationsQuery()
+            .where("iot_device.id = :id", { id: id })
             .getOne();
+    }
+
+    private queryDatabaseForIoTDevices(ids: number[]) {
+        return this.buildIoTDeviceWithRelationsQuery()
+            .where("iot_device.id IN (:...ids)", { ids })
+            .getMany();
     }
 
     async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {
@@ -321,22 +327,8 @@ export class IoTDeviceService {
     ): Promise<IoTDevice> {
         const iotDevice = await this.createMany([createIoTDeviceDto], userId);
 
-        // if (iotDevice[0].error) throw new BadRequestException(iotDevice[0].error);
-        return (
-            iotDevice[0].data ?? {
-                application: null,
-                id: 1234,
-                connections: null,
-                createdAt: null,
-                latestReceivedMessage: null,
-                metadata: null,
-                multicasts: null,
-                name: "BulkTesss",
-                receivedMessagesMetadata: null,
-                updatedAt: null,
-                type: null,
-            }
-        );
+        if (iotDevice[0].error) throw new BadRequestException(iotDevice[0].error);
+        return iotDevice[0].data;
     }
 
     async createMany(
@@ -355,12 +347,12 @@ export class IoTDeviceService {
             }
         });
 
-        // TODO: Different service profiles equal different chirpstack applications!
-        // Necessary to think about though?
+        await this.mapDtoToIoTDevice(
+            this.filterValidIotDeviceMaps(iotDevicesMaps),
+            false
+        );
 
-        await this.mapDtoToIoTDevice(this.getValidIotDeviceMaps(iotDevicesMaps), false);
-
-        for (const mappedIotDevice of this.getValidIotDeviceMaps(iotDevicesMaps)) {
+        for (const mappedIotDevice of this.filterValidIotDeviceMaps(iotDevicesMaps)) {
             if (mappedIotDevice.iotDevice) {
                 mappedIotDevice.iotDevice.createdBy = userId;
                 mappedIotDevice.iotDevice.updatedBy = userId;
@@ -368,16 +360,19 @@ export class IoTDeviceService {
         }
 
         const entityManager = getManager();
-        const validIotDevices = this.getValidIotDeviceMaps(iotDevicesMaps).map(
+        const validIotDevices = this.filterValidIotDeviceMaps(iotDevicesMaps).map(
             iotDeviceMap => iotDeviceMap.iotDevice
         );
         const dbIotDevices = await entityManager.save(validIotDevices);
 
         return iotDevicesMaps.map(iotDeviceMap => ({
-            data:
-                dbIotDevices.find(
-                    dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id
-                ) ?? iotDeviceMap.iotDevice,
+            data: dbIotDevices.find(
+                dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id
+            ),
+            idMetadata: {
+                name: iotDeviceMap.iotDeviceDto.name,
+                applicationId: iotDeviceMap.iotDeviceDto.applicationId,
+            },
             error: iotDeviceMap.error,
         }));
     }
@@ -429,6 +424,45 @@ export class IoTDeviceService {
         const res = this.iotDeviceRepository.save(mappedIoTDevice);
 
         return res;
+    }
+
+    async updateMany(
+        updateDto: UpdateIoTDeviceBatchDto,
+        userId: number
+    ): Promise<IotDeviceBatchResponseDto[]> {
+        const existingDevices = await this.iotDeviceRepository.findByIds(
+            updateDto.data.map(device => device.id)
+        );
+        const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = updateDto.data.map(
+            updateDevice => ({
+                iotDeviceDto: updateDevice,
+                iotDevice: existingDevices.find(
+                    existingDevice => existingDevice.id === updateDevice.id
+                ),
+            })
+        );
+        await this.mapDtoToIoTDevice(iotDeviceDtoMap, true);
+
+        const validDevices = iotDeviceDtoMap.reduce((res: IoTDevice[], currentMap) => {
+            if (this.isValidIoTDeviceMap(currentMap)) {
+                currentMap.iotDevice.updatedBy = userId;
+                res.push(currentMap.iotDevice);
+            }
+
+            return res;
+        }, []);
+        const dbIotDevices = await this.iotDeviceRepository.save(validDevices);
+
+        return iotDeviceDtoMap.map(iotDeviceMap => ({
+            data: dbIotDevices.find(
+                dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id
+            ),
+            idMetadata: {
+                name: iotDeviceMap.iotDeviceDto.name,
+                applicationId: iotDeviceMap.iotDeviceDto.applicationId,
+            },
+            error: iotDeviceMap.error,
+        }));
     }
 
     async delete(device: IoTDevice): Promise<DeleteResult> {
@@ -485,9 +519,9 @@ export class IoTDeviceService {
             }
         }
 
-        await this.mapDeviceModels(this.getValidIotDeviceMaps(iotDeviceMaps));
+        await this.mapDeviceModels(this.filterValidIotDeviceMaps(iotDeviceMaps));
         await this.mapChildDtoToIoTDevice(
-            this.getValidIotDeviceMaps(iotDeviceMaps),
+            this.filterValidIotDeviceMaps(iotDeviceMaps),
             isUpdate
         );
     }
@@ -620,21 +654,6 @@ export class IoTDeviceService {
               await this.ioTLoRaWANDeviceService.getDeviceEuisByIds(iotLorawanDevices);
 
         return loraDeviceEuis.map(loraDevice => ({ devEUI: loraDevice.deviceEUI }));
-    }
-
-    private getLorawanServiceProfileIds(
-        iotDevicesDtoMap: CreateIoTDeviceMapDto[]
-    ): string[] {
-        return iotDevicesDtoMap.reduce((res: string[], { iotDevice, iotDeviceDto }) => {
-            if (
-                iotDevice.constructor.name === LoRaWANDevice.name &&
-                iotDeviceDto.lorawanSettings
-            ) {
-                res.push(iotDeviceDto.lorawanSettings.serviceProfileID);
-            }
-
-            return res;
-        }, []);
     }
 
     private async mapSigFoxDevice(
@@ -843,7 +862,7 @@ export class IoTDeviceService {
             lorawanDevice.chirpstackApplicationId = applicationId;
             chirpstackDeviceDto.device.applicationID = applicationId.toString();
 
-            await this.chirpstackDeviceService.createOrUpdateDevice(chirpstackDeviceDto);
+            await this.chirpstackDeviceService.createOrUpdateDevice(chirpstackDeviceDto, lorawanDeviceEuis);
             lorawanDeviceEuis.push(chirpstackDeviceDto.device);
             await this.doActivation(dto, isUpdate);
         } catch (err) {
@@ -905,7 +924,11 @@ export class IoTDeviceService {
         }
     }
 
-    private getValidIotDeviceMaps(
+    private isValidIoTDeviceMap(iotDeviceMap: CreateIoTDeviceMapDto): boolean {
+        return !iotDeviceMap.error && !!iotDeviceMap.iotDevice;
+    }
+
+    private filterValidIotDeviceMaps(
         iotDeviceMap: CreateIoTDeviceMapDto[]
     ): CreateIoTDeviceMapDto[] {
         return iotDeviceMap.filter(map => !map.error && map.iotDevice);
