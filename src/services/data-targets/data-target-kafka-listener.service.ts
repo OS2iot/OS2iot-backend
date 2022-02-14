@@ -86,10 +86,10 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             } else if (target.type == DataTargetType.Fiware) {
                 try {
                     const status = await this.fiwareDataTargetService.send(target, dto);
-                    this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
+                    this.logger.debug(`Sent to FIWARE target: ${JSON.stringify(status)}`);
                 } catch (err) {
                     this.logger.error(
-                        `Error while sending to Http Push DataTarget: ${err}`
+                        `Error while sending to FIWARE DataTarget: ${err}`
                     );
                 }
             } else
