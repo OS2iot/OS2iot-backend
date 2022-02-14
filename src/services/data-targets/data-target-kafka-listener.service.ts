@@ -2,7 +2,6 @@ import { Injectable, Logger, NotImplementedException } from "@nestjs/common";
 
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { DataTarget } from "@entities/data-target.entity";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -13,6 +12,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
+import { FiwareDataTargetService } from "./fiware-data-target.service";
 
 const UNIQUE_NAME_FOR_KAFKA = "DataTargetKafka";
 
@@ -22,6 +22,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         private ioTDeviceService: IoTDeviceService,
         private dataTargetService: DataTargetService,
         private httpPushDataTargetService: HttpPushDataTargetService,
+        private fiwareDataTargetService: FiwareDataTargetService,
         private ioTDevicePayloadDecoderDataTargetConnectionService: IoTDevicePayloadDecoderDataTargetConnectionService
     ) {
         super();
@@ -75,29 +76,26 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         dataTargets.forEach(async target => {
             if (target.type == DataTargetType.HttpPush) {
                 try {
-                    await this.sendToHttpPushDataTarget(target, dto);
+                    const status = await this.httpPushDataTargetService.send(target, dto);
+                    this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
                 } catch (err) {
                     this.logger.error(
                         `Error while sending to Http Push DataTarget: ${err}`
                     );
                 }
-            } else {
+            } else if (target.type == DataTargetType.Fiware) {
+                try {
+                    const status = await this.fiwareDataTargetService.send(target, dto);
+                    this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
+                } catch (err) {
+                    this.logger.error(
+                        `Error while sending to Http Push DataTarget: ${err}`
+                    );
+                }
+            } else
+            {
                 throw new NotImplementedException(`Not implemented for: ${target.type}`);
             }
         });
-    }
-
-    private async sendToHttpPushDataTarget(
-        target: DataTarget,
-        dto: TransformedPayloadDto
-    ) {
-        const config = (target as HttpPushDataTarget).toConfiguration();
-        const data = {
-            rawBody: JSON.stringify(dto.payload),
-            mimeType: "application/json",
-        };
-
-        const status = await this.httpPushDataTargetService.send(config, data);
-        this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
     }
 }
