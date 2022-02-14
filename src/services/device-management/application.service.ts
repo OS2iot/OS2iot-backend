@@ -31,7 +31,7 @@ export class ApplicationService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
-    ) {}
+    ) { }
 
     async findAndCountInList(
         query?: ListAllEntitiesDto,
@@ -65,9 +65,9 @@ export class ApplicationService {
             where:
                 organizationIds.length > 0
                     ? [
-                          { id: In(allowedApplications) },
-                          { belongsTo: In(organizationIds) },
-                      ]
+                        { id: In(allowedApplications) },
+                        { belongsTo: In(organizationIds) },
+                    ]
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,

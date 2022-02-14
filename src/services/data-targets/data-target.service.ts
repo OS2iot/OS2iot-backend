@@ -20,6 +20,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -121,8 +122,8 @@ export class DataTargetService {
         userId: number
     ): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
-        const dataTarget = this.createDataTargetByDto(childType);
-
+        
+        const dataTarget = this.createDataTargetByDto<DataTarget>(childType);
         const mappedDataTarget = await this.mapDtoToDataTarget(
             createDataTargetDto,
             dataTarget
@@ -204,7 +205,7 @@ export class DataTargetService {
             throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
-        this.setAuthorizationHeader(dataTargetDto, dataTarget);
+        this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
 
         return dataTarget;
     }
@@ -224,7 +225,7 @@ export class DataTargetService {
         return o;
     }
 
-    private setAuthorizationHeader(
+    private mapDtoToTypeSpecificDataTarget(
         dataTargetDto: CreateDataTargetDto,
         dataTarget: DataTarget
     ) {
@@ -233,12 +234,18 @@ export class DataTargetService {
             (dataTarget as HttpPushDataTarget).timeout = dataTargetDto.timeout;
             (dataTarget as HttpPushDataTarget).authorizationHeader =
                 dataTargetDto.authorizationHeader;
+        } else if (dataTargetDto.type === DataTargetType.Fiware) {
+            (dataTarget as FiwareDataTarget).url = dataTargetDto.url;
+            (dataTarget as FiwareDataTarget).timeout = dataTargetDto.timeout;
+            (dataTarget as FiwareDataTarget).authorizationHeader =
+                dataTargetDto.authorizationHeader;
+            (dataTarget as FiwareDataTarget).tenant = dataTargetDto.tenant;
+            (dataTarget as FiwareDataTarget).context = dataTargetDto.context;
+
         }
     }
 
-    private createDataTargetByDto<T extends DataTarget>(childDataTargetType: {
-        new (): T;
-    }): T {
+    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any ):T {
         return new childDataTargetType();
     }
 }

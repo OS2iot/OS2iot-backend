@@ -3,43 +3,40 @@ import { AxiosRequestConfig } from "axios";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { DataTarget } from "@entities/data-target.entity";
-import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
-import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
-import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
+import { FiwareDataTargetConfiguration } from "@interfaces/fiware-data-target-configuration.interface";
 import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
 
 @Injectable()
-export class HttpPushDataTargetService extends BaseDataTargetService {
+export class FiwareDataTargetService extends BaseDataTargetService {
     constructor(private httpService: HttpService) {
         super();
     }
 
-    protected readonly logger = new Logger(HttpPushDataTargetService.name);
+    protected readonly logger = new Logger(FiwareDataTargetService.name);
 
     // eslint-disable-next-line max-lines-per-function
     async send(
         datatarget: DataTarget,
         dto: TransformedPayloadDto
     ): Promise<DataTargetSendStatus> {
+        
+        const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
 
-        const data: HttpPushDataTargetData = {
-            rawBody: JSON.stringify(dto.payload),
-            mimeType: "application/json"            
-        };
-        const config: HttpPushDataTargetConfiguration = (datatarget as HttpPushDataTarget).toConfiguration();
-
+      
         // Setup HTTP client
-        const axiosConfig = HttpPushDataTargetService.makeAxiosConfiguration(
-            config,
-            data
-        );
-        const target = `HttpTarget(${config.url})`;
+        const axiosConfig = this.makeAxiosConfiguration(config,dto);
+
+        const rawBody: string = JSON.stringify(dto.payload);      
+
+        const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
+        const target = `HttpTarget(${endpointUrl})`;
 
         try {
             const result = await this.httpService
-                .post(config.url, data.rawBody, axiosConfig)
+                .post(endpointUrl, rawBody, axiosConfig)
                 .toPromise();
 
             this.logger.debug(
@@ -60,14 +57,16 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
         }
     }
 
-    static makeAxiosConfiguration(
-        config: HttpPushDataTargetConfiguration,
-        data: HttpPushDataTargetData
+     makeAxiosConfiguration(
+        config: FiwareDataTargetConfiguration,
+        data: TransformedPayloadDto
     ): AxiosRequestConfig {
+        
         const axiosConfig: AxiosRequestConfig = {
             timeout: config.timeout,
-            headers: { "Content-Type": data.mimeType },
+            headers: this.getHeaders(config),
         };
+
         if (
             config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
@@ -84,5 +83,28 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
             }
         }
         return axiosConfig;
+    }
+
+    getHeaders(config: FiwareDataTargetConfiguration) :any
+    {
+        let headers :any = {}
+
+        if(config.context) {
+            headers = {               
+                    mimeType: "application/json",
+                    Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`
+            };
+        } else {
+            headers =  {
+                mimeType: "application/ld+json",                
+            };
+        }
+
+        if (config.tenant)
+        {
+            headers["NGSILD-Tenant"] = config.tenant;
+        }
+
+        return headers;
     }
 }
