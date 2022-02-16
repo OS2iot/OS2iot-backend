@@ -572,7 +572,7 @@ export class IoTDeviceService {
             }
 
             if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
-                map.error = { message: ErrorCodes.OrganizationDoesNotMatch };
+                map.error = { message: ErrorCodes.DeviceModelOrganizationDoesNotMatch };
                 continue;
             }
 

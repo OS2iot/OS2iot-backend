@@ -13,7 +13,7 @@ export enum ErrorCodes {
     UserAlreadyExists = "MESSAGE.USER-ALREADY-EXISTS",
     OrganizationAlreadyExists = "MESSAGE.ORGANIZATION-ALREADY-EXISTS",
     OrganizationDoesNotExists = "MESSAGE.ORGANIZATION-DOES-NOT-EXISTS",
-    OrganizationDoesNotMatch = "MESSAGE.ORGANIZATION-DOES-NOT-MATCH",
+    DeviceModelOrganizationDoesNotMatch = "MESSAGE.DEVICE-MODEL-ORGANIZATION-DOES-NOT-MATCH",
     UserInactive = "MESSAGE.USER-INACTIVE",
     NotSameApplication = "MESSAGE.NOT-SAME-APPLICATION",
     PasswordNotMetRequirements = "MESSAGE.PASSWORD-DOES-NOT-MEET-REQUIREMENTS",
