@@ -26,6 +26,9 @@ import { ChirpstackManyDeviceResponseDto } from "@dto/chirpstack/chirpstack-many
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
+import { groupBy } from "lodash";
+
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -49,7 +52,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             ListAllChirpstackApplicationsResponseDto
         >(`applications?limit=100&organizationID=${organizationID}`);
         // if default exist use it
-        let applicationId;
+        let applicationId: string;
         applications.result.forEach(element => {
             if (
                 element.serviceProfileID.toLowerCase() ===
@@ -72,7 +75,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     }
 
     private async createDefaultApplication(
-        applicationId: any,
+        applicationId: string,
         dto: CreateChirpstackDeviceDto,
         organizationID: string
     ) {
@@ -301,8 +304,15 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
+    /**
+     * Fetch and set LoRaWAN settings on the given device. This is not immutable.
+     * @param iotDevice
+     * @param applications
+     * @returns The mutated device
+     */
     async enrichLoRaWANDevice(
-        iotDevice: IoTDevice
+        iotDevice: IoTDevice,
+        applications: ChirpstackApplicationResponseDto[] = []
     ): Promise<LoRaWANDeviceWithChirpstackDataDto> {
         const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
         loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
@@ -316,9 +326,19 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
         loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
 
-        const csAppliation = await this.getChirpstackApplication(csData.applicationID);
-        loraDevice.lorawanSettings.serviceProfileID =
-            csAppliation.application.serviceProfileID;
+        const appMatch = applications.find(app => app.id === csData.applicationID);
+        loraDevice.lorawanSettings.serviceProfileID = appMatch
+            ? appMatch.serviceProfileID
+            : loraDevice.lorawanSettings.serviceProfileID;
+
+        if (!loraDevice.lorawanSettings.serviceProfileID) {
+            const csAppliation = await this.getChirpstackApplication(
+                csData.applicationID
+            );
+            loraDevice.lorawanSettings.serviceProfileID =
+                csAppliation.application.serviceProfileID;
+        }
+
         return loraDevice;
     }
 
@@ -350,6 +370,30 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             return x.devEUI.toLowerCase() == deviceEUI.toLowerCase();
         });
         return alreadyExists;
+    }
+
+    /**
+     * Fetch LoRaWAN applications by the device application id. This **assumes** that
+     * the device chirpstack application id always reflects what's on Chirpstack.
+     * @param devices
+     * @returns
+     */
+    public async getLoRaWANApplications(
+        devices: LoRaWANDeviceWithChirpstackDataDto[]
+    ): Promise<ChirpstackSingleApplicationResponseDto[]> {
+        const loraDevicesByAppId = groupBy(
+            devices,
+            device => device.chirpstackApplicationId
+        );
+
+        const res: ChirpstackSingleApplicationResponseDto[] = [];
+
+        // Avoid async .forEach and .map when querying the API. They execute whatever's inside in "parallel" which can result in timeouts.
+        for (const appId of Object.keys(loraDevicesByAppId)) {
+            res.push(await this.getChirpstackApplication(appId));
+        }
+
+        return res;
     }
 
     private async getAllChirpstackDevices(): Promise<ChirpstackDeviceContentsDto[]> {

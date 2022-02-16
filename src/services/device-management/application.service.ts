@@ -19,6 +19,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { Multicast } from "@entities/multicast.entity";
 import { MulticastService } from "./multicast.service";
+import { groupBy } from "lodash";
 
 @Injectable()
 export class ApplicationService {
@@ -326,18 +327,28 @@ export class ApplicationService {
             .orderBy(orderByColumn, direction)
             .getManyAndCount();
 
-        // Need to get LoRa details to get battery status ...
-        await Promise.all(
-            data.map(async x => {
-                if (x.type == IoTDeviceType.LoRaWAN) {
-                    x = await this.chirpstackDeviceService.enrichLoRaWANDevice(x);
-                }
-            })
+        // Fetch LoRa details one by one to get battery status. The LoRa API doesn't support query by multiple deveui's to reduce the calls.
+        // Reduce calls by pre-fetching service profile ids by application id. The applications is usually the same
+        const loraDevices = data.filter(
+            device => device.type === IoTDeviceType.LoRaWAN
+        ) as LoRaWANDeviceWithChirpstackDataDto[];
+        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(
+            loraDevices
+        );
+        const loraApplications = applications.map(
+            app => app.application
         );
 
+        for (const device of loraDevices) {
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(
+                device,
+                loraApplications
+            );
+        }
+
         return {
-            data: data,
-            count: count,
+            data,
+            count,
         };
     }
 
