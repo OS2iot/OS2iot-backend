@@ -13,7 +13,7 @@ export class IoTLoRaWANDeviceService {
 
     private readonly logger = new Logger(IoTLoRaWANDeviceService.name, true);
 
-    public getDeviceEuisByIds(deviceEUIs: string[]): Promise<LoRaWANDeviceId[]> {
+    public getDeviceEUIsByIds(deviceEUIs: string[]): Promise<LoRaWANDeviceId[]> {
         return this.iotLorawanDeviceRepository.find({
             select: ["deviceEUI"],
             where: { deviceEUI: In(deviceEUIs) },

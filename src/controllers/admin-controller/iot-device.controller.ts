@@ -54,6 +54,7 @@ import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-resp
 import { ArrayMaxSize } from "class-validator";
 import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
+import { buildIoTDeviceCreateUpdateAuditData, ensureUpdatePayload as ensureIoTDeviceUpdatePayload } from "@helpers/iot-device.helper";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -235,14 +236,17 @@ export class IoTDeviceController {
         @Body() createDto: CreateIoTDeviceBatchDto
     ): Promise<IotDeviceBatchResponseDto[]> {
         try {
-            checkIfUserHasWriteAccessToApplication(req, createDto.data[0].applicationId);
+
+            createDto.data.forEach(createDto => checkIfUserHasWriteAccessToApplication(req, createDto.applicationId));
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId
             );
 
             // Iterate through the devices once, splitting it into a tuple with the data we want to log
-            const { deviceIds, deviceNames } = buildCreateUpdateAuditData(devices);
+            const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(
+                devices
+            );
 
             if (!deviceIds.length) {
                 AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
@@ -283,7 +287,12 @@ export class IoTDeviceController {
 
         try {
             validDevices.data = updateDto.data.reduce(
-                ensureUpdatePayload(validDevices, oldIotDevices, devicesNotFound, req),
+                ensureIoTDeviceUpdatePayload(
+                    validDevices,
+                    oldIotDevices,
+                    devicesNotFound,
+                    req
+                ),
                 []
             );
         } catch (err) {
@@ -296,7 +305,7 @@ export class IoTDeviceController {
             : [];
         response.push(...devicesNotFound);
 
-        const { deviceIds, deviceNames } = buildCreateUpdateAuditData(response);
+        const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(response);
 
         if (!deviceIds.length) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
@@ -333,66 +342,4 @@ export class IoTDeviceController {
             throw err;
         }
     }
-}
-
-/**
- * Iterate through the devices once, splitting it into a tuple with the data we want to log
- * @param response
- */
-function buildCreateUpdateAuditData(response: IotDeviceBatchResponseDto[]): { deviceIds: any; deviceNames: any; } {
-    return response.reduce(
-        (res: { deviceIds: number[]; deviceNames: string[]; }, device) => {
-            if (!device.data || device.error) {
-                return res;
-            }
-            device.data.id && res.deviceIds.push(device.data.id);
-            device.data.name && res.deviceNames.push(device.data.name);
-            return res;
-        },
-        { deviceIds: [], deviceNames: [] }
-    );
-}
-
-function ensureUpdatePayload(
-    validDevices: UpdateIoTDeviceBatchDto,
-    oldIotDevices: (
-        | IoTDevice
-        | LoRaWANDeviceWithChirpstackDataDto
-        | SigFoxDeviceWithBackendDataDto
-    )[],
-    devicesNotFound: IotDeviceBatchResponseDto[],
-    req: AuthenticatedRequest
-): (
-    previousValue: UpdateIoTDeviceDto[],
-    currentValue: UpdateIoTDeviceDto,
-    currentIndex: number,
-    array: UpdateIoTDeviceDto[]
-) => UpdateIoTDeviceDto[] {
-    return (res: typeof validDevices["data"], updateDeviceDto) => {
-        const oldDevice = oldIotDevices.find(
-            oldDevice => oldDevice.id === updateDeviceDto.id
-        );
-
-        if (!oldDevice) {
-            devicesNotFound.push({
-                idMetadata: {
-                    applicationId: updateDeviceDto.applicationId,
-                    name: updateDeviceDto.name,
-                },
-                error: {
-                    message: ErrorCodes.IdDoesNotExists,
-                },
-            });
-            return res;
-        }
-
-        checkIfUserHasWriteAccessToApplication(req, oldDevice.application.id);
-
-        if (updateDeviceDto.applicationId !== oldDevice.application.id) {
-            // New application
-            checkIfUserHasWriteAccessToApplication(req, updateDeviceDto.applicationId);
-        }
-        res.push(updateDeviceDto);
-        return res;
-    };
 }

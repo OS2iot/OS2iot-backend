@@ -41,4 +41,5 @@ export enum ErrorCodes {
     TooMuchData = "MESSAGE.TOO-MUCH-DATA",
     ApplicationDoesNotExist = "MESSAGE.APPLICATION-DOES-NOT-EXIST",
     FailedToCreateOrUpdateIotDevice = "MESSAGE.FAILED-TO-CREATE-OR-UPDATE-IOT-DEVICE",
+    DeviceModelDoesNotExist = "MESSAGE.DEVICE-MODEL-DOES-NOT-EXIST",
 }
