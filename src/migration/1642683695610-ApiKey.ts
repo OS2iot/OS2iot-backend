@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class ApiKey1642683695610 implements MigrationInterface {
-    name = 'ApiKey1642683695610'
+export class apiKey1642683695610 implements MigrationInterface {
+    name = 'apiKey1642683695610'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "api_key" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "key" character varying NOT NULL, "name" character varying NOT NULL, "createdById" integer, "updatedById" integer, "systemUserId" integer NOT NULL, CONSTRAINT "UQ_fb080786c16de6ace7ed0b69f7d" UNIQUE ("key"), CONSTRAINT "REL_ba0ccb6c48e13f3fe1ff78f3d2" UNIQUE ("systemUserId"), CONSTRAINT "PK_b1bd840641b8acbaad89c3d8d11" PRIMARY KEY ("id"))`);
