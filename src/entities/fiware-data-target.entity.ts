@@ -24,10 +24,7 @@ export class FiwareDataTarget extends DataTarget {
     context: string;
 
     @BeforeInsert()
-    private beforeInsert() {
-        /**
-         * Generate uuid (version 4 = random) to be used as the apiKey for this GenericHTTPDevice
-         */
+    private beforeInsert() {       
         this.type = DataTargetType.Fiware;
     }
 

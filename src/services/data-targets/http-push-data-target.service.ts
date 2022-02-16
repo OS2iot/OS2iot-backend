@@ -1,6 +1,5 @@
 import { HttpService, Injectable, Logger } from "@nestjs/common";
 import { AxiosRequestConfig } from "axios";
-
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { DataTarget } from "@entities/data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";

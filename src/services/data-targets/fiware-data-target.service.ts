@@ -27,12 +27,12 @@ export class FiwareDataTargetService extends BaseDataTargetService {
 
       
         // Setup HTTP client
-        const axiosConfig = this.makeAxiosConfiguration(config,dto);
+        const axiosConfig = this.makeAxiosConfiguration(config);
 
         const rawBody: string = JSON.stringify(dto.payload);      
 
         const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
-        const target = `HttpTarget(${endpointUrl})`;
+        const target = `FiwareDataTarget(${endpointUrl})`;
 
         try {
             const result = await this.httpService
@@ -40,7 +40,7 @@ export class FiwareDataTargetService extends BaseDataTargetService {
                 .toPromise();
 
             this.logger.debug(
-                `HttpPushDataTarget result: '${JSON.stringify(result.data)}'`
+                `FiwareDataTarget result: '${JSON.stringify(result.data)}'`
             );
             if (!result.status.toString().startsWith("2")) {
                 this.logger.warn(
@@ -50,16 +50,14 @@ export class FiwareDataTargetService extends BaseDataTargetService {
                 );
             }
             return this.success(target);
-        } catch (err) {
-            // TODO: Error handling for common errors
-            this.logger.error(`HttpPushDataTarget got error: ${err}`);
+        } catch (err) {            
+            this.logger.error(`FiwareDataTarget got error: ${err}`);
             return this.failure(target, err);
         }
     }
 
      makeAxiosConfiguration(
-        config: FiwareDataTargetConfiguration,
-        data: TransformedPayloadDto
+        config: FiwareDataTargetConfiguration
     ): AxiosRequestConfig {
         
         const axiosConfig: AxiosRequestConfig = {
@@ -67,8 +65,7 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             headers: this.getHeaders(config),
         };
 
-        if (
-            config.authorizationType !== null &&
+        if (config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
         ) {
             if (config.authorizationType === AuthorizationType.HTTP_BASIC_AUTHORIZATION) {

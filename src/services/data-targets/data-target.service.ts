@@ -230,18 +230,17 @@ export class DataTargetService {
         dataTarget: DataTarget
     ) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
-            (dataTarget as HttpPushDataTarget).url = dataTargetDto.url;
-            (dataTarget as HttpPushDataTarget).timeout = dataTargetDto.timeout;
-            (dataTarget as HttpPushDataTarget).authorizationHeader =
-                dataTargetDto.authorizationHeader;
+            const httpPushDataTarget = (dataTarget as HttpPushDataTarget);
+            httpPushDataTarget.url = dataTargetDto.url;
+            httpPushDataTarget.timeout = dataTargetDto.timeout;
+            httpPushDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
         } else if (dataTargetDto.type === DataTargetType.Fiware) {
-            (dataTarget as FiwareDataTarget).url = dataTargetDto.url;
-            (dataTarget as FiwareDataTarget).timeout = dataTargetDto.timeout;
-            (dataTarget as FiwareDataTarget).authorizationHeader =
-                dataTargetDto.authorizationHeader;
-            (dataTarget as FiwareDataTarget).tenant = dataTargetDto.tenant;
-            (dataTarget as FiwareDataTarget).context = dataTargetDto.context;
-
+            const fiwareDataTarget = (dataTarget as FiwareDataTarget);
+            fiwareDataTarget.url = dataTargetDto.url;
+            fiwareDataTarget.timeout = dataTargetDto.timeout;
+            fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
+            fiwareDataTarget.tenant = dataTargetDto.tenant;
+            fiwareDataTarget.context = dataTargetDto.context;
         }
     }
 
