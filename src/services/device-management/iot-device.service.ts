@@ -31,6 +31,11 @@ import { iotDeviceTypeMap } from "@enum/device-type-mapping";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import {
+    filterValidIotDeviceMaps,
+    isValidIoTDeviceMap,
+    mapAllDevicesByProcessed,
+} from "@helpers/iot-device.helper";
+import {
     BadRequestException,
     Injectable,
     Logger,
@@ -42,7 +47,6 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import * as _ from "lodash";
 import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
@@ -342,8 +346,8 @@ export class IoTDeviceService {
         // Translate each generic device to the specific type
         createIoTDeviceDtos.forEach(createIotDevice => {
             try {
-                const childType = iotDeviceTypeMap[createIotDevice.type];
-                const iotDevice = new childType();
+                const deviceType = iotDeviceTypeMap[createIotDevice.type];
+                const iotDevice = new deviceType();
                 iotDevicesMaps.push({ iotDeviceDto: createIotDevice, iotDevice });
             } catch (error) {
                 iotDevicesMaps.push({ iotDeviceDto: createIotDevice, error });
@@ -352,11 +356,11 @@ export class IoTDeviceService {
 
         await this.mapDtoToIoTDevice(
             // Don't process failed devices
-            this.filterValidIotDeviceMaps(iotDevicesMaps),
+            filterValidIotDeviceMaps(iotDevicesMaps),
             false
         );
         // Filter any device which failed during the previous operations
-        const validProcessedDevices = this.filterValidIotDeviceMaps(iotDevicesMaps);
+        const validProcessedDevices = filterValidIotDeviceMaps(iotDevicesMaps);
 
         for (const mappedIotDevice of validProcessedDevices) {
             if (mappedIotDevice.iotDevice) {
@@ -373,7 +377,7 @@ export class IoTDeviceService {
         const dbIotDevices = await entityManager.save(validIotDevices);
 
         // Return a new list with all processed and failed devices
-        return iotDevicesMaps.map(this.mapAllDevicesByProcessed(dbIotDevices));
+        return iotDevicesMaps.map(mapAllDevicesByProcessed(dbIotDevices));
     }
 
     async save(iotDevice: IoTDevice): Promise<IoTDevice> {
@@ -444,7 +448,7 @@ export class IoTDeviceService {
         await this.mapDtoToIoTDevice(iotDeviceMaps, true);
 
         const validDevices = iotDeviceMaps.reduce((res: IoTDevice[], currentMap) => {
-            if (this.isValidIoTDeviceMap(currentMap)) {
+            if (isValidIoTDeviceMap(currentMap)) {
                 currentMap.iotDevice.updatedBy = userId;
                 res.push(currentMap.iotDevice);
             }
@@ -454,7 +458,7 @@ export class IoTDeviceService {
         const dbIotDevices = await this.iotDeviceRepository.save(validDevices);
 
         // Return a new list with all processed and failed devices
-        return iotDeviceMaps.map(this.mapAllDevicesByProcessed(dbIotDevices));
+        return iotDeviceMaps.map(mapAllDevicesByProcessed(dbIotDevices));
     }
 
     async delete(device: IoTDevice): Promise<DeleteResult> {
@@ -474,7 +478,8 @@ export class IoTDeviceService {
     }
 
     /**
-     * Create or update the IoT devices payload
+     * Validate and map info. from the dto onto an IoT device. This device is then created or updated
+     * as one of the final steps. I.e. valid chirpstack devices will be created in Chirpstack
      * @param iotDeviceMaps
      * @param isUpdate
      */
@@ -520,9 +525,9 @@ export class IoTDeviceService {
 
         // Set and validate properties on each IoT device
         // Before each operation, filter out any failed devices
-        await this.mapDeviceModels(this.filterValidIotDeviceMaps(iotDeviceMaps));
+        await this.mapDeviceModels(filterValidIotDeviceMaps(iotDeviceMaps));
         await this.mapChildDtoToIoTDevice(
-            this.filterValidIotDeviceMaps(iotDeviceMaps),
+            filterValidIotDeviceMaps(iotDeviceMaps),
             isUpdate
         );
     }
@@ -920,42 +925,5 @@ export class IoTDeviceService {
         } else {
             throw new BadRequestException(ErrorCodes.MissingABPInfo);
         }
-    }
-
-    private isValidIoTDeviceMap(iotDeviceMap: CreateIoTDeviceMapDto): boolean {
-        return !iotDeviceMap.error && !!iotDeviceMap.iotDevice;
-    }
-
-    private filterValidIotDeviceMaps(
-        iotDeviceMap: CreateIoTDeviceMapDto[]
-    ): CreateIoTDeviceMapDto[] {
-        return iotDeviceMap.filter(map => !map.error && map.iotDevice);
-    }
-
-    /**
-     * @param dbIotDevices
-     * @returns A new list of processed and failed devices
-     */
-    private mapAllDevicesByProcessed(
-        dbIotDevices: IoTDevice[]
-    ): (
-        value: CreateIoTDeviceMapDto,
-        index: number,
-        array: CreateIoTDeviceMapDto[]
-    ) => {
-        data: IoTDevice;
-        idMetadata: { name: string; applicationId: number };
-        error: Omit<Error, "name">;
-    } {
-        return iotDeviceMap => ({
-            data: dbIotDevices.find(
-                dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id
-            ),
-            idMetadata: {
-                name: iotDeviceMap.iotDeviceDto.name,
-                applicationId: iotDeviceMap.iotDeviceDto.applicationId,
-            },
-            error: iotDeviceMap.error,
-        });
     }
 }

@@ -1,4 +1,5 @@
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { CreateIoTDeviceMapDto } from "@dto/iot-device/create-iot-device-map.dto";
 import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
@@ -70,4 +71,39 @@ export function ensureUpdatePayload(
         res.push(updateDeviceDto);
         return res;
     };
+}
+
+export function isValidIoTDeviceMap(iotDeviceMap: CreateIoTDeviceMapDto): boolean {
+    return !iotDeviceMap.error && !!iotDeviceMap.iotDevice;
+}
+
+export function filterValidIotDeviceMaps(
+    iotDeviceMap: CreateIoTDeviceMapDto[]
+): CreateIoTDeviceMapDto[] {
+    return iotDeviceMap.filter(map => !map.error && map.iotDevice);
+}
+
+/**
+ * @param dbIotDevices
+ * @returns A new list of processed and failed devices
+ */
+export function mapAllDevicesByProcessed(
+    dbIotDevices: IoTDevice[]
+): (
+    value: CreateIoTDeviceMapDto,
+    index: number,
+    array: CreateIoTDeviceMapDto[]
+) => {
+    data: IoTDevice;
+    idMetadata: { name: string; applicationId: number };
+    error: Omit<Error, "name">;
+} {
+    return iotDeviceMap => ({
+        data: dbIotDevices.find(dbDevice => dbDevice.id === iotDeviceMap.iotDevice?.id),
+        idMetadata: {
+            name: iotDeviceMap.iotDeviceDto.name,
+            applicationId: iotDeviceMap.iotDeviceDto.applicationId,
+        },
+        error: iotDeviceMap.error,
+    });
 }
