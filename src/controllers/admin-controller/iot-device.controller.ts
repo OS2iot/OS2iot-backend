@@ -24,7 +24,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
@@ -50,6 +50,11 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
+import { ArrayMaxSize } from "class-validator";
+import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
+import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
+import { buildIoTDeviceCreateUpdateAuditData, ensureUpdatePayload as ensureIoTDeviceUpdatePayload } from "@helpers/iot-device.helper";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -220,6 +225,100 @@ export class IoTDeviceController {
             iotDevice.name
         );
         return iotDevice;
+    }
+
+    @Post("createMany")
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Create many IoT-Devices" })
+    @ApiBadRequestResponse()
+    async createMany(
+        @Req() req: AuthenticatedRequest,
+        @Body() createDto: CreateIoTDeviceBatchDto
+    ): Promise<IotDeviceBatchResponseDto[]> {
+        try {
+
+            createDto.data.forEach(createDto => checkIfUserHasWriteAccessToApplication(req, createDto.applicationId));
+            const devices = await this.iotDeviceService.createMany(
+                createDto.data,
+                req.user.userId
+            );
+
+            // Iterate through the devices once, splitting it into a tuple with the data we want to log
+            const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(
+                devices
+            );
+
+            if (!deviceIds.length) {
+                AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+            } else {
+                AuditLog.success(
+                    ActionType.CREATE,
+                    IoTDevice.name,
+                    req.user.userId,
+                    deviceIds.join(", "),
+                    deviceNames.join(", ")
+                );
+            }
+            return devices;
+        } catch (err) {
+            AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+            this.logger.error(
+                `Failed to create IoTDevice from dto: ${JSON.stringify(
+                    createDto
+                )}. Error: ${err}`
+            );
+            throw err;
+        }
+    }
+
+    @Post("updateMany")
+    @Header("Cache-Control", "none")
+    @ApiOperation({ summary: "Update existing IoT-Devices" })
+    @ApiBadRequestResponse()
+    async updateMany(
+        @Req() req: AuthenticatedRequest,
+        @Body() updateDto: UpdateIoTDeviceBatchDto
+    ): Promise<IotDeviceBatchResponseDto[]> {
+        const oldIotDevices = await this.iotDeviceService.findManyWithApplicationAndMetadata(
+            updateDto.data.map(iotDevice => iotDevice.id)
+        );
+        const devicesNotFound: IotDeviceBatchResponseDto[] = [];
+        const validDevices: typeof updateDto = { data: [] };
+
+        try {
+            validDevices.data = updateDto.data.reduce(
+                ensureIoTDeviceUpdatePayload(
+                    validDevices,
+                    oldIotDevices,
+                    devicesNotFound,
+                    req
+                ),
+                []
+            );
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId);
+            throw err;
+        }
+
+        const response = validDevices.data.length
+            ? await this.iotDeviceService.updateMany(validDevices, req.user.userId)
+            : [];
+        response.push(...devicesNotFound);
+
+        const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(response);
+
+        if (!deviceIds.length) {
+            AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
+        } else {
+            AuditLog.success(
+                ActionType.CREATE,
+                IoTDevice.name,
+                req.user.userId,
+                deviceIds.join(", "),
+                deviceNames.join(", ")
+            );
+        }
+        return response;
     }
 
     @Delete(":id")

@@ -19,7 +19,6 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { Multicast } from "@entities/multicast.entity";
 import { MulticastService } from "./multicast.service";
-import { groupBy } from "lodash";
 
 @Injectable()
 export class ApplicationService {
@@ -151,6 +150,12 @@ export class ApplicationService {
 
     async findOneWithOrganisation(id: number): Promise<Application> {
         return await this.applicationRepository.findOneOrFail(id, {
+            relations: ["belongsTo"],
+        });
+    }
+
+    async findManyWithOrganisation(ids: number[]): Promise<Application[]> {
+        return await this.applicationRepository.findByIds(ids, {
             relations: ["belongsTo"],
         });
     }

@@ -12,6 +12,7 @@ import { PeriodicSigFoxCleanupService } from "@services/sigfox/periodic-sigfox-c
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { DeviceModelModule } from "./device-model.module";
 import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-payload-decoder.controller";
+import { IoTLoRaWANDeviceModule } from "./iot-lorawan-device.module";
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-
         SigfoxDeviceTypeModule,
         DeviceModelModule,
         forwardRef(() => SigfoxDeviceModule),
+        forwardRef(() => IoTLoRaWANDeviceModule),
     ],
     exports: [IoTDeviceService],
     controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],
