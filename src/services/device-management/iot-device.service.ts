@@ -354,12 +354,12 @@ export class IoTDeviceService {
             }
         });
 
-        await this.mapDtoToIoTDevice(
-            // Don't process failed devices
+        await this.validateDtoAndCreateIoTDevice(
+            // Don't process any devices whose type couldn't be determined
             filterValidIotDeviceMaps(iotDevicesMaps),
             false
         );
-        // Filter any device which failed during the previous operations
+        // Filter any device which failed validation or couldn't be created
         const validProcessedDevices = filterValidIotDeviceMaps(iotDevicesMaps);
 
         for (const mappedIotDevice of validProcessedDevices) {
@@ -420,7 +420,7 @@ export class IoTDeviceService {
         const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = [
             { iotDevice: existingIoTDevice, iotDeviceDto: updateDto },
         ];
-        await this.mapDtoToIoTDevice(iotDeviceDtoMap, true);
+        await this.validateDtoAndCreateIoTDevice(iotDeviceDtoMap, true);
 
         const mappedIoTDevice = iotDeviceDtoMap[0].iotDevice;
         mappedIoTDevice.updatedBy = userId;
@@ -445,7 +445,7 @@ export class IoTDeviceService {
                 ),
             })
         );
-        await this.mapDtoToIoTDevice(iotDeviceMaps, true);
+        await this.validateDtoAndCreateIoTDevice(iotDeviceMaps, true);
 
         const validDevices = iotDeviceMaps.reduce((res: IoTDevice[], currentMap) => {
             if (isValidIoTDeviceMap(currentMap)) {
@@ -483,7 +483,7 @@ export class IoTDeviceService {
      * @param iotDeviceMaps
      * @param isUpdate
      */
-    private async mapDtoToIoTDevice(
+    private async validateDtoAndCreateIoTDevice(
         iotDeviceMaps: CreateIoTDeviceMapDto[],
         isUpdate: boolean
     ): Promise<void> {
@@ -498,7 +498,8 @@ export class IoTDeviceService {
         const applications = await this.getApplicationsByIds(applicationIds);
 
         // Populate all IoT devices. Any which fail will be added to the response as failed devices
-        for (const { iotDevice, iotDeviceDto } of iotDeviceMaps) {
+        for (const map of iotDeviceMaps) {
+            const { iotDevice, iotDeviceDto } = map;
             try {
                 const application = applications.find(
                     app => app.id === iotDeviceDto.applicationId
@@ -519,13 +520,16 @@ export class IoTDeviceService {
                 iotDevice.commentOnLocation = iotDeviceDto.commentOnLocation;
                 iotDevice.metadata = iotDeviceDto.metadata;
             } catch (error) {
-                iotDeviceMaps.push({ iotDeviceDto, error });
+                map.error = error;
             }
         }
 
         // Set and validate properties on each IoT device
-        // Before each operation, filter out any failed devices
-        await this.mapDeviceModels(filterValidIotDeviceMaps(iotDeviceMaps));
+        // Filter devices whose properties couldn't be set
+        await this.mapDeviceModels(
+            filterValidIotDeviceMaps(iotDeviceMaps)
+        );
+        // Filter devices which didn't have a valid device model
         await this.mapChildDtoToIoTDevice(
             filterValidIotDeviceMaps(iotDeviceMaps),
             isUpdate
