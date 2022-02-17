@@ -3,5 +3,5 @@ import { ApiProperty } from "@nestjs/swagger";
 
 export class ListAllApiKeysDto extends ListAllEntitiesDto {
     @ApiProperty({ required: true })
-    organisationId: number;
+    organizationId: number;
 }

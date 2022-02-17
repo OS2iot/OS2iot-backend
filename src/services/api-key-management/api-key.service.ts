@@ -50,7 +50,7 @@ export class ApiKeyService {
     ): Promise<ListAllApiKeysResponseDto> {
         const permIds = (
             await this.permissionService.getAllPermissionsInOrganizations([
-                query.organisationId,
+                query.organizationId,
             ])
         ).data.map(x => x.id);
 
