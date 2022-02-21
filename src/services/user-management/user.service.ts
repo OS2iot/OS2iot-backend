@@ -22,6 +22,11 @@ import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
+import * as nodemailer from "nodemailer";
+import { Organization } from "@entities/organization.entity";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { OrganizationAdmin } from "@auth/roles.decorator";
+import { PermissionType } from "@enum/permission-type.enum";
 
 @Injectable()
 export class UserService {
@@ -235,9 +240,16 @@ export class UserService {
         }
     }
 
-    async newKombitUser(dto: CreateNewKombitUserDto, user: User): Promise<User> {
+    async newKombitUser(
+        dto: CreateNewKombitUserDto,
+        requestedOrganizations: Organization[],
+        user: User
+    ): Promise<User> {
         user.email = dto.email;
         user.awaitingConfirmation = true;
+        for (let index = 0; index < requestedOrganizations.length; index++) {
+            await this.sendOrganizationRequestMail(user, requestedOrganizations[index]);
+        }
         return await this.userRepository.save(user);
     }
 
@@ -297,5 +309,50 @@ export class UserService {
         return {
             users: result,
         };
+    }
+
+    async sendOrganizationRequestMail(
+        user: User,
+        organization: Organization
+    ): Promise<void> {
+        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
+            {
+                host: "smtp.ethereal.email",
+                port: 587,
+                auth: {
+                    user: "hgybebxqjxdbakvy@ethereal.email",
+                    pass: "TKDkXk67gV5CK6cPk5",
+                },
+            }
+        );
+        const emails = await this.getEmails(organization);
+        try {
+            await transporter.sendMail({
+                from: "augusthjerrild@gmail.com", // sender address
+                to: emails, // list of receivers
+                subject: "Ny ansøgning til din organisation!", // Subject line
+                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="https://www.google.com">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+    async getEmails(organization: Organization): Promise<string[]> {
+        const emails: string[] = [];
+        const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
+        organization.permissions.forEach(permission => {
+            if (permission.type === PermissionType.OrganizationAdmin) {
+                if (permission.users.length > 0) {
+                    permission.users.forEach(user => {
+                        emails.push(user.email);
+                    });
+                } else {
+                    // globalAdminPermission.users.forEach(user => {
+                    //     emails.push(user.email);
+                    // });
+                }
+            }
+        });
+        return emails;
     }
 }

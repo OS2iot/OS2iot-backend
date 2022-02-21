@@ -38,4 +38,5 @@ export enum ErrorCodes {
     KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
     DifferentServiceprofile = "MESSAGE.DIFFERENT-SERVICE-PROFILE",
     NewDevicesWrongServiceProfile = "MESSAGE.WRONG-SERVICE-PROFILE",
+    SendMailError = "MESSAGE.SEND-MAIL-ERROR"
 }

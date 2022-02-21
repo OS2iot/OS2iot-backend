@@ -81,6 +81,13 @@ export class OrganizationService {
         };
     }
 
+    async findManyWithRelations(organizationIds: number[]): Promise<Organization[]>
+    {
+        return await this.organizationRepository.findByIds(organizationIds, {
+            relations: ["permissions", "permissions.users"],
+        });
+    }
+
     async findAllPaginated(
         query?: ListAllEntitiesDto
     ): Promise<ListAllOrganizationsResponseDto> {

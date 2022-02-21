@@ -84,32 +84,6 @@ export class OrganizationController {
         }
     }
 
-    @Put("updateUserOrgs")
-    @ApiOperation({ summary: "Updates the users organizations" })
-    @ApiNotFoundResponse()
-    async updateUserOrgs(
-        @Req() req: AuthenticatedRequest,
-        @Body() updateUserOrgsDto: UpdateUserOrgsDto
-    ): Promise<UpdateUserOrgsDto> {
-        try {
-            const user = await this.userService.findOne(req.user.userId);
-
-            for (let index = 0; index < updateUserOrgsDto.requestedOrganizations.length; index++) {
-                const dbOrg = await this.organizationService.findByIdWithUsers(
-                    updateUserOrgsDto.requestedOrganizations[index].id
-                );
-
-                await this.organizationService.updateAwaitingUsers(dbOrg, user);
-            }
-
-            AuditLog.success(ActionType.UPDATE, Organization.name, req.user.userId);
-            return updateUserOrgsDto;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, Organization.name, req.user.userId);
-            throw err;
-        }
-    }
-
     @Put(":id")
     @ApiOperation({ summary: "Update an Organization" })
     @ApiNotFoundResponse()

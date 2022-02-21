@@ -281,6 +281,13 @@ export class PermissionService {
         });
     }
 
+    async getGlobalPermission(): Promise<Permission> {
+        return await getManager().findOneOrFail(Permission, {
+            where: { type: PermissionType.GlobalAdmin },
+            relations: [ "users"],
+        });
+    }
+
     async findPermissionsForUser(userId: number): Promise<PermissionMinimalDto[]> {
         return await this.permissionRepository
             .createQueryBuilder("permission")
