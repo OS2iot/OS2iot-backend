@@ -85,15 +85,15 @@ export class FiwareDataTargetService extends BaseDataTargetService {
     getHeaders(config: FiwareDataTargetConfiguration) :any
     {
         let headers :any = {}
-
+        
         if(config.context) {
             headers = {               
-                    mimeType: "application/json",
+                    "Content-Type": "application/json",
                     Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`
             };
         } else {
             headers =  {
-                mimeType: "application/ld+json",                
+                "Content-Type": "application/ld+json",                
             };
         }
 
