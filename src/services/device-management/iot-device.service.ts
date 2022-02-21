@@ -549,8 +549,17 @@ export class IoTDeviceService {
         const deviceModels = await this.deviceModelService.getByIdsWithRelations(
             deviceModelIds
         );
+
+		// 
+        const applicationIds = iotDevicesDtoMap.reduce((ids: number[], dto) => {
+            if (dto.iotDeviceDto.applicationId) {
+                ids.push(dto.iotDeviceDto.applicationId);
+            }
+            return ids;
+        }, []);		
+		
         const applications = await this.applicationService.findManyWithOrganisation(
-            deviceModelIds
+            applicationIds
         );
 
         // Ensure that each device model is assignable
@@ -566,21 +575,25 @@ export class IoTDeviceService {
                 continue;
             }
 
-            const deviceModelMatch = deviceModels.find(
-                model => model.id === map.iotDeviceDto.deviceModelId
-            );
+			// Validate DeviceModel if set
+			if (map.iotDeviceDto.deviceModelId) {
 
-            if (!deviceModelMatch) {
-                map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
-                continue;
-            }
+				const deviceModelMatch = deviceModels.find(
+					model => model.id === map.iotDeviceDto.deviceModelId
+				);
 
-            if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
-                map.error = { message: ErrorCodes.DeviceModelOrganizationDoesNotMatch };
-                continue;
-            }
+				if (!deviceModelMatch) {
+					map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
+					continue;
+				}
 
-            map.iotDevice.deviceModel = deviceModelMatch;
+				if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
+					map.error = { message: ErrorCodes.DeviceModelOrganizationDoesNotMatch };
+					continue;
+				}
+
+				map.iotDevice.deviceModel = deviceModelMatch;
+			}
         }
     }
 
@@ -652,7 +665,7 @@ export class IoTDeviceService {
         );
 
         const loraDeviceEuis = !iotLorawanDevices.length
-            ? null
+            ? []
             : // Fetch from the database instead of from Chirpstack to free up load
               await this.ioTLoRaWANDeviceService.getDeviceEUIsByIds(iotLorawanDevices);
 
