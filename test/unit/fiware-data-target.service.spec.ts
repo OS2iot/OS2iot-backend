@@ -2,9 +2,9 @@ import { HttpService } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
-import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
 import { FiwareDataTargetService } from "@services/data-targets/fiware-data-target.service";
+import { FiwareDataTargetConfiguration } from "@interfaces/fiware-data-target-configuration.interface";
 
 describe("FiwareDataTargetService", () => {
     let service: FiwareDataTargetService;
@@ -29,27 +29,45 @@ describe("FiwareDataTargetService", () => {
         expect(service).toBeDefined();
     });
 
-    it("makeAxiosConfiguration - translate config and data", () => {
-        const config: HttpPushDataTargetConfiguration = {
+    it("check headers without context with authorizationHeader", () => {
+        const config: FiwareDataTargetConfiguration = {
             url: "http://example.com/endpoint",
             timeout: 1337,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
-            authorizationHeader: "Bearer AbCdEf123456",
+            authorizationHeader: "Bearer AbCdEf123456",        
         };
-        const data: HttpPushDataTargetData = {
-            rawBody: '{"some_key": "some_value"}',
-            mimeType: "application/json",
-            context: ""
-        };
-
-        const res = FiwareDataTargetService.makeAxiosConfiguration(config, data);
+      
+        const res = service.makeAxiosConfiguration(config);
 
         expect(res).toMatchObject({
             timeout: 1337,
             headers: {
-                "Content-Type": "application/json",
+                "Content-Type": "application/ld+json",
                 Authorization: "Bearer AbCdEf123456",
             },
         });
     });
+
+    it("check headers with context and tenant", () => {
+        const config: FiwareDataTargetConfiguration = {
+            url: "http://example.com/endpoint",
+            timeout: 0,
+            authorizationType: AuthorizationType.NO_AUTHORIZATION,
+            context: "http://contextfile.json",
+            tenant: "Test"
+        };
+      
+        const res = service.makeAxiosConfiguration(config);
+
+        expect(res).toMatchObject({
+            timeout: 0,
+            headers: {
+                "Content-Type": "application/json",   
+                "Link":  '<http://contextfile.json>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+                "NGSILD-Tenant": 'Test',
+            },
+        });
+    });
+
+
 });
