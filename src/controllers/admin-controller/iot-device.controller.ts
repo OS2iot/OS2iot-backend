@@ -234,7 +234,7 @@ export class IoTDeviceController {
     ): Promise<IotDeviceBatchResponseDto[]> {
         try {
 
-            createDto.data.forEach(createDto => checkIfUserHasWriteAccessToApplication(req, createDto.applicationId));
+            createDto.data.forEach(createDto => checkIfUserHasAccessToApplication(req, createDto.applicationId, ApplicationAccessScope.Write));
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId
