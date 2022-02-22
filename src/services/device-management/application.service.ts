@@ -31,7 +31,7 @@ export class ApplicationService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
-    ) {}
+    ) { }
 
     async findAndCountInList(
         query?: ListAllEntitiesDto,
@@ -65,9 +65,9 @@ export class ApplicationService {
             where:
                 organizationIds.length > 0
                     ? [
-                          { id: In(allowedApplications) },
-                          { belongsTo: In(organizationIds) },
-                      ]
+                        { id: In(allowedApplications) },
+                        { belongsTo: In(organizationIds) },
+                    ]
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,
@@ -150,6 +150,12 @@ export class ApplicationService {
 
     async findOneWithOrganisation(id: number): Promise<Application> {
         return await this.applicationRepository.findOneOrFail(id, {
+            relations: ["belongsTo"],
+        });
+    }
+
+    async findManyWithOrganisation(ids: number[]): Promise<Application[]> {
+        return await this.applicationRepository.findByIds(ids, {
             relations: ["belongsTo"],
         });
     }
@@ -326,18 +332,28 @@ export class ApplicationService {
             .orderBy(orderByColumn, direction)
             .getManyAndCount();
 
-        // Need to get LoRa details to get battery status ...
-        await Promise.all(
-            data.map(async x => {
-                if (x.type == IoTDeviceType.LoRaWAN) {
-                    x = await this.chirpstackDeviceService.enrichLoRaWANDevice(x);
-                }
-            })
+        // Fetch LoRa details one by one to get battery status. The LoRa API doesn't support query by multiple deveui's to reduce the calls.
+        // Reduce calls by pre-fetching service profile ids by application id. The applications is usually the same
+        const loraDevices = data.filter(
+            device => device.type === IoTDeviceType.LoRaWAN
+        ) as LoRaWANDeviceWithChirpstackDataDto[];
+        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(
+            loraDevices
+        );
+        const loraApplications = applications.map(
+            app => app.application
         );
 
+        for (const device of loraDevices) {
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(
+                device,
+                loraApplications
+            );
+        }
+
         return {
-            data: data,
-            count: count,
+            data,
+            count,
         };
     }
 

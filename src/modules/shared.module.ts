@@ -6,6 +6,7 @@ import { DataTarget } from "@entities/data-target.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { GlobalAdminPermission } from "@entities/permissions/global-admin-permission.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
@@ -40,6 +41,7 @@ import { OrganizationGatewayAdminPermission } from "@entities/permissions/organi
             GenericHTTPDevice,
             GlobalAdminPermission,
             HttpPushDataTarget,
+            FiwareDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,

@@ -135,7 +135,7 @@ export class ApiKeyController {
     ): Promise<ListAllApiKeysResponseDto> {
         checkIfUserHasAccessToOrganization(
             req,
-            query.organisationId,
+            query.organizationId,
             OrganizationAccessScope.UserAdministrationWrite
         );
 

@@ -23,6 +23,12 @@ export class CreateDataTargetDto {
     @MaxLength(50)
     name: string;
 
+    @ApiProperty({ required: false, default: "" })
+    tenant: string;
+
+    @ApiProperty({ required: false, default: "", example: null })
+    context: string;
+
     @ApiProperty({ required: true, example: 1 })
     @IsNumber()
     @Min(1)
@@ -35,7 +41,7 @@ export class CreateDataTargetDto {
     @IsString()
     @MaxLength(1024)
     @IsNotBlank("url")
-    @IsUrl()
+    @IsUrl({ require_tld: false, require_protocol: true})
     url: string;
 
     @ApiProperty({ required: true, example: 30000 })
