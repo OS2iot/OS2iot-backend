@@ -1,8 +1,8 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
 
 export class ListAllPaginated {
-    @ApiProperty({ type: Number, required: false })
+    @IsSwaggerOptional({ type: Number })
     limit? = 100;
-    @ApiProperty({ type: Number, required: false })
+    @IsSwaggerOptional({ type: Number })
     offset? = 0;
 }

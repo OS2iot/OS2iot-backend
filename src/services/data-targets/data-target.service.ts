@@ -20,6 +20,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -121,8 +122,8 @@ export class DataTargetService {
         userId: number
     ): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
-        const dataTarget = this.createDataTargetByDto(childType);
-
+        
+        const dataTarget = this.createDataTargetByDto<DataTarget>(childType);
         const mappedDataTarget = await this.mapDtoToDataTarget(
             createDataTargetDto,
             dataTarget
@@ -204,7 +205,7 @@ export class DataTargetService {
             throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
-        this.setAuthorizationHeader(dataTargetDto, dataTarget);
+        this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
 
         return dataTarget;
     }
@@ -224,21 +225,26 @@ export class DataTargetService {
         return o;
     }
 
-    private setAuthorizationHeader(
+    private mapDtoToTypeSpecificDataTarget(
         dataTargetDto: CreateDataTargetDto,
         dataTarget: DataTarget
     ) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
-            (dataTarget as HttpPushDataTarget).url = dataTargetDto.url;
-            (dataTarget as HttpPushDataTarget).timeout = dataTargetDto.timeout;
-            (dataTarget as HttpPushDataTarget).authorizationHeader =
-                dataTargetDto.authorizationHeader;
+            const httpPushDataTarget = (dataTarget as HttpPushDataTarget);
+            httpPushDataTarget.url = dataTargetDto.url;
+            httpPushDataTarget.timeout = dataTargetDto.timeout;
+            httpPushDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
+        } else if (dataTargetDto.type === DataTargetType.Fiware) {
+            const fiwareDataTarget = (dataTarget as FiwareDataTarget);
+            fiwareDataTarget.url = dataTargetDto.url;
+            fiwareDataTarget.timeout = dataTargetDto.timeout;
+            fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
+            fiwareDataTarget.tenant = dataTargetDto.tenant;
+            fiwareDataTarget.context = dataTargetDto.context;
         }
     }
 
-    private createDataTargetByDto<T extends DataTarget>(childDataTargetType: {
-        new (): T;
-    }): T {
+    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any ):T {
         return new childDataTargetType();
     }
 }

@@ -15,6 +15,7 @@ import { AuthorizationType } from "@enum/authorization-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { JwtToken } from "./jwt-token";
+import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
@@ -30,19 +31,19 @@ export class GenericChirpstackConfigurationService {
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
 
     setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
-        // Default timeout value in ms
-        const timeout = 30000;
+        const timeoutMs = 30 * 1000;
         let url = this.baseUrl + "/api/" + endPoint;
 
         // If limits are supplied, add these as query params
-        if (limit != null && offset != null) {            
-            url += `${endPoint.indexOf("?") >= 0 ? "&" : "?"
-                }limit=${limit}&offset=${offset}`;
+        if (limit != null && offset != null) {
+            url += `${
+                endPoint.indexOf("?") >= 0 ? "&" : "?"
+            }limit=${limit}&offset=${offset}`;
         }
-        
-        let headerDto: HeaderDto = {
+
+        const headerDto: HeaderDto = {
             url,
-            timeout,
+            timeout: timeoutMs,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
             authorizationHeader: "Bearer " + JwtToken.setupToken(),
         };
@@ -192,6 +193,14 @@ export class GenericChirpstackConfigurationService {
 
             throw new InternalServerErrorException(err?.response?.data);
         }
+    }
+
+    async getAllApplicationsWithPagination(
+        organizationID: string
+    ): Promise<ListAllChirpstackApplicationsResponseDto> {
+        return this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
+            `applications?limit=100&organizationID=${organizationID}`
+        );
     }
 
     async getAllWithPagination<T>(

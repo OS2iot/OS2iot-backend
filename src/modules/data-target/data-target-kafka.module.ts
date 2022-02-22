@@ -10,6 +10,7 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { KafkaModule } from "@modules/kafka.module";
 import { SharedModule } from "@modules/shared.module";
 import { DataTargetKafkaListenerService } from "@services/data-targets/data-target-kafka-listener.service";
+import { DataTargetFiwareSenderModule } from "./data-target-fiware-sender.module";
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { DataTargetKafkaListenerService } from "@services/data-targets/data-targ
         HttpModule,
         KafkaModule,
         DataTargetSenderModule,
+        DataTargetFiwareSenderModule,
         DeviceIntegrationPersistenceModule,
         IoTDeviceModule,
         ChirpstackAdministrationModule,

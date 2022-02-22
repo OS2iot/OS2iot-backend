@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
 
 export class ListAllIoTDevicesMinimalResponseDto {
     @ApiProperty()
@@ -34,9 +35,9 @@ export class IoTDeviceMinimalRaw {
 }
 
 export class PayloadDecoderIoDeviceMinimalQuery {
-    @ApiPropertyOptional()
-    limit?: number = 20;
+    @IsSwaggerOptional()
+    limit? = 20;
 
-    @ApiPropertyOptional()
-    offset?: number = 0;
+    @IsSwaggerOptional()
+    offset? = 0;
 }

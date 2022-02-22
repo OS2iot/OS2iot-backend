@@ -24,7 +24,6 @@ import {
     ApiTags,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
@@ -38,12 +37,12 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
 

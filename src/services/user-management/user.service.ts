@@ -256,6 +256,9 @@ export class UserService {
             take: +query.limit,
             skip: +query.offset,
             order: sorting,
+			where: {
+				isSystemUser: false
+			}
         });
 
         return {

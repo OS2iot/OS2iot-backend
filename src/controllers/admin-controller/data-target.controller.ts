@@ -23,7 +23,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
@@ -44,7 +44,7 @@ import { ActionType } from "@entities/audit-log-entry";
 
 @ApiTags("Data Target")
 @Controller("data-target")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()
@@ -134,7 +134,7 @@ export class DataTargetController {
         const oldDataTarget = await this.dataTargetService.findOne(id);
         try {
             checkIfUserHasWriteAccessToApplication(req, oldDataTarget.application.id);
-            if (oldDataTarget.application.id != updateDto.applicationId) {
+            if (oldDataTarget.application.id !== updateDto.applicationId) {
                 checkIfUserHasWriteAccessToApplication(req, updateDto.applicationId);
             }
         } catch (err) {
@@ -164,7 +164,7 @@ export class DataTargetController {
     }
 
     @Delete(":id")
-    @ApiOperation({ summary: "Delete an existing IoT-Device" })
+    @ApiOperation({ summary: "Delete an existing DataTarget" })
     @ApiBadRequestResponse()
     @Write()
     async delete(
@@ -183,7 +183,7 @@ export class DataTargetController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, DataTarget.name, req.user.userId, id);
-            if (err?.status == 403) {
+            if (err?.status === 403) {
                 throw err;
             }
             throw new NotFoundException(err);

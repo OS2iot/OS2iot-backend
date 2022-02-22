@@ -77,6 +77,15 @@ export class DeviceModelService {
         });
     }
 
+    async getByIdsWithRelations(ids: number[]): Promise<DeviceModel[]> {
+        return this.repository.findByIds(ids, {
+            relations: ["belongsTo"],
+            loadRelationIds: {
+                relations: ["createdBy", "updatedBy"],
+            },
+        });
+    }
+
     async create(dto: CreateDeviceModelDto, userId: number): Promise<DeviceModel> {
         const deviceModel = new DeviceModel();
         deviceModel.belongsTo = await this.organizationService.findById(dto.belongsToId);
