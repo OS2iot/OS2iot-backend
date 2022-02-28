@@ -57,5 +57,5 @@ export class Organization extends DbBaseEntity {
     @ManyToMany(_ => User, user => user.requestedOrganizations, {
         nullable: true,
     })
-    users?: User[];
+    awaitingUsers?: User[];
 }

@@ -230,4 +230,13 @@ export class UserController {
     async findAll(@Query() query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         return await this.userService.findAll(query);
     }
+
+    @Get("/awaitingUsers/:id")
+    @ApiOperation({ summary: "Get all users" })
+    async findAwaitingUsers(
+        @Param("id", new ParseIntPipe()) id: number,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        return await this.userService.getAwaitingUsers(id, query);
+    }
 }

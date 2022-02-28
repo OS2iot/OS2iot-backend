@@ -22,6 +22,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { PermissionService } from "./permission.service";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { User } from "@entities/user.entity";
+import { UserService } from "./user.service";
 
 @Injectable()
 export class OrganizationService {
@@ -64,8 +65,8 @@ export class OrganizationService {
     }
 
     async updateAwaitingUsers(org: Organization, user: User): Promise<Organization> {
-        if (!org.users.find(dbUser => dbUser.id === user.id)) {
-            org.users.push(user);
+        if (!org.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
+            org.awaitingUsers.push(user);
         }
         return await this.organizationRepository.save(org);
     }
@@ -168,7 +169,7 @@ export class OrganizationService {
     }
     async findByIdWithUsers(organizationId: number): Promise<Organization> {
         return await this.organizationRepository.findOneOrFail(organizationId, {
-            relations: ["users"],
+            relations: ["awaitingUsers"],
         });
     }
 

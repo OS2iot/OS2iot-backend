@@ -25,7 +25,6 @@ import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-u
 import * as nodemailer from "nodemailer";
 import { Organization } from "@entities/organization.entity";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { OrganizationAdmin } from "@auth/roles.decorator";
 import { PermissionType } from "@enum/permission-type.enum";
 
 @Injectable()
@@ -316,12 +315,12 @@ export class UserService {
         organization: Organization
     ): Promise<void> {
         const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
-            {
+            { // TODO::: THIS IS TEMPORARY
                 host: "smtp.ethereal.email",
                 port: 587,
                 auth: {
-                    user: "hgybebxqjxdbakvy@ethereal.email",
-                    pass: "TKDkXk67gV5CK6cPk5",
+                    user: "eulah.okon0@ethereal.email",
+                    pass: "XFnVfSmRtmGTftVquc",
                 },
             }
         );
@@ -347,12 +346,39 @@ export class UserService {
                         emails.push(user.email);
                     });
                 } else {
-                    // globalAdminPermission.users.forEach(user => {
-                    //     emails.push(user.email);
-                    // });
+                    globalAdminPermission.users.forEach(user => {
+                        emails.push(user.email);
+                    });
                 }
             }
         });
         return emails;
+    }
+
+    async getAwaitingUsers( id: number, query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
+        let orderBy = `user.id`;
+        if (
+            query.orderOn !== null &&
+            (query.orderOn === "id" ||
+                query.orderOn === "name")
+        ) {
+            orderBy = `user.${query.orderOn}`;
+        }
+        const order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+
+        const [data, count] =  await this.userRepository.createQueryBuilder("user")
+        .innerJoin("user.requestedOrganizations", "org")
+        .where("org.id = :id", {id: id})
+        .take(+query.limit)
+        .skip(+query.offset)
+        .orderBy(orderBy, order)
+        .getManyAndCount();
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+       
     }
 }
