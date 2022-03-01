@@ -221,6 +221,7 @@ export class ApplicationService {
         mappedApplication.multicasts = [];
         mappedApplication.createdBy = userId;
         mappedApplication.updatedBy = userId;
+
         const app = await this.applicationRepository.save(mappedApplication);
 
         await this.permissionService.autoAddPermissionsToApplication(app);
@@ -312,6 +313,7 @@ export class ApplicationService {
         application.belongsTo = await this.organizationService.findById(
             applicationDto.organizationId
         );
+        application.metadata = applicationDto.metadata;
 
         return application;
     }

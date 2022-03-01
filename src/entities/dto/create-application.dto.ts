@@ -1,5 +1,6 @@
+import { IsSwaggerOptional } from "@helpers/optional-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { IsJSON, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateApplicationDto {
     @ApiProperty({ required: true })
@@ -16,4 +17,8 @@ export class CreateApplicationDto {
     @IsString()
     @MaxLength(1024)
     description?: string;
+
+    @IsSwaggerOptional()
+    @IsJSON()
+    metadata?: JSON;
 }

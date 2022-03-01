@@ -64,4 +64,7 @@ export class Application extends DbBaseEntity {
     )
     @JoinTable()
     permissions: OrganizationApplicationPermission[];
+
+    @Column({ type: "jsonb", nullable: true })
+    metadata: JSON;
 }
