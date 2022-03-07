@@ -7,8 +7,6 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
 import { MulticastModule } from "./multicast.module";
-import { ApplicationDeviceTypeModule } from "./application-device-type.module";
-import { ControlledPropertyModule } from "./controlled-property.module";
 
 @Module({
     imports: [
@@ -17,8 +15,6 @@ import { ControlledPropertyModule } from "./controlled-property.module";
         forwardRef(() => PermissionModule),
         forwardRef(() => MulticastModule), // because of circular reference
         ChirpstackAdministrationModule,
-        ControlledPropertyModule,
-        ApplicationDeviceTypeModule,
     ],
     exports: [ApplicationService],
     controllers: [ApplicationController],

@@ -19,9 +19,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { MulticastService } from "./multicast.service";
 import { nameof } from "@helpers/type-helper";
-import { ControlledPropertyService } from "./controlled-property.service";
 import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
-import { ApplicationDeviceTypeService } from "./application-device-type.service";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { findValuesInRecord } from "@helpers/record.helper";
@@ -42,8 +40,6 @@ export class ApplicationService {
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService,
-        private controlledPropertyService: ControlledPropertyService,
-        private applicationDeviceTypeService: ApplicationDeviceTypeService
     ) {}
 
     async findAndCountInList(
