@@ -25,12 +25,14 @@ import { HttpModule, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ApplicationDeviceTypeModule } from "./device-management/application-device-type.module";
+import { ControlledPropertyModule } from "./device-management/controlled-property.module";
 import { DeviceModelModule } from "./device-management/device-model.module";
+import { IoTLoRaWANDeviceModule } from "./device-management/iot-lorawan-device.module";
 import { MulticastModule } from "./device-management/multicast.module";
 import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { SearchModule } from "./search.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
-import { IoTLoRaWANDeviceModule } from "./device-management/iot-lorawan-device.module";
 
 @Module({
     imports: [
@@ -90,6 +92,8 @@ import { IoTLoRaWANDeviceModule } from "./device-management/iot-lorawan-device.m
         OpenDataDkSharingModule,
         MulticastModule,
         IoTLoRaWANDeviceModule,
+        ControlledPropertyModule,
+        ApplicationDeviceTypeModule,
     ],
     controllers: [],
     providers: [],

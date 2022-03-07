@@ -67,7 +67,7 @@
         "rimraf": "^3.0.2",
         "rxjs": "^6.6.3",
         "swagger-ui-express": "^4.1.5",
-        "typeorm": "^0.2.29",
+        "typeorm": "^0.2.34",
         "uuid": "^8.3.2",
         "vm2": "^3.9.2",
         "wait-for-expect": "^3.0.2"

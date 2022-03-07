@@ -30,6 +30,8 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
+import { ControlledProperty } from "@entities/controlled-property.entity";
+import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 
 @Module({
     imports: [
@@ -61,7 +63,9 @@ import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
             WritePermission,
             ApiKeyPermission,
             Multicast,
-            LorawanMulticastDefinition
+            LorawanMulticastDefinition,
+            ControlledProperty,
+            ApplicationDeviceType,
         ]),
     ],
     providers: [AuditLog],
