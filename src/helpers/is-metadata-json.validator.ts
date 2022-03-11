@@ -6,7 +6,7 @@ import {
     ValidatorConstraintInterface,
 } from "class-validator";
 
-@ValidatorConstraint({ name: "notEmptyKey", async: false })
+@ValidatorConstraint({ name: "isMetadataJson", async: false })
 export class IsMetadataJsonConstraint implements ValidatorConstraintInterface {
     private message = "";
 
@@ -39,37 +39,6 @@ export class IsMetadataJsonConstraint implements ValidatorConstraintInterface {
 
     public defaultMessage(_args: ValidationArguments): string {
         return this.message;
-    }
-}
-
-@ValidatorConstraint({ name: "notEmptyValue", async: false })
-export class NotEmptyValue implements ValidatorConstraintInterface {
-    public validate(value: string, args: ValidationArguments): boolean {
-        const [relatedPropertyName] = args.constraints;
-        const relatedValue = (args.object as Record<string, string>)[relatedPropertyName];
-
-        if (typeof value !== "string") {
-            return false;
-        }
-        try {
-            const json = JSON.parse(value) as Record<string, string>;
-
-            for (const key of Object.keys(json)) {
-                if (typeof json[key] !== "string" || json[key].trim() === "") {
-                    return false;
-                }
-            }
-        } catch (error) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public defaultMessage(args: ValidationArguments): string {
-        // Set the default error message here
-        const [relatedPropertyName] = args.constraints;
-        return `The value whose key is "${relatedPropertyName}" must be a valid text value`;
     }
 }
 
