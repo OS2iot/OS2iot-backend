@@ -3,7 +3,6 @@ import {
     Body,
     Controller,
     Delete,
-    ForbiddenException,
     Get,
     NotFoundException,
     Param,
@@ -40,14 +39,16 @@ import {
 import { PermissionService } from "@services/user-management/permission.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UserService } from "@services/user-management/user.service";
-import { UserResponseDto } from "@dto/user-response.dto";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 import { ApplicationService } from "@services/device-management/application.service";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import { PermissionRequestAcceptUser } from "@dto/user-management/add-user-to-permission.dto";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { Organization } from "@entities/organization.entity";
+import { User } from "@entities/user.entity";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -60,7 +61,8 @@ export class PermissionController {
     constructor(
         private permissionService: PermissionService,
         private userService: UserService,
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService,
+        private organizationService: OrganizationService
     ) {}
 
     @Post()
@@ -87,6 +89,42 @@ export class PermissionController {
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, Permission.name, req.user.userId);
+            throw err;
+        }
+    }
+
+    @Put("/acceptUser")
+    @ApiOperation({ summary: "add user to permission" })
+    async addUserToPermission(
+        @Req() req: AuthenticatedRequest,
+        @Body() dto: PermissionRequestAcceptUser
+    ): Promise<User> {
+        try {
+            checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
+            let dbPermission: Permission;
+            const org: Organization = await this.organizationService.findByIdWithPermissions(
+                dto.organizationId
+            );
+            const user: User = await this.userService.findOne(dto.userId);
+            for (let index = 0; index < org.permissions.length; index++) {
+                if (org.permissions[index].type === dto.level) {
+                    dbPermission = await this.permissionService.getPermission(
+                        org.permissions[index].id
+                    );
+                }
+            }
+            const resultUser = await this.userService.acceptUser(user, org, dbPermission);
+
+            AuditLog.success(
+                ActionType.UPDATE,
+                Permission.name,
+                req.user.userId,
+                resultUser.id,
+                resultUser.name
+            );
+            return resultUser;
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId);
             throw err;
         }
     }

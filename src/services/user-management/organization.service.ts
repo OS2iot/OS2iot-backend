@@ -30,7 +30,9 @@ export class OrganizationService {
         @InjectRepository(Organization)
         private organizationRepository: Repository<Organization>,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        private permissionService: PermissionService,
+        @Inject(forwardRef(() => UserService))
+        private userService: UserService
     ) {}
 
     private readonly logger = new Logger(OrganizationService.name, true);
@@ -69,6 +71,18 @@ export class OrganizationService {
             org.awaitingUsers.push(user);
         }
         return await this.organizationRepository.save(org);
+    }
+
+    async rejectAwaitingUser(user: User, organization: Organization): Promise<Organization> {
+        if(organization.awaitingUsers.find(dbUser => dbUser.id === user.id))
+        {
+            const index = organization.awaitingUsers.findIndex(dbUser => dbUser.id === user.id);
+            organization.awaitingUsers.splice(index, 1);
+            await this.userService.sendRejectionMail(user, organization)
+            return await this.organizationRepository.save(organization);
+        }
+        throw new NotFoundException(ErrorCodes.UserDoesNotExistInArray);
+
     }
 
     async findAll(): Promise<ListAllOrganizationsResponseDto> {

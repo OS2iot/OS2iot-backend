@@ -32,7 +32,10 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
+import {
+    checkIfUserHasAdminAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
+} from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
@@ -43,6 +46,8 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UpdateUserOrgsDto } from "@dto/user-management/update-user-orgs.dto";
+import { Organization } from "@entities/organization.entity";
+import { RejectUserDto } from "@dto/user-management/reject-user.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -113,16 +118,23 @@ export class UserController {
     ): Promise<User> {
         try {
             const user = await this.userService.findOne(req.user.userId);
-            const requestedOrganizations = await this.organizationService.findManyWithRelations(dto.requestedOrganizationIds);
-
+            const requestedOrganizations = await this.organizationService.findManyWithRelations(
+                dto.requestedOrganizationIds
+            );
             if (!user.email) {
-                const updatedUser = await this.userService.newKombitUser(dto, requestedOrganizations, user);
-
-                for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
+                const updatedUser = await this.userService.newKombitUser(
+                    dto,
+                    requestedOrganizations,
+                    user
+                );
+                for (
+                    let index = 0;
+                    index < dto.requestedOrganizationIds.length;
+                    index++
+                ) {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
                         requestedOrganizations[index].id
                     );
-
                     await this.organizationService.updateAwaitingUsers(
                         dbOrg,
                         updatedUser
@@ -148,13 +160,22 @@ export class UserController {
     ): Promise<UpdateUserOrgsDto> {
         try {
             const user = await this.userService.findOne(req.user.userId);
-            const requestedOrganizations = await this.organizationService.findManyWithRelations(updateUserOrgsDto.requestedOrganizationIds);
+            const requestedOrganizations = await this.organizationService.findManyWithRelations(
+                updateUserOrgsDto.requestedOrganizationIds
+            );
 
             for (let index = 0; index < requestedOrganizations.length; index++) {
-                await this.userService.sendOrganizationRequestMail(user, requestedOrganizations[index]);
+                await this.userService.sendOrganizationRequestMail(
+                    user,
+                    requestedOrganizations[index]
+                );
             }
 
-            for (let index = 0; index < updateUserOrgsDto.requestedOrganizationIds.length; index++) {
+            for (
+                let index = 0;
+                index < updateUserOrgsDto.requestedOrganizationIds.length;
+                index++
+            ) {
                 const dbOrg = await this.organizationService.findByIdWithUsers(
                     requestedOrganizations[index].id
                 );
@@ -168,6 +189,21 @@ export class UserController {
             AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
             throw err;
         }
+    }
+
+    @Put("/rejectUser/:id")
+    @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
+    async rejectUser(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) userId: number,
+        @Body() body: RejectUserDto
+    ): Promise<Organization> {
+        checkIfUserHasAdminAccessToOrganization(req, body.orgId);
+
+        const user = await this.userService.findOne(userId);
+        const organization = await this.organizationService.findByIdWithUsers(body.orgId);
+
+        return await this.organizationService.rejectAwaitingUser(user, organization);
     }
 
     @Put(":id")
@@ -232,11 +268,15 @@ export class UserController {
     }
 
     @Get("/awaitingUsers/:id")
-    @ApiOperation({ summary: "Get all users" })
+    @ApiOperation({ summary: "Get awaiting users" })
     async findAwaitingUsers(
-        @Param("id", new ParseIntPipe()) id: number,
+        @Param("id", new ParseIntPipe()) organizationId: number,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllUsersResponseDto> {
-        return await this.userService.getAwaitingUsers(id, query);
+        try {
+            return await this.userService.getAwaitingUsers(organizationId, query);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
     }
 }

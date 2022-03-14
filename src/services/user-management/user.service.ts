@@ -46,6 +46,26 @@ export class UserService {
         );
     }
 
+    async acceptUser(
+        user: User,
+        org: Organization,
+        dbPermission: Permission
+    ): Promise<User> {
+        user.awaitingConfirmation = false;
+
+        if (user.permissions.find(perms => perms.id === dbPermission.id)) {
+            throw new BadRequestException(ErrorCodes.UserAlreadyInPermission);
+        } else {
+            const index = user.requestedOrganizations.findIndex(
+                dbOrg => dbOrg.id === org.id
+            );
+            user.requestedOrganizations.splice(index, 1);
+            user.permissions.push(dbPermission);
+            await this.sendVerificationMail(user, org);
+            return await this.userRepository.save(user);
+        }
+    }
+
     async findOneUserByEmailWithPassword(email: string): Promise<User> {
         return await this.userRepository.findOne(
             { email: email },
@@ -315,22 +335,87 @@ export class UserService {
         organization: Organization
     ): Promise<void> {
         const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
-            { // TODO::: THIS IS TEMPORARY
+            {
+                // TODO::: THIS IS TEMPORARY
                 host: "smtp.ethereal.email",
                 port: 587,
                 auth: {
-                    user: "eulah.okon0@ethereal.email",
-                    pass: "XFnVfSmRtmGTftVquc",
+                    user: "dzdywj2mlf3twnw6@ethereal.email",
+                    pass: "9rBYYuM7CutDHuJm2v",
                 },
             }
         );
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
         const emails = await this.getEmails(organization);
         try {
             await transporter.sendMail({
                 from: "augusthjerrild@gmail.com", // sender address
                 to: emails, // list of receivers
                 subject: "Ny ansøgning til din organisation!", // Subject line
-                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="https://www.google.com">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
+                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="http://localhost:4200/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+    async sendRejectionMail(
+        user: User,
+        organization: Organization
+    ): Promise<void> {
+        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
+            {
+                // TODO::: THIS IS TEMPORARY
+                host: "smtp.ethereal.email",
+                port: 587,
+                auth: {
+                    user: "dzdywj2mlf3twnw6@ethereal.email",
+                    pass: "9rBYYuM7CutDHuJm2v",
+                },
+            }
+        );
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+        try {
+            await transporter.sendMail({
+                from: "augusthjerrild@gmail.com", // sender address
+                to: user.email, // list of receivers
+                subject: "Ansøgning afvist!", // Subject line
+                html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er afvist!</h1>`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+    async sendVerificationMail(user: User, organization: Organization): Promise<void> {
+        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
+            {
+                // TODO::: THIS IS TEMPORARY
+                host: "smtp.ethereal.email",
+                port: 587,
+                auth: {
+                    user: "dzdywj2mlf3twnw6@ethereal.email",
+                    pass: "9rBYYuM7CutDHuJm2v",
+                },
+            }
+        );
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+        try {
+            await transporter.sendMail({
+                from: "augusthjerrild@gmail.com", // sender address
+                to: user.email, // list of receivers
+                subject: "Ansøgning bekræftet!", // Subject line
+                html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er godkendt!</h1>`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
@@ -355,30 +440,32 @@ export class UserService {
         return emails;
     }
 
-    async getAwaitingUsers( id: number, query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
+    async getAwaitingUsers(
+        organizationId: number,
+        query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
         let orderBy = `user.id`;
         if (
             query.orderOn !== null &&
-            (query.orderOn === "id" ||
-                query.orderOn === "name")
+            (query.orderOn === "id" || query.orderOn === "name")
         ) {
             orderBy = `user.${query.orderOn}`;
         }
         const order: "DESC" | "ASC" =
             query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
 
-        const [data, count] =  await this.userRepository.createQueryBuilder("user")
-        .innerJoin("user.requestedOrganizations", "org")
-        .where("org.id = :id", {id: id})
-        .take(+query.limit)
-        .skip(+query.offset)
-        .orderBy(orderBy, order)
-        .getManyAndCount();
+        const [data, count] = await this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.requestedOrganizations", "org")
+            .where("org.id = :id", { id: organizationId })
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order)
+            .getManyAndCount();
 
         return {
             data: data.map(x => x as UserResponseDto),
             count: count,
         };
-       
     }
 }

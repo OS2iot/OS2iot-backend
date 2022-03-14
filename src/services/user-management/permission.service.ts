@@ -163,7 +163,6 @@ export class PermissionService {
             x.permissions = _.union(x.permissions, [permission]);
         });
     }
-
     async removeUserFromPermission(permission: Permission, user: User): Promise<void> {
         user.permissions = user.permissions.filter(x => x.id != permission.id);
     }
@@ -284,7 +283,7 @@ export class PermissionService {
     async getGlobalPermission(): Promise<Permission> {
         return await getManager().findOneOrFail(Permission, {
             where: { type: PermissionType.GlobalAdmin },
-            relations: [ "users"],
+            relations: ["users"],
         });
     }
 
