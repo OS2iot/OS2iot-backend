@@ -50,6 +50,7 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+import { v4 as uuidv4 } from "uuid";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -550,14 +551,14 @@ export class IoTDeviceService {
             deviceModelIds
         );
 
-		// 
+		//
         const applicationIds = iotDevicesDtoMap.reduce((ids: number[], dto) => {
             if (dto.iotDeviceDto.applicationId) {
                 ids.push(dto.iotDeviceDto.applicationId);
             }
             return ids;
-        }, []);		
-		
+        }, []);
+
         const applications = await this.applicationService.findManyWithOrganisation(
             applicationIds
         );
@@ -595,6 +596,11 @@ export class IoTDeviceService {
 				map.iotDevice.deviceModel = deviceModelMatch;
 			}
         }
+    }
+
+    resetHttpDeviceApiKey(httpDevice: GenericHTTPDevice): Promise<GenericHTTPDevice & IoTDevice> {
+        httpDevice.apiKey = uuidv4();
+        return this.iotDeviceRepository.save(httpDevice);
     }
 
     private async getApplicationsByIds(applicationIds: number[]) {
