@@ -4,6 +4,7 @@ export class applicationMetadata1646669134921 implements MigrationInterface {
     name = 'applicationMetadata1646669134921'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // Constraints automatically altered by upgrading typeorm from 0.2.29 to 0.2.34
         await queryRunner.query(`ALTER TABLE "api_key_permissions_permission" DROP CONSTRAINT "FK_c1141b0748c24b2f3e78789b6c8"`);
         await queryRunner.query(`ALTER TABLE "user_permissions_permission" DROP CONSTRAINT "FK_c43a6a56e3ef281cbfba9a77457"`);
         await queryRunner.query(`ALTER TABLE "user_permissions_permission" DROP CONSTRAINT "FK_5b72d197d92b8bafbe7906782ec"`);
@@ -15,6 +16,8 @@ export class applicationMetadata1646669134921 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "iot_dev_pay_dec_dat_tar_con_iot_dev_iot_dev" DROP CONSTRAINT "FK_daf134b834f403ea98efa1fc09f"`);
         await queryRunner.query(`ALTER TABLE "application_permissions_permission" DROP CONSTRAINT "FK_c1bbb34687ca84f2a166ee376e2"`);
         await queryRunner.query(`ALTER TABLE "application_permissions_permission" DROP CONSTRAINT "FK_6c691b1ba972915dc7bf3244204"`);
+
+        // Real entity updates. Unrelated to typeorm upgrade
         await queryRunner.query(`CREATE TABLE "controlled_property" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" character varying NOT NULL, "createdById" integer, "updatedById" integer, "applicationId" integer, CONSTRAINT "PK_b241e3f7ab75d1863a970e5c034" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "application_device_type" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" character varying NOT NULL, "createdById" integer, "updatedById" integer, "applicationId" integer, CONSTRAINT "PK_ffd5a25180653136c950debb749" PRIMARY KEY ("id"))`);
         await queryRunner.query(`ALTER TABLE "application" ADD "status" character varying`);
@@ -33,6 +36,9 @@ export class applicationMetadata1646669134921 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "application_device_type" ADD CONSTRAINT "FK_9bd8714c2f09bdf98a7f0ea511d" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "application_device_type" ADD CONSTRAINT "FK_023677bbb714364dcb2f45f1aa0" FOREIGN KEY ("updatedById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "application_device_type" ADD CONSTRAINT "FK_ecf9a8fc7e73ea69608dd0a5233" FOREIGN KEY ("applicationId") REFERENCES "application"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+
+        // Constraints altered from upgrading typeorm. Comparing the new constraints with the old (refer to down()),
+        // the difference is in the cascading. New version makes cascading on delete and update the same, unless specified otherwise.
         await queryRunner.query(`ALTER TABLE "api_key_permissions_permission" ADD CONSTRAINT "FK_c1141b0748c24b2f3e78789b6c8" FOREIGN KEY ("apiKeyId") REFERENCES "api_key"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "user_permissions_permission" ADD CONSTRAINT "FK_5b72d197d92b8bafbe7906782ec" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "user_permissions_permission" ADD CONSTRAINT "FK_c43a6a56e3ef281cbfba9a77457" FOREIGN KEY ("permissionId") REFERENCES "permission"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
