@@ -16,6 +16,8 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 
 import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
+import { IsMetadataJson } from "@helpers/is-metadata-json.validator";
+import { nameof } from "@helpers/type-helper";
 
 export class CreateIoTDeviceDto {
     @ApiProperty({ required: true })
@@ -60,6 +62,7 @@ export class CreateIoTDeviceDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
+    @IsMetadataJson(nameof<CreateIoTDeviceDto>("metadata"))
     metadata?: JSON;
 
     @ApiProperty({ required: false })
