@@ -42,4 +42,6 @@ export enum ErrorCodes {
     ApplicationDoesNotExist = "MESSAGE.APPLICATION-DOES-NOT-EXIST",
     FailedToCreateOrUpdateIotDevice = "MESSAGE.FAILED-TO-CREATE-OR-UPDATE-IOT-DEVICE",
     DeviceModelDoesNotExist = "MESSAGE.DEVICE-MODEL-DOES-NOT-EXIST",
+    InvalidKeyInKeyValuePair = "MESSAGE.INVALID-KEY-IN-KEY-VALUE-PAIR",
+    InvalidValueInKeyValuePair = "MESSAGE.INVALID-VALUE-IN-KEY-VALUE-PAIR",
 }

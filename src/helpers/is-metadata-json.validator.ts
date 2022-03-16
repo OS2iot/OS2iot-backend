@@ -1,3 +1,4 @@
+import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     registerDecorator,
     ValidationArguments,
@@ -22,11 +23,11 @@ export class IsMetadataJsonConstraint implements ValidatorConstraintInterface {
 
             for (const key of Object.keys(json)) {
                 if (typeof key !== "string" || key.trim() === "") {
-                    this.message = `The key whose value is "${json[key]}" must be a valid text value`;
+                    this.message = ErrorCodes.InvalidKeyInKeyValuePair;
                     return false;
                 }
                 if (typeof json[key] !== "string" || json[key].trim() === "") {
-                    this.message = `The value whose key is "${key}" must be a valid text value`;
+                    this.message = ErrorCodes.InvalidValueInKeyValuePair;
                     return false;
                 }
             }
