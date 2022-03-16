@@ -25,6 +25,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private readonly logger = new Logger(DeviceIntegrationPersistenceService.name);
+    private readonly defaultMetadataSavedCount = 20;
 
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence");
@@ -122,7 +123,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async deleteOldMetadata(relatedIoTDevice: IoTDevice): Promise<void> {
-        const countToKeep: number = +process.env.METADATA_SAVED_COUNT || 10;
+        const countToKeep: number = +process.env.METADATA_SAVED_COUNT || this.defaultMetadataSavedCount;
         // Find the oldest item to be kept.
         const newestToDelete = await this.receivedMessageMetadataRepository.find({
             where: { device: { id: relatedIoTDevice.id } },
