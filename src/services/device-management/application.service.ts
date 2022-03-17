@@ -10,15 +10,24 @@ import { Application } from "@entities/application.entity";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { IoTDeviceType } from "@enum/device-type.enum";
+import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { PermissionService } from "@services/user-management/permission.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
-import { Multicast } from "@entities/multicast.entity";
 import { MulticastService } from "./multicast.service";
+import { nameof } from "@helpers/type-helper";
+import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
+import { ApplicationDeviceType } from "@entities/application-device-type.entity";
+import { ControlledProperty } from "@entities/controlled-property.entity";
+import { findValuesInRecord } from "@helpers/record.helper";
+
+type ControlledPropertyDeviceType<TType> = Omit<ControlledProperty, "type"> &
+    Omit<ApplicationDeviceType, "type"> & {
+        type: TType
+    };
 
 @Injectable()
 export class ApplicationService {
@@ -30,8 +39,8 @@ export class ApplicationService {
         private multicastService: MulticastService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
-    ) { }
+        private permissionService: PermissionService,
+    ) {}
 
     async findAndCountInList(
         query?: ListAllEntitiesDto,
@@ -65,9 +74,9 @@ export class ApplicationService {
             where:
                 organizationIds.length > 0
                     ? [
-                        { id: In(allowedApplications) },
-                        { belongsTo: In(organizationIds) },
-                    ]
+                          { id: In(allowedApplications) },
+                          { belongsTo: In(organizationIds) },
+                      ]
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,
@@ -168,6 +177,8 @@ export class ApplicationService {
                 "multicasts",
                 "iotDevices.receivedMessagesMetadata",
                 "belongsTo",
+                nameof<Application>("controlledProperties"),
+                nameof<Application>("deviceTypes"),
             ],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -214,13 +225,15 @@ export class ApplicationService {
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
             createApplicationDto,
-            application
+            application,
+            userId
         );
         mappedApplication.iotDevices = [];
         mappedApplication.dataTargets = [];
         mappedApplication.multicasts = [];
         mappedApplication.createdBy = userId;
         mappedApplication.updatedBy = userId;
+
         const app = await this.applicationRepository.save(mappedApplication);
 
         await this.permissionService.autoAddPermissionsToApplication(app);
@@ -234,16 +247,22 @@ export class ApplicationService {
         userId: number
     ): Promise<Application> {
         const existingApplication = await this.applicationRepository.findOneOrFail(id, {
-            relations: ["iotDevices", "dataTargets"],
+            relations: [
+                nameof<Application>("iotDevices"),
+                nameof<Application>("dataTargets"),
+                nameof<Application>("controlledProperties"),
+                nameof<Application>("deviceTypes"),
+            ],
         });
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
             updateApplicationDto,
-            existingApplication
+            existingApplication,
+            userId
         );
 
         mappedApplication.updatedBy = userId;
-        return this.applicationRepository.save(mappedApplication);
+        return this.applicationRepository.save(mappedApplication, {});
     }
 
     async delete(id: number): Promise<DeleteResult> {
@@ -305,15 +324,67 @@ export class ApplicationService {
 
     private async mapApplicationDtoToApplication(
         applicationDto: CreateApplicationDto | UpdateApplicationDto,
-        application: Application
+        application: Application,
+        userId: number
     ): Promise<Application> {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
         application.belongsTo = await this.organizationService.findById(
             applicationDto.organizationId
         );
+        application.status = applicationDto.status;
+        // Setting a date to 'undefined' will set it to today in the database
+        application.startDate = applicationDto.startDate ?? null;
+        application.endDate = applicationDto.endDate ?? null;
+        application.category = applicationDto.category;
+        application.owner = applicationDto.owner;
+        application.contactPerson = applicationDto.contactPerson;
+        application.contactEmail = applicationDto.contactEmail;
+        application.contactPhone = applicationDto.contactPhone;
+        application.personalData = applicationDto.personalData;
+        application.hardware = applicationDto.hardware;
+
+        // Set metadata dependencies
+        application.controlledProperties = applicationDto.controlledProperties
+            ? this.buildControlledPropertyDeviceType(
+                  ControlledPropertyTypes,
+                  applicationDto.controlledProperties,
+                  userId,
+                  ControlledProperty
+              )
+            : undefined;
+        application.deviceTypes = applicationDto.deviceTypes
+            ? this.buildControlledPropertyDeviceType(
+                  ApplicationDeviceTypes,
+                  applicationDto.deviceTypes,
+                  userId,
+                  ApplicationDeviceType
+              )
+            : undefined;
 
         return application;
+    }
+
+    buildControlledPropertyDeviceType<
+        T extends Record<string, string>,
+        Entity extends ControlledProperty | ApplicationDeviceType
+    >(
+        validKeys: T,
+        clientTypes: string[],
+        userId: number,
+        entity: { new (): Entity }
+    ): Entity[] {
+        // Filter out invalid client values
+        const matchingValues = findValuesInRecord(validKeys, clientTypes);
+
+        return matchingValues.map(type => {
+            const newEntity = new entity();
+            newEntity.createdBy = userId;
+            newEntity.updatedBy = userId;
+            newEntity.type = type as ControlledPropertyTypes | ApplicationDeviceTypeUnion;
+
+            return newEntity;
+        });
     }
 
     async findDevicesForApplication(
@@ -340,9 +411,7 @@ export class ApplicationService {
         const applications = await this.chirpstackDeviceService.getLoRaWANApplications(
             loraDevices
         );
-        const loraApplications = applications.map(
-            app => app.application
-        );
+        const loraApplications = applications.map(app => app.application);
 
         for (const device of loraDevices) {
             await this.chirpstackDeviceService.enrichLoRaWANDevice(
