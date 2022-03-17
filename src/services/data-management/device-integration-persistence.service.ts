@@ -4,7 +4,10 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata.ent
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { isValidLoRaWANRxInfo, isValidSigfoxRxInfo } from "@helpers/rx-info.helper";
+import {
+    isValidLoRaWANPayload,
+    isValidSigfoxPayload,
+} from "@helpers/message-payload.helper";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
@@ -145,7 +148,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         payload: Record<string, unknown>,
         message: ReceivedMessage
     ) {
-        if (isValidLoRaWANRxInfo(payload.rxInfo)) {
+        if (isValidLoRaWANPayload(payload)) {
             // There's signal info for each nearby gateway. Retrieve the strongest signal strength
             const rssi = Math.max(...payload.rxInfo.map(info => info.rssi));
             const snr = Math.max(...payload.rxInfo.map(info => info.loRaSNR));
@@ -159,14 +162,13 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     /**
-     * TODO: NOT TESTED WITH REAL SIGFOX DEVICE
+     * Same principle as {@link mapLoRaWANInfoToReceivedMessage}
      */
     private mapSigfoxInfoToReceivedMessage(
         payload: Record<string, unknown>,
         message: ReceivedMessage
     ) {
-        if (isValidSigfoxRxInfo(payload.duplicates)) {
-            // There's signal info for each nearby gateway. Retrieve the strongest signal strength
+        if (isValidSigfoxPayload(payload)) {
             const rssi = Math.max(...payload.duplicates.map(info => info.rssi));
             const snr = Math.max(...payload.duplicates.map(info => info.snr));
             message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
