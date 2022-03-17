@@ -1,16 +1,17 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
+import { ReceivedMessage } from "@entities/received-message.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { isValidLoRaWANRxInfo, isValidSigfoxRxInfo } from "@helpers/rx-info.helper";
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
@@ -98,7 +99,83 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             ? new Date(dto.unixTimestamp)
             : new Date();
 
+        this.mapRxInfoToReceivedMessage(
+            dto.rawPayload,
+            existingMessage,
+            relatedIoTDevice.type
+        );
+
         return existingMessage;
+    }
+
+    private mapRxInfoToReceivedMessage(
+        rawPayload: JSON,
+        message: ReceivedMessage,
+        type: IoTDeviceType
+    ) {
+        if (!rawPayload) {
+            return;
+        }
+
+        // JSON is the same as a Record<string, unknown> which is easier to work with
+        const rawPayloadRecord = (rawPayload as unknown) as Record<string, unknown>;
+
+        try {
+            switch (type) {
+                case IoTDeviceType.LoRaWAN:
+                    this.mapLoRaWANInfoToReceivedMessage(rawPayloadRecord, message);
+                    break;
+                case IoTDeviceType.SigFox:
+                    this.mapSigfoxInfoToReceivedMessage(rawPayloadRecord, message);
+                    break;
+                case IoTDeviceType.GenericHttp:
+                    break;
+                default:
+                    this.logger.debug(
+                        "Unable to determine raw payload type of ReceivedMessage"
+                    );
+                    break;
+            }
+        } catch (error) {
+            // Continue. Failing to pre-fill device-specifc fields doesn't matter
+        }
+    }
+
+    private mapLoRaWANInfoToReceivedMessage(
+        payload: Record<string, unknown>,
+        message: ReceivedMessage
+    ) {
+        if (isValidLoRaWANRxInfo(payload.rxInfo)) {
+            // There's signal info for each nearby gateway. Retrieve the strongest signal strength
+            const rssi = Math.max(...payload.rxInfo.map(info => info.rssi));
+            const snr = Math.max(...payload.rxInfo.map(info => info.loRaSNR));
+            message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
+            message.snr = Number.isInteger(snr) ? snr : message.snr;
+        } else {
+            this.logger.debug(
+                "The received LoRaWAN message is either not valid or incomplete"
+            );
+        }
+    }
+
+    /**
+     * TODO: NOT TESTED WITH REAL SIGFOX DEVICE
+     */
+    private mapSigfoxInfoToReceivedMessage(
+        payload: Record<string, unknown>,
+        message: ReceivedMessage
+    ) {
+        if (isValidSigfoxRxInfo(payload.duplicates)) {
+            // There's signal info for each nearby gateway. Retrieve the strongest signal strength
+            const rssi = Math.max(...payload.duplicates.map(info => info.rssi));
+            const snr = Math.max(...payload.duplicates.map(info => info.snr));
+            message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
+            message.snr = Number.isInteger(snr) ? snr : message.snr;
+        } else {
+            this.logger.debug(
+                "The received Sigfox message is either not valid or incomplete"
+            );
+        }
     }
 
     private async saveMessageMetadata(
@@ -123,7 +200,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async deleteOldMetadata(relatedIoTDevice: IoTDevice): Promise<void> {
-        const countToKeep: number = +process.env.METADATA_SAVED_COUNT || this.defaultMetadataSavedCount;
+        const countToKeep: number =
+            +process.env.METADATA_SAVED_COUNT || this.defaultMetadataSavedCount;
         // Find the oldest item to be kept.
         const newestToDelete = await this.receivedMessageMetadataRepository.find({
             where: { device: { id: relatedIoTDevice.id } },

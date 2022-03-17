@@ -6,6 +6,7 @@ import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaService } from "@services/kafka/kafka.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Injectable()
 export class ReceiveDataService {
@@ -15,13 +16,14 @@ export class ReceiveDataService {
     async sendToKafka(
         iotDevice: IoTDevice,
         data: string,
-        type: string,
+        type: IoTDeviceType[number],
         timestamp?: number
     ): Promise<void> {
         this.logger.debug(`Received data, sending to Kafka`);
         const dto = new RawRequestDto();
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
+        dto.type = type;
         // We cannot generically know when it was sent by the device, "now" is accurate enough
         dto.unixTimestamp = timestamp != null ? timestamp : new Date().valueOf();
 
