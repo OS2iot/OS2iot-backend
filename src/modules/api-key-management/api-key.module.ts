@@ -1,4 +1,4 @@
-import { ApiKeyController } from "@admin-controller/api-key/api-key.controller";
+import { ApiKeyController } from "src/controllers/api-key/api-key.controller";
 import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";

@@ -1,4 +1,4 @@
-import { ApiKeyInfoController } from "@admin-controller/api-key/api-key-info.controller";
+import { ApiKeyInfoController } from "src/controllers/api-key/api-key-info.controller";
 import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { forwardRef, Module } from "@nestjs/common";
