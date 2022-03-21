@@ -6,9 +6,11 @@ import { UserBootstrapperService } from "@services/user-management/user-bootstra
 import { UserService } from "@services/user-management/user.service";
 import { UserController } from "@user-management-controller/user.controller";
 import { OrganizationModule } from "./organization.module";
+import { ConfigModule } from "@nestjs/config";
+import configuration from "@config/configuration";
 
 @Module({
-    imports: [SharedModule, forwardRef(() => PermissionModule), forwardRef(() => OrganizationModule)],
+    imports: [SharedModule, ConfigModule.forRoot({ load: [configuration] }), forwardRef(() => PermissionModule), forwardRef(() => OrganizationModule)],
     controllers: [UserController],
     providers: [UserService, UserBootstrapperService],
     exports: [UserService],

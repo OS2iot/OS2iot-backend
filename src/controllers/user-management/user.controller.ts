@@ -159,6 +159,7 @@ export class UserController {
         @Body() updateUserOrgsDto: UpdateUserOrgsDto
     ): Promise<UpdateUserOrgsDto> {
         try {
+            const token = await this.userService.generateToken();
             const user = await this.userService.findOne(req.user.userId);
             const requestedOrganizations = await this.organizationService.findManyWithRelations(
                 updateUserOrgsDto.requestedOrganizationIds
@@ -167,10 +168,10 @@ export class UserController {
             for (let index = 0; index < requestedOrganizations.length; index++) {
                 await this.userService.sendOrganizationRequestMail(
                     user,
-                    requestedOrganizations[index]
+                    requestedOrganizations[index],
+                    token
                 );
             }
-
             for (
                 let index = 0;
                 index < updateUserOrgsDto.requestedOrganizationIds.length;

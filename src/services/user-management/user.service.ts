@@ -26,6 +26,7 @@ import * as nodemailer from "nodemailer";
 import { Organization } from "@entities/organization.entity";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class UserService {
@@ -33,7 +34,8 @@ export class UserService {
         @InjectRepository(User)
         private userRepository: Repository<User>,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        private permissionService: PermissionService,
+        private configService: ConfigService
     ) {}
 
     private readonly logger = new Logger(UserService.name, true);
@@ -264,12 +266,21 @@ export class UserService {
         requestedOrganizations: Organization[],
         user: User
     ): Promise<User> {
+        const token = await this.generateToken(); //TODO::: GENERATE OWN REFRESH TOKEN
         user.email = dto.email;
         user.awaitingConfirmation = true;
         for (let index = 0; index < requestedOrganizations.length; index++) {
-            await this.sendOrganizationRequestMail(user, requestedOrganizations[index]);
+            await this.sendOrganizationRequestMail(
+                user,
+                requestedOrganizations[index],
+                token
+            );
         }
         return await this.userRepository.save(user);
+    }
+
+    async generateToken(): Promise<string> {
+        return "THE GENERATED TOKEN";
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
@@ -329,14 +340,27 @@ export class UserService {
             users: result,
         };
     }
-
-    async sendOrganizationRequestMail(
-        user: User,
-        organization: Organization
-    ): Promise<void> {
-        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
+    oAuth2MailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
+        return nodemailer.createTransport({
+            //TODO::: make if statement if it's OAuth og only basic - Following lines is for OAuth2
+            host: "smtp.gmail.com", // TODO::: Take from env
+            port: 465, // TODO::: Take from env
+            secure: true, // TODO::: Take from env
+            auth: {
+                type: "OAuth2",
+                user: "augusthjerrild@gmail.com", // TODO::: Take from env
+                clientId:
+                    "535033211414-nso0762tbckadnflkptufts2pfgppecr.apps.googleusercontent.com", // TODO::: Take from env
+                clientSecret: "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", // TODO::: Take from env
+                refreshToken:
+                    "1//04-8dPVOozC6SCgYIARAAGAQSNwF-L9IrExn5OJ9GYxtK_h-j9OccHSdgK-0FFJs1t2tm-WiypX2A-i7ZUlxsv22dU5VhmaEwfJI", // TODO ::: this is for testing. Use the refreshToken parameter
+            },
+        });
+    }
+    basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
+        return nodemailer.createTransport(
             {
-                // TODO::: THIS IS TEMPORARY
+                // TODO::: THIS IS TEMPORARY - TAKE FROM ENV
                 host: "smtp.ethereal.email",
                 port: 587,
                 auth: {
@@ -345,16 +369,30 @@ export class UserService {
                 },
             }
         );
+    }
+    async sendOrganizationRequestMail(
+        user: User,
+        organization: Organization,
+        refreshToken: string //TODO::: THIS IS THE TOKEN WE NEED TO GENERATE
+    ): Promise<void> {
+        const emails = await this.getEmails(organization);
+        let transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
+
+        if (this.configService.get<string>("email.authtype") === "basic") {
+           transporter = this.basicMailTransporter();
+        }
+        else{
+            transporter = this.oAuth2MailTransporter();
+        }
         try {
             await transporter.verify();
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
-        const emails = await this.getEmails(organization);
         try {
             await transporter.sendMail({
                 from: "augusthjerrild@gmail.com", // sender address
-                to: emails, // list of receivers
+                to: "augusthjerrild@gmail.com", // list of receivers TODO::: USE emails FROM l. 378. Right now it's just for testing that I can send a mail
                 subject: "Ny ansøgning til din organisation!", // Subject line
                 html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="http://localhost:4200/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
             });
@@ -362,10 +400,7 @@ export class UserService {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     }
-    async sendRejectionMail(
-        user: User,
-        organization: Organization
-    ): Promise<void> {
+    async sendRejectionMail(user: User, organization: Organization): Promise<void> {
         const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
             {
                 // TODO::: THIS IS TEMPORARY
