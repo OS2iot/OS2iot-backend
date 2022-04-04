@@ -34,11 +34,11 @@ export default (): any => {
             ? GetLogLevels(process.env.LOG_LEVEL)
             : GetLogLevels("debug"),
         email: {
-            host: process.env.EMAIL_HOST || "smtp.ethereal.email",
+            host: process.env.EMAIL_HOST || "smtp.eu.mailgun.org",
             port: process.env.EMAIL_PORT || 587,
-            user: process.env.EMAIL_USER || "margarita.bradtke34@ethereal.email",
-            pass: process.env.EMAIL_PASS || "eJ5e58kxgeRw2RkqsW",
-            from: process.env.EMAIL_FROM || "test@gmail.com"
+            user: process.env.EMAIL_USER || "***REMOVED***",
+            pass: process.env.EMAIL_PASS || "***REMOVED***",
+            from: process.env.EMAIL_FROM || "noreply@os2iot.iteratorprojects.com"
         },
     };
 };
