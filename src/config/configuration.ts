@@ -34,7 +34,11 @@ export default (): any => {
             ? GetLogLevels(process.env.LOG_LEVEL)
             : GetLogLevels("debug"),
         email: {
-            authType: process.env.AUTH_TYPE || "basic",
+            host: process.env.EMAIL_HOST || "smtp.ethereal.email",
+            port: process.env.EMAIL_PORT || 587,
+            user: process.env.EMAIL_USER || "margarita.bradtke34@ethereal.email",
+            pass: process.env.EMAIL_PASS || "eJ5e58kxgeRw2RkqsW",
+            from: process.env.EMAIL_FROM || "test@gmail.com"
         },
     };
 };

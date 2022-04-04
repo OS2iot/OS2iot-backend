@@ -117,12 +117,12 @@ export class UserController {
         @Body() dto: CreateNewKombitUserDto
     ): Promise<User> {
         try {
-            const user = await this.userService.findOne(req.user.userId);
-            const requestedOrganizations = await this.organizationService.findManyWithRelations(
+            const user: User = await this.userService.findOne(req.user.userId);
+            const requestedOrganizations: Organization[] = await this.organizationService.findManyWithRelations(
                 dto.requestedOrganizationIds
             );
             if (!user.email) {
-                const updatedUser = await this.userService.newKombitUser(
+                const updatedUser: User = await this.userService.newKombitUser(
                     dto,
                     requestedOrganizations,
                     user
@@ -168,8 +168,7 @@ export class UserController {
             for (let index = 0; index < requestedOrganizations.length; index++) {
                 await this.userService.sendOrganizationRequestMail(
                     user,
-                    requestedOrganizations[index],
-                    token
+                    requestedOrganizations[index]
                 );
             }
             for (

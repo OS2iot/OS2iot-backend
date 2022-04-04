@@ -266,15 +266,10 @@ export class UserService {
         requestedOrganizations: Organization[],
         user: User
     ): Promise<User> {
-        const token = await this.generateToken(); //TODO::: GENERATE OWN REFRESH TOKEN
         user.email = dto.email;
         user.awaitingConfirmation = true;
         for (let index = 0; index < requestedOrganizations.length; index++) {
-            await this.sendOrganizationRequestMail(
-                user,
-                requestedOrganizations[index],
-                token
-            );
+            await this.sendOrganizationRequestMail(user, requestedOrganizations[index]);
         }
         return await this.userRepository.save(user);
     }
@@ -340,50 +335,22 @@ export class UserService {
             users: result,
         };
     }
-    oAuth2MailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
+    basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
         return nodemailer.createTransport({
-            //TODO::: make if statement if it's OAuth og only basic - Following lines is for OAuth2
-            host: "smtp.gmail.com", // TODO::: Take from env
-            port: 465, // TODO::: Take from env
-            secure: true, // TODO::: Take from env
+            host: this.configService.get<string>("email.host"),
+            port: this.configService.get<number>("email.port"),
             auth: {
-                type: "OAuth2",
-                user: "augusthjerrild@gmail.com", // TODO::: Take from env
-                clientId:
-                    "535033211414-nso0762tbckadnflkptufts2pfgppecr.apps.googleusercontent.com", // TODO::: Take from env
-                clientSecret: "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", // TODO::: Take from env
-                refreshToken:
-                    "1//04-8dPVOozC6SCgYIARAAGAQSNwF-L9IrExn5OJ9GYxtK_h-j9OccHSdgK-0FFJs1t2tm-WiypX2A-i7ZUlxsv22dU5VhmaEwfJI", // TODO ::: this is for testing. Use the refreshToken parameter
+                user: this.configService.get<string>("email.user"),
+                pass: this.configService.get<string>("email.pass")
             },
         });
     }
-    basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
-        return nodemailer.createTransport(
-            {
-                // TODO::: THIS IS TEMPORARY - TAKE FROM ENV
-                host: "smtp.ethereal.email",
-                port: 587,
-                auth: {
-                    user: "dzdywj2mlf3twnw6@ethereal.email",
-                    pass: "9rBYYuM7CutDHuJm2v",
-                },
-            }
-        );
-    }
     async sendOrganizationRequestMail(
         user: User,
-        organization: Organization,
-        refreshToken: string //TODO::: THIS IS THE TOKEN WE NEED TO GENERATE
+        organization: Organization
     ): Promise<void> {
-        const emails = await this.getEmails(organization);
-        let transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
-
-        if (this.configService.get<string>("email.authtype") === "basic") {
-           transporter = this.basicMailTransporter();
-        }
-        else{
-            transporter = this.oAuth2MailTransporter();
-        }
+        const emails = await this.getOrgAdminEmails(organization);
+        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = this.basicMailTransporter();
         try {
             await transporter.verify();
         } catch (error) {
@@ -391,8 +358,8 @@ export class UserService {
         }
         try {
             await transporter.sendMail({
-                from: "augusthjerrild@gmail.com", // sender address
-                to: "augusthjerrild@gmail.com", // list of receivers TODO::: USE emails FROM l. 378. Right now it's just for testing that I can send a mail
+                from: this.configService.get<string>("email.from"), // sender address
+                to: emails, // list of receivers
                 subject: "Ny ansøgning til din organisation!", // Subject line
                 html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="http://localhost:4200/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
             });
@@ -401,17 +368,8 @@ export class UserService {
         }
     }
     async sendRejectionMail(user: User, organization: Organization): Promise<void> {
-        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
-            {
-                // TODO::: THIS IS TEMPORARY
-                host: "smtp.ethereal.email",
-                port: 587,
-                auth: {
-                    user: "dzdywj2mlf3twnw6@ethereal.email",
-                    pass: "9rBYYuM7CutDHuJm2v",
-                },
-            }
-        );
+        const transporter = this.basicMailTransporter();
+
         try {
             await transporter.verify();
         } catch (error) {
@@ -419,7 +377,7 @@ export class UserService {
         }
         try {
             await transporter.sendMail({
-                from: "augusthjerrild@gmail.com", // sender address
+                from: this.configService.get<string>("email.from"), // sender address
                 to: user.email, // list of receivers
                 subject: "Ansøgning afvist!", // Subject line
                 html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er afvist!</h1>`, // html body
@@ -429,17 +387,8 @@ export class UserService {
         }
     }
     async sendVerificationMail(user: User, organization: Organization): Promise<void> {
-        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(
-            {
-                // TODO::: THIS IS TEMPORARY
-                host: "smtp.ethereal.email",
-                port: 587,
-                auth: {
-                    user: "dzdywj2mlf3twnw6@ethereal.email",
-                    pass: "9rBYYuM7CutDHuJm2v",
-                },
-            }
-        );
+        const transporter = this.basicMailTransporter();
+
         try {
             await transporter.verify();
         } catch (error) {
@@ -447,7 +396,7 @@ export class UserService {
         }
         try {
             await transporter.sendMail({
-                from: "augusthjerrild@gmail.com", // sender address
+                from: this.configService.get<string>("email.from"), // sender address
                 to: user.email, // list of receivers
                 subject: "Ansøgning bekræftet!", // Subject line
                 html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er godkendt!</h1>`, // html body
@@ -456,7 +405,7 @@ export class UserService {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     }
-    async getEmails(organization: Organization): Promise<string[]> {
+    async getOrgAdminEmails(organization: Organization): Promise<string[]> {
         const emails: string[] = [];
         const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
