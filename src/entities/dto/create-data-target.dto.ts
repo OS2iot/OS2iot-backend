@@ -15,6 +15,7 @@ import { Type } from "class-transformer";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { IsNotBlank } from "@helpers/is-not-blank.validator";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
@@ -56,4 +57,17 @@ export class CreateDataTargetDto {
     @ValidateNested({ each: true })
     @Type(() => CreateOpenDataDkDatasetDto)
     openDataDkDataset?: CreateOpenDataDkDatasetDto;
+
+    @IsSwaggerOptional()
+    @IsString()
+    mqttTopic?: string;
+
+    @IsSwaggerOptional()
+    @IsString()
+    @MaxLength(100)
+    mqttUsername?: string
+
+    @IsSwaggerOptional()
+    @MaxLength(100)
+    mqttPassword?: string
 }
