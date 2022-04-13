@@ -1,11 +1,9 @@
-import { AuthorizationType } from "@enum/authorization-type.enum";
-
 export interface MqttDataTargetConfiguration {
     url: string;
+    port: number;
     topic: string;
+    qos: 0 | 1 | 2;
     timeout: number;
-    // TODO: Is auth type necessary?
-    // authorizationType: AuthorizationType;
     username?: string;
     password?: string;
 }

@@ -246,7 +246,9 @@ export class DataTargetService {
             const mqttTarget = dataTarget as MqttDataTarget;
             mqttTarget.url = dataTargetDto.url;
             mqttTarget.timeout = dataTargetDto.timeout;
+            mqttTarget.mqttPort = dataTargetDto.mqttPort;
             mqttTarget.mqttTopic = dataTargetDto.mqttTopic;
+            mqttTarget.mqttQos = dataTargetDto.mqttQos;
             mqttTarget.mqttUsername = dataTargetDto.mqttUsername;
             mqttTarget.mqttPassword = dataTargetDto.mqttPassword;
         }

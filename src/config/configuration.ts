@@ -29,8 +29,6 @@ export default (): any => {
         },
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
-            username: process.env.CHIRPSTACK_BACKEND_USERNAME ?? "OS2IOT_BACKEND_MQTT",
-            password: process.env.CHIRPSTACK_BACKEND_PASSWORD ?? "chirpstack-secret-key",
         },
         logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels('debug')
     };
