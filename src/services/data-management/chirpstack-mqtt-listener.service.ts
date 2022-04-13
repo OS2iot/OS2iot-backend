@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { Injectable, Logger, NotImplementedException, OnApplicationBootstrap } from "@nestjs/common";
 import * as mqtt from "mqtt";
 import { Client } from "mqtt";
 
@@ -62,5 +62,12 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
             message,
             IoTDeviceType.LoRaWAN.toString()
         );
+    }
+
+    async receiveMqttGatewayStatusMessage(message: string): Promise<void> {
+        const dto: unknown = JSON.parse(message);
+
+        // TODO: Validate dto
+        throw new NotImplementedException();
     }
 }
