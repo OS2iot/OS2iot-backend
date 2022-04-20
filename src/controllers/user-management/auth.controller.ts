@@ -42,6 +42,7 @@ import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
+import { RequestWithUser, Profile } from "passport-saml/lib/passport-saml/types";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -101,7 +102,14 @@ export class AuthController {
     @ApiOperation({ summary: "Initiates the SAML logout flow" })
     public async logout(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
         this.logger.debug("Get logout Logging out ...");
-        this.strategy.logout(req, (err: Error, url: string): void => {
+        const reqConverted: RequestWithUser = req as RequestWithUser;
+        const samlLogoutRequest: Profile = {
+            // TODO: From pub certificate?
+            ID: "OS2IOT-KOMBIT-ADGANGSSTYRING"
+        }
+        reqConverted.samlLogoutRequest = samlLogoutRequest;
+
+        this.strategy.logout(reqConverted, (err: Error, url: string): void => {
             req.logout();
             this.logger.debug("Inside callback");
             if (!err) {
