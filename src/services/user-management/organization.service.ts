@@ -10,6 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import {
     ListAllMinimalOrganizationsResponseDto,
     ListAllOrganizationsResponseDto,
@@ -20,7 +21,6 @@ import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { User } from "@entities/user.entity";
 import { UserService } from "./user.service";
 
@@ -191,6 +191,14 @@ export class OrganizationService {
         return await this.organizationRepository.findOneOrFail(organizationId, {
             relations: ["permissions"],
         });
+    }
+
+    findByPermissionIds(permissionIds: number[]): Promise<Organization[]> {
+        return this.organizationRepository
+            .createQueryBuilder("organization")
+            .innerJoin("organization.permissions", "perm")
+            .where("perm.id IN (:...permissionIds)", { permissionIds })
+            .getMany();
     }
 
     async delete(id: number): Promise<DeleteResponseDto> {

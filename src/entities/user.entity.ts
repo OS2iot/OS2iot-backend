@@ -1,15 +1,16 @@
+// The order of these imports matters! The extended class has to stay at the bottom for avoiding class extends failure.
+import { ApiKey } from "@entities/api-key.entity";
 import {
     Column,
     Entity,
     JoinTable,
     ManyToMany,
-    ManyToOne,
     Unique,
+    OneToOne,
 } from "typeorm";
-
-import { DbBaseEntity } from "@entities/base.entity";
-import { Permission } from "@entities/permission.entity";
 import { Organization } from "./organization.entity";
+import { Permission } from "@entities/permission.entity";
+import { DbBaseEntity } from "@entities/base.entity";
 
 @Entity("user")
 @Unique(["email"])
@@ -45,4 +46,13 @@ export class User extends DbBaseEntity {
     })
     @JoinTable()
     requestedOrganizations: Organization[];
+    
+    @OneToOne(type => ApiKey, a => a.systemUser, {
+        nullable: true,
+        cascade: false,
+    })
+    apiKeyRef: ApiKey;
+
+    @Column({ default: false })
+    isSystemUser: boolean;
 }

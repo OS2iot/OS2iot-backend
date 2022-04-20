@@ -20,10 +20,8 @@ import {
     ApiTags,
 } from "@nestjs/swagger";
 
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { Read, Write } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
-import { ChirpstackPaginatedListDto } from "@dto/chirpstack/chirpstack-paginated-list.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
@@ -36,12 +34,12 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ChirpstackGetAll } from "@dto/chirpstack/chirpstack-get-all.dto";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Write()
 export class ChirpstackGatewayController {
     constructor(private chirpstackGatewayService: ChirpstackGatewayService) {}
 
@@ -49,6 +47,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @Write()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateGatewayDto
@@ -98,6 +97,7 @@ export class ChirpstackGatewayController {
     @Get(":gatewayId")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
+    @Read()
     async getOne(
         @Param("gatewayId") gatewayId: string
     ): Promise<SingleGatewayResponseDto> {
@@ -116,6 +116,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
+    @Write()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string,
@@ -151,6 +152,7 @@ export class ChirpstackGatewayController {
     }
 
     @Delete(":gatewayId")
+    @Write()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string

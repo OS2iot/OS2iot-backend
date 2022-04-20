@@ -1,8 +1,8 @@
-import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
-
-import { DbBaseEntity } from "@entities/base.entity";
+// The order of these imports matters! The extended class has to stay at the bottom for avoiding class extends failure.
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
+import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
+import { DbBaseEntity } from "@entities/base.entity";
 
 @Entity()
 @TableInheritance({

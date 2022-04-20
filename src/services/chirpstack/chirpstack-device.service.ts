@@ -26,6 +26,9 @@ import { ChirpstackManyDeviceResponseDto } from "@dto/chirpstack/chirpstack-many
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
+import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
+import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
+import { groupBy } from "lodash";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -41,24 +44,23 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     DEFAULT_DESCRIPTION = "Created by OS2IoT";
 
     async findOrCreateDefaultApplication(
-        dto: CreateChirpstackDeviceDto
+        dto: CreateChirpstackDeviceDto,
+        applications: ListAllChirpstackApplicationsResponseDto = null
     ): Promise<number> {
         const organizationID = await this.getDefaultOrganizationId();
         // Fetch applications
-        const applications = await this.getAllWithPagination<
-            ListAllChirpstackApplicationsResponseDto
-        >(`applications?limit=100&organizationID=${organizationID}`);
+        applications =
+            applications ??
+            (await this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
+                `applications?limit=100&organizationID=${organizationID}`
+            ));
         // if default exist use it
-        let applicationId;
-        applications.result.forEach(element => {
-            if (
+        let applicationId = applications.result.find(
+            element =>
                 element.serviceProfileID.toLowerCase() ===
                     dto.device.serviceProfileID.toLowerCase() &&
                 element.name.startsWith(this.defaultApplicationName)
-            ) {
-                applicationId = element.id;
-            }
-        });
+        )?.id;
         // otherwise create default
         if (!applicationId) {
             applicationId = await this.createDefaultApplication(
@@ -72,7 +74,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     }
 
     private async createDefaultApplication(
-        applicationId: any,
+        applicationId: string,
         dto: CreateChirpstackDeviceDto,
         organizationID: string
     ) {
@@ -89,10 +91,10 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return applicationId;
     }
 
-    async makeCreateChirpstackDeviceDto(
+    makeCreateChirpstackDeviceDto(
         dto: CreateLoRaWANSettingsDto,
         name: string
-    ): Promise<CreateChirpstackDeviceDto> {
+    ): CreateChirpstackDeviceDto {
         const csDto = new ChirpstackDeviceContentsDto();
         csDto.name = `${this.DEVICE_NAME_PREFIX}${name}`.toLowerCase();
         csDto.description = this.DEFAULT_DESCRIPTION;
@@ -242,15 +244,18 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return res.status == 200;
     }
 
-    async createOrUpdateDevice(dto: CreateChirpstackDeviceDto): Promise<boolean> {
-        let res;
-        if (await this.isDeviceAlreadyCreated(dto.device.devEUI)) {
+    async createOrUpdateDevice(
+        dto: CreateChirpstackDeviceDto,
+        lorawanDevices: ChirpstackDeviceId[] = null
+    ): Promise<boolean> {
+        let res: AxiosResponse<unknown>;
+        if (await this.isDeviceAlreadyCreated(dto.device.devEUI, lorawanDevices)) {
             res = await this.put(`devices`, dto, dto.device.devEUI);
         } else {
             res = await this.post(`devices`, dto);
         }
 
-        if (res.status != 200) {
+        if (res.status !== 200) {
             this.logger.warn(
                 `Could not create Chirpstack Device using body: ${JSON.stringify(dto)}`
             );
@@ -258,7 +263,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             return false;
         }
 
-        return res.status == 200;
+        return true;
     }
 
     async getChirpstackApplication(
@@ -301,8 +306,15 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
+    /**
+     * Fetch and set LoRaWAN settings on the given device. This is not immutable.
+     * @param iotDevice
+     * @param applications
+     * @returns The mutated device
+     */
     async enrichLoRaWANDevice(
-        iotDevice: IoTDevice
+        iotDevice: IoTDevice,
+        applications: ChirpstackApplicationResponseDto[] = []
     ): Promise<LoRaWANDeviceWithChirpstackDataDto> {
         const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
         loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
@@ -316,9 +328,19 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
         loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
 
-        const csAppliation = await this.getChirpstackApplication(csData.applicationID);
-        loraDevice.lorawanSettings.serviceProfileID =
-            csAppliation.application.serviceProfileID;
+        const appMatch = applications.find(app => app.id === csData.applicationID);
+        loraDevice.lorawanSettings.serviceProfileID = appMatch
+            ? appMatch.serviceProfileID
+            : loraDevice.lorawanSettings.serviceProfileID;
+
+        if (!loraDevice.lorawanSettings.serviceProfileID) {
+            const csAppliation = await this.getChirpstackApplication(
+                csData.applicationID
+            );
+            loraDevice.lorawanSettings.serviceProfileID =
+                csAppliation.application.serviceProfileID;
+        }
+
         return loraDevice;
     }
 
@@ -344,16 +366,48 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async isDeviceAlreadyCreated(deviceEUI: string): Promise<boolean> {
-        const devices = await this.getAllChirpstackDevices();
-        const alreadyExists = devices.some(x => {
-            return x.devEUI.toLowerCase() == deviceEUI.toLowerCase();
-        });
+    async isDeviceAlreadyCreated(
+        deviceEUI: string,
+        chirpstackIds: ChirpstackDeviceId[] = null
+    ): Promise<boolean> {
+        const devices = !chirpstackIds
+            ? await this.getAllChirpstackDevices()
+            : chirpstackIds;
+        const alreadyExists = devices.some(
+            x => x.devEUI.toLowerCase() === deviceEUI.toLowerCase()
+        );
         return alreadyExists;
     }
 
-    private async getAllChirpstackDevices(): Promise<ChirpstackDeviceContentsDto[]> {
-        return (await this.get<ListAllDevicesResponseDto>("devices?limit=1000")).result;
+    /**
+     * Fetch LoRaWAN applications by the device application id. This **assumes** that
+     * the device chirpstack application id always reflects what's on Chirpstack.
+     * @param devices
+     * @returns
+     */
+    public async getLoRaWANApplications(
+        devices: LoRaWANDeviceWithChirpstackDataDto[]
+    ): Promise<ChirpstackSingleApplicationResponseDto[]> {
+        const loraDevicesByAppId = groupBy(
+            devices,
+            device => device.chirpstackApplicationId
+        );
+
+        const res: ChirpstackSingleApplicationResponseDto[] = [];
+
+        // Avoid async .forEach and .map when querying the API. They execute whatever's inside in "parallel" which can result in timeouts.
+        for (const appId of Object.keys(loraDevicesByAppId)) {
+            res.push(await this.getChirpstackApplication(appId));
+        }
+
+        return res;
+    }
+
+    private async getAllChirpstackDevices(
+        limit = 1000
+    ): Promise<ChirpstackDeviceContentsDto[]> {
+        return (await this.get<ListAllDevicesResponseDto>(`devices?limit=${limit}`))
+            .result;
     }
 
     private async createApplication(

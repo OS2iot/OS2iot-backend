@@ -5,4 +5,5 @@ export enum PermissionType {
     Read = "Read",
     OrganizationPermission = "OrganizationPermission",
     OrganizationApplicationPermissions = "OrganizationApplicationPermissions",
+    ApiKeyPermission = "ApiKeyPermission",
 }

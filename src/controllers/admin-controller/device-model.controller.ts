@@ -1,4 +1,4 @@
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
+import { ComposeAuthGuard } from '@auth/compose-auth.guard';
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
@@ -44,7 +44,7 @@ import { DeviceModelService } from "@services/device-management/device-model.ser
 
 @ApiTags("Device Model")
 @Controller("device-model")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()

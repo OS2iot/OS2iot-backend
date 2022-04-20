@@ -6,6 +6,7 @@ import { DataTarget } from "@entities/data-target.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
@@ -25,17 +26,23 @@ import { WritePermission } from "@entities/write-permission.entity";
 import { DeviceModel } from "@entities/device-model.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ApiKey } from "@entities/api-key.entity";
+import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
+import { ControlledProperty } from "@entities/controlled-property.entity";
+import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
+            User,
             Application,
             DataTarget,
             GenericHTTPDevice,
             GlobalAdminPermission,
             HttpPushDataTarget,
+            FiwareDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,
@@ -52,10 +59,13 @@ import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
             ReceivedMessageMetadata,
             SigFoxDevice,
             SigFoxGroup,
-            User,
             WritePermission,
+            ApiKeyPermission,
             Multicast,
-            LorawanMulticastDefinition
+            LorawanMulticastDefinition,
+            ControlledProperty,
+            ApplicationDeviceType,
+            ApiKey,
         ]),
     ],
     providers: [AuditLog],

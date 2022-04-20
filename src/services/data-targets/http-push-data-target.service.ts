@@ -1,7 +1,9 @@
 import { HttpService, Injectable, Logger } from "@nestjs/common";
 import { AxiosRequestConfig } from "axios";
-
 import { AuthorizationType } from "@enum/authorization-type.enum";
+import { DataTarget } from "@entities/data-target.entity";
+import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
@@ -17,9 +19,16 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
 
     // eslint-disable-next-line max-lines-per-function
     async send(
-        config: HttpPushDataTargetConfiguration,
-        data: HttpPushDataTargetData
+        datatarget: DataTarget,
+        dto: TransformedPayloadDto
     ): Promise<DataTargetSendStatus> {
+
+        const data: HttpPushDataTargetData = {
+            rawBody: JSON.stringify(dto.payload),
+            mimeType: "application/json"            
+        };
+        const config: HttpPushDataTargetConfiguration = (datatarget as HttpPushDataTarget).toConfiguration();
+
         // Setup HTTP client
         const axiosConfig = HttpPushDataTargetService.makeAxiosConfiguration(
             config,
