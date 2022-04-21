@@ -1,12 +1,14 @@
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
+import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { subtractHours } from "@helpers/date.helper";
 import {
     isValidLoRaWANPayload,
-    isValidSigfoxPayload,
+    isValidSigFoxPayload,
 } from "@helpers/message-payload.helper";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -14,7 +16,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 
 @Injectable()
 export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
@@ -23,13 +25,20 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         private receivedMessageRepository: Repository<ReceivedMessage>,
         @InjectRepository(ReceivedMessageMetadata)
         private receivedMessageMetadataRepository: Repository<ReceivedMessageMetadata>,
-        private ioTDeviceService: IoTDeviceService
+        private ioTDeviceService: IoTDeviceService,
+        @InjectRepository(ReceivedMessageSigFoxSignals)
+        private receivedMessageSigFoxSignalsRepository: Repository<ReceivedMessageSigFoxSignals>
     ) {
         super();
     }
 
     private readonly logger = new Logger(DeviceIntegrationPersistenceService.name);
     private readonly defaultMetadataSavedCount = 20;
+    /**
+     * Limit how many messages can be stored within a time period. At the time,
+     * this limit is set conservatively.
+     */
+    private readonly maxSigFoxSignalsMessagesPerHour = 10;
 
     protected registerTopic(): void {
         this.addTopic(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence");
@@ -49,16 +58,22 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         }
 
         // Save latest message
-        await this.saveLatestMessage(dto, relatedIoTDevice);
+        const latestMessage = await this.saveLatestMessage(dto, relatedIoTDevice);
 
         // Save last X messages worth of metadata
         await this.saveMessageMetadata(dto, relatedIoTDevice);
+
+        // In order to make statistics on SigFox data, we need to store it for long-term
+        if (relatedIoTDevice.type === IoTDeviceType.SigFox) {
+            await this.saveSigFoxStats(latestMessage);
+            await this.deleteOldSigFoxStats(latestMessage.sentTime, relatedIoTDevice);
+        }
     }
 
     private async saveLatestMessage(
         dto: RawRequestDto,
         relatedIoTDevice: IoTDevice
-    ): Promise<void> {
+    ): Promise<ReceivedMessage> {
         let existingMessage = await this.findExistingRecevedMessage(relatedIoTDevice);
 
         if (existingMessage) {
@@ -78,6 +93,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         this.logger.debug(
             "Saved ReceivedMessage for device with id: " + mappedMessage.device.id
         );
+
+        return mappedMessage;
     }
 
     private async findExistingRecevedMessage(
@@ -129,7 +146,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
                     this.mapLoRaWANInfoToReceivedMessage(rawPayloadRecord, message);
                     break;
                 case IoTDeviceType.SigFox:
-                    this.mapSigfoxInfoToReceivedMessage(rawPayloadRecord, message);
+                    this.mapSigFoxInfoToReceivedMessage(rawPayloadRecord, message);
                     break;
                 case IoTDeviceType.GenericHttp:
                     break;
@@ -164,11 +181,11 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     /**
      * Same principle as {@link mapLoRaWANInfoToReceivedMessage}
      */
-    private mapSigfoxInfoToReceivedMessage(
+    private mapSigFoxInfoToReceivedMessage(
         payload: Record<string, unknown>,
         message: ReceivedMessage
     ) {
-        if (isValidSigfoxPayload(payload)) {
+        if (isValidSigFoxPayload(payload)) {
             const rssi = Math.max(...payload.duplicates.map(info => info.rssi));
             const snr = Math.max(...payload.duplicates.map(info => info.snr));
             message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
@@ -254,5 +271,38 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             : new Date();
 
         return newMetadata;
+    }
+
+    private async saveSigFoxStats(dto: ReceivedMessage): Promise<void> {
+        const sigFoxMessage: ReceivedMessageSigFoxSignals = { ...dto, id: undefined };
+        await this.receivedMessageSigFoxSignalsRepository.insert(sigFoxMessage);
+    }
+
+    private async deleteOldSigFoxStats(
+        latestMessageTime: Date,
+        relatedIoTDevice: IoTDevice
+    ): Promise<void> {
+        const lastHour = subtractHours(latestMessageTime);
+        // Delete the oldest items since the last hour
+        const oldestToDelete = await this.receivedMessageSigFoxSignalsRepository.find({
+            where: { device: { id: relatedIoTDevice.id }, sentTime: MoreThan(lastHour) },
+            skip: this.maxSigFoxSignalsMessagesPerHour,
+            order: {
+                sentTime: "DESC",
+            },
+        });
+
+        if (oldestToDelete.length === 0) {
+            this.logger.debug("We don't need to delete any SigFox signal messages");
+            return;
+        }
+
+        const result = await this.receivedMessageSigFoxSignalsRepository.delete(
+            oldestToDelete.map(old => old.id)
+        );
+
+        this.logger.debug(
+            `Deleted: ${result.affected} rows from received_message_sigfox_signals`
+        );
     }
 }

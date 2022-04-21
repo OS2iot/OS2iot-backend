@@ -29,6 +29,7 @@ import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
 import { groupBy } from "lodash";
+import { LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -42,6 +43,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     DEVICE_NAME_PREFIX = "OS2IOT-";
     DEFAULT_DESCRIPTION = "Created by OS2IoT";
+    DEVICE_STATS_INTERVAL_IN_DAYS = 29;
 
     async findOrCreateDefaultApplication(
         dto: CreateChirpstackDeviceDto,
@@ -377,6 +379,18 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             x => x.devEUI.toLowerCase() === deviceEUI.toLowerCase()
         );
         return alreadyExists;
+    }
+
+    getStats(deviceEUI: string): Promise<LoRaWANStatsResponseDto> {
+        const now = new Date();
+        const to_time = now.toISOString();
+        const from_time = new Date(
+            new Date().setDate(now.getDate() - this.DEVICE_STATS_INTERVAL_IN_DAYS)
+        ).toISOString();
+
+        return this.get<LoRaWANStatsResponseDto>(
+            `devices/${deviceEUI}/stats?interval=DAY&startTimestamp=${from_time}&endTimestamp=${to_time}`
+        );
     }
 
     /**

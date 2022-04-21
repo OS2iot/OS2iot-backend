@@ -18,14 +18,14 @@ export interface LoRaWANSignalData {
     gatewayID: string;
 }
 
-export interface SigfoxPayload {
-    duplicates: SigfoxSignalData[];
+export interface SigFoxPayload {
+    duplicates: SigFoxSignalData[];
 }
 
 /**
  * @see https://support.sigfox.com/docs/data-advanced
  */
-export interface SigfoxSignalData {
+export interface SigFoxSignalData {
     rssi: number;
     snr: number;
 }
@@ -55,25 +55,25 @@ export const isValidLoRaWANSignalData = (rxInfo: unknown): rxInfo is LoRaWANSign
     return false;
 };
 
-export const isValidSigfoxPayload = (payload: unknown): payload is SigfoxPayload => {
+export const isValidSigFoxPayload = (payload: unknown): payload is SigFoxPayload => {
     return (
         payload &&
         typeof payload === "object" &&
-        hasProps(payload, nameof<SigfoxPayload>("duplicates")) &&
-        isValidSigfoxSignalData(payload.duplicates)
+        hasProps(payload, nameof<SigFoxPayload>("duplicates")) &&
+        isValidSigFoxSignalData(payload.duplicates)
     );
 };
 
-export const isValidSigfoxSignalData = (rxInfo: unknown): rxInfo is SigfoxSignalData[] => {
+export const isValidSigFoxSignalData = (rxInfo: unknown): rxInfo is SigFoxSignalData[] => {
     if (Array.isArray(rxInfo)) {
         // TS narrows it to any[]. Issue: https://github.com/microsoft/TypeScript/issues/17002
         const unknownInfo = rxInfo as unknown[];
 
         return (
             typeof unknownInfo[0] === "object" &&
-            hasProps(unknownInfo[0], nameof<SigfoxSignalData>("rssi")) &&
+            hasProps(unknownInfo[0], nameof<SigFoxSignalData>("rssi")) &&
             typeof unknownInfo[0].rssi === "number" &&
-            hasProps(unknownInfo[0], nameof<SigfoxSignalData>("snr")) &&
+            hasProps(unknownInfo[0], nameof<SigFoxSignalData>("snr")) &&
             typeof unknownInfo[0].snr === "number"
         );
     }

@@ -32,6 +32,7 @@ import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
+import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
 
 @Module({
     imports: [
@@ -66,6 +67,7 @@ import { ApplicationDeviceType } from "@entities/application-device-type.entity"
             LorawanMulticastDefinition,
             ControlledProperty,
             ApplicationDeviceType,
+            ReceivedMessageSigFoxSignals,
         ]),
     ],
     providers: [AuditLog],

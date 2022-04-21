@@ -34,12 +34,13 @@ export class PeriodicSigFoxCleanupService {
                 return this.getId(x);
             }
         );
-        if (devicesToRemove.length > 0) {
-            // Delete them
-            const idsToDelete = devicesToRemove.map(x => x.id);
-            this.logger.log(`Will remove devices: ${idsToDelete.join(", ")}`);
-            await this.iotDevicService.deleteMany(idsToDelete);
-        }
+        // TODO: Disabled for test purposes. Undo before PR
+        // if (devicesToRemove.length > 0) {
+        //     // Delete them
+        //     const idsToDelete = devicesToRemove.map(x => x.id);
+        //     this.logger.log(`Will remove devices: ${idsToDelete.join(", ")}`);
+        //     await this.iotDevicService.deleteMany(idsToDelete);
+        // }
     }
 
     private async getDevicesInSigFoxBackend() {

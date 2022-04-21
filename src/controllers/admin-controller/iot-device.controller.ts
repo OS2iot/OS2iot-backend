@@ -54,7 +54,10 @@ import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-resp
 import { ArrayMaxSize } from "class-validator";
 import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
-import { buildIoTDeviceCreateUpdateAuditData, ensureUpdatePayload as ensureIoTDeviceUpdatePayload } from "@helpers/iot-device.helper";
+import {
+    buildIoTDeviceCreateUpdateAuditData,
+    ensureUpdatePayload as ensureIoTDeviceUpdatePayload,
+} from "@helpers/iot-device.helper";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -129,6 +132,21 @@ export class IoTDeviceController {
         } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
         }
+    }
+
+    @Get(":id/stats")
+    @ApiOperation({
+        summary: "Get statistics of several key values over the past period",
+    })
+    async findStats(
+        // TODO: Un-needed?
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<unknown> {
+        const device = await this.iotDeviceService.findOne(id);
+        checkIfUserHasReadAccessToApplication(req, device.application.id);
+
+        return this.iotDeviceService.findStats(device);
     }
 
     @Post()
@@ -236,8 +254,9 @@ export class IoTDeviceController {
         @Body() createDto: CreateIoTDeviceBatchDto
     ): Promise<IotDeviceBatchResponseDto[]> {
         try {
-
-            createDto.data.forEach(createDto => checkIfUserHasWriteAccessToApplication(req, createDto.applicationId));
+            createDto.data.forEach(createDto =>
+                checkIfUserHasWriteAccessToApplication(req, createDto.applicationId)
+            );
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId

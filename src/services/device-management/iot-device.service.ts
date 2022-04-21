@@ -50,6 +50,9 @@ import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
+import { subtractDays } from "@helpers/date.helper";
+import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -73,7 +76,8 @@ export class IoTDeviceService {
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
         private sigfoxGroupService: SigFoxGroupService,
         private deviceModelService: DeviceModelService,
-        private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService
+        private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService,
+        private sigfoxMessagesService: SigFoxMessagesService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -477,6 +481,38 @@ export class IoTDeviceService {
         return this.iotDeviceRepository.delete(ids);
     }
 
+    async findStats(device: IoTDevice): Promise<DeviceStatsResponseDto[]> {
+        const toDate = new Date();
+        const fromDate = subtractDays(toDate, 30);
+
+        switch (device.type) {
+            case IoTDeviceType.LoRaWAN:
+                const loraData = await this.chirpstackDeviceService.getStats(
+                    (device as LoRaWANDevice).deviceEUI
+                );
+
+                return loraData.result.map(loraStat => ({
+                    timestamp: loraStat.timestamp,
+                    rssi: loraStat.gwRssi,
+                    snr: loraStat.gwSnr,
+                    rxPacketsPerDr: loraStat.rxPacketsPerDr,
+                }));
+            case IoTDeviceType.SigFox:
+                const sigFoxData = await this.sigfoxMessagesService.getMessageSignals(
+                    device.id,
+                    fromDate,
+                    toDate
+                );
+                return sigFoxData.map(data => ({
+                    timestamp: data.sentTime.toISOString(),
+                    rssi: data.rssi,
+                    snr: data.snr,
+                }));
+            default:
+                return null;
+        }
+    }
+
     /**
      * Validate and map info. from the dto onto an IoT device. This device is then created or updated
      * as one of the final steps. I.e. valid chirpstack devices will be created in Chirpstack
@@ -526,9 +562,7 @@ export class IoTDeviceService {
 
         // Set and validate properties on each IoT device
         // Filter devices whose properties couldn't be set
-        await this.mapDeviceModels(
-            filterValidIotDeviceMaps(iotDeviceMaps)
-        );
+        await this.mapDeviceModels(filterValidIotDeviceMaps(iotDeviceMaps));
         // Filter devices which didn't have a valid device model
         await this.mapChildDtoToIoTDevice(
             filterValidIotDeviceMaps(iotDeviceMaps),
@@ -550,14 +584,14 @@ export class IoTDeviceService {
             deviceModelIds
         );
 
-		// 
+        //
         const applicationIds = iotDevicesDtoMap.reduce((ids: number[], dto) => {
             if (dto.iotDeviceDto.applicationId) {
                 ids.push(dto.iotDeviceDto.applicationId);
             }
             return ids;
-        }, []);		
-		
+        }, []);
+
         const applications = await this.applicationService.findManyWithOrganisation(
             applicationIds
         );
@@ -575,25 +609,26 @@ export class IoTDeviceService {
                 continue;
             }
 
-			// Validate DeviceModel if set
-			if (map.iotDeviceDto.deviceModelId) {
+            // Validate DeviceModel if set
+            if (map.iotDeviceDto.deviceModelId) {
+                const deviceModelMatch = deviceModels.find(
+                    model => model.id === map.iotDeviceDto.deviceModelId
+                );
 
-				const deviceModelMatch = deviceModels.find(
-					model => model.id === map.iotDeviceDto.deviceModelId
-				);
+                if (!deviceModelMatch) {
+                    map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
+                    continue;
+                }
 
-				if (!deviceModelMatch) {
-					map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
-					continue;
-				}
+                if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
+                    map.error = {
+                        message: ErrorCodes.DeviceModelOrganizationDoesNotMatch,
+                    };
+                    continue;
+                }
 
-				if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
-					map.error = { message: ErrorCodes.DeviceModelOrganizationDoesNotMatch };
-					continue;
-				}
-
-				map.iotDevice.deviceModel = deviceModelMatch;
-			}
+                map.iotDevice.deviceModel = deviceModelMatch;
+            }
         }
     }
 
