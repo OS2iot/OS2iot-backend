@@ -71,7 +71,7 @@ export class SigfoxGroupController {
 
     @Get(":id")
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "Get " })
+    @ApiOperation({ summary: "Get one group by ID" })
     @Read()
     async getOne(
         @Req() req: AuthenticatedRequest,
