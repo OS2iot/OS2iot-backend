@@ -23,7 +23,6 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigFoxDownlinkCallbackDto } from "@dto/sigfox/external/sigfox-callback.dto";
 import { Response } from "express";
-import { IoTDevice } from "@entities/iot-device.entity";
 
 @ApiTags("SigFox")
 @Controller("sigfox-callback")
@@ -47,21 +46,20 @@ export class SigFoxListenerController {
     ): Promise<any> {
         this.verifyDeviceType(apiKey, data);
 
-        // TODO: Uncomment and revert the changes here before PR. For test purposes
-        // const sigfoxDevice = await this.findSigFoxDevice(data);
+        const sigfoxDevice = await this.findSigFoxDevice(data);
 
         const dataAsString = JSON.stringify(data);
         await this.receiveDataService.sendToKafka(
-            {id: 4, name: "FakeDev"} as any,
+            sigfoxDevice,
             dataAsString,
             IoTDeviceType.SigFox.toString(),
             data.time * 1000 // Timestamp passed must be in millis, sigfox uses seconds.
         );
 
-        // if (this.shouldSendDownlink(sigfoxDevice, data)) {
-        //     const payload = await this.doDownlink(sigfoxDevice);
-        //     return res.status(200).json(payload);
-        // }
+        if (this.shouldSendDownlink(sigfoxDevice, data)) {
+            const payload = await this.doDownlink(sigfoxDevice);
+            return res.status(200).json(payload);
+        }
 
         return res.status(204).send();
     }

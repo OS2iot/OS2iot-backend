@@ -503,14 +503,64 @@ export class IoTDeviceService {
                     fromDate,
                     toDate
                 );
-                return sigFoxData.map(data => ({
-                    timestamp: data.sentTime.toISOString(),
-                    rssi: data.rssi,
-                    snr: data.snr,
-                }));
+
+                // SigFox data might contain data points on the same day. They have to be averaged
+                const sortedStats = sigFoxData
+                    .map(data => ({
+                        timestamp: data.sentTime.toISOString(),
+                        rssi: data.rssi,
+                        snr: data.snr,
+                    }))
+                    .sort(
+                        (a, b) =>
+                            new Date(a.timestamp).getTime() -
+                            new Date(b.timestamp).getTime()
+                    );
+                const averagedStats = this.averageStatsForSameDay(sortedStats);
+                return averagedStats;
             default:
                 return null;
         }
+    }
+
+    private averageStatsForSameDay(stats: DeviceStatsResponseDto[]) {
+        const statsSummed = stats.reduce(
+            (
+                res: Record<
+                    string,
+                    { timestamp: string; count: number; rssi: number; snr: number }
+                >,
+                item
+            ) => {
+                // Assume that the date is ISO formatted and extract only the date.
+                const dateWithoutTime = item.timestamp.split("T")[0];
+                res[dateWithoutTime] = res.hasOwnProperty(dateWithoutTime)
+                    ? {
+                          count: res[dateWithoutTime].count + 1,
+                          timestamp: item.timestamp,
+                          rssi: res[dateWithoutTime].rssi + item.rssi,
+                          snr: res[dateWithoutTime].snr + item.snr,
+                      }
+                    : {
+                          count: 1,
+                          timestamp: item.timestamp,
+                          rssi: item.rssi,
+                          snr: item.snr,
+                      };
+                return res;
+            },
+            {}
+        );
+
+        const averagedStats: DeviceStatsResponseDto[] = Object.entries(statsSummed).map(
+            ([_key, item]) => ({
+                timestamp: item.timestamp,
+                rssi: item.rssi / item.count,
+                snr: item.snr / item.count,
+            })
+        );
+
+        return averagedStats;
     }
 
     /**

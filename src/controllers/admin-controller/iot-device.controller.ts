@@ -51,13 +51,13 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
-import { ArrayMaxSize } from "class-validator";
 import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
 import {
     buildIoTDeviceCreateUpdateAuditData,
     ensureUpdatePayload as ensureIoTDeviceUpdatePayload,
 } from "@helpers/iot-device.helper";
+import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -134,15 +134,14 @@ export class IoTDeviceController {
         }
     }
 
-    @Get(":id/stats")
+    @Get("/stats/:id")
     @ApiOperation({
         summary: "Get statistics of several key values over the past period",
     })
     async findStats(
-        // TODO: Un-needed?
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
-    ): Promise<unknown> {
+    ): Promise<DeviceStatsResponseDto[]> {
         const device = await this.iotDeviceService.findOne(id);
         checkIfUserHasReadAccessToApplication(req, device.application.id);
 
