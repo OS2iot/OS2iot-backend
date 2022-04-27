@@ -51,10 +51,13 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
-import { ArrayMaxSize } from "class-validator";
 import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
-import { buildIoTDeviceCreateUpdateAuditData, ensureUpdatePayload as ensureIoTDeviceUpdatePayload } from "@helpers/iot-device.helper";
+import {
+    buildIoTDeviceCreateUpdateAuditData,
+    ensureUpdatePayload as ensureIoTDeviceUpdatePayload,
+} from "@helpers/iot-device.helper";
+import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -129,6 +132,20 @@ export class IoTDeviceController {
         } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
         }
+    }
+
+    @Get("/stats/:id")
+    @ApiOperation({
+        summary: "Get statistics of several key values over the past period",
+    })
+    async findStats(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<DeviceStatsResponseDto[]> {
+        const device = await this.iotDeviceService.findOne(id);
+        checkIfUserHasReadAccessToApplication(req, device.application.id);
+
+        return this.iotDeviceService.findStats(device);
     }
 
     @Post()
@@ -236,8 +253,9 @@ export class IoTDeviceController {
         @Body() createDto: CreateIoTDeviceBatchDto
     ): Promise<IotDeviceBatchResponseDto[]> {
         try {
-
-            createDto.data.forEach(createDto => checkIfUserHasWriteAccessToApplication(req, createDto.applicationId));
+            createDto.data.forEach(createDto =>
+                checkIfUserHasWriteAccessToApplication(req, createDto.applicationId)
+            );
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId

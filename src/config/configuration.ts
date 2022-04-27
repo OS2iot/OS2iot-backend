@@ -8,7 +8,7 @@ export default (): any => {
             port: parseInt(process.env.DATABASE_PORT, 10) || 5433,
             username: process.env.DATABASE_USERNAME || "os2iot",
             password: process.env.DATABASE_PASSWORD || "toi2so",
-            ssl: process.env.DATABASE_ENABLE_SSL === "true"
+            ssl: process.env.DATABASE_ENABLE_SSL === "true",
         },
         jwt: {
             secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
@@ -17,6 +17,8 @@ export default (): any => {
         backend: {
             baseurl:
                 process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
+            deviceStatsIntervalInDays:
+                parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
         },
         kombit: {
             entryPoint:
@@ -30,6 +32,8 @@ export default (): any => {
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
         },
-        logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels('debug')
+        logLevels: process.env.LOG_LEVEL
+            ? GetLogLevels(process.env.LOG_LEVEL)
+            : GetLogLevels("debug"),
     };
 };
