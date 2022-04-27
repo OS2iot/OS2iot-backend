@@ -30,6 +30,10 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
+import { ControlledProperty } from "@entities/controlled-property.entity";
+import { ApplicationDeviceType } from "@entities/application-device-type.entity";
+import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 
 @Module({
     imports: [
@@ -41,6 +45,7 @@ import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
             GlobalAdminPermission,
             HttpPushDataTarget,
             FiwareDataTarget,
+            MqttDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,
@@ -61,7 +66,10 @@ import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
             WritePermission,
             ApiKeyPermission,
             Multicast,
-            LorawanMulticastDefinition
+            LorawanMulticastDefinition,
+            ControlledProperty,
+            ApplicationDeviceType,
+            ReceivedMessageSigFoxSignals,
         ]),
     ],
     providers: [AuditLog],
