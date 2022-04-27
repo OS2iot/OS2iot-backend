@@ -37,6 +37,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     /**
      * Limit how many messages can be stored within a time period. At the time,
      * this limit is set conservatively.
+	 * 
+	 * As SigFox is limited to 140 messages/day, this should be plenty
      */
     private readonly maxSigFoxSignalsMessagesPerHour = 10;
 
@@ -278,6 +280,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         await this.receivedMessageSigFoxSignalsRepository.insert(sigFoxMessage);
     }
 
+	// Make sure we never have stats for more than 10 messages pr. device pr. hour
+	// to avoid filling the database
     private async deleteOldSigFoxStats(
         latestMessageTime: Date,
         relatedIoTDevice: IoTDevice
