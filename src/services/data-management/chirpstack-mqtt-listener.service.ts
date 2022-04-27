@@ -1,11 +1,11 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import * as mqtt from "mqtt";
-import { Client } from "mqtt";
-
+import { MqttClientId } from "@config/constants/mqtt-constants";
 import { ChirpstackMQTTMessageDto } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import * as mqtt from "mqtt";
+import { Client } from "mqtt";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
@@ -16,7 +16,6 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
     private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
 
-    MQTT_CLIENT_ID = "os2iot-backend";
     MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${
         process.env.CS_MQTT_PORT || "1883"
     }`;
@@ -29,7 +28,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
         this.logger.debug("Pre-init");
         this.client = mqtt.connect(this.MQTT_URL, {
             clean: true,
-            clientId: this.MQTT_CLIENT_ID,
+            clientId: MqttClientId,
         });
         this.client.on("connect", () => {
             this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC);

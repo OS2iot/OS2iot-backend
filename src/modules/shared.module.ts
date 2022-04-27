@@ -33,6 +33,7 @@ import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 
 @Module({
     imports: [
@@ -44,6 +45,7 @@ import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-
             GlobalAdminPermission,
             HttpPushDataTarget,
             FiwareDataTarget,
+            MqttDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,
