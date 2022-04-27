@@ -32,6 +32,7 @@ import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 
 @Module({
     imports: [
@@ -43,6 +44,7 @@ import { ApplicationDeviceType } from "@entities/application-device-type.entity"
             GlobalAdminPermission,
             HttpPushDataTarget,
             FiwareDataTarget,
+            MqttDataTarget,
             IoTDevice,
             IoTDevicePayloadDecoderDataTargetConnection,
             DeviceModel,
