@@ -35,6 +35,7 @@ import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
+    checkIfUserHasAdminAccessToOrganization,
     checkIfUserHasReadAccessToApplication,
     checkIfUserHasWriteAccessToApplication,
 } from "@helpers/security-helper";
@@ -58,6 +59,7 @@ import {
     ensureUpdatePayload as ensureIoTDeviceUpdatePayload,
 } from "@helpers/iot-device.helper";
 import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -357,6 +359,32 @@ export class IoTDeviceController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
+            throw err;
+        }
+    }
+
+    @Put("resetHttpDeviceApiKey/:id")
+    @ApiOperation({ summary: "Reset the API key of a generic HTTP device" })
+    @ApiBadRequestResponse()
+    async resetHttpDeviceApiKey(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<Pick<GenericHTTPDevice, 'apiKey'>> {
+        try {
+            const oldIotDevice = await this.iotDeviceService.findOne(id);
+            checkIfUserHasWriteAccessToApplication(req, oldIotDevice?.application?.id);
+
+            if (oldIotDevice.type !== IoTDeviceType.GenericHttp) {
+                throw new BadRequestException("The requested device is not a generic HTTP device");
+            }
+
+            const result = await this.iotDeviceService.resetHttpDeviceApiKey(oldIotDevice as GenericHTTPDevice);
+            AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+            return {
+                apiKey: result.apiKey,
+            };
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
             throw err;
         }
     }
