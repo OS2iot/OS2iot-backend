@@ -29,7 +29,7 @@ import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-respons
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
+import { OrganizationPermission } from "@entities/permission.entity";
 import { Permission } from "@entities/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import {

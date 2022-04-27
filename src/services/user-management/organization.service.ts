@@ -23,6 +23,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { PermissionService } from "./permission.service";
 import { User } from "@entities/user.entity";
 import { UserService } from "./user.service";
+import { Permission, OrganizationPermission } from "@entities/permission.entity";
 
 @Injectable()
 export class OrganizationService {
@@ -73,16 +74,19 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async rejectAwaitingUser(user: User, organization: Organization): Promise<Organization> {
-        if(organization.awaitingUsers.find(dbUser => dbUser.id === user.id))
-        {
-            const index = organization.awaitingUsers.findIndex(dbUser => dbUser.id === user.id);
+    async rejectAwaitingUser(
+        user: User,
+        organization: Organization
+    ): Promise<Organization> {
+        if (organization.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
+            const index = organization.awaitingUsers.findIndex(
+                dbUser => dbUser.id === user.id
+            );
             organization.awaitingUsers.splice(index, 1);
-            await this.userService.sendRejectionMail(user, organization)
+            await this.userService.sendRejectionMail(user, organization);
             return await this.organizationRepository.save(organization);
         }
         throw new NotFoundException(ErrorCodes.UserDoesNotExistInArray);
-
     }
 
     async findAll(): Promise<ListAllOrganizationsResponseDto> {
@@ -96,11 +100,35 @@ export class OrganizationService {
         };
     }
 
-    async findManyWithRelations(organizationIds: number[]): Promise<Organization[]>
-    {
-        return await this.organizationRepository.findByIds(organizationIds, {
-            relations: ["permissions", "permissions.users"],
+    async mapPermissionsToOrganizations(
+        permissions: OrganizationPermission[]
+    ): Promise<Organization[]> {
+        const requestedOrganizations: Organization[] = [];
+
+        for (let index = 0; index < permissions.length; index++) {
+            if (
+                requestedOrganizations.find(org => {
+                    return permissions[index].organization.id === org.id;
+                })
+            ) {
+            } else {
+                requestedOrganizations.push(permissions[index].organization);
+            }
+        }
+
+        requestedOrganizations.forEach(org => {
+            org.permissions = [];
+            permissions.forEach(permission => {
+                if (org.id === permission.organization.id) {
+                    org.permissions.push(permission);
+                }
+            });
         });
+        permissions.forEach(permission => {
+            permission.organization = null;
+        })
+
+        return requestedOrganizations;
     }
 
     async findAllPaginated(

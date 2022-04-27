@@ -1,4 +1,3 @@
-// The order of these imports matters! The extended class has to stay at the bottom for avoiding class extends failure.
 import { ApiKey } from "@entities/api-key.entity";
 import {
     Column,

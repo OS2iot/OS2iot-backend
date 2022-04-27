@@ -1,6 +1,6 @@
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { OrganizationApplicationPermission } from "@entities/permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApplicationStatus } from "@enum/application-status.enum";
 import {

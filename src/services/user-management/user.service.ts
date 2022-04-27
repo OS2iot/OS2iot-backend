@@ -274,10 +274,6 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
-    async generateToken(): Promise<string> {
-        return "THE GENERATED TOKEN";
-    }
-
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
         return await this.userRepository.findByIds(userIds);
     }

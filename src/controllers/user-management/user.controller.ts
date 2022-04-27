@@ -110,87 +110,6 @@ export class UserController {
         }
     }
 
-    @Put("createNewKombitUser")
-    @ApiOperation({ summary: "Create kombit-user Email" })
-    async newKombitUser(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreateNewKombitUserDto
-    ): Promise<User> {
-        try {
-            const user: User = await this.userService.findOne(req.user.userId);
-            const requestedOrganizations: Organization[] = await this.organizationService.findManyWithRelations(
-                dto.requestedOrganizationIds
-            );
-            if (!user.email) {
-                const updatedUser: User = await this.userService.newKombitUser(
-                    dto,
-                    requestedOrganizations,
-                    user
-                );
-                for (
-                    let index = 0;
-                    index < dto.requestedOrganizationIds.length;
-                    index++
-                ) {
-                    const dbOrg = await this.organizationService.findByIdWithUsers(
-                        requestedOrganizations[index].id
-                    );
-                    await this.organizationService.updateAwaitingUsers(
-                        dbOrg,
-                        updatedUser
-                    );
-                }
-                AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
-                return updatedUser;
-            } else {
-                throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
-            }
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
-            throw err;
-        }
-    }
-
-    @Put("updateUserOrgs")
-    @ApiOperation({ summary: "Updates the users organizations" })
-    @ApiNotFoundResponse()
-    async updateUserOrgs(
-        @Req() req: AuthenticatedRequest,
-        @Body() updateUserOrgsDto: UpdateUserOrgsDto
-    ): Promise<UpdateUserOrgsDto> {
-        try {
-            const token = await this.userService.generateToken();
-            const user = await this.userService.findOne(req.user.userId);
-            const requestedOrganizations = await this.organizationService.findManyWithRelations(
-                updateUserOrgsDto.requestedOrganizationIds
-            );
-
-            for (let index = 0; index < requestedOrganizations.length; index++) {
-                await this.userService.sendOrganizationRequestMail(
-                    user,
-                    requestedOrganizations[index]
-                );
-            }
-            for (
-                let index = 0;
-                index < updateUserOrgsDto.requestedOrganizationIds.length;
-                index++
-            ) {
-                const dbOrg = await this.organizationService.findByIdWithUsers(
-                    requestedOrganizations[index].id
-                );
-
-                await this.organizationService.updateAwaitingUsers(dbOrg, user);
-            }
-
-            AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
-            return updateUserOrgsDto;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
-            throw err;
-        }
-    }
-
     @Put("/rejectUser/:id")
     @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
     async rejectUser(
@@ -241,6 +160,7 @@ export class UserController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
+    @Read()
     async find(
         @Param("id", new ParseIntPipe()) id: number,
         @Query("extendedInfo") extendedInfo?: boolean

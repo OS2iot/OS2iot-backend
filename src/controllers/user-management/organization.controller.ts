@@ -41,7 +41,6 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { UpdateUserOrgsDto } from "@dto/user-management/update-user-orgs.dto";
 import { UserService } from "@services/user-management/user.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -54,7 +53,6 @@ import { UserService } from "@services/user-management/user.service";
 export class OrganizationController {
     constructor(
         private organizationService: OrganizationService,
-        private userService: UserService
     ) {}
     private readonly logger = new Logger(OrganizationController.name);
 
@@ -142,15 +140,6 @@ export class OrganizationController {
                 query
             );
         }
-    }
-
-    @Get("all")
-    @ApiOperation({ summary: "Get list of all Organizations" })
-    async findAllNoReq(
-        @Req() req: AuthenticatedRequest,
-        @Query() query?: ListAllEntitiesDto
-    ): Promise<ListAllOrganizationsResponseDto> {
-        return this.organizationService.findAllPaginated(query);
     }
 
     @Get(":id")
