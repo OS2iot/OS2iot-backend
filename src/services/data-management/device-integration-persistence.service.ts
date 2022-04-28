@@ -288,7 +288,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
      * Make sure we never have stats for more than X messages per device per hour
      * to avoid filling the database
      * @param latestMessageTime
-     * @param relatedIoTDevice
+     * @param deviceId
      */
     private async deleteSigFoxStatsSinceLastHour(
         latestMessageTime: Date,
@@ -306,7 +306,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
 
         if (oldestToDelete.length === 0) {
             this.logger.debug(
-                "We didn't receive too many SigFox signal messages since last hour"
+                `Less than ${this.maxSigFoxSignalsMessagesPerHour} SigFox stat objects for device ${deviceId} found in database. Deleting no rows.`				
             );
             return;
         }
@@ -320,6 +320,10 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
     }
 
+	/**
+     * Clean up SigFox stats for the device if they are older than 1 year
+     * @param deviceId
+     */
     private async deleteOldSigFoxStats(deviceId: number): Promise<void> {
         const lastYear = subtractYears(new Date());
         // Find messages older than a date and delete them
