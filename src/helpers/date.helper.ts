@@ -9,3 +9,9 @@ export const subtractDays = (date: Date, days = 1): Date => {
     newDate.setDate(date.getDate() - days);
     return newDate;
 };
+
+export const subtractYears = (date: Date, years = 1): Date => {
+    const newDate = new Date();
+    newDate.setDate(date.getDate() - years * 365);
+    return newDate;
+}
