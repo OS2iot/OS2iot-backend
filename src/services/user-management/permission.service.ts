@@ -177,6 +177,16 @@ export class PermissionService {
         return perm as OrganizationPermission[];
     }
 
+    async findOneWithRelations(organizationId: number): Promise<OrganizationPermission[]>
+    {
+        const perm = await this.permissionRepository.find({
+            relations: ["organization", "users"],
+            where: {organization: {id: organizationId}}
+        }); 
+
+        return perm as OrganizationPermission[];
+    }
+
     async updatePermission(
         id: number,
         dto: UpdatePermissionDto,

@@ -126,9 +126,31 @@ export class OrganizationService {
         });
         permissions.forEach(permission => {
             permission.organization = null;
-        })
+        });
 
         return requestedOrganizations;
+    }
+
+    async mapPermissionsToOneOrganization(
+        permissions: OrganizationPermission[]
+    ): Promise<Organization> {
+        const org: Organization = new Organization();
+
+        permissions.map(permission => {
+            org.id = permission.organization.id;
+            org.name = permission.organization.name
+        });
+
+        org.permissions = [];
+        permissions.forEach(permission => {
+            if (org.id === permission.organization.id) {
+                org.permissions.push(permission);
+            }
+        });
+        permissions.forEach(permission => {
+            permission.organization = null;
+        });
+        return org;
     }
 
     async findAllPaginated(

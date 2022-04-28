@@ -102,9 +102,15 @@ export class PermissionController {
         try {
             checkIfUserHasAdminAccessToOrganization(req, dto.organizationId);
             let dbPermission: Permission;
-            const org: Organization = await this.organizationService.findByIdWithPermissions(
+
+            const permissions: OrganizationPermission[] = await this.permissionService.findOneWithRelations(
                 dto.organizationId
             );
+
+            const org: Organization = await this.organizationService.mapPermissionsToOneOrganization(
+                permissions
+            );
+            
             const user: User = await this.userService.findOne(dto.userId);
             for (let index = 0; index < org.permissions.length; index++) {
                 if (org.permissions[index].type === dto.level) {
