@@ -17,6 +17,8 @@ export default (): any => {
         backend: {
             baseurl:
                 process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
+            deviceStatsIntervalInDays:
+                parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
         },
         kombit: {
             entryPoint:
