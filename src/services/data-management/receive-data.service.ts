@@ -1,42 +1,80 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { RecordMetadata } from "kafkajs";
-
+import { RawGatewayStateDto } from "@dto/kafka/raw-gateway-state.dto";
+import { RawIotDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { Injectable, Logger } from "@nestjs/common";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaService } from "@services/kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Injectable()
 export class ReceiveDataService {
-    constructor(private kafkaService: KafkaService) {}
+    constructor(private kafkaService: KafkaService) {
+        console.log(typeof this.logger);
+    }
     private readonly logger = new Logger(ReceiveDataService.name);
 
-    async sendToKafka(
+    async sendRawIotDeviceRequestToKafka(
         iotDevice: IoTDevice,
         data: string,
         type: string,
         timestamp?: number
     ): Promise<void> {
-        this.logger.debug(`Received data, sending to Kafka`);
-        const dto = new RawRequestDto();
+        const dto = new RawIotDeviceRequestDto();
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
+        const payload = this.buildMessage(dto, type, KafkaTopic.RAW_REQUEST, timestamp);
+
+        await this.doSendToKafka(payload, KafkaTopic.RAW_REQUEST);
+    }
+
+    async sendRawGatewayStateToKafka(
+        gatewayId: string,
+        data: string,
+        timestamp?: number
+    ): Promise<void> {
+        const dto = new RawGatewayStateDto();
+        dto.gatewayId = gatewayId;
+        dto.rawPayload = JSON.parse(data);
+        const payload = this.buildMessage(
+            dto,
+            "GATEWAY",
+            KafkaTopic.RAW_GATEWAY_STATE,
+            timestamp
+        );
+
+        await this.doSendToKafka(payload, KafkaTopic.RAW_GATEWAY_STATE);
+    }
+
+    private buildMessage(
+        dto: RawRequestDto,
+        type: string,
+        topicName: KafkaTopic,
+        timestamp?: number
+    ): KafkaPayload {
+        this.logger.debug(`Received data, sending to Kafka`);
+
         // We cannot generically know when it was sent by the device, "now" is accurate enough
-        dto.unixTimestamp = timestamp != null ? timestamp : new Date().valueOf();
+        dto.unixTimestamp =
+            timestamp !== null && timestamp !== undefined
+                ? timestamp
+                : new Date().valueOf();
 
         const payload: KafkaPayload = {
             messageId: `${type}${new Date().valueOf()}`,
             body: dto,
             messageType: `receiveData.${type}`,
-            topicName: KafkaTopic.RAW_REQUEST,
+            topicName,
         };
         this.logger.debug(`Made payload: '${JSON.stringify(payload)}'`);
 
-        const rawStatus = await this.kafkaService.sendMessage(
-            KafkaTopic.RAW_REQUEST,
-            payload
-        );
+        return payload;
+    }
+
+    private async doSendToKafka(payload: KafkaPayload, topic: KafkaTopic) {
+        const rawStatus = await this.kafkaService.sendMessage(topic, payload);
 
         this.logger.debug(`Sent message to Kafka: ${JSON.stringify(rawStatus)}`);
 

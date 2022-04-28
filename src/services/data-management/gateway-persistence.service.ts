@@ -12,8 +12,8 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
     private gatewayOnlineStatusSavedDays: number;
 
     constructor(
+        private configService: ConfigService,
         private chirpstackOnlineHistoryService: ChirpstackOnlineHistoryService,
-        private configService: ConfigService
     ) {
         super();
         this.gatewayOnlineStatusSavedDays = configService.get<number>(
@@ -28,12 +28,12 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
     }
 
     // Listen to Kafka event
-    @CombinedSubscribeTo(KafkaTopic.RAW_REQUEST, "GatewayPersistence")
+    @CombinedSubscribeTo(KafkaTopic.RAW_GATEWAY_STATE, "GatewayPersistence")
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
-        this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
-        const dto: RawGatewayStateDto = payload.body;
+        this.logger.debug(`RAW_GATEWAY_STATE: '${JSON.stringify(payload)}'`);
+        // TODO: GATEWAY-STATUS: Do proper validation
+        const dto = payload.body as RawGatewayStateDto;
 
-        // TODO: Save last X messages worth of data
-        throw new NotImplementedException();
+        // TODO: GATEWAY-STATUS: Save last X messages worth of data
     }
 }

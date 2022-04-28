@@ -9,7 +9,6 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
-import { ChirpstackOnlineHistoryService } from "@services/chirpstack/chirpstack-online-history.service";
 
 @Module({
     controllers: [
@@ -25,12 +24,10 @@ import { ChirpstackOnlineHistoryService } from "@services/chirpstack/chirpstack-
         ServiceProfileService,
         DeviceProfileService,
         ChirpstackDeviceService,
-        ChirpstackOnlineHistoryService,
     ],
     exports: [
         ChirpstackDeviceService,
         ChirpstackGatewayService,
-        ChirpstackOnlineHistoryService,
     ],
 })
 export class ChirpstackAdministrationModule {}
