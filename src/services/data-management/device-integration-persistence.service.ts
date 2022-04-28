@@ -5,7 +5,7 @@ import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { subtractHours } from "@helpers/date.helper";
+import { subtractHours, subtractYears } from "@helpers/date.helper";
 import {
     isValidLoRaWANPayload,
     isValidSigFoxPayload,
@@ -16,7 +16,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { MoreThan, Repository } from "typeorm";
+import { MoreThan, Repository, LessThan } from "typeorm";
 
 @Injectable()
 export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
@@ -37,8 +37,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     /**
      * Limit how many messages can be stored within a time period. At the time,
      * this limit is set conservatively.
-	 * 
-	 * As SigFox is limited to 140 messages/day, this should be plenty
+     *
+     * As SigFox is limited to 140 messages/day, this should be plenty
      */
     private readonly maxSigFoxSignalsMessagesPerHour = 10;
 
@@ -68,7 +68,11 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         // In order to make statistics on SigFox data, we need to store it for long-term
         if (relatedIoTDevice.type === IoTDeviceType.SigFox) {
             await this.saveSigFoxStats(latestMessage);
-            await this.deleteOldSigFoxStats(latestMessage.sentTime, relatedIoTDevice);
+            await this.deleteSigFoxStatsSinceLastHour(
+                latestMessage.sentTime,
+                relatedIoTDevice.id
+            );
+            await this.deleteOldSigFoxStats(relatedIoTDevice.id);
         }
     }
 
@@ -280,16 +284,20 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         await this.receivedMessageSigFoxSignalsRepository.insert(sigFoxMessage);
     }
 
-	// Make sure we never have stats for more than 10 messages pr. device pr. hour
-	// to avoid filling the database
-    private async deleteOldSigFoxStats(
+    /**
+     * Make sure we never have stats for more than X messages per device per hour
+     * to avoid filling the database
+     * @param latestMessageTime
+     * @param relatedIoTDevice
+     */
+    private async deleteSigFoxStatsSinceLastHour(
         latestMessageTime: Date,
-        relatedIoTDevice: IoTDevice
+        deviceId: number
     ): Promise<void> {
         const lastHour = subtractHours(latestMessageTime);
-        // Delete the oldest items since the last hour
+        // Find the oldest items since the last hour
         const oldestToDelete = await this.receivedMessageSigFoxSignalsRepository.find({
-            where: { device: { id: relatedIoTDevice.id }, sentTime: MoreThan(lastHour) },
+            where: { device: { id: deviceId }, sentTime: MoreThan(lastHour) },
             skip: this.maxSigFoxSignalsMessagesPerHour,
             order: {
                 sentTime: "DESC",
@@ -297,7 +305,33 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         });
 
         if (oldestToDelete.length === 0) {
-            this.logger.debug("We don't need to delete any SigFox signal messages");
+            this.logger.debug(
+                "We didn't receive too many SigFox signal messages since last hour"
+            );
+            return;
+        }
+
+        const result = await this.receivedMessageSigFoxSignalsRepository.delete(
+            oldestToDelete.map(old => old.id)
+        );
+
+        this.logger.debug(
+            `Deleted: ${result.affected} rows from received_message_sigfox_signals`
+        );
+    }
+
+    private async deleteOldSigFoxStats(deviceId: number): Promise<void> {
+        const lastYear = subtractYears(new Date());
+        // Find messages older than a date and delete them
+        const oldestToDelete = await this.receivedMessageSigFoxSignalsRepository.find({
+            where: [
+                { device: { id: deviceId }, sentTime: LessThan(lastYear) },
+                { device: { id: deviceId }, updatedAt: LessThan(lastYear) },
+            ],
+        });
+
+        if (oldestToDelete.length === 0) {
+            this.logger.debug("There's no old SigFox signal messages");
             return;
         }
 
