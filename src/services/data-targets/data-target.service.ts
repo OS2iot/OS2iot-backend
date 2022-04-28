@@ -21,6 +21,7 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -122,7 +123,7 @@ export class DataTargetService {
         userId: number
     ): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
-        
+
         const dataTarget = this.createDataTargetByDto<DataTarget>(childType);
         const mappedDataTarget = await this.mapDtoToDataTarget(
             createDataTargetDto,
@@ -241,10 +242,19 @@ export class DataTargetService {
             fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
             fiwareDataTarget.tenant = dataTargetDto.tenant;
             fiwareDataTarget.context = dataTargetDto.context;
+        } else if (dataTargetDto.type === DataTargetType.MQTT) {
+            const mqttTarget = dataTarget as MqttDataTarget;
+            mqttTarget.url = dataTargetDto.url;
+            mqttTarget.timeout = dataTargetDto.timeout;
+            mqttTarget.mqttPort = dataTargetDto.mqttPort;
+            mqttTarget.mqttTopic = dataTargetDto.mqttTopic;
+            mqttTarget.mqttQos = dataTargetDto.mqttQos;
+            mqttTarget.mqttUsername = dataTargetDto.mqttUsername;
+            mqttTarget.mqttPassword = dataTargetDto.mqttPassword;
         }
     }
 
-    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any ):T {
+    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any):T {
         return new childDataTargetType();
     }
 }

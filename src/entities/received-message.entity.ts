@@ -1,7 +1,6 @@
-import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
-
 import { DbBaseEntity } from "@entities/base.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
 
 @Entity("received_message")
 export class ReceivedMessage extends DbBaseEntity {
@@ -21,4 +20,10 @@ export class ReceivedMessage extends DbBaseEntity {
         comment: "Time reported by device (if possible, otherwise time received)",
     })
     sentTime: Date;
+
+    @Column({ nullable: true })
+    rssi?: number;
+
+    @Column({ nullable: true })
+    snr?: number;
 }

@@ -1,5 +1,11 @@
+import { DbBaseEntity } from "@entities/base.entity";
+import { DataTarget } from "@entities/data-target.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { Organization } from "@entities/organization.entity";
+import { ApplicationStatus } from "@enum/application-status.enum";
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinTable,
     ManyToMany,
@@ -7,14 +13,10 @@ import {
     OneToMany,
     Unique,
 } from "typeorm";
-
-import { DbBaseEntity } from "@entities/base.entity";
-import { DataTarget } from "@entities/data-target.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
+import { ApplicationDeviceType } from "./application-device-type.entity";
+import { ControlledProperty } from "./controlled-property.entity";
 import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
-import { Organization } from "@entities/organization.entity";
 import { Multicast } from "./multicast.entity";
-
 
 @Entity("application")
 @Unique(["name"])
@@ -64,4 +66,46 @@ export class Application extends DbBaseEntity {
     )
     @JoinTable()
     permissions: OrganizationApplicationPermission[];
+
+    @Column({ nullable: true })
+    status?: ApplicationStatus;
+
+    @CreateDateColumn({ nullable: true })
+    startDate?: Date;
+
+    @CreateDateColumn({ nullable: true })
+    endDate?: Date;
+
+    @Column({ nullable: true })
+    category?: string;
+
+    @Column({ nullable: true })
+    owner?: string;
+
+    @Column({ nullable: true })
+    contactPerson?: string;
+
+    @Column({ nullable: true })
+    contactEmail?: string;
+
+    @Column({ nullable: true })
+    contactPhone?: string;
+
+    @Column({ nullable: true })
+    personalData?: boolean;
+
+    @Column({ nullable: true })
+    hardware?: string;
+
+    @OneToMany(() => ControlledProperty, entity => entity.application, {
+        nullable: true,
+        cascade: true,
+    })
+    controlledProperties?: ControlledProperty[];
+
+    @OneToMany(() => ApplicationDeviceType, entity => entity.application, {
+        nullable: true,
+        cascade: true,
+    })
+    deviceTypes?: ApplicationDeviceType[];
 }

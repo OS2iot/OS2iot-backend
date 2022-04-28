@@ -24,7 +24,7 @@ type UserPermissions = {
 }[];
 
 export class revisedPermissions1645536193420 implements MigrationInterface {
-    name = "revisedPermissions1645536193420";
+    name = "revisedPermissions1645536193420";       
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(

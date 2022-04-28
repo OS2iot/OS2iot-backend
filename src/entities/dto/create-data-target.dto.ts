@@ -1,6 +1,13 @@
+import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
+import { DataTargetType } from "@enum/data-target-type.enum";
+import { QoS } from "@enum/qos.enum";
+import { IsNotBlank } from "@helpers/is-not-blank.validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
+    IsEnum,
     IsInt,
+    IsNotEmpty,
     IsNumber,
     IsOptional,
     IsString,
@@ -8,13 +15,9 @@ import {
     MaxLength,
     Min,
     MinLength,
+    ValidateIf,
     ValidateNested,
 } from "class-validator";
-import { Type } from "class-transformer";
-
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
-import { IsNotBlank } from "@helpers/is-not-blank.validator";
 
 export class CreateDataTargetDto {
     @ApiProperty({ required: true })
@@ -41,7 +44,7 @@ export class CreateDataTargetDto {
     @IsString()
     @MaxLength(1024)
     @IsNotBlank("url")
-    @IsUrl({ require_tld: false, require_protocol: true})
+    @IsUrl({ require_tld: false, require_protocol: true })
     url: string;
 
     @ApiProperty({ required: true, example: 30000 })
@@ -56,4 +59,37 @@ export class CreateDataTargetDto {
     @ValidateNested({ each: true })
     @Type(() => CreateOpenDataDkDatasetDto)
     openDataDkDataset?: CreateOpenDataDkDatasetDto;
+
+    @ApiPropertyOptional({ required: false, description: "Required for MQTT datatarget" })
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type === DataTargetType.MQTT)
+    @Type(() => Number)
+    @IsInt()
+    @Min(1025) // Don't allow priviliged ports
+    mqttPort?: number;
+
+    @ApiPropertyOptional({ required: false, description: "Required for MQTT datatarget" })
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type === DataTargetType.MQTT)
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(100)
+    mqttTopic?: string;
+
+    @ApiPropertyOptional({ required: false, description: "Required for MQTT datatarget" })
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type === DataTargetType.MQTT)
+    @IsEnum(QoS)
+    mqttQos?: QoS;
+
+    @ApiPropertyOptional({ required: false, description: "Required for MQTT datatarget" })
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type === DataTargetType.MQTT)
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(100)
+    mqttUsername?: string;
+
+    @ApiPropertyOptional({ required: false, description: "Required for MQTT datatarget" })
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type === DataTargetType.MQTT)
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(100)
+    mqttPassword?: string;
 }

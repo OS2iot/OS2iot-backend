@@ -48,10 +48,14 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
-import { ArrayMaxSize } from "class-validator";
 import { CreateIoTDeviceBatchDto } from "@dto/iot-device/create-iot-device-batch.dto";
 import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
-import { buildIoTDeviceCreateUpdateAuditData, ensureUpdatePayload as ensureIoTDeviceUpdatePayload } from "@helpers/iot-device.helper";
+import {
+    buildIoTDeviceCreateUpdateAuditData,
+    ensureUpdatePayload as ensureIoTDeviceUpdatePayload,
+} from "@helpers/iot-device.helper";
+import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
+import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -126,6 +130,20 @@ export class IoTDeviceController {
         } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
         }
+    }
+
+    @Get("/stats/:id")
+    @ApiOperation({
+        summary: "Get statistics of several key values over the past period",
+    })
+    async findStats(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<DeviceStatsResponseDto[]> {
+        const device = await this.iotDeviceService.findOne(id);
+        checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
+
+        return this.iotDeviceService.findStats(device);
     }
 
     @Post()
@@ -232,9 +250,9 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateIoTDeviceBatchDto
     ): Promise<IotDeviceBatchResponseDto[]> {
-        try {
-
+        try {            
             createDto.data.forEach(createDto => checkIfUserHasAccessToApplication(req, createDto.applicationId, ApplicationAccessScope.Write));
+            
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId
@@ -336,6 +354,32 @@ export class IoTDeviceController {
             return new DeleteResponseDto(result.affected);
         } catch (err) {
             AuditLog.fail(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
+            throw err;
+        }
+    }
+
+    @Put("resetHttpDeviceApiKey/:id")
+    @ApiOperation({ summary: "Reset the API key of a generic HTTP device" })
+    @ApiBadRequestResponse()
+    async resetHttpDeviceApiKey(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) id: number
+    ): Promise<Pick<GenericHTTPDevice, 'apiKey'>> {
+        try {
+            const oldIotDevice = await this.iotDeviceService.findOne(id);
+            checkIfUserHasAccessToApplication(req, oldIotDevice?.application?.id, ApplicationAccessScope.Write);
+
+            if (oldIotDevice.type !== IoTDeviceType.GenericHttp) {
+                throw new BadRequestException("The requested device is not a generic HTTP device");
+            }
+
+            const result = await this.iotDeviceService.resetHttpDeviceApiKey(oldIotDevice as GenericHTTPDevice);
+            AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+            return {
+                apiKey: result.apiKey,
+            };
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
             throw err;
         }
     }
