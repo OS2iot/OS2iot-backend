@@ -123,14 +123,38 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
 
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
+
+        await queryRunner.query(`DELETE FROM user_permissions_permission
+WHERE "permissionId" IN
+( 
+    SELECT "permission"."id" FROM user_permissions_permission
+    JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
+    WHERE permission.type IN ('Write', 'OrganizationAdmin')
+);`);
+
+		await queryRunner.query(`DELETE FROM application_permissions_permission
+WHERE "permissionId" IN
+( 
+    SELECT "permission"."id" FROM application_permissions_permission
+    JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
+    WHERE permission.type IN ('Write', 'OrganizationAdmin')
+)`);
+
+		await queryRunner.query(`DELETE FROM api_key_permissions_permission
+WHERE "permissionId" IN
+( 
+    SELECT "permission"."id" FROM api_key_permissions_permission
+    JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
+    WHERE permission.type IN ('Write', 'OrganizationAdmin')
+)`);
 		
-        // await queryRunner.query(
-        //     `DELETE FROM "public"."permission" where type IN ('OrganizationAdmin', 'Write')`
-        // );
-        // await queryRunner.query(
-        //     `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
-        // );
-        // await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+        await queryRunner.query(
+            `DELETE FROM "public"."permission" where type IN ('OrganizationAdmin', 'Write')`
+        );
+        await queryRunner.query(
+            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
+        );
+        await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
     }
 
     private async migrateUserPermissions(
