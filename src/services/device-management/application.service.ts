@@ -24,11 +24,6 @@ import { ApplicationDeviceType } from "@entities/application-device-type.entity"
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { findValuesInRecord } from "@helpers/record.helper";
 
-type ControlledPropertyDeviceType<TType> = Omit<ControlledProperty, "type"> &
-    Omit<ApplicationDeviceType, "type"> & {
-        type: TType
-    };
-
 @Injectable()
 export class ApplicationService {
     constructor(
@@ -429,12 +424,16 @@ export class ApplicationService {
     private getSortingForIoTDevices(query: ListAllEntitiesDto) {
         let orderBy = `iot_device.id`;
         if (
-            (query?.orderOn != null && query.orderOn == "id") ||
-            query.orderOn == "name" ||
-            query.orderOn == "active"
+            (query?.orderOn != null && query.orderOn === "id") ||
+            query.orderOn === "name" ||
+            query.orderOn === "active" ||
+            query.orderOn === "rssi" ||
+            query.orderOn === "snr"
         ) {
-            if (query.orderOn == "active") {
+            if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
+            } else if (query.orderOn === "rssi" || query.orderOn === "snr") {
+                orderBy = `metadata.${query.orderOn}`;
             } else {
                 orderBy = `iot_device.${query.orderOn}`;
             }

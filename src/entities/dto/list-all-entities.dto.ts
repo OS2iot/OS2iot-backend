@@ -27,5 +27,7 @@ export class ListAllEntitiesDto {
         | "type"
         | "organisations"
         | "active"
-        | "groupName";
+        | "groupName"
+        | "rssi"
+        | "snr";
 }

@@ -1,3 +1,4 @@
+import { MqttClientId } from "@config/constants/mqtt-constants";
 import {
     ChirpstackMQTTConnectionStateMessageDto,
     ChirpstackMQTTMessageDto,
@@ -26,7 +27,6 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
     private readonly connStateType: Protobuf.Type;
 
-    MQTT_CLIENT_ID = "os2iot-backend";
     MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${
         process.env.CS_MQTT_PORT || "1883"
     }`;
@@ -44,7 +44,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
         this.client = mqtt.connect(this.MQTT_URL, {
             clean: true,
-            clientId: this.MQTT_CLIENT_ID,
+            clientId: MqttClientId,
         });
         this.client.on("connect", () => {
             this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC);

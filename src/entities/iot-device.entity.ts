@@ -20,6 +20,7 @@ import { ReceivedMessageMetadata } from "@entities/received-message-metadata.ent
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { DeviceModel } from "./device-model.entity";
 import { Multicast } from "./multicast.entity";
+import { ReceivedMessageSigFoxSignals } from "./received-message-sigfox-signals.entity";
 
 @Entity("iot_device")
 @TableInheritance({
@@ -92,6 +93,13 @@ export abstract class IoTDevice extends DbBaseEntity {
     @ManyToMany(() => Multicast)
     @JoinTable()
     multicasts: Multicast[];
+
+    @OneToMany(
+        () => ReceivedMessageSigFoxSignals,
+        message => message.device,
+        { onDelete: "CASCADE" }
+    )
+    receivedSigFoxSignalsMessages: ReceivedMessageSigFoxSignals[];
 
     toString(): string {
         return `IoTDevices: id: ${this.id} - name: ${this.name}`;

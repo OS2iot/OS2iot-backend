@@ -3,11 +3,11 @@ import { RawIotDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
 import { Injectable, Logger } from "@nestjs/common";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaService } from "@services/kafka/kafka.service";
 import { RecordMetadata } from "kafkajs";
-import { IoTDeviceType } from "@enum/device-type.enum";
 
 @Injectable()
 export class ReceiveDataService {
@@ -19,7 +19,7 @@ export class ReceiveDataService {
     async sendRawIotDeviceRequestToKafka(
         iotDevice: IoTDevice,
         data: string,
-        type: string,
+        type: IoTDeviceType[number],
         timestamp?: number
     ): Promise<void> {
         const dto = new RawIotDeviceRequestDto();
@@ -55,7 +55,7 @@ export class ReceiveDataService {
         timestamp?: number
     ): KafkaPayload {
         this.logger.debug(`Received data, sending to Kafka`);
-
+        dto.type = type;
         // We cannot generically know when it was sent by the device, "now" is accurate enough
         dto.unixTimestamp =
             timestamp !== null && timestamp !== undefined

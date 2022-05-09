@@ -25,6 +25,7 @@ import { HttpModule, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ApiKeyInfoModule } from "./api-key-info/api-key-info.module";
 import { DeviceModelModule } from "./device-management/device-model.module";
 import { IoTLoRaWANDeviceModule } from "./device-management/iot-lorawan-device.module";
 import { MulticastModule } from "./device-management/multicast.module";
@@ -90,6 +91,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
         OpenDataDkSharingModule,
         MulticastModule,
         IoTLoRaWANDeviceModule,
+        ApiKeyInfoModule,
     ],
     controllers: [],
     providers: [],
