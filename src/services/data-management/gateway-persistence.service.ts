@@ -1,24 +1,18 @@
 import { RawGatewayStateDto } from "@dto/kafka/raw-gateway-state.dto";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { Injectable, Logger, NotImplementedException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { ChirpstackOnlineHistoryService } from "@services/chirpstack/chirpstack-online-history.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
 
 @Injectable()
 export class GatewayPersistenceService extends AbstractKafkaConsumer {
-    private gatewayOnlineStatusSavedDays: number;
+    private gatewayStatusSavedDays: number;
 
-    constructor(
-        private configService: ConfigService,
-        private chirpstackOnlineHistoryService: ChirpstackOnlineHistoryService,
-    ) {
+    constructor(private gatewayStatusHistoryService: GatewayStatusHistoryService) {
         super();
-        this.gatewayOnlineStatusSavedDays = configService.get<number>(
-            "chirpstack.gatewayOnlineStatusSavedDays"
-        );
+        this.gatewayStatusSavedDays = 30;
     }
 
     private readonly logger = new Logger(GatewayPersistenceService.name);

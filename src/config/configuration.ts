@@ -29,7 +29,6 @@ export default (): any => {
         },
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
-            gatewayOnlineStatusSavedDays: parseInt(process.env.GATEWAY_ONLINE_HISTORY_DAYS) || 7,
         },
         logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels('debug')
     };

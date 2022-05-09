@@ -1,5 +1,5 @@
 import configuration from "@config/configuration";
-import { ChirpstackBackendModule } from "@modules/device-integrations/chirpstack-backend.module";
+import { LoRaWANGatewayModule } from "@modules/device-integrations/lorawan-gateway.module";
 import { SharedModule } from "@modules/shared.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
@@ -9,7 +9,7 @@ import { GatewayPersistenceService } from "@services/data-management/gateway-per
     imports: [
         SharedModule,
         ConfigModule.forRoot({ load: [configuration] }),
-        ChirpstackBackendModule,
+        LoRaWANGatewayModule,
     ],
     exports: [],
     providers: [GatewayPersistenceService],

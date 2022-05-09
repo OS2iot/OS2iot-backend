@@ -32,7 +32,7 @@ import { Multicast } from "@entities/multicast.entity";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
-import { GatewayOnlineHistory } from "@entities/gateway-online-history.entity";
+import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 
 @Module({
     imports: [
@@ -67,7 +67,7 @@ import { GatewayOnlineHistory } from "@entities/gateway-online-history.entity";
             LorawanMulticastDefinition,
             ControlledProperty,
             ApplicationDeviceType,
-            GatewayOnlineHistory,
+            GatewayStatusHistory,
         ]),
     ],
     providers: [AuditLog],
