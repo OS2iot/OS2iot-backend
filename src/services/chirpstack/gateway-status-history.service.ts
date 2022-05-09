@@ -19,23 +19,12 @@ export class GatewayStatusHistoryService {
     ) {}
     private readonly logger = new Logger(GatewayStatusHistoryService.name);
 
-    // TODO: Not for this task! Focus on overview
-    // public find(gatewayMac: string): Promise<GatewayOnlineHistory[]> {
-    //     return this.gatewayOnlineHistoryRepository.find({
-    //         where: {
-    //             mac: gatewayMac,
-    //         },
-    //     });
-    // }
-
     public async findAll(
         query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
-        const gateways = await this.chirpstackGatewayService.getWithPagination(
-            query.limit,
-            query.offset,
-            query.organizationId
-        );
+        // Very expensive operation. Since no gateway data is stored on the backend database, we need
+        // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
+        const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
         const gatewayIds = gateways.result.map(gateway => gateway.id);
         const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 

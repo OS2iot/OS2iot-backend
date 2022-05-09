@@ -112,35 +112,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         };
     }
 
-    async getWithPagination(
-        limit = 25,
-        offset = 0,
-        organizationId?: number
-    ): Promise<ListAllGatewaysResponseDto> {
-        const gatewayResponse = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
-            "gateways",
-            limit,
-            offset
-        );
-        const allResults = gatewayResponse.result;
-
-        await this.enrichWithOrganizationId(allResults);
-        if (organizationId !== undefined) {
-            const filteredResults = _.filter(allResults, x => {
-                return x.internalOrganizationId === +organizationId;
-            });
-            return {
-                result: filteredResults,
-                totalCount: filteredResults.length,
-            };
-        }
-
-        return {
-            result: allResults,
-            totalCount: gatewayResponse.totalCount,
-        };
-    }
-
     /**
      * Fetch gateways individually. This gives us the tags which contain the OS2 organization id.
      * This is a very expensive operation, but it's the only way to retrieve gateway tags.

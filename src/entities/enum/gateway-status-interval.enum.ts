@@ -1,3 +1,5 @@
+import { subtractDays } from "@helpers/date.helper";
+
 export enum GatewayStatusInterval {
     DAY = "DAY",
     WEEK = "WEEK",
@@ -9,10 +11,10 @@ export const gatewayStatusIntervalToDate = (interval: GatewayStatusInterval): Da
 
     switch (interval) {
         case GatewayStatusInterval.WEEK:
-            break;
+            return subtractDays(now, 7);
         case GatewayStatusInterval.MONTH:
-            break;
+            return subtractDays(now, 30);
         default:
-            return ;
+            return subtractDays(now, 1);
     }
 };
