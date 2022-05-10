@@ -4,13 +4,14 @@ import {
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { GatewayStatus } from "@dto/chirpstack/backend/gateway-status.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
-import { gatewayStatusIntervalToDate } from "@enum/gateway-status-interval.enum";
+import {
+    GatewayStatusInterval,
+    gatewayStatusIntervalToDate,
+} from "@enum/gateway-status-interval.enum";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, MoreThan, Repository, MoreThanOrEqual } from "typeorm";
+import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
-import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 type GatewayId = { id: string; name: string };
 
@@ -48,6 +49,22 @@ export class GatewayStatusHistoryService {
             data,
             count: gateways.totalCount,
         };
+    }
+
+    public async findOne<Gateway extends GatewayId>(
+        gateway: Gateway,
+        timeInterval: GatewayStatusInterval
+    ): Promise<GatewayStatus> {
+        const fromDate = gatewayStatusIntervalToDate(timeInterval);
+
+        const statusHistories = await this.gatewayStatusHistoryRepository.find({
+            where: {
+                mac: gateway.id,
+                timestamp: MoreThanOrEqual(fromDate),
+            },
+        });
+
+        return this.mapStatusHistoryToGateway(gateway, statusHistories);
     }
 
     private mapStatusHistoryToGateways<Gateway extends GatewayId>(
