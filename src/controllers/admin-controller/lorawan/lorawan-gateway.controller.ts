@@ -20,13 +20,16 @@ export class LoRaWANGatewayController {
 
     @Get("/status")
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "Get the online status of all LoRaWAN gateways" })
+    @ApiOperation({ summary: "Get the status for all LoRaWAN gateways" })
     @Read()
     async getAllStatus(
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
-        checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+        if (query.organizationId) {
+            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+        }
+
         return this.onlineHistoryService.findAllWithChirpstack(query);
     }
 }

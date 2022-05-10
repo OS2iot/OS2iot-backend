@@ -10,9 +10,9 @@ import { GatewayStatus } from "./gateway-status.dto";
 export class GatewayGetAllStatusResponseDto extends ListAllEntitiesResponseDto<GatewayStatus> {}
 
 export class ListAllGatewayStatusDto extends ListAllEntitiesDto {
-    @ApiProperty({ type: Number, required: true })
+    @IsSwaggerOptional()
     @StringToNumber()
-    organizationId: number;
+    organizationId?: number;
 
     @IsSwaggerOptional({
         default: GatewayStatusInterval.DAY,

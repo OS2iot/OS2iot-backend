@@ -9,6 +9,10 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThan, Repository, MoreThanOrEqual } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+
+type GatewayId = { id: string; name: string };
 
 @Injectable()
 export class GatewayStatusHistoryService {
@@ -33,35 +37,50 @@ export class GatewayStatusHistoryService {
                 mac: In(gatewayIds),
                 timestamp: MoreThanOrEqual(fromDate),
             },
-            take: query.limit,
-            skip: query.offset,
         });
 
-        const data: GatewayStatus[] = gateways.result.map(gateway => {
-            const statusTimestamps = statusHistories.reduce(
-                (res: GatewayStatus["statusTimestamps"], history) => {
-                    if (history.mac === gateway.id) {
-                        res.push({
-                            timestamp: history.timestamp,
-                            wasOnline: history.wasOnline,
-                        });
-                    }
-
-                    return res;
-                },
-                []
-            );
-
-            return {
-                id: gateway.id,
-                name: gateway.name,
-                statusTimestamps,
-            };
-        });
+        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(
+            gateways.result,
+            statusHistories
+        );
 
         return {
             data,
             count: gateways.totalCount,
+        };
+    }
+
+    private mapStatusHistoryToGateways<Gateway extends GatewayId>(
+        gateways: Gateway[],
+        statusHistories: GatewayStatusHistory[]
+    ): GatewayStatus[] {
+        return gateways.map(gateway => {
+            return this.mapStatusHistoryToGateway(gateway, statusHistories);
+        });
+    }
+
+    private mapStatusHistoryToGateway<Gateway extends GatewayId>(
+        gateway: Gateway,
+        statusHistories: GatewayStatusHistory[]
+    ) {
+        const statusTimestamps = statusHistories.reduce(
+            (res: GatewayStatus["statusTimestamps"], history) => {
+                if (history.mac === gateway.id) {
+                    res.push({
+                        timestamp: history.timestamp,
+                        wasOnline: history.wasOnline,
+                    });
+                }
+
+                return res;
+            },
+            []
+        );
+
+        return {
+            id: gateway.id,
+            name: gateway.name,
+            statusTimestamps,
         };
     }
 }
