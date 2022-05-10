@@ -27,6 +27,6 @@ export class LoRaWANGatewayController {
         @Query() query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
         checkIfUserHasReadAccessToOrganization(req, query.organizationId);
-        return this.onlineHistoryService.findAll(query);
+        return this.onlineHistoryService.findAllWithChirpstack(query);
     }
 }

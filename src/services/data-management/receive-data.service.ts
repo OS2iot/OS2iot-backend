@@ -11,9 +11,7 @@ import { RecordMetadata } from "kafkajs";
 
 @Injectable()
 export class ReceiveDataService {
-    constructor(private kafkaService: KafkaService) {
-        console.log(typeof this.logger);
-    }
+    constructor(private kafkaService: KafkaService) {}
     private readonly logger = new Logger(ReceiveDataService.name);
 
     async sendRawIotDeviceRequestToKafka(

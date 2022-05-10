@@ -19,7 +19,7 @@ export class GatewayStatusHistoryService {
     ) {}
     private readonly logger = new Logger(GatewayStatusHistoryService.name);
 
-    public async findAll(
+    public async findAllWithChirpstack(
         query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
         // Very expensive operation. Since no gateway data is stored on the backend database, we need
@@ -38,18 +38,24 @@ export class GatewayStatusHistoryService {
         });
 
         const data: GatewayStatus[] = gateways.result.map(gateway => {
-            const onlineTimestamps = statusHistories.reduce((res: Date[], history) => {
-                if (history.mac === gateway.id) {
-                    res.push(history.timestamp);
-                }
+            const statusTimestamps = statusHistories.reduce(
+                (res: GatewayStatus["statusTimestamps"], history) => {
+                    if (history.mac === gateway.id) {
+                        res.push({
+                            timestamp: history.timestamp,
+                            wasOnline: history.wasOnline,
+                        });
+                    }
 
-                return res;
-            }, []);
+                    return res;
+                },
+                []
+            );
 
             return {
                 id: gateway.id,
                 name: gateway.name,
-                onlineTimestamps,
+                statusTimestamps,
             };
         });
 

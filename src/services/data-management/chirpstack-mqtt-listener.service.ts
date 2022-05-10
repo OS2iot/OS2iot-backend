@@ -60,16 +60,11 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
                 } else if (topic.startsWith(this.CHIRPSTACK_MQTT_GATEWAY_PREFIX)) {
                     try {
                         const decoded = this.connStateType.decode(message);
-                        // TODO: GATEWAY-STATUS: Remove log
-                        console.log(
-                            "Received gateway topic! Data is ",
-                            message.toString(),
-                            decoded.toJSON()
-                        );
-
                         await this.receiveMqttGatewayStatusMessage(decoded.toJSON());
                     } catch (error) {
-                        // TODO: GATEWAY-STATUS:  Add error handling/logging
+                        this.logger.error(
+                            `Gateway status data could not be processed. Error: ${error}`
+                        );
                     }
                 } else {
                     this.logger.warn("Unrecognized MQTT topic " + topic);
@@ -121,7 +116,9 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
                 jsonDto
             );
         } else {
-            // TODO: Error handling
+            this.logger.error(
+                `Gateway status message is not properly formatted. Gateway id, if any, is ${message?.id}`
+            );
         }
     }
 }
