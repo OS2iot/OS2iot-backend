@@ -54,7 +54,7 @@ export class DeviceModelController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllDeviceModelsDto
     ): Promise<ListAllDeviceModelResponseDto> {
-        if (query?.organizationId != null) {
+        if (query?.organizationId != null) {			
             checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.ApplicationRead);
             return this.service.getAllDeviceModelsByOrgIds(
                 [query?.organizationId],

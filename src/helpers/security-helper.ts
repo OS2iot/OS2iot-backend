@@ -24,7 +24,7 @@ export function checkIfUserHasAccessToOrganization(
     organizationId: number,
     scope: OrganizationAccessScope
 ): void {
-    if (!Number.isInteger(organizationId)) return;
+    if (!Number.isInteger(+organizationId)) return;
 
     let allowedOrganizations: number[] = [];
 

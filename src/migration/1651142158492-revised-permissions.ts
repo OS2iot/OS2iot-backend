@@ -5,6 +5,11 @@ type AppPermissions = {
     permissionId: number;
 }[];
 
+type ApiKeyPermissions = {
+    apiKeyId: number;
+    permissionId: number;
+}[];
+
 type PermissionInfo = {
     id: number;
     clonedFromId: number;
@@ -17,6 +22,10 @@ type UserPermissionInfo = PermissionInfo & {
 type AppPermissionInfo = PermissionInfo & {
     applicationId?: number;
 };
+
+type ApiKeyPermissionInfo = PermissionInfo & {
+	apiKeyId?: number;
+}
 
 type UserPermissions = {
     userId: number;
@@ -101,7 +110,7 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         );
 
         // Migrate entities in other tables with a foreign key to the permission table
-        await this.migrateUserPermissions(
+        await this.migrateUserPermissions (
             queryRunner,
             applicationAdminFromWriteInfo,
             readFromWriteInfo,
@@ -111,7 +120,17 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
             readAdminFromOrgAdminInfo
         );
 
-        await this.migrateApplicationPermissions(
+        await this.migrateApplicationPermissions (
+            queryRunner,
+            applicationAdminFromWriteInfo,
+            readFromWriteInfo,
+            userAdminFromOrgAdminInfo,
+            applicationAdminFromOrgAdminInfo,
+            gatewayAdminFromOrgAdminInfo,
+            readAdminFromOrgAdminInfo
+        );
+
+		await this.migrateApiKeyPermissions (
             queryRunner,
             applicationAdminFromWriteInfo,
             readFromWriteInfo,
@@ -190,8 +209,26 @@ from public.application_permissions_permission`);
             []
         );
 
-        // User-permission table
+        // App-permission table
         await queryRunner.query(this.copyAppPermissionsQuery(newAppPermissions));
+    }
+
+	private async migrateApiKeyPermissions(
+        queryRunner: QueryRunner,
+        ...permissionInfos: PermissionInfo[][]
+    ) {
+        const apiKeyPermissions: ApiKeyPermissions = await queryRunner.query(`select  "apiKeyId"
+,"permissionId"
+from public.api_key_permissions_permission`);
+
+        // .reduce instead of .flatmap as it's only available in ES2019+
+        const newApiKeyPermissions: ApiKeyPermissionInfo[] = permissionInfos.reduce(
+            (acc, info) => acc.concat(this.mapApiKeyPermissions(apiKeyPermissions, info)),
+            []
+        );
+
+        // ApiKey-permission table
+        await queryRunner.query(this.copyApiKeyPermissionsQuery(newApiKeyPermissions));
     }
 
     private fetchPermissionsIdsQuery(oldType: string, newType = oldType): string {
@@ -236,6 +273,17 @@ returning id, "permission"."clonedFromId"`;
         return mappedInfos.filter(info => typeof info.applicationId === "number");
     }
 
+	private mapApiKeyPermissions(
+        apiKeyPermissions: ApiKeyPermissions,
+        infos: ApiKeyPermissionInfo[]
+    ): PermissionInfo[] {
+        const mappedInfos = infos.map(info => {
+            const match = apiKeyPermissions.find(p => p.permissionId === info.clonedFromId);
+            return match ? { ...info, apiKeyId: match.apiKeyId } : info;
+        });
+        return mappedInfos.filter(info => typeof info.apiKeyId === "number");
+    }
+
     private copyUserPermissionsQuery(infos: UserPermissionInfo[]): string {
         if (!infos.length) return "";
 
@@ -253,6 +301,16 @@ returning id, "permission"."clonedFromId"`;
             .map(info => `(${info.applicationId}, ${info.id})`)
             .join(",");
         return `INSERT INTO "public"."application_permissions_permission"("applicationId","permissionId") VALUES
+        ${insertIntoStatements}`;
+    }
+
+	private copyApiKeyPermissionsQuery(infos: ApiKeyPermissionInfo[]): string {
+        if (!infos.length) return "";
+
+        const insertIntoStatements = infos
+            .map(info => `(${info.apiKeyId}, ${info.id})`)
+            .join(",");
+        return `INSERT INTO "public"."api_key_permissions_permission"("apiKeyId","permissionId") VALUES
         ${insertIntoStatements}`;
     }
 
