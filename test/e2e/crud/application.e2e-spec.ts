@@ -24,7 +24,7 @@ import {
     randomMacAddress,
 } from "../test-helpers";
 import { PermissionType } from "@enum/permission-type.enum";
-import { ReadPermission } from "@entities/read-permission.entity";
+import { ReadPermission } from "@entities/permissions/read-permission.entity";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
@@ -32,9 +32,9 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
-import { WritePermission } from "@entities/write-permission.entity";
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
 
 describe("ApplicationController (e2e)", () => {
     let app: INestApplication;
@@ -556,11 +556,11 @@ describe("ApplicationController (e2e)", () => {
             x => x.type == PermissionType.Read
         ) as ReadPermission;
         readPerm.applications = [app1];
-        const writePerm = user.permissions.find(
-            x => x.type == PermissionType.Write
-        ) as ReadPermission;
-        writePerm.applications = [app1];
-        await getManager().save([readPerm, writePerm]);
+        const orgAppAdminPerm = user.permissions.find(
+            x => x.type == PermissionType.OrganizationApplicationAdmin
+        ) as OrganizationApplicationAdminPermission;
+        orgAppAdminPerm.applications = [app1];
+        await getManager().save([readPerm, orgAppAdminPerm]);
 
         const jwt = generateValidJwtForUser(user);
 
@@ -621,10 +621,10 @@ describe("ApplicationController (e2e)", () => {
         ) as ReadPermission;
         expect(readPerm.automaticallyAddNewApplications).toBeTruthy();
 
-        const writePerm = org.permissions.find(
-            x => x.type == PermissionType.Write
-        ) as WritePermission;
-        expect(writePerm.automaticallyAddNewApplications).toBeTruthy();
+        const orgAppAdminPerm = org.permissions.find(
+            x => x.type == PermissionType.OrganizationApplicationAdmin
+        ) as OrganizationApplicationAdminPermission;
+        expect(orgAppAdminPerm.automaticallyAddNewApplications).toBeTruthy();
 
         const testAppOne: CreateApplicationDto = {
             name: "AutoAdd",

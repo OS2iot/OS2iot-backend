@@ -27,7 +27,7 @@ import {
 } from "@nestjs/swagger";
 import { ApiResponse } from "@nestjs/swagger";
 
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -38,10 +38,10 @@ import { Application } from "@entities/application.entity";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-    checkIfUserHasReadAccessToApplication,
-    checkIfUserHasReadAccessToOrganization,
-    checkIfUserHasWriteAccessToApplication,
-    checkIfUserHasWriteAccessToOrganization,
+    ApplicationAccessScope,
+    checkIfUserHasAccessToApplication,
+    checkIfUserHasAccessToOrganization,
+    OrganizationAccessScope,
 } from "@helpers/security-helper";
 import { ApplicationService } from "@services/device-management/application.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -90,11 +90,11 @@ export class ApplicationController {
         query: ListAllApplicationsDto
     ) {
         if (query?.organizationId) {
-            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
             return await this.getApplicationsInOrganization(req, query);
         }
 
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
         const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
         const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
             query,
@@ -109,7 +109,7 @@ export class ApplicationController {
         query: ListAllApplicationsDto
     ) {
         // If org admin give all
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
         if (this.isOrganizationAdmin(allFromOrg, query)) {
             return await this.applicationService.findAndCountWithPagination(query, [
                 query.organizationId,
@@ -137,7 +137,7 @@ export class ApplicationController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<Application> {
-        checkIfUserHasReadAccessToApplication(req, id);
+        checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Read);
 
         try {
             return await this.applicationService.findOne(id);
@@ -155,7 +155,7 @@ export class ApplicationController {
         @Param("id", new ParseIntPipe()) applicationId: number,
         @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllIoTDevicesResponseDto> {
-        checkIfUserHasReadAccessToApplication(req, applicationId);
+        checkIfUserHasAccessToApplication(req, applicationId, ApplicationAccessScope.Read);
 
         try {
             return await this.applicationService.findDevicesForApplication(
@@ -167,7 +167,7 @@ export class ApplicationController {
         }
     }
 
-    @Write()
+    @ApplicationAdmin()
     @Post()
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new Application" })
@@ -176,9 +176,10 @@ export class ApplicationController {
         @Req() req: AuthenticatedRequest,
         @Body() createApplicationDto: CreateApplicationDto
     ): Promise<Application> {
-        checkIfUserHasWriteAccessToOrganization(
+        checkIfUserHasAccessToOrganization(
             req,
-            createApplicationDto?.organizationId
+            createApplicationDto?.organizationId,
+            OrganizationAccessScope.ApplicationWrite
         );
 
         const isValid = await this.applicationService.isNameValidAndNotUsed(
@@ -207,7 +208,7 @@ export class ApplicationController {
         return application;
     }
 
-    @Write()
+    @ApplicationAdmin()
     @Put(":id")
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Update an existing Application" })
@@ -217,7 +218,7 @@ export class ApplicationController {
         @Param("id", new ParseIntPipe()) id: number,
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
-        checkIfUserHasWriteAccessToApplication(req, id);
+        checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Write);
         if (
             !(await this.applicationService.isNameValidAndNotUsed(
                 updateApplicationDto?.name,
@@ -247,7 +248,7 @@ export class ApplicationController {
         return application;
     }
 
-    @Write()
+    @ApplicationAdmin()
     @Delete(":id")
     @ApiOperation({ summary: "Delete an existing Application" })
     @ApiBadRequestResponse()
@@ -255,7 +256,7 @@ export class ApplicationController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeleteResponseDto> {
-        checkIfUserHasWriteAccessToApplication(req, id);
+        checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Write);
 
         try {
             const result = await this.applicationService.delete(id);

@@ -1,6 +1,6 @@
 import { ChildEntity } from "typeorm";
 
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 
 @ChildEntity(PermissionType.GlobalAdmin)

@@ -1,5 +1,5 @@
 import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-type-request.dto";
@@ -11,10 +11,7 @@ import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-refe
 import { UpdateSigFoxApiDeviceTypeRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-type-request.dto";
 import { ActionType } from "@entities/audit-log-entry";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import {
-    checkIfUserHasReadAccessToOrganization,
-    checkIfUserHasWriteAccessToOrganization,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import {
     Body,
     Controller,
@@ -66,7 +63,7 @@ export class SigfoxDeviceTypeController {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
-        checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
+        checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
         const sigfoxApiGroup = await this.usersService.getByUserId(group.username, group);
 
         return await this.service.getAllByGroupIds(group, [sigfoxApiGroup.group.id]);
@@ -83,13 +80,13 @@ export class SigfoxDeviceTypeController {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
-        checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
+        checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
 
         return await this.service.getById(group, id);
     }
 
     @Post()
-    @Write()
+    @ApplicationAdmin()
     @ApiCreatedResponse()
     @ApiBadRequestResponse()
     async create(
@@ -101,7 +98,7 @@ export class SigfoxDeviceTypeController {
             const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
                 groupId
             );
-            checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+            checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
             const res = await this.service.create(group, dto);
             AuditLog.success(
                 ActionType.CREATE,
@@ -118,7 +115,7 @@ export class SigfoxDeviceTypeController {
     }
 
     @Put(":id")
-    @Write()
+    @ApplicationAdmin()
     @ApiNoContentResponse()
     @ApiBadRequestResponse()
     @HttpCode(204)
@@ -132,7 +129,7 @@ export class SigfoxDeviceTypeController {
             const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
                 groupId
             );
-            checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+            checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
             await this.service.update(group, id, dto);
             AuditLog.success(
                 ActionType.UPDATE,

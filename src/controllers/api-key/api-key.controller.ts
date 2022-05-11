@@ -1,5 +1,5 @@
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { OrganizationAdmin, Read } from "@auth/roles.decorator";
+import { Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
@@ -10,10 +10,6 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ApiKey } from "@entities/api-key.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    checkIfUserHasAdminAccessToAllOrganizations,
-    checkIfUserHasAdminAccessToOrganization,
-} from "@helpers/security-helper";
 import {
     Body,
     Controller,
@@ -42,11 +38,14 @@ import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
+import {
+    checkIfUserHasAccessToOrganization,
+    OrganizationAccessScope,
+} from "@helpers/security-helper";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@OrganizationAdmin()
-@Read()
+@UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("API Key Management")
@@ -134,7 +133,11 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllApiKeysDto
     ): Promise<ListAllApiKeysResponseDto> {
-        checkIfUserHasAdminAccessToOrganization(req, query.organizationId);
+        checkIfUserHasAccessToOrganization(
+            req,
+            query.organizationId,
+            OrganizationAccessScope.UserAdministrationWrite
+        );
 
         try {
             return this.apiKeyService.findAllByOrganizationId(query);
@@ -177,9 +180,12 @@ export class ApiKeyController {
             permissionIds
         );
 
-        checkIfUserHasAdminAccessToAllOrganizations(
-            req,
-            apiKeyOrganizations.map(x => x.id)
-        );
+        for (const id of apiKeyOrganizations.map(org => org.id)) {
+            checkIfUserHasAccessToOrganization(
+                req,
+                id,
+                OrganizationAccessScope.UserAdministrationWrite
+            );
+        }
     }
 }

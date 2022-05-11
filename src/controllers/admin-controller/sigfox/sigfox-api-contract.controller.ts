@@ -4,7 +4,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { SigFoxApiContractInfosContent } from "@dto/sigfox/external/sigfox-api-contract-infos-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { checkIfUserHasReadAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { Controller, Get, ParseIntPipe, Query, Req, UseGuards } from "@nestjs/common";
 import {
     ApiTags,
@@ -38,7 +38,7 @@ export class SigFoxApiContractController {
         const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
             groupId
         );
-        checkIfUserHasReadAccessToOrganization(req, group?.belongsTo?.id);
+        checkIfUserHasAccessToOrganization(req, group?.belongsTo?.id, OrganizationAccessScope.ApplicationRead);
 
         return await this.service.getContractInfos(group);
     }

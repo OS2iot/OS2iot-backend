@@ -25,7 +25,7 @@ import {
 } from "@nestjs/swagger";
 
 import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -36,7 +36,7 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto as UpdateConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasWriteAccessToApplication } from "@helpers/security-helper";
+import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -120,7 +120,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         } else {
             return await this.service.findAllByPayloadDecoderId(
                 id,
-                req.user.permissions.getAllOrganizationsWithAtLeastRead()
+                req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead()
             );
         }
     }
@@ -142,7 +142,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     }
 
     @Post()
-    @Write()
+    @ApplicationAdmin()
     @ApiOperation({
         summary: "Create new connection",
     })
@@ -184,12 +184,12 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     ) {
         const iotDevices = await this.iotDeviceService.findManyByIds(ids);
         iotDevices.forEach(x => {
-            checkIfUserHasWriteAccessToApplication(req, x.application.id);
+            checkIfUserHasAccessToApplication(req, x.application.id, ApplicationAccessScope.Write);
         });
     }
 
     @Put(":id")
-    @Write()
+    @ApplicationAdmin()
     @ApiNotFoundResponse({
         description: "If the id of the entity doesn't exist",
     })
@@ -231,7 +231,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         const newIotDevice = await this.iotDeviceService.findOne(
             updateDto.iotDeviceIds[0]
         );
-        checkIfUserHasWriteAccessToApplication(req, newIotDevice.application.id);
+        checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
         const oldConnection = await this.service.findOne(id);
         await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
         const oldIds = oldConnection.iotDevices.map(x => x.id);
@@ -241,7 +241,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     }
 
     @Delete(":id")
-    @Write()
+    @ApplicationAdmin()
     @ApiNotFoundResponse({
         description: "If the id of the entity doesn't exist",
     })

@@ -1,7 +1,7 @@
 import { ChildEntity, ManyToOne } from "typeorm";
 
 import { Organization } from "@entities/organization.entity";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 
 @ChildEntity(PermissionType.OrganizationPermission)

@@ -40,14 +40,17 @@ export class RolesGuard implements CanActivate {
     hasAccess(user: AuthenticatedUser, roleRequired: string): boolean {
         if (user.permissions.isGlobalAdmin) {
             return true;
-        } else if (roleRequired == PermissionType.OrganizationAdmin) {
-            return this.hasOrganizationAdminAccess(user);
-        } else if (roleRequired == PermissionType.Write) {
-            return this.hasOrganizationAdminAccess(user) || this.hasWriteAccess(user);
+        } else if (roleRequired == PermissionType.OrganizationApplicationAdmin) {
+            return this.hasOrganizationApplicationAdminAccess(user);
+        } else if (roleRequired == PermissionType.OrganizationUserAdmin) {
+            return this.hasOrganizationUserAdminAccess(user);
+        } else if (roleRequired == PermissionType.OrganizationGatewayAdmin) {
+            return this.hasOrganizationGatewayAdminAccess(user);
         } else if (roleRequired == PermissionType.Read) {
             return (
-                this.hasOrganizationAdminAccess(user) ||
-                this.hasWriteAccess(user) ||
+                this.hasOrganizationApplicationAdminAccess(user) ||
+                this.hasOrganizationUserAdminAccess(user) ||
+                this.hasOrganizationGatewayAdminAccess(user) ||
                 this.hasReadAccess(user)
             );
         }
@@ -55,19 +58,19 @@ export class RolesGuard implements CanActivate {
         return false;
     }
 
-    hasOrganizationAdminAccess(user: AuthenticatedUser): boolean {
-        return user.permissions.organizationAdminPermissions.size > 0;
+    hasOrganizationApplicationAdminAccess(user: AuthenticatedUser): boolean {
+        return user.permissions.orgToApplicationAdminPermissions.size > 0;
     }
 
-    hasWriteAccess(user: AuthenticatedUser): boolean {
-        return this.hasSomeAccess(user.permissions.writePermissions);
+    hasOrganizationUserAdminAccess(user: AuthenticatedUser): boolean {
+        return user.permissions.orgToUserAdminPermissions.size > 0;
+    }
+
+    hasOrganizationGatewayAdminAccess(user: AuthenticatedUser): boolean {
+        return user.permissions.orgToGatewayAdminPermissions.size > 0;
     }
 
     hasReadAccess(user: AuthenticatedUser): boolean {
-        return this.hasSomeAccess(user.permissions.readPermissions);
-    }
-
-    hasSomeAccess(userPermission: Map<number, number[]>): boolean {
-        return userPermission.size > 0;
+        return user.permissions.orgToReadPermissions.size > 0;
     }
 }

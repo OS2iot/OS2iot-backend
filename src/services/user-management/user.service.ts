@@ -12,7 +12,7 @@ import { Repository } from "typeorm";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 

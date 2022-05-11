@@ -24,7 +24,7 @@ import {
 } from "@nestjs/swagger";
 
 import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
@@ -32,16 +32,13 @@ import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sig
 import { SigFoxGetAllRequestDto } from "@dto/sigfox/internal/sigfox-get-all-request.dto";
 import { UpdateSigFoxGroupRequestDto } from "@dto/sigfox/internal/update-sigfox-group-request.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import {
-    checkIfUserHasReadAccessToOrganization,
-    checkIfUserHasWriteAccessToOrganization,
-} from "@helpers/security-helper";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
 import { SigFoxTestResponse } from "@dto/sigfox/internal/sigfox-test-response.dto";
 import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 
 @ApiTags("SigFox")
 @Controller("sigfox-group")
@@ -65,7 +62,7 @@ export class SigfoxGroupController {
         @Req() req: AuthenticatedRequest,
         @Query() query: SigFoxGetAllRequestDto
     ): Promise<ListAllSigFoxGroupResponseDto> {
-        checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+        checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
         return await this.service.findAllForOrganization(query.organizationId);
     }
 
@@ -83,7 +80,7 @@ export class SigfoxGroupController {
         } catch (err) {
             throw new NotFoundException();
         }
-        checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
+        checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
         return group;
     }
 
@@ -91,13 +88,13 @@ export class SigfoxGroupController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a SigFox Group connection" })
     @ApiCreatedResponse()
-    @Write()
+    @ApplicationAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() query: CreateSigFoxGroupRequestDto
     ): Promise<SigFoxGroup> {
         try {
-            checkIfUserHasWriteAccessToOrganization(req, query.organizationId);
+            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationWrite);
             const group = await this.service.create(query, req.user.userId);
 
             AuditLog.success(
@@ -121,7 +118,7 @@ export class SigfoxGroupController {
     @Put(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Update a SigFox Groups" })
-    @Write()
+    @ApplicationAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
@@ -134,7 +131,7 @@ export class SigfoxGroupController {
             AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId, id);
             throw new NotFoundException();
         }
-        checkIfUserHasWriteAccessToOrganization(req, group.belongsTo.id);
+        checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
         try {
             const changeGroup = await this.service.update(group, dto, req.user.userId);
             AuditLog.success(
@@ -162,7 +159,7 @@ export class SigfoxGroupController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateSigFoxGroupRequestDto
     ): Promise<SigFoxTestResponse> {
-        checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
+        checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.ApplicationWrite);
 
         const group = new SigFoxGroup();
         group.username = dto.username;

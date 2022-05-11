@@ -1,7 +1,6 @@
 import { DbBaseEntity } from "@entities/base.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApplicationStatus } from "@enum/application-status.enum";
 import {
@@ -16,6 +15,7 @@ import {
 } from "typeorm";
 import { ApplicationDeviceType } from "./application-device-type.entity";
 import { ControlledProperty } from "./controlled-property.entity";
+import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
 import { Multicast } from "./multicast.entity";
 
 @Entity("application")

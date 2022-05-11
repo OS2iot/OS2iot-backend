@@ -1,7 +1,6 @@
+import { PermissionType } from "@entities/enum/permission-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNumber, IsString, Length } from "class-validator";
-
-import { PermissionType } from "@entities/enum/permission-type.enum";
 
 export class CreatePermissionDto {
     @ApiProperty({
@@ -9,7 +8,11 @@ export class CreatePermissionDto {
         enum: PermissionType,
     })
     @IsEnum(PermissionType)
-    level: "OrganizationAdmin" | "Write" | "Read";
+    level:
+        | PermissionType.OrganizationUserAdmin
+        | PermissionType.OrganizationGatewayAdmin
+        | PermissionType.OrganizationApplicationAdmin
+        | PermissionType.Read;
 
     @ApiProperty({ required: true })
     @IsString()

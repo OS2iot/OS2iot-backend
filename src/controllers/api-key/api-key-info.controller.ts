@@ -37,7 +37,8 @@ export class ApiKeyInfoController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllEntitiesDto
     ): Promise<Organization> {
-        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastRead();
+		// The API Key will have access to at least read from a specific 
+        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
 
         if (allowedOrganizations.length !== 1) {
             this.logger.error(

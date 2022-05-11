@@ -2,7 +2,6 @@ import { DbBaseEntity } from "@entities/base.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { Column, Entity, ManyToMany, TableInheritance } from "typeorm";
-import { ApiKey } from "./api-key.entity";
 
 @Entity()
 @TableInheritance({

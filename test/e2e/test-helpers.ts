@@ -7,19 +7,17 @@ import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { Application } from "@entities/application.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
+import { GlobalAdminPermission } from "@entities/permissions/global-admin-permission.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { Permission } from "@entities/permission.entity";
-import { ReadPermission } from "@entities/read-permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
+import { ReadPermission } from "@entities/permissions/read-permission.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { User } from "@entities/user.entity";
-import { WritePermission } from "@entities/write-permission.entity";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
@@ -38,12 +36,15 @@ import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, NotImplementedException } from "@nestjs/common";
 import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
+import { OrganizationGatewayAdminPermission } from "@entities/permissions/organization-gateway-admin-permission.entity";
+import { OrganizationUserAdminPermission } from "@entities/permissions/organization-user-admin-permission.entity";
 
 export async function clearDatabase(): Promise<void> {
     await getManager().query(
@@ -142,17 +143,19 @@ export async function generateSavedGlobalAdminPermission(): Promise<
     return await getManager().save(generateGlobalAdminPermission());
 }
 
-export function generateOrganizationAdminPermission(
-    org: Organization
-): OrganizationAdminPermission {
-    return new OrganizationAdminPermission("E2E Test - Org admin", org);
-}
+// TODO: Due to the changes in permissions, these are no longer valid.
+// See generateSavedOrganizationAdminUser()
+// export function generateOrganizationAdminPermission(
+//     org: Organization
+// ): OrganizationAdminPermission {
+//     return new OrganizationAdminPermission("E2E Test - Org admin", org);
+// }
 
-export async function generateSavedOrganizationAdminPermission(
-    org: Organization
-): Promise<OrganizationAdminPermission> {
-    return await getManager().save(generateOrganizationAdminPermission(org));
-}
+// export async function generateSavedOrganizationAdminPermission(
+//     org: Organization
+// ): Promise<OrganizationAdminPermission> {
+//     return await getManager().save(generateOrganizationAdminPermission(org));
+// }
 
 export function generateDeviceModel(
     org: Organization,
@@ -191,13 +194,20 @@ export function generateOrganization(name?: string): Organization {
     org.deviceModels = [];
 
     const READ_SUFFIX = " - Read";
-    const WRITE_SUFFIX = " - Write";
-    const ADMIN_SUFFIX = " - OrganizationAdmin";
+    const APP_ADMIN_SUFFIX = " - OrganizationAppAdmin";
+    const GATEWAY_ADMIN_SUFFIX = " - OrganizationGatewayAdmin";
+    const USER_ADMIN_SUFFIX = " - OrganizationUserAdmin";
 
     const readPermission = new ReadPermission(org.name + READ_SUFFIX, org, true);
-    const writePermission = new WritePermission(org.name + WRITE_SUFFIX, org, true);
-    const adminPermission = new OrganizationAdminPermission(org.name + ADMIN_SUFFIX, org);
-    org.permissions = [adminPermission, writePermission, readPermission];
+    const appAdminPermission = new OrganizationApplicationAdminPermission(org.name + APP_ADMIN_SUFFIX, org, true);
+    const gatewayAdminPermission = new OrganizationGatewayAdminPermission(org.name + GATEWAY_ADMIN_SUFFIX, org);
+    const userAdminPermission = new OrganizationUserAdminPermission(org.name + USER_ADMIN_SUFFIX, org);
+    org.permissions = [
+        appAdminPermission,
+        gatewayAdminPermission,
+        userAdminPermission,
+        readPermission,
+    ];
 
     return org;
 }
@@ -247,19 +257,27 @@ export async function generateSavedGlobalAdminUser(): Promise<User> {
 export async function generateSavedOrganizationAdminUser(
     org: Organization
 ): Promise<User> {
-    let orgAdmin = org.permissions.find(x => x.type == PermissionType.OrganizationAdmin);
-    if (!orgAdmin) {
-        orgAdmin = await generateSavedOrganizationAdminPermission(org);
-    }
-    const user = await getManager().save(generateUser([orgAdmin]));
+    // let orgAdmin = org.permissions.find(x => x.type == PermissionType.OrganizationAdmin);
+    // if (!orgAdmin) {
+    //     orgAdmin = await generateSavedOrganizationAdminPermission(org);
+    // }
+    // const user = await getManager().save(generateUser([orgAdmin]));
 
-    return user;
+    // return user;
+
+    // TODO: Due to the changes in permissions, this test is no longer valid
+    // Tests aren't used anymore. Instead of "fixing" it, we throw an exception to raise awareness
+    throw new NotImplementedException();
 }
 
 export async function generateSavedReadWriteUser(org: Organization): Promise<User> {
-    const writePerm = org.permissions.find(x => x.type == PermissionType.Write);
+    const appAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationApplicationAdmin);
+    const gatewayAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationGatewayAdmin);
+    const userAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationUserAdmin);
     const readPerm = org.permissions.find(x => x.type == PermissionType.Read);
-    return await getManager().save(generateUser([writePerm, readPerm]));
+    return await getManager().save(
+        generateUser([appAdminPerm, gatewayAdminPerm, userAdminPerm, readPerm])
+    );
 }
 
 export function generateApplication(org?: Organization, name?: string): Application {
@@ -480,19 +498,19 @@ export function generatePayloadDecoder(
     const TYPE_EXT_DIGITAL2 = 0x1a; // 1bytes value 1 or 0
     const TYPE_EXT_ANALOG_UV = 0x1b; // 4 bytes signed int (uV)
     const TYPE_DEBUG = 0x3d; // 4bytes debug
-    
+
     function bin16dec(bin) {
       var num = bin & 0xffff;
       if (0x8000 & num) num = -(0x010000 - num);
       return num;
     }
-    
+
     function bin8dec(bin) {
       var num = bin & 0xff;
       if (0x80 & num) num = -(0x0100 - num);
       return num;
     }
-    
+
     function base64ToBytes(str) {
       return atob(str)
         .split("")
@@ -500,13 +518,13 @@ export function generatePayloadDecoder(
           return c.charCodeAt(0);
         });
     }
-    
+
     function hexToBytes(hex) {
       for (var bytes = [], c = 0; c < hex.length; c += 2)
         bytes.push(parseInt(hex.substr(c, 2), 16));
       return bytes;
     }
-    
+
     function DecodeElsysPayload(data) {
       var obj = new Object();
       for (i = 0; i < data.length; i++) {
@@ -685,11 +703,11 @@ export function generatePayloadDecoder(
       }
       return obj;
     }
-    
+
     function decode(payload, metadata) {
       let res = {};
       res.decoded = DecodeElsysPayload(base64ToBytes(payload.data));
-      ${includeDeviceModel ? "res.deviceModel = metadata.deviceModel.body;" : ""} 
+      ${includeDeviceModel ? "res.deviceModel = metadata.deviceModel.body;" : ""}
       return res;
     }
     `;

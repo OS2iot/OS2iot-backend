@@ -1,6 +1,6 @@
 import { ApiKey } from "@entities/api-key.entity";
 import { DbBaseEntity } from "@entities/base.entity";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { Column, Entity, JoinTable, ManyToMany, OneToOne, Unique } from "typeorm";
 
 @Entity("user")
