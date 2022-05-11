@@ -6,7 +6,10 @@ import {
     ListAllGatewayStatusDto,
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasReadAccessToOrganization } from "@helpers/security-helper";
+import {
+    checkIfUserHasAccessToOrganization,
+    OrganizationAccessScope,
+} from "@helpers/security-helper";
 import { Controller, Get, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
@@ -27,7 +30,11 @@ export class LoRaWANGatewayController {
         @Query() query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
         if (query.organizationId) {
-            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
+            checkIfUserHasAccessToOrganization(
+                req,
+                query.organizationId,
+                OrganizationAccessScope.ApplicationRead
+            );
         }
 
         return this.onlineHistoryService.findAllWithChirpstack(query);
