@@ -122,6 +122,7 @@ export class UserService {
         const mappedUser = this.mapDtoToUser(user, dto);
         mappedUser.createdBy = userId;
         mappedUser.updatedBy = userId;
+        mappedUser.showWelcomeScreen = true;
 
         await this.setPasswordHash(mappedUser, dto.password);
 
@@ -138,6 +139,7 @@ export class UserService {
     async createUserFromKombit(profile: Profile): Promise<User> {
         const user = new User();
         await this.mapKombitLoginProfileToUser(user, profile);
+        user.showWelcomeScreen = true;
 
         return await this.userRepository.save(user);
     }
@@ -256,9 +258,9 @@ export class UserService {
             take: +query.limit,
             skip: +query.offset,
             order: sorting,
-			where: {
-				isSystemUser: false
-			}
+            where: {
+                isSystemUser: false,
+            },
         });
 
         return {
@@ -293,5 +295,10 @@ export class UserService {
         return {
             users: result,
         };
+    }
+
+    async hideWelcome(id: number): Promise<boolean> {
+        const res = await this.userRepository.update(id, { showWelcomeScreen: false });
+        return !!res.affected
     }
 }
