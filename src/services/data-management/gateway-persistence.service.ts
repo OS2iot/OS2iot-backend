@@ -14,8 +14,7 @@ import { LessThan, MoreThan, Repository } from "typeorm";
 export class GatewayPersistenceService extends AbstractKafkaConsumer {
     private readonly gatewayStatusSavedDays = 30;
     /**
-     * Limit how many messages can be stored within a time period. Storing
-     * more than this limit doesn't make sense.
+     * Limit how many messages can be stored for each hour
      */
     private readonly maxStatusMessagesPerHour = 10;
 
@@ -41,6 +40,8 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
 
         const statusHistory = this.mapDtoToEntity(dto, messageState);
         await this.gatewayStatusHistoryRepository.save(statusHistory);
+
+		// Clean up old statuses
         await this.deleteStatusHistoriesSinceLastHour(
             statusHistory.timestamp,
             dto.gatewayId
