@@ -37,4 +37,7 @@ export class User extends DbBaseEntity {
 
     @Column({ default: false })
     isSystemUser: boolean;
+
+    @Column({ default: false })
+    showWelcomeScreen: boolean;
 }
