@@ -128,7 +128,7 @@ describe("SearchController (e2e)", () => {
         orgAdminJwt = generateValidJwtForUser(orgAdminUser);
 
         const orgAppAdminPermission = org1.permissions.find(
-            x => x.type == PermissionType.OrganizationApplicationAdmin
+            x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
         ) as OrganizationApplicationAdminPermission;
         orgAppAdminPermission.applications = [app1_1];
         await getManager().save(orgAppAdminPermission);

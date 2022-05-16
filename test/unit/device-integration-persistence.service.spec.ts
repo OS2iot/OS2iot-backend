@@ -119,6 +119,7 @@ describe("DeviceIntegrationPersistenceService", () => {
             updatedAt: new Date(),
             belongsTo: org,
             permissions: [],
+            multicasts: [],
         },
         connections: [],
         name: "Test IoTDevice",
@@ -128,6 +129,8 @@ describe("DeviceIntegrationPersistenceService", () => {
         type: IoTDeviceType.GenericHttp,
         latestReceivedMessage: null,
         receivedMessagesMetadata: [],
+        multicasts: [],
+        receivedSigFoxSignalsMessages: [],
     };
 
     it("test mapDtoToNewReceivedMessageMetadata - Sigfox data + with timestmap", async () => {

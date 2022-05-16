@@ -271,10 +271,10 @@ export async function generateSavedOrganizationAdminUser(
 }
 
 export async function generateSavedReadWriteUser(org: Organization): Promise<User> {
-    const appAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationApplicationAdmin);
-    const gatewayAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationGatewayAdmin);
-    const userAdminPerm = org.permissions.find(x => x.type == PermissionType.OrganizationUserAdmin);
-    const readPerm = org.permissions.find(x => x.type == PermissionType.Read);
+    const appAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin));
+    const gatewayAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationGatewayAdmin));
+    const userAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationUserAdmin));
+    const readPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.Read));
     return await getManager().save(
         generateUser([appAdminPerm, gatewayAdminPerm, userAdminPerm, readPerm])
     );
@@ -742,6 +742,7 @@ export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDt
         }`),
         iotDeviceId: iotDeviceId || 1,
         unixTimestamp: 1596921546,
+        type: IoTDeviceType.LoRaWAN,
     };
 }
 
@@ -788,6 +789,7 @@ export function generateSigfoxRawRequestDto(iotDeviceId?: number): RawRequestDto
         rawPayload: JSON.parse(SIGFOX_PAYLOAD),
         iotDeviceId: iotDeviceId || 1,
         unixTimestamp: 1596721546,
+        type: IoTDeviceType.SigFox,
     };
 }
 

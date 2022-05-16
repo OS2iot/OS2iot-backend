@@ -553,11 +553,11 @@ describe("ApplicationController (e2e)", () => {
 
         const user = await generateSavedReadWriteUser(org);
         const readPerm = user.permissions.find(
-            x => x.type == PermissionType.Read
+            x => x.type.some(({ type }) => type === PermissionType.Read)
         ) as ReadPermission;
         readPerm.applications = [app1];
         const orgAppAdminPerm = user.permissions.find(
-            x => x.type == PermissionType.OrganizationApplicationAdmin
+            x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
         ) as OrganizationApplicationAdminPermission;
         orgAppAdminPerm.applications = [app1];
         await getManager().save([readPerm, orgAppAdminPerm]);
@@ -617,12 +617,12 @@ describe("ApplicationController (e2e)", () => {
         const org = await generateSavedOrganization();
 
         const readPerm = org.permissions.find(
-            x => x.type == PermissionType.Read
+            x => x.type.some(({ type }) => type === PermissionType.Read)
         ) as ReadPermission;
         expect(readPerm.automaticallyAddNewApplications).toBeTruthy();
 
         const orgAppAdminPerm = org.permissions.find(
-            x => x.type == PermissionType.OrganizationApplicationAdmin
+            x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
         ) as OrganizationApplicationAdminPermission;
         expect(orgAppAdminPerm.automaticallyAddNewApplications).toBeTruthy();
 
