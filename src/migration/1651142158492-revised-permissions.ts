@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import { NotImplementedException } from "@nestjs/common";
 
 type AppPermissions = {
     applicationId: number;
@@ -32,7 +33,7 @@ type UserPermissions = {
     permissionId: number;
 }[];
 
-export class revisedPermissions1651142158492 implements MigrationInterface {    
+export class revisedPermissions1651142158492 implements MigrationInterface {
 	name = "revisedPermissions1651142158492";
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -52,6 +53,9 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         // );
         await queryRunner.query(`DROP TYPE "permission_type_enum_old"`);
         await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
+
+        // Update permission so it can refer to multiple types
+        await this.migratePermissionTypeUp(queryRunner);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -73,6 +77,8 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         await queryRunner.query(
             `ALTER TYPE "permission_type_enum_old" RENAME TO  "permission_type_enum"`
         );
+
+        await this.migratePermissionTypeDown(queryRunner);
     }
 
     private async migrateUp(queryRunner: QueryRunner): Promise<void> {
@@ -145,7 +151,7 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
 
         await queryRunner.query(`DELETE FROM user_permissions_permission
 WHERE "permissionId" IN
-( 
+(
     SELECT "permission"."id" FROM user_permissions_permission
     JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
     WHERE permission.type IN ('Write', 'OrganizationAdmin')
@@ -153,7 +159,7 @@ WHERE "permissionId" IN
 
 		await queryRunner.query(`DELETE FROM application_permissions_permission
 WHERE "permissionId" IN
-( 
+(
     SELECT "permission"."id" FROM application_permissions_permission
     JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
     WHERE permission.type IN ('Write', 'OrganizationAdmin')
@@ -161,12 +167,12 @@ WHERE "permissionId" IN
 
 		await queryRunner.query(`DELETE FROM api_key_permissions_permission
 WHERE "permissionId" IN
-( 
+(
     SELECT "permission"."id" FROM api_key_permissions_permission
     JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
     WHERE permission.type IN ('Write', 'OrganizationAdmin')
 )`);
-		
+
         await queryRunner.query(
             `DELETE FROM "public"."permission" where type IN ('OrganizationAdmin', 'Write')`
         );
@@ -314,7 +320,31 @@ returning id, "permission"."clonedFromId"`;
         ${insertIntoStatements}`;
     }
 
+    private async migratePermissionTypeUp(queryRunner: QueryRunner) {
+        await queryRunner.query(`DROP INDEX "public"."IDX_71bf2818fb2ad92e208d7aeadf"`);
+        await queryRunner.query(`CREATE TABLE "permission_type" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" character varying NOT NULL, "createdById" integer, "updatedById" integer, "permissionId" integer, CONSTRAINT "PK_3f2a17e0bff1bc4e34254b27d78" PRIMARY KEY ("id"))`);
+
+        const fetchAllPermissions = `select "createdAt",
+        "updatedAt",
+        type,
+        "createdById",
+        "updatedById",
+        "id" AS "permissionId"
+ from "public"."permission"`;
+
+        await queryRunner.query(`INSERT INTO "public"."permission_type"("createdAt","updatedAt",type,"createdById","updatedById","permissionId")
+        ${fetchAllPermissions}`);
+
+        await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "type"`);
+        await queryRunner.query(`DROP TYPE "public"."permission_type_enum"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848" FOREIGN KEY ("updatedById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b" FOREIGN KEY ("permissionId") REFERENCES "permission"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+    }
+
     private async migrateDown(queryRunner: QueryRunner): Promise<void> {
+        await this.migratePermissionTypeDown(queryRunner);
+
         // Create a temporary enum which is a union of both old and new enum values
         await queryRunner.query(
             `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
@@ -370,5 +400,17 @@ returning id, "permission"."clonedFromId"`;
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_old" USING "type"::"text"::"permission_type_enum_old"`
         );
         await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+    }
+
+    private async migratePermissionTypeDown(queryRunner: QueryRunner) {
+        // TODO: Migrate first?
+
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2"`);
+        await queryRunner.query(`CREATE TYPE "public"."permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`);
+        await queryRunner.query(`ALTER TABLE "permission" ADD "type" "public"."permission_type_enum" NOT NULL`);
+        await queryRunner.query(`DROP TABLE "permission_type"`);
+        await queryRunner.query(`CREATE INDEX "IDX_71bf2818fb2ad92e208d7aeadf" ON "permission" ("type") `);
     }
 }

@@ -1,10 +1,9 @@
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { Permission } from "@entities/permissions/permission.entity";
-import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ForbiddenException, BadRequestException } from "@nestjs/common";
 import * as _ from "lodash";
-import { OrganizationApplicationPermission } from "@entities/permissions/organization-application-permission.entity";
+import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 
 export enum OrganizationAccessScope {
     ApplicationRead,
@@ -96,20 +95,21 @@ function checkIfGlobalAdminOrInList(
     }
 }
 
-export function isOrganizationPermission(p: Permission): p is OrganizationPermission {
+export function isOrganizationPermission(p: Permission): p is Permission {
     return [
         PermissionType.OrganizationUserAdmin,
         PermissionType.OrganizationApplicationAdmin,
         PermissionType.OrganizationGatewayAdmin,
         PermissionType.Read,
-    ].some(x => x === p.type);
+    ].some(orgPermission => p.type.some(({ type }) => type === orgPermission));
 }
 
 export function isOrganizationApplicationPermission(p: {
-    type: PermissionType;
-}): p is OrganizationApplicationPermission {
-    return (
-        p.type === PermissionType.Read ||
-        p.type === PermissionType.OrganizationApplicationAdmin
+    type: PermissionTypeEntity[];
+}): p is Permission {
+    return p.type.some(
+        ({ type }) =>
+            type === PermissionType.Read ||
+            type === PermissionType.OrganizationApplicationAdmin
     );
 }

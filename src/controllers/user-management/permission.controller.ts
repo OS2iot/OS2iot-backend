@@ -29,7 +29,6 @@ import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-respons
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import {
@@ -71,7 +70,11 @@ export class PermissionController {
         @Body() dto: CreatePermissionDto
     ): Promise<Permission> {
         try {
-            checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.UserAdministrationWrite);
+            checkIfUserHasAccessToOrganization(
+                req,
+                dto.organizationId,
+                OrganizationAccessScope.UserAdministrationWrite
+            );
 
             const result = await this.permissionService.createNewPermission(
                 dto,
@@ -102,13 +105,12 @@ export class PermissionController {
     ): Promise<Permission> {
         try {
             const permission = await this.permissionService.getPermission(id);
-            if (permission.type == PermissionType.GlobalAdmin) {
+            if (permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)) {
                 checkIfUserIsGlobalAdmin(req);
             } else {
-                const organizationPermission = permission as OrganizationPermission;
                 checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id,
+                    permission.organization.id,
                     OrganizationAccessScope.UserAdministrationWrite
                 );
             }
@@ -142,13 +144,14 @@ export class PermissionController {
     ): Promise<DeleteResponseDto> {
         try {
             const permission = await this.permissionService.getPermission(id);
-            if (permission.type == PermissionType.GlobalAdmin) {
+            if (
+                permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
+            ) {
                 throw new BadRequestException("You cannot delete GlobalAdmin");
             } else {
-                const organizationPermission = permission as OrganizationPermission;
                 checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id,
+                    permission.organization.id,
                     OrganizationAccessScope.UserAdministrationWrite
                 );
             }
@@ -196,18 +199,17 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return permission;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id,
+                permission.organization.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
-            return organizationPermission;
+            return permission;
         }
     }
 
@@ -233,14 +235,13 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return await applicationsPromise;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id,
+                permission.organization.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
@@ -267,14 +268,13 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return await users;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission?.organization?.id,
+                permission?.organization?.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
