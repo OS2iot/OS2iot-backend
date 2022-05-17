@@ -31,7 +31,6 @@ import {
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { LoginDto } from "@dto/login.dto";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthService } from "@services/user-management/auth.service";
@@ -42,6 +41,7 @@ import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
+import { OrganizationPermission } from "@entities/permission.entity";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")

@@ -1,4 +1,5 @@
 export enum ErrorCodes {
+    EmailAlreadyExists = "MESSAGE.USER-ALREADY-HAVE-MAIL",
     IdDoesNotExists = "MESSAGE.ID-DOES-NOT-EXIST",
     IdMissing = "MESSAGE.ID-MISSING-FROM-REQUEST",
     NameInvalidOrAlreadyInUse = "MESSAGE.NAME-INVALID-OR-ALREADY-IN-USE",
@@ -44,4 +45,7 @@ export enum ErrorCodes {
     DeviceModelDoesNotExist = "MESSAGE.DEVICE-MODEL-DOES-NOT-EXIST",
     InvalidKeyInKeyValuePair = "MESSAGE.INVALID-KEY-IN-KEY-VALUE-PAIR",
     InvalidValueInKeyValuePair = "MESSAGE.INVALID-VALUE-IN-KEY-VALUE-PAIR",
+    SendMailError = "MESSAGE.SEND-MAIL-ERROR",
+    UserDoesNotExistInArray = "MESSAGE.USER-DOES-NOT-EXIST",
+    UserAlreadyInPermission = "MESSAGE.USER-ALREADY-IN-PERMISSION",
 }
