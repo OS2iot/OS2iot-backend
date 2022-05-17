@@ -110,19 +110,18 @@ export class UserController {
         }
     }
 
-    @Put("/rejectUser/:id")
+    @Put("/rejectUser")
     @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
     async rejectUser(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) userId: number,
+        @Req() req: AuthenticatedRequest,        
         @Body() body: RejectUserDto
     ): Promise<Organization> {
         checkIfUserHasAdminAccessToOrganization(req, body.orgId);
 
-        const user = await this.userService.findOne(userId);
+        const user = await this.userService.findOne(body.userIdToReject);
         const organization = await this.organizationService.findByIdWithUsers(body.orgId);
 
-        return await this.organizationService.rejectAwaitingUser(user, organization);
+        return await this.organizationService.rejectAwaitingUser(user, organization);		
     }
 
     @Put(":id")

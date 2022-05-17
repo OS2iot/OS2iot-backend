@@ -56,6 +56,7 @@ export class NewKombitCreationController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateNewKombitUserDto
     ): Promise<User> {
+
         try {
             const user: User = await this.userService.findOne(req.user.userId);
             const permissions = await this.permissionService.findManyWithRelations(
@@ -65,27 +66,28 @@ export class NewKombitCreationController {
             const requestedOrganizations: Organization[] = await this.organizationService.mapPermissionsToOrganizations(
                 permissions
             );
+
             if (!user.email) {
                 const updatedUser: User = await this.userService.newKombitUser(
                     dto,
                     requestedOrganizations,
                     user
                 );
-                for (
-                    let index = 0;
-                    index < dto.requestedOrganizationIds.length;
-                    index++
-                ) {
+
+                for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
                         requestedOrganizations[index].id
                     );
+
                     await this.organizationService.updateAwaitingUsers(
                         dbOrg,
                         updatedUser
                     );
                 }
+
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
                 return updatedUser;
+
             } else {
                 throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
             }
@@ -117,25 +119,25 @@ export class NewKombitCreationController {
         @Req() req: AuthenticatedRequest,
         @Body() updateUserOrgsDto: UpdateUserOrgsDto
     ): Promise<UpdateUserOrgsDto> {
-        try {
+        
+		try {
             const user = await this.userService.findOne(req.user.userId);
             const permissions: OrganizationPermission[] = await this.permissionService.findManyWithRelations(
                 updateUserOrgsDto.requestedOrganizationIds
             );
+
             const requestedOrganizations = await this.organizationService.mapPermissionsToOrganizations(
                 permissions
             );
+
             for (let index = 0; index < requestedOrganizations.length; index++) {
                 await this.userService.sendOrganizationRequestMail(
                     user,
                     requestedOrganizations[index]
                 );
             }
-            for (
-                let index = 0;
-                index < updateUserOrgsDto.requestedOrganizationIds.length;
-                index++
-            ) {
+
+            for (let index = 0; index < updateUserOrgsDto.requestedOrganizationIds.length; index++) {
                 const dbOrg = await this.organizationService.findByIdWithUsers(
                     requestedOrganizations[index].id
                 );
@@ -157,7 +159,8 @@ export class NewKombitCreationController {
         @Param("id", new ParseIntPipe()) id: number,
         @Query("extendedInfo") extendedInfo?: boolean
     ): Promise<UserResponseDto> {
-        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
+
+        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;		
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars

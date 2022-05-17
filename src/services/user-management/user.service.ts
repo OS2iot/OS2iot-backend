@@ -336,6 +336,7 @@ export class UserService {
             users: result,
         };
     }
+
     basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
         return nodemailer.createTransport({
             host: this.configService.get<string>("email.host"),
@@ -346,6 +347,7 @@ export class UserService {
             },
         });
     }
+
     async sendOrganizationRequestMail(
         user: User,
         organization: Organization
@@ -362,12 +364,13 @@ export class UserService {
                 from: this.configService.get<string>("email.from"), // sender address
                 to: emails, // list of receivers
                 subject: "Ny ansøgning til din organisation!", // Subject line
-                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="http://localhost:4200/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
+                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="${this.configService.get<string>("frontend.baseurl")}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     }
+
     async sendRejectionMail(user: User, organization: Organization): Promise<void> {
         const transporter = this.basicMailTransporter();
 
@@ -387,6 +390,7 @@ export class UserService {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     }
+
     async sendVerificationMail(user: User, organization: Organization): Promise<void> {
         const transporter = this.basicMailTransporter();
 
@@ -406,6 +410,7 @@ export class UserService {
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     }
+
     async getOrgAdminEmails(organization: Organization): Promise<string[]> {
         const emails: string[] = [];
         const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
