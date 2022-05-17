@@ -33,6 +33,12 @@ type UserPermissions = {
     permissionId: number;
 }[];
 
+/**
+ * Create a temporary enum which is a union of both old and new enum values
+ */
+const permissionTypeUnionName = "permission_type_enum_temp";
+const createPermissionTypeUnionSql = `CREATE TYPE "${permissionTypeUnionName}" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`;
+
 export class revisedPermissions1651142158492 implements MigrationInterface {
 	name = "revisedPermissions1651142158492";
 
@@ -47,22 +53,22 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
         // Must be resolved by a user administrator or above or directly on the database
         await this.migrateUp(queryRunner);
-
-        // await queryRunner.query(
-        //     `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
-        // );
         await queryRunner.query(`DROP TYPE "permission_type_enum_old"`);
-        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
 
         // Update permission so it can refer to multiple types
         await this.migratePermissionTypeUp(queryRunner);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
         await queryRunner.query(
             `CREATE TYPE "permission_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
+        // Create a temporary enum which is a union of both old and new enum values
+        await queryRunner.query(createPermissionTypeUnionSql);
+
+        // Revert permission so each one only has exactly one type (level)
+        await this.migratePermissionTypeDown(queryRunner);
+        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
 
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
         // ASSUMPTION: this migration is only reverted immediately after executing it.
@@ -73,21 +79,17 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_old" USING "type"::"text"::"permission_type_enum_old"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum"`);
+        await queryRunner.query(`DROP TYPE IF EXISTS "permission_type_enum"`);
         await queryRunner.query(
             `ALTER TYPE "permission_type_enum_old" RENAME TO  "permission_type_enum"`
         );
 
-        await this.migratePermissionTypeDown(queryRunner);
     }
 
     private async migrateUp(queryRunner: QueryRunner): Promise<void> {
-        // Create a temporary enum which is a union of both old and new enum values
+        await queryRunner.query(createPermissionTypeUnionSql);
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
-        );
-        await queryRunner.query(
-            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
+            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "${permissionTypeUnionName}" USING "type"::"text"::"${permissionTypeUnionName}"`
         );
 
         // When migrating permisisons tied to old permission types, we need to keep track of the old id. This is for updating any dependents
@@ -179,7 +181,7 @@ WHERE "permissionId" IN
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+        await queryRunner.query(`DROP TYPE "${permissionTypeUnionName}"`);
     }
 
     private async migrateUserPermissions(
@@ -332,6 +334,7 @@ returning id, "permission"."clonedFromId"`;
         "id" AS "permissionId"
  from "public"."permission"`;
 
+        // For each permission, create a corresponding permission type
         await queryRunner.query(`INSERT INTO "public"."permission_type"("createdAt","updatedAt",type,"createdById","updatedById","permissionId")
         ${fetchAllPermissions}`);
 
@@ -340,15 +343,10 @@ returning id, "permission"."clonedFromId"`;
         await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848" FOREIGN KEY ("updatedById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b" FOREIGN KEY ("permissionId") REFERENCES "permission"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "UQ_3acd70f5a3895ee2fb92b2a4290" UNIQUE ("type", "permissionId")`);
     }
 
     private async migrateDown(queryRunner: QueryRunner): Promise<void> {
-        await this.migratePermissionTypeDown(queryRunner);
-
-        // Create a temporary enum which is a union of both old and new enum values
-        await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
-        );
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
         );
@@ -358,7 +356,7 @@ returning id, "permission"."clonedFromId"`;
             `ALTER TABLE "permission" ADD COLUMN "clonedFromId" integer`
         );
 
-        // Begin cloning. Store both the old and new ids as mappings
+        // Begin cloning. Store both the old and new ids as mappings. The clone must not have access to more than the original.
         const readFromUserAdminInfo: PermissionInfo[] = await queryRunner.query(
             this.copyPermissionsQuery("OrganizationUserAdmin", "Read")
         );
@@ -391,6 +389,14 @@ returning id, "permission"."clonedFromId"`;
             writeFromApplicationAdminInfo
         );
 
+        await this.migrateApiKeyPermissions(
+            queryRunner,
+            readFromUserAdminInfo,
+            readFromGatewayAdminInfo,
+            readFromApplicationAdminInfo,
+            writeFromApplicationAdminInfo
+        );
+
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
         await queryRunner.query(
@@ -403,13 +409,47 @@ returning id, "permission"."clonedFromId"`;
     }
 
     private async migratePermissionTypeDown(queryRunner: QueryRunner) {
-        // TODO: Migrate first?
-
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "UQ_3acd70f5a3895ee2fb92b2a4290"`);
         await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b"`);
         await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848"`);
         await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2"`);
-        await queryRunner.query(`CREATE TYPE "public"."permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`);
-        await queryRunner.query(`ALTER TABLE "permission" ADD "type" "public"."permission_type_enum" NOT NULL`);
+
+        // Add permission level "type". It's nullable to make the migration possible
+        await queryRunner.query(`ALTER TABLE "permission" ADD "type" "${permissionTypeUnionName}"`);
+
+        // Temporary table with every permission settable by a client prioritized. Any permission with an unknown type is ignored.
+        // Unless otherwise specified, the table is automatically dropped after session end.
+        await queryRunner.query(`CREATE TEMP TABLE "permission_type_priority" ON COMMIT DROP AS
+        SELECT * FROM (
+            VALUES
+                ('GlobalAdmin'::character varying, 0),
+                ('OrganizationUserAdmin'::character varying, 10),
+                ('OrganizationApplicationAdmin'::character varying, 20),
+                ('OrganizationGatewayAdmin'::character varying, 30),
+                ('Read'::character varying, 40)
+        ) as t (type, priority)`);
+
+        // Migrate permission levels
+        await queryRunner.query(`UPDATE
+        public.permission pm
+    SET
+        -- The column is updated for each row with identical "permissionId"
+        type = CAST(highestPmType.type as ${permissionTypeUnionName})
+    FROM
+    (
+        SELECT pt.*
+        FROM permission_type_priority ptp
+        JOIN permission_type pt ON ptp.type = pt.type
+        -- Order from lowest to highest priority. The last update for any given permission
+        -- thus be the type with highest priority (lowest value)
+        ORDER BY ptp.priority DESC
+    ) highestPmType
+    WHERE
+        pm.id = highestPmType."permissionId"`)
+
+        // Cleanup. If setting "type" to non-nullable fails, then there exists permissions without any level.
+        // This should not happen. Review them manually.
+        await queryRunner.query(`ALTER TABLE "permission" ALTER COLUMN "type" SET NOT NULL`);
         await queryRunner.query(`DROP TABLE "permission_type"`);
         await queryRunner.query(`CREATE INDEX "IDX_71bf2818fb2ad92e208d7aeadf" ON "permission" ("type") `);
     }

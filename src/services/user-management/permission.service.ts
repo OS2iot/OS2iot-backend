@@ -31,6 +31,7 @@ import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 import { isOrganizationApplicationPermission } from "@helpers/security-helper";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { PermissionCreator } from "@helpers/permission.helper";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class PermissionService {
@@ -86,6 +87,11 @@ export class PermissionService {
             org.name + organizationGatewayAdminSuffix,
             org
         );
+        this.setUserIdOnPermissions(readPermission, userId);
+        this.setUserIdOnPermissions(orgApplicationAdminPermission, userId);
+        this.setUserIdOnPermissions(orgAdminPermission, userId);
+        this.setUserIdOnPermissions(orgGatewayAadminPermission, userId);
+
         readPermission.createdBy = userId;
         readPermission.updatedBy = userId;
         orgApplicationAdminPermission.createdBy = userId;
@@ -96,16 +102,26 @@ export class PermissionService {
         orgGatewayAadminPermission.updatedBy = userId;
         return { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission };
     }
+    private setUserIdOnPermissions(permission: Permission, userId: number) {
+        permission.type.forEach(type => {
+            type.createdBy = userId;
+            type.updatedBy = userId;
+        });
+    }
 
     async findOrCreateGlobalAdminPermission(): Promise<Permission> {
-        const globalAdmin = await this.permissionRepository.findOne({
-            where: {
-                // TODO: PERMISSION REIVSED. Will this work?
-                type: {
-                    type: PermissionType.GlobalAdmin
+        // Use query builder since the other syntax doesn't support one-to-many for property querying
+        const globalAdmin = await this.permissionRepository
+            .createQueryBuilder("permission")
+            .where(
+                    " type.type = :permType",
+                {
+                    permType: PermissionType.GlobalAdmin,
                 }
-            }
-        });
+            )
+            .leftJoin("permission.type", "type")
+            .getOneOrFail();
+
         if (globalAdmin) {
             return globalAdmin;
         }
@@ -140,21 +156,21 @@ export class PermissionService {
     }
 
     async autoAddPermissionsToApplication(app: Application): Promise<void> {
-        const permissionsInOrganisation = await this.permissionRepository.find(
-            {
-                where: {
-                    // TODO: PERMISSION REIVSED. Will this work?
-                    type: {
-                        type: PermissionType.OrganizationApplicationAdmin
-                    },
-                    organization: {
-                        id: app.belongsTo.id,
-                    },
-                    automaticallyAddNewApplications: true,
-                },
-                relations: ["applications"],
-            }
-        );
+        // Use query builder since the other syntax doesn't support one-to-many for property querying
+        const permissionsInOrganisation = await this.permissionRepository
+            .createQueryBuilder("permission")
+            .where(
+                "permission.organization.id = :orgId" +
+                    " AND type.type IN (:...permType)" +
+                    ` AND "${nameof<Permission>('automaticallyAddNewApplications')}" = True`,
+                {
+                    orgId: app.belongsTo.id,
+                    permType: [PermissionType.OrganizationApplicationAdmin, PermissionType.Read],
+                }
+            )
+            .leftJoinAndSelect("permission.applications", "app")
+            .leftJoin("permission.type", "type")
+            .getMany();
 
         await Promise.all(
             permissionsInOrganisation.map(async p => {

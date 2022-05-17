@@ -1,10 +1,11 @@
 import { DbBaseEntity } from "@entities/base.entity";
 import { PermissionType } from "@enum/permission-type.enum";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { Column, Entity, ManyToOne, Unique } from "typeorm";
 import { Permission } from "./permission.entity";
+import { nameof } from "@helpers/type-helper";
 
 @Entity("permission_type")
-// TODO: Temp name to avoid clashing with enum value
+@Unique([nameof<PermissionTypeEntity>("type"), nameof<PermissionTypeEntity>("permission")])
 export class PermissionTypeEntity extends DbBaseEntity {
     @Column()
     type: PermissionType;

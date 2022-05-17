@@ -252,7 +252,7 @@ export class UserService {
         }
 
         const [data, count] = await this.userRepository.findAndCount({
-            relations: ["permissions"],
+            relations: ["permissions", "permissions.type"],
             take: +query.limit,
             skip: +query.offset,
             order: sorting,
