@@ -81,7 +81,7 @@ export class GenericSigfoxAdministationService {
         path,
         sigfoxGroup,
         method,
-        dto = {},
+        dto = undefined,
         useCache = false,
     }: RequestParameters): Promise<T> {
         const config = await this.generateAxiosConfig(
