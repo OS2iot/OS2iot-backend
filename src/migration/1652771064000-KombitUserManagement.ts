@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class KombitUserManagement1652771064000 implements MigrationInterface {    
-    name = 'KombitUserManagement1652771064000'
+export class kombitUserManagement1652771064000 implements MigrationInterface {    
+    name = 'kombitUserManagement1652771064000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "user_requested_organizations_organization" ("userId" integer NOT NULL, "organizationId" integer NOT NULL, CONSTRAINT "PK_b228a18276f4dc0153b74e04370" PRIMARY KEY ("userId", "organizationId"))`);
