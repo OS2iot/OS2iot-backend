@@ -3,6 +3,8 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNumber, IsString, Length, ValidateNested, IsArray, ArrayUnique } from "class-validator";
 import { PermissionTypeDto } from "./permission-type.dto";
 import { Type } from "class-transformer";
+import { ArrayDistinct } from "@helpers/array-distinct.validator";
+import { nameof } from "@helpers/type-helper";
 
 export class CreatePermissionDto {
     @ApiProperty({
@@ -10,7 +12,7 @@ export class CreatePermissionDto {
         enum: PermissionType,
     })
     @IsArray()
-    @ArrayUnique()
+    @ArrayDistinct(nameof<PermissionTypeDto>('type'))
     @Type(() => PermissionTypeDto)
     @ValidateNested({ each: true })
     levels: PermissionTypeDto[]

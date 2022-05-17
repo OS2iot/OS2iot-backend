@@ -102,6 +102,7 @@ export class PermissionService {
         orgGatewayAadminPermission.updatedBy = userId;
         return { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission };
     }
+
     private setUserIdOnPermissions(permission: Permission, userId: number) {
         permission.type.forEach(type => {
             type.createdBy = userId;
@@ -214,10 +215,6 @@ export class PermissionService {
         permission: Permission,
         dto: UpdatePermissionDto
     ): Promise<void> {
-        // TODO: Is it just as easy to make the frontend do it? What happens if this issue goes through?
-        // Sanitize types
-        permission.type = _.uniqBy(permission.type, type => type.type)
-
         if (isOrganizationApplicationPermission(permission)) {
             permission.applications = await this.applicationService.findManyByIds(
                 dto.applicationIds

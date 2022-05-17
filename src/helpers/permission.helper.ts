@@ -30,7 +30,6 @@ export abstract class PermissionCreator {
 
     static createGlobalAdmin(): Permission {
         const pm = this.create("GlobalAdmin");
-        // TODO: Does this auto-fill dates etc.
         pm.type = [{ type: PermissionType.GlobalAdmin } as PermissionTypeEntity];
         return pm;
     }
@@ -38,7 +37,6 @@ export abstract class PermissionCreator {
     static createRead(name: string, org?: Organization, addNewApps = false): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        // TODO: Does this auto-fill dates etc.
         pm.type = [{ type: PermissionType.Read } as PermissionTypeEntity];
         return pm;
     }
@@ -50,7 +48,6 @@ export abstract class PermissionCreator {
     ): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        // TODO: Does this auto-fill dates etc.
         pm.type = [
             { type: PermissionType.OrganizationApplicationAdmin } as PermissionTypeEntity,
         ];
@@ -64,7 +61,6 @@ export abstract class PermissionCreator {
     ): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        // TODO: Does this auto-fill dates etc.
         pm.type = [
             { type: PermissionType.OrganizationUserAdmin } as PermissionTypeEntity,
         ];
@@ -78,7 +74,6 @@ export abstract class PermissionCreator {
     ): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        // TODO: Does this auto-fill dates etc.
         pm.type = [
             { type: PermissionType.OrganizationGatewayAdmin } as PermissionTypeEntity,
         ];
