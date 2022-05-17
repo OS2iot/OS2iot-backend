@@ -158,6 +158,23 @@ export class UserController {
         }
     }
 
+    @Put(":id/hide-welcome")
+    @ApiOperation({ summary: "Don't show welcome screen for a user again" })
+    @Read()
+    async hideWelcome(@Req() req: AuthenticatedRequest): Promise<boolean> {
+        const wasOk = await this.userService.hideWelcome(req.user.userId);
+
+        AuditLog.success(
+            ActionType.UPDATE,
+            User.name,
+            req.user.userId,
+            req.user.userId,
+            req.user.username
+        );
+
+        return wasOk
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     @Read()
