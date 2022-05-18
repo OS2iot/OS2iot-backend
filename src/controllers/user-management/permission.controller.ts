@@ -104,26 +104,30 @@ export class PermissionController {
         @Body() dto: PermissionRequestAcceptUser
     ): Promise<User> {
         try {
-            checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.UserAdministrationWrite);
-            let dbPermission: Permission;
+            checkIfUserHasAccessToOrganization(
+                req,
+                dto.organizationId,
+                OrganizationAccessScope.UserAdministrationWrite
+            );
 
             const permissions = await this.permissionService.findOneWithRelations(
                 dto.organizationId
-            );
+                );
 
             const org: Organization = this.organizationService.mapPermissionsToOneOrganization(
                 permissions
             );
 
             const user: User = await this.userService.findOne(dto.userId);
-            for (let index = 0; index < org.permissions.length; index++) {
-                if (org.permissions[index].type.some(({ type }) => type === dto.level)) {
-                    dbPermission = await this.permissionService.getPermission(
-                        org.permissions[index].id
-                    );
+            const newUserPermissions: Permission[] = [];
+
+            for (const orgPermission of org.permissions) {
+                if (dto.permissionIds.includes(orgPermission.id)) {
+                    newUserPermissions.push(orgPermission);
                 }
             }
-            const resultUser = await this.userService.acceptUser(user, org, dbPermission);
+
+            const resultUser = await this.userService.acceptUser(user, org, newUserPermissions);
 
             AuditLog.success(
                 ActionType.UPDATE,
@@ -133,6 +137,7 @@ export class PermissionController {
                 resultUser.name
             );
             return resultUser;
+
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId);
             throw err;
@@ -188,9 +193,7 @@ export class PermissionController {
     ): Promise<DeleteResponseDto> {
         try {
             const permission = await this.permissionService.getPermission(id);
-            if (
-                permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
-            ) {
+            if (permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)) {
                 throw new BadRequestException("You cannot delete GlobalAdmin");
             } else {
                 checkIfUserHasAccessToOrganization(

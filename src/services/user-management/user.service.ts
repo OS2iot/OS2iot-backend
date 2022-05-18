@@ -52,18 +52,22 @@ export class UserService {
     async acceptUser(
         user: User,
         org: Organization,
-        dbPermission: Permission
+        newUserPermissions: Permission[]
     ): Promise<User> {
         user.awaitingConfirmation = false;
 
-        if (user.permissions.find(perms => perms.id === dbPermission.id)) {
+        if (
+            user.permissions.find(perms =>
+                newUserPermissions.some(newPerm => newPerm.id === perms.id)
+            )
+        ) {
             throw new BadRequestException(ErrorCodes.UserAlreadyInPermission);
         } else {
             const index = user.requestedOrganizations.findIndex(
                 dbOrg => dbOrg.id === org.id
             );
             user.requestedOrganizations.splice(index, 1);
-            user.permissions.push(dbPermission);
+            user.permissions.push(...newUserPermissions);
             await this.sendVerificationMail(user, org);
             return await this.userRepository.save(user);
         }
