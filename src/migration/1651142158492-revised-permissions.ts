@@ -1,5 +1,4 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { NotImplementedException } from "@nestjs/common";
 
 type AppPermissions = {
     applicationId: number;

@@ -113,3 +113,12 @@ export function isOrganizationApplicationPermission(p: {
             type === PermissionType.OrganizationApplicationAdmin
     );
 }
+
+export function isPermissionType(
+    p: {
+        type: PermissionTypeEntity[];
+    },
+    targetType: PermissionType
+): p is Permission {
+    return p.type.some(({ type }) => type === targetType);
+}

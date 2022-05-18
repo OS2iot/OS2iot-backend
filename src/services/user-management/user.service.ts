@@ -27,6 +27,7 @@ import { Organization } from "@entities/organization.entity";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
+import { isPermissionType } from "@helpers/security-helper";
 
 @Injectable()
 export class UserService {
@@ -415,7 +416,7 @@ export class UserService {
         const emails: string[] = [];
         const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
-            if (permission.type === PermissionType.OrganizationAdmin) {
+            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin)) {
                 if (permission.users.length > 0) {
                     permission.users.forEach(user => {
                         emails.push(user.email);

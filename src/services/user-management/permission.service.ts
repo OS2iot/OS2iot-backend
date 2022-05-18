@@ -321,11 +321,18 @@ export class PermissionService {
         });
     }
 
-    async getGlobalPermission(): Promise<Permission> {
-        return await getManager().findOneOrFail(Permission, {
-            where: { type: PermissionType.GlobalAdmin },
-            relations: ["users"],
-        });
+    getGlobalPermission(): Promise<Permission> {
+        return this.permissionRepository
+            .createQueryBuilder("permission")
+            .where(
+                    " type.type = :permType",
+                {
+                    permType: PermissionType.GlobalAdmin,
+                }
+            )
+            .leftJoin("permission.type", "type")
+            .leftJoinAndSelect("permission.users", "users")
+            .getOneOrFail();
     }
 
       buildPermissionsQuery(): SelectQueryBuilder<Permission> {

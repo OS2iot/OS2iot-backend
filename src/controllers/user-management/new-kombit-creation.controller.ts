@@ -35,7 +35,6 @@ import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { UserService } from "@services/user-management/user.service";
-import { Permission, OrganizationPermission } from "@entities/permission.entity";
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -119,14 +118,14 @@ export class NewKombitCreationController {
         @Req() req: AuthenticatedRequest,
         @Body() updateUserOrgsDto: UpdateUserOrgsDto
     ): Promise<UpdateUserOrgsDto> {
-        
+
 		try {
             const user = await this.userService.findOne(req.user.userId);
-            const permissions: OrganizationPermission[] = await this.permissionService.findManyWithRelations(
+            const permissions = await this.permissionService.findManyWithRelations(
                 updateUserOrgsDto.requestedOrganizationIds
             );
 
-            const requestedOrganizations = await this.organizationService.mapPermissionsToOrganizations(
+            const requestedOrganizations = this.organizationService.mapPermissionsToOrganizations(
                 permissions
             );
 
@@ -160,7 +159,7 @@ export class NewKombitCreationController {
         @Query("extendedInfo") extendedInfo?: boolean
     ): Promise<UserResponseDto> {
 
-        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;		
+        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars

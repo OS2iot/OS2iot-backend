@@ -17,7 +17,6 @@ import { Logger } from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
-    ApiNotFoundResponse,
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -32,10 +31,7 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import {
-    checkIfUserHasAdminAccessToOrganization,
-    checkIfUserIsGlobalAdmin,
-} from "@helpers/security-helper";
+import { checkIfUserIsGlobalAdmin, checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
@@ -43,9 +39,7 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { User } from "@entities/user.entity";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
-import { UpdateUserOrgsDto } from "@dto/user-management/update-user-orgs.dto";
 import { Organization } from "@entities/organization.entity";
 import { RejectUserDto } from "@dto/user-management/reject-user.dto";
 
@@ -113,15 +107,15 @@ export class UserController {
     @Put("/rejectUser")
     @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
     async rejectUser(
-        @Req() req: AuthenticatedRequest,        
+        @Req() req: AuthenticatedRequest,
         @Body() body: RejectUserDto
     ): Promise<Organization> {
-        checkIfUserHasAdminAccessToOrganization(req, body.orgId);
+        checkIfUserHasAccessToOrganization(req, body.orgId, OrganizationAccessScope.UserAdministrationWrite);
 
         const user = await this.userService.findOne(body.userIdToReject);
         const organization = await this.organizationService.findByIdWithUsers(body.orgId);
 
-        return await this.organizationService.rejectAwaitingUser(user, organization);		
+        return await this.organizationService.rejectAwaitingUser(user, organization);
     }
 
     @Put(":id")

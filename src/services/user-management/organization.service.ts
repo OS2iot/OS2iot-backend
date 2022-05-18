@@ -23,7 +23,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { PermissionService } from "./permission.service";
 import { User } from "@entities/user.entity";
 import { UserService } from "./user.service";
-import { Permission, OrganizationPermission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class OrganizationService {
@@ -100,9 +100,9 @@ export class OrganizationService {
         };
     }
 
-    async mapPermissionsToOrganizations(
-        permissions: OrganizationPermission[]
-    ): Promise<Organization[]> {
+    mapPermissionsToOrganizations(
+        permissions: Permission[]
+    ): Organization[] {
         const requestedOrganizations: Organization[] = [];
 
         for (let index = 0; index < permissions.length; index++) {
@@ -131,9 +131,9 @@ export class OrganizationService {
         return requestedOrganizations;
     }
 
-    async mapPermissionsToOneOrganization(
-        permissions: OrganizationPermission[]
-    ): Promise<Organization> {
+    mapPermissionsToOneOrganization(
+        permissions: Permission[]
+    ): Organization {
         const org: Organization = new Organization();
 
         permissions.map(permission => {

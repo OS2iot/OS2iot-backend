@@ -111,7 +111,7 @@ export class PermissionController {
                 dto.organizationId
             );
 
-            const org: Organization = await this.organizationService.mapPermissionsToOneOrganization(
+            const org: Organization = this.organizationService.mapPermissionsToOneOrganization(
                 permissions
             );
 
