@@ -324,11 +324,13 @@ returning id, "permission"."clonedFromId"`;
 
     private async migratePermissionTypeUp(queryRunner: QueryRunner) {
         await queryRunner.query(`DROP INDEX "public"."IDX_71bf2818fb2ad92e208d7aeadf"`);
-        await queryRunner.query(`CREATE TABLE "permission_type" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" character varying NOT NULL, "createdById" integer, "updatedById" integer, "permissionId" integer, CONSTRAINT "PK_3f2a17e0bff1bc4e34254b27d78" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."permission_type_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`);
+        await queryRunner.query(`CREATE TABLE "permission_type" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" "public"."permission_type_type_enum" NOT NULL, "createdById" integer, "updatedById" integer, "permissionId" integer, CONSTRAINT "PK_3f2a17e0bff1bc4e34254b27d78" PRIMARY KEY ("id"))`);
 
         const fetchAllPermissions = `select "createdAt",
         "updatedAt",
-        type,
+        -- Casting from one enum to another requires casting it to text first
+        type::text::"public"."permission_type_type_enum",
         "createdById",
         "updatedById",
         "id" AS "permissionId"
@@ -348,7 +350,7 @@ returning id, "permission"."clonedFromId"`;
 
     private async migrateDown(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
-            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
+            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "${permissionTypeUnionName}" USING "type"::"text"::"${permissionTypeUnionName}"`
         );
 
         // When migrating permisisons tied to old permission types, we need to keep track of the old id. This is for updating any dependents
@@ -405,7 +407,7 @@ returning id, "permission"."clonedFromId"`;
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_old" USING "type"::"text"::"permission_type_enum_old"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+        await queryRunner.query(`DROP TYPE "${permissionTypeUnionName}"`);
     }
 
     private async migratePermissionTypeDown(queryRunner: QueryRunner) {
@@ -422,11 +424,11 @@ returning id, "permission"."clonedFromId"`;
         await queryRunner.query(`CREATE TEMP TABLE "permission_type_priority" ON COMMIT DROP AS
         SELECT * FROM (
             VALUES
-                ('GlobalAdmin'::character varying, 0),
-                ('OrganizationUserAdmin'::character varying, 10),
-                ('OrganizationApplicationAdmin'::character varying, 20),
-                ('OrganizationGatewayAdmin'::character varying, 30),
-                ('Read'::character varying, 40)
+                ('GlobalAdmin'::text, 0),
+                ('OrganizationUserAdmin'::text, 10),
+                ('OrganizationApplicationAdmin'::text, 20),
+                ('OrganizationGatewayAdmin'::text, 30),
+                ('Read'::text, 40)
         ) as t (type, priority)`);
 
         // Migrate permission levels
@@ -434,12 +436,13 @@ returning id, "permission"."clonedFromId"`;
         public.permission pm
     SET
         -- The column is updated for each row with identical "permissionId"
-        type = CAST(highestPmType.type as ${permissionTypeUnionName})
+        -- Casting from one enum to another requires casting it to text first
+        type = highestPmType.type::text::${permissionTypeUnionName}
     FROM
     (
         SELECT pt.*
         FROM permission_type_priority ptp
-        JOIN permission_type pt ON ptp.type = pt.type
+        JOIN permission_type pt ON ptp.type::${permissionTypeUnionName} = pt.type::text::${permissionTypeUnionName}
         -- Order from lowest to highest priority. The last update for any given permission
         -- thus be the type with highest priority (lowest value)
         ORDER BY ptp.priority DESC
@@ -451,6 +454,7 @@ returning id, "permission"."clonedFromId"`;
         // This should not happen. Review them manually.
         await queryRunner.query(`ALTER TABLE "permission" ALTER COLUMN "type" SET NOT NULL`);
         await queryRunner.query(`DROP TABLE "permission_type"`);
+        await queryRunner.query(`DROP TYPE "public"."permission_type_type_enum"`);
         await queryRunner.query(`CREATE INDEX "IDX_71bf2818fb2ad92e208d7aeadf" ON "permission" ("type") `);
     }
 }

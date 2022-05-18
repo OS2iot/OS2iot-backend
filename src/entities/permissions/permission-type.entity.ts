@@ -7,7 +7,9 @@ import { nameof } from "@helpers/type-helper";
 @Entity("permission_type")
 @Unique([nameof<PermissionTypeEntity>("type"), nameof<PermissionTypeEntity>("permission")])
 export class PermissionTypeEntity extends DbBaseEntity {
-    @Column()
+    @Column("enum", {
+        enum: PermissionType
+    })
     type: PermissionType;
 
     @ManyToOne(() => Permission, p => p.type, {
