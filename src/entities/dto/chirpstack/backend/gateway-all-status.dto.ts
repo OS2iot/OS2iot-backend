@@ -3,7 +3,6 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { GatewayStatusInterval } from "@enum/gateway-status-interval.enum";
 import { IsSwaggerOptional } from "@helpers/optional-validator";
 import { StringToNumber } from "@helpers/string-to-number-validator";
-import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum } from "class-validator";
 import { GatewayStatus } from "./gateway-status.dto";
 
