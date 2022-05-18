@@ -71,7 +71,7 @@ export class SigfoxGroupController {
 
     @Get(":id")
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "List a SigFox Groups" })
+    @ApiOperation({ summary: "Get one group by ID" })
     @Read()
     async getOne(
         @Req() req: AuthenticatedRequest,
@@ -81,7 +81,7 @@ export class SigfoxGroupController {
         try {
             group = await this.service.findOne(id);
         } catch (err) {
-            throw new NotFoundException();
+			return null;            
         }
         checkIfUserHasReadAccessToOrganization(req, group.belongsTo.id);
         return group;

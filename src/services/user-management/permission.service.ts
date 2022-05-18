@@ -15,15 +15,15 @@ import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
 import { UserPermissions } from "@dto/permission-organization-application.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { GlobalAdminPermission } from "@entities/global-admin-permission.entity";
-import { OrganizationAdminPermission } from "@entities/organization-admin-permission.entity";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
+import { GlobalAdminPermission } from "@entities/permission.entity";
+import { OrganizationAdminPermission } from "@entities/permission.entity";
+import { OrganizationApplicationPermission } from "@entities/permission.entity";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
+import { OrganizationPermission } from "@entities/permission.entity";
 import { Permission } from "@entities/permission.entity";
-import { ReadPermission } from "@entities/read-permission.entity";
+import { ReadPermission } from "@entities/permission.entity";
 import { User } from "@entities/user.entity";
-import { WritePermission } from "@entities/write-permission.entity";
+import { WritePermission } from "@entities/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OrganizationService } from "@services/user-management/organization.service";
@@ -163,9 +163,28 @@ export class PermissionService {
             x.permissions = _.union(x.permissions, [permission]);
         });
     }
-
     async removeUserFromPermission(permission: Permission, user: User): Promise<void> {
         user.permissions = user.permissions.filter(x => x.id != permission.id);
+    }
+
+    async findManyWithRelations(organizationIds: number[]): Promise<OrganizationPermission[]>
+    {
+        const perm = await this.permissionRepository.find({
+            relations: ["organization", "users"],
+            where: {organization: {id: In(organizationIds)}}
+        }); 
+
+        return perm as OrganizationPermission[];
+    }
+
+    async findOneWithRelations(organizationId: number): Promise<OrganizationPermission[]>
+    {
+        const perm = await this.permissionRepository.find({
+            relations: ["organization", "users"],
+            where: {organization: {id: organizationId}}
+        }); 
+
+        return perm as OrganizationPermission[];
     }
 
     async updatePermission(
@@ -281,7 +300,14 @@ export class PermissionService {
         });
     }
 
-    buildPermissionsQuery(): SelectQueryBuilder<Permission> {
+    async getGlobalPermission(): Promise<Permission> {
+        return await getManager().findOneOrFail(Permission, {
+            where: { type: PermissionType.GlobalAdmin },
+            relations: ["users"],
+        });
+    }
+
+      buildPermissionsQuery(): SelectQueryBuilder<Permission> {
         return this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoinAndSelect(
@@ -315,7 +341,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-    async findPermissionsForOrgAdminWithApplications(
+       async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
         return await this.buildPermissionsWithApplicationsQuery()
@@ -327,7 +353,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-    buildPermissionsWithApplicationsQuery(): SelectQueryBuilder<Permission> {
+   buildPermissionsWithApplicationsQuery(): SelectQueryBuilder<Permission> {
         return this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoinAndSelect("permission.organization", "organization")
@@ -398,7 +424,7 @@ export class PermissionService {
         });
 
         return res;
-    }
+	    }
 
     async findManyByIds(ids: number[]): Promise<Permission[]> {
         return await this.permissionRepository.findByIds(ids);

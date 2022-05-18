@@ -35,5 +35,16 @@ export default (): any => {
         logLevels: process.env.LOG_LEVEL
             ? GetLogLevels(process.env.LOG_LEVEL)
             : GetLogLevels("debug"),
-    };
+        email: {
+            host: process.env.EMAIL_HOST || "smtp.ethereal.email",
+            port: process.env.EMAIL_PORT || 587,
+            user: process.env.EMAIL_USER || "ara.kertzmann8@ethereal.email",
+            pass: process.env.EMAIL_PASS || "KzRSyYReEygpFPPZdd",
+            from: process.env.EMAIL_FROM || "ara.kertzmann8@ethereal.email"
+        },
+        frontend: {
+            baseurl:
+                process.env.FRONTEND_BASEURL || "http://localhost:8081"
+            }
+    	};
 };

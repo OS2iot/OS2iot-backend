@@ -1,7 +1,15 @@
 import { ApiKey } from "@entities/api-key.entity";
-import { DbBaseEntity } from "@entities/base.entity";
+import {
+    Column,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    Unique,
+    OneToOne,
+} from "typeorm";
+import { Organization } from "./organization.entity";
 import { Permission } from "@entities/permission.entity";
-import { Column, Entity, JoinTable, ManyToMany, OneToOne, Unique } from "typeorm";
+import { DbBaseEntity } from "@entities/base.entity";
 
 @Entity("user")
 @Unique(["email"])
@@ -24,11 +32,20 @@ export class User extends DbBaseEntity {
     @Column({ nullable: true })
     nameId: string;
 
+    @Column({ nullable: true })
+    awaitingConfirmation: boolean;
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ManyToMany(type => Permission, permission => permission.users)
     @JoinTable()
     permissions: Permission[];
 
+    @ManyToMany(_ => Organization, requestedOrganizations => requestedOrganizations.awaitingUsers, {
+        nullable: true,
+    })
+    @JoinTable()
+    requestedOrganizations: Organization[];
+    
     @OneToOne(type => ApiKey, a => a.systemUser, {
         nullable: true,
         cascade: false,

@@ -9,8 +9,8 @@ import {
     OneToOne,
     Unique,
 } from "typeorm";
-import { ApiKeyPermission } from "./api-key-permission.entity";
 import { DbBaseEntity } from "./base.entity";
+import { ApiKeyPermission } from "./permission.entity";
 
 @Entity("api_key")
 @Unique([nameof<ApiKey>("key")])
