@@ -7,17 +7,16 @@ import {
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { GatewayStatus, GetGatewayStatusQuery } from "@dto/chirpstack/backend/gateway-status.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasReadAccessToOrganization } from "@helpers/security-helper";
 import { Controller, Get, Param, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 
 @ApiTags("LoRaWAN gateway")
 @Controller("lorawan/gateway")
 @UseGuards(ComposeAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@Read()
 export class LoRaWANGatewayController {
     constructor(
         private onlineHistoryService: GatewayStatusHistoryService,
@@ -32,11 +31,7 @@ export class LoRaWANGatewayController {
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
-        if (query.organizationId) {
-            // TODO: NEW USER MANAGEMENT: Update the rights once it's merged
-            checkIfUserHasReadAccessToOrganization(req, query.organizationId);
-        }
-
+        // Currently, everyone is allowed to get the status
         return this.onlineHistoryService.findAllWithChirpstack(query);
     }
 
@@ -48,9 +43,8 @@ export class LoRaWANGatewayController {
         @Param("id") id: string,
         @Query() query: GetGatewayStatusQuery
     ): Promise<GatewayStatus> {
+        // Currently, everyone is allowed to get the status
         const gatewayDto = await this.chirpstackGatewayService.getOne(id);
-        checkIfUserHasReadAccessToOrganization(req, gatewayDto.gateway.internalOrganizationId);
-
         return this.onlineHistoryService.findOne(gatewayDto.gateway, query.timeInterval);
     }
 }
