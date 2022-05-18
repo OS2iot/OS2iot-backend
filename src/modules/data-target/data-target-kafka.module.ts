@@ -11,6 +11,7 @@ import { KafkaModule } from "@modules/kafka.module";
 import { SharedModule } from "@modules/shared.module";
 import { DataTargetKafkaListenerService } from "@services/data-targets/data-target-kafka-listener.service";
 import { DataTargetFiwareSenderModule } from "./data-target-fiware-sender.module";
+import { GatewayPersistenceModule } from "@modules/data-management/gateway-persistence.module";
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { DataTargetFiwareSenderModule } from "./data-target-fiware-sender.module
         IoTDevicePayloadDecoderDataTargetConnectionModule,
         ApplicationModule,
         DataTargetModule,
+        GatewayPersistenceModule,
     ],
     providers: [DataTargetKafkaListenerService],
 })

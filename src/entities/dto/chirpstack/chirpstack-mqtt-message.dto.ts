@@ -16,3 +16,8 @@ export class ChirpstackMQTTMessageTxInfoDto {
     frequency: number;
     dr: number;
 }
+
+export class ChirpstackMQTTConnectionStateMessageDto {
+    gatewayId: string;
+    isOnline: boolean;
+}

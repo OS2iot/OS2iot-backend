@@ -83,7 +83,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const limit = 1000;
         let allResults: GatewayResponseDto[] = [];
         let totalCount = 0;
-        let lastResults;
+        let lastResults: ListAllGatewaysResponseDto;
         do {
             // Default parameters if not set
             lastResults = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
@@ -112,6 +112,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         };
     }
 
+    /**
+     * Fetch gateways individually. This gives us the tags which contain the OS2 organization id.
+     * This is a very expensive operation, but it's the only way to retrieve gateway tags.
+     * @param results
+     */
     private async enrichWithOrganizationId(results: GatewayResponseDto[]) {
         await BluebirdPromise.all(
             BluebirdPromise.map(

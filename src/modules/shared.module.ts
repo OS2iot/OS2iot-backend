@@ -34,6 +34,7 @@ import { ControlledProperty } from "@entities/controlled-property.entity";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
+import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 
 @Module({
     imports: [
@@ -70,6 +71,7 @@ import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
             ApplicationDeviceType,
             ApiKey,
             ReceivedMessageSigFoxSignals,
+            GatewayStatusHistory,
         ]),
     ],
     providers: [AuditLog],

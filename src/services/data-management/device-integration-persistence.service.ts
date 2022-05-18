@@ -1,4 +1,4 @@
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { RawIoTDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
@@ -16,7 +16,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-import { MoreThan, Repository, LessThan } from "typeorm";
+import { LessThan, MoreThan, Repository } from "typeorm";
 
 @Injectable()
 export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
@@ -50,7 +50,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     @CombinedSubscribeTo(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence")
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
         this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
-        const dto: RawRequestDto = payload.body;
+        const dto = payload.body as RawIoTDeviceRequestDto;
         let relatedIoTDevice;
         try {
             relatedIoTDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
@@ -77,7 +77,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async saveLatestMessage(
-        dto: RawRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): Promise<ReceivedMessage> {
         let existingMessage = await this.findExistingRecevedMessage(relatedIoTDevice);
@@ -115,7 +115,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     mapDtoToReceivedMessage(
-        dto: RawRequestDto,
+        dto: RawIoTDeviceRequestDto,
         existingMessage: ReceivedMessage,
         relatedIoTDevice: IoTDevice
     ): ReceivedMessage {
@@ -204,7 +204,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async saveMessageMetadata(
-        dto: RawRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): Promise<void> {
         // Save this
@@ -267,7 +267,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     mapDtoToNewReceivedMessageMetadata(
-        dto: RawRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): ReceivedMessageMetadata {
         const newMetadata = new ReceivedMessageMetadata();
@@ -306,7 +306,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
 
         if (oldestToDelete.length === 0) {
             this.logger.debug(
-                `Less than ${this.maxSigFoxSignalsMessagesPerHour} SigFox stat objects for device ${deviceId} found in database. Deleting no rows.`				
+                `Less than ${this.maxSigFoxSignalsMessagesPerHour} SigFox stat objects for device ${deviceId} found in database. Deleting no rows.`
             );
             return;
         }
@@ -320,7 +320,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         );
     }
 
-	/**
+    /**
      * Clean up SigFox stats for the device if they are older than 1 year
      * @param deviceId
      */
