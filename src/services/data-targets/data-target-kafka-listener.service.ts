@@ -39,7 +39,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     async transformedRequestListener(payload: KafkaPayload): Promise<void> {
         this.logger.debug(`TRANSFORMED_REQUEST: '${JSON.stringify(payload)}'`);
 
-        const dto: TransformedPayloadDto = payload.body;
+        const dto = payload.body as TransformedPayloadDto;
         let iotDevice: IoTDevice;
         try {
             iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
