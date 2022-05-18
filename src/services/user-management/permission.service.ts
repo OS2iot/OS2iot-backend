@@ -186,9 +186,28 @@ export class PermissionService {
             x.permissions = _.union(x.permissions, [permission]);
         });
     }
-
     async removeUserFromPermission(permission: Permission, user: User): Promise<void> {
         user.permissions = user.permissions.filter(x => x.id != permission.id);
+    }
+
+    async findManyWithRelations(organizationIds: number[]): Promise<Permission[]>
+    {
+        const perm = await this.permissionRepository.find({
+            relations: ["organization", "users", "type"],
+            where: {organization: {id: In(organizationIds)}}
+        });
+
+        return perm;
+    }
+
+    async findOneWithRelations(organizationId: number): Promise<Permission[]>
+    {
+        const perm = await this.permissionRepository.find({
+            relations: ["organization", "users", "type"],
+            where: {organization: {id: organizationId}}
+        });
+
+        return perm;
     }
 
     async updatePermission(
@@ -302,7 +321,14 @@ export class PermissionService {
         });
     }
 
-    buildPermissionsQuery(): SelectQueryBuilder<Permission> {
+    async getGlobalPermission(): Promise<Permission> {
+        return await getManager().findOneOrFail(Permission, {
+            where: { type: PermissionType.GlobalAdmin },
+            relations: ["users"],
+        });
+    }
+
+      buildPermissionsQuery(): SelectQueryBuilder<Permission> {
         return this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoinAndSelect(
@@ -341,7 +367,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-    async findPermissionsForOrgAdminWithApplications(
+       async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
         return await this.buildPermissionsWithApplicationsQuery()
@@ -353,7 +379,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-    buildPermissionsWithApplicationsQuery(): SelectQueryBuilder<Permission> {
+   buildPermissionsWithApplicationsQuery(): SelectQueryBuilder<Permission> {
         return this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoinAndSelect("permission.organization", "organization")
@@ -425,7 +451,7 @@ export class PermissionService {
         });
 
         return res;
-    }
+	    }
 
     async findManyByIds(ids: number[]): Promise<Permission[]> {
         return await this.permissionRepository.findByIds(ids);

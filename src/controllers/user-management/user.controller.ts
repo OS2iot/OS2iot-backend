@@ -6,7 +6,6 @@ import {
     InternalServerErrorException,
     NotFoundException,
     Param,
-    ParseBoolPipe,
     ParseIntPipe,
     Post,
     Put,
@@ -18,6 +17,7 @@ import { Logger } from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
+    ApiNotFoundResponse,
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -32,7 +32,10 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { checkIfUserIsGlobalAdmin } from "@helpers/security-helper";
+import {
+    checkIfUserHasAdminAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
+} from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
@@ -40,6 +43,11 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { User } from "@entities/user.entity";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { UpdateUserOrgsDto } from "@dto/user-management/update-user-orgs.dto";
+import { Organization } from "@entities/organization.entity";
+import { RejectUserDto } from "@dto/user-management/reject-user.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -48,7 +56,10 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 @ApiTags("User Management")
 @Controller("user")
 export class UserController {
-    constructor(private userService: UserService) {}
+    constructor(
+        private userService: UserService,
+        private organizationService: OrganizationService
+    ) {}
 
     private readonly logger = new Logger(UserController.name);
 
@@ -99,6 +110,20 @@ export class UserController {
         }
     }
 
+    @Put("/rejectUser")
+    @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
+    async rejectUser(
+        @Req() req: AuthenticatedRequest,        
+        @Body() body: RejectUserDto
+    ): Promise<Organization> {
+        checkIfUserHasAdminAccessToOrganization(req, body.orgId);
+
+        const user = await this.userService.findOne(body.userIdToReject);
+        const organization = await this.organizationService.findByIdWithUsers(body.orgId);
+
+        return await this.organizationService.rejectAwaitingUser(user, organization);		
+    }
+
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
     @UserAdmin()
@@ -132,8 +157,26 @@ export class UserController {
         }
     }
 
+    @Put(":id/hide-welcome")
+    @ApiOperation({ summary: "Don't show welcome screen for a user again" })
+    @Read()
+    async hideWelcome(@Req() req: AuthenticatedRequest): Promise<boolean> {
+        const wasOk = await this.userService.hideWelcome(req.user.userId);
+
+        AuditLog.success(
+            ActionType.UPDATE,
+            User.name,
+            req.user.userId,
+            req.user.userId,
+            req.user.username
+        );
+
+        return wasOk
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
+    @Read()
     async find(
         @Param("id", new ParseIntPipe()) id: number,
         @Query("extendedInfo") extendedInfo?: boolean
@@ -157,5 +200,18 @@ export class UserController {
     @ApiOperation({ summary: "Get all users" })
     async findAll(@Query() query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         return await this.userService.findAll(query);
+    }
+
+    @Get("/awaitingUsers/:id")
+    @ApiOperation({ summary: "Get awaiting users" })
+    async findAwaitingUsers(
+        @Param("id", new ParseIntPipe()) organizationId: number,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        try {
+            return await this.userService.getAwaitingUsers(organizationId, query);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
     }
 }

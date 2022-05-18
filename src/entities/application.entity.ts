@@ -1,4 +1,3 @@
-import { DbBaseEntity } from "@entities/base.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Organization } from "@entities/organization.entity";
@@ -17,6 +16,7 @@ import { ApplicationDeviceType } from "./application-device-type.entity";
 import { ControlledProperty } from "./controlled-property.entity";
 import { Multicast } from "./multicast.entity";
 import { Permission } from "./permissions/permission.entity";
+import { DbBaseEntity } from "@entities/base.entity";
 
 @Entity("application")
 @Unique(["name"])

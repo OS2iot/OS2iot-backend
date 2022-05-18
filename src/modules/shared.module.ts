@@ -32,7 +32,7 @@ import { PermissionTypeEntity } from "@entities/permissions/permission-type.enti
 @Module({
     imports: [
         TypeOrmModule.forFeature([
-            ApiKey,
+            User,
             Application,
             DataTarget,
             GenericHTTPDevice,
@@ -56,6 +56,7 @@ import { PermissionTypeEntity } from "@entities/permissions/permission-type.enti
             LorawanMulticastDefinition,
             ControlledProperty,
             ApplicationDeviceType,
+            ApiKey,
             ReceivedMessageSigFoxSignals,
             PermissionTypeEntity,
         ]),

@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToOne } from "typeorm";
 
 import { multicastGroup } from "@enum/multicast-type.enum";
 import { Multicast } from "./multicast.entity";

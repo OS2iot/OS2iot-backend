@@ -32,6 +32,7 @@ import { MulticastModule } from "./device-management/multicast.module";
 import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { SearchModule } from "./search.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
+import { NewKombitCreationModule } from "./user-management/new-kombit-creation.module";
 
 @Module({
     imports: [
@@ -92,6 +93,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
         MulticastModule,
         IoTLoRaWANDeviceModule,
         ApiKeyInfoModule,
+        NewKombitCreationModule,
     ],
     controllers: [],
     providers: [],
