@@ -27,6 +27,7 @@ export class LoRaWANGatewayController {
         @Query() query: ListAllGatewayStatusDto
     ): Promise<GatewayGetAllStatusResponseDto> {
         if (query.organizationId) {
+            // TODO: NEW USER MANAGEMENT: Update the rights once it's merged
             checkIfUserHasReadAccessToOrganization(req, query.organizationId);
         }
 

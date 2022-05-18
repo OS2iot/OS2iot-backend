@@ -1,4 +1,4 @@
-import { RawIotDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
+import { RawIoTDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-signals.entity";
@@ -50,7 +50,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     @CombinedSubscribeTo(KafkaTopic.RAW_REQUEST, "DeviceIntegrationPersistence")
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
         this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
-        const dto = payload.body as RawIotDeviceRequestDto;
+        const dto = payload.body as RawIoTDeviceRequestDto;
         let relatedIoTDevice;
         try {
             relatedIoTDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
@@ -77,7 +77,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async saveLatestMessage(
-        dto: RawIotDeviceRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): Promise<ReceivedMessage> {
         let existingMessage = await this.findExistingRecevedMessage(relatedIoTDevice);
@@ -115,7 +115,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     mapDtoToReceivedMessage(
-        dto: RawIotDeviceRequestDto,
+        dto: RawIoTDeviceRequestDto,
         existingMessage: ReceivedMessage,
         relatedIoTDevice: IoTDevice
     ): ReceivedMessage {
@@ -204,7 +204,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     private async saveMessageMetadata(
-        dto: RawIotDeviceRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): Promise<void> {
         // Save this
@@ -267,7 +267,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     }
 
     mapDtoToNewReceivedMessageMetadata(
-        dto: RawIotDeviceRequestDto,
+        dto: RawIoTDeviceRequestDto,
         relatedIoTDevice: IoTDevice
     ): ReceivedMessageMetadata {
         const newMetadata = new ReceivedMessageMetadata();

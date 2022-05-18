@@ -1,5 +1,5 @@
 import { RawRequestDto } from "./raw-request.dto";
 
-export class RawIotDeviceRequestDto extends RawRequestDto {
+export class RawIoTDeviceRequestDto extends RawRequestDto {
     iotDeviceId: number;
 }

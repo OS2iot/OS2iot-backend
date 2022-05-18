@@ -1,5 +1,5 @@
 import { RawGatewayStateDto } from "@dto/kafka/raw-gateway-state.dto";
-import { RawIotDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
+import { RawIoTDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { RawRequestDto } from "@dto/kafka/raw-request.dto";
 import { KafkaTopic } from "@entities/enum/kafka-topic.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
@@ -20,7 +20,7 @@ export class ReceiveDataService {
         type: IoTDeviceType[number],
         timestamp?: number
     ): Promise<void> {
-        const dto = new RawIotDeviceRequestDto();
+        const dto = new RawIoTDeviceRequestDto();
         dto.iotDeviceId = iotDevice.id;
         dto.rawPayload = JSON.parse(data);
         const payload = this.buildMessage(dto, type, KafkaTopic.RAW_REQUEST, timestamp);
