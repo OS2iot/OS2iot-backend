@@ -12,7 +12,7 @@ import { Repository } from "typeorm";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
@@ -27,6 +27,7 @@ import { Organization } from "@entities/organization.entity";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
+import { isPermissionType } from "@helpers/security-helper";
 
 @Injectable()
 export class UserService {
@@ -51,18 +52,22 @@ export class UserService {
     async acceptUser(
         user: User,
         org: Organization,
-        dbPermission: Permission
+        newUserPermissions: Permission[]
     ): Promise<User> {
         user.awaitingConfirmation = false;
 
-        if (user.permissions.find(perms => perms.id === dbPermission.id)) {
+        if (
+            user.permissions.find(perms =>
+                newUserPermissions.some(newPerm => newPerm.id === perms.id)
+            )
+        ) {
             throw new BadRequestException(ErrorCodes.UserAlreadyInPermission);
         } else {
             const index = user.requestedOrganizations.findIndex(
                 dbOrg => dbOrg.id === org.id
             );
             user.requestedOrganizations.splice(index, 1);
-            user.permissions.push(dbPermission);
+            user.permissions.push(...newUserPermissions);
             await this.sendVerificationMail(user, org);
             return await this.userRepository.save(user);
         }
@@ -117,7 +122,7 @@ export class UserService {
 
     async findOneWithOrganizations(id: number): Promise<User> {
         return await this.userRepository.findOne(id, {
-            relations: ["permissions", "permissions.organization"],
+            relations: ["permissions", "permissions.organization", "permissions.type"],
         });
     }
 
@@ -294,7 +299,7 @@ export class UserService {
         }
 
         const [data, count] = await this.userRepository.findAndCount({
-            relations: ["permissions"],
+            relations: ["permissions", "permissions.type"],
             take: +query.limit,
             skip: +query.offset,
             order: sorting,
@@ -415,7 +420,7 @@ export class UserService {
         const emails: string[] = [];
         const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
-            if (permission.type === PermissionType.OrganizationAdmin) {
+            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin)) {
                 if (permission.users.length > 0) {
                     permission.users.forEach(user => {
                         emails.push(user.email);

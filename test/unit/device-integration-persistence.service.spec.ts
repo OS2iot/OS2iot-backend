@@ -8,7 +8,7 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { Organization } from "@entities/organization.entity";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { ReceivedMessage } from "@entities/received-message.entity";
 import { ReceivedMessageMetadata } from "@entities/received-message-metadata.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
@@ -119,6 +119,7 @@ describe("DeviceIntegrationPersistenceService", () => {
             updatedAt: new Date(),
             belongsTo: org,
             permissions: [],
+            multicasts: [],
         },
         connections: [],
         name: "Test IoTDevice",
@@ -128,6 +129,8 @@ describe("DeviceIntegrationPersistenceService", () => {
         type: IoTDeviceType.GenericHttp,
         latestReceivedMessage: null,
         receivedMessagesMetadata: [],
+        multicasts: [],
+        receivedSigFoxSignalsMessages: [],
     };
 
     it("test mapDtoToNewReceivedMessageMetadata - Sigfox data + with timestmap", async () => {

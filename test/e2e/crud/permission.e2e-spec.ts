@@ -9,8 +9,6 @@ import { getManager } from "typeorm";
 import configuration from "@config/configuration";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { OrganizationApplicationPermission } from "@entities/organization-application-permission.entity";
-import { ReadPermission } from "@entities/read-permission.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthModule } from "@modules/user-management/auth.module";
@@ -116,12 +114,16 @@ describe("PermissionController (e2e)", () => {
                             type: PermissionType.GlobalAdmin,
                         }),
                         expect.objectContaining({
-                            name: org.name + " - OrganizationAdmin",
-                            type: PermissionType.OrganizationAdmin,
+                            name: org.name + " - OrganizationAppAdmin",
+                            type: PermissionType.OrganizationApplicationAdmin,
                         }),
                         expect.objectContaining({
-                            name: org.name + " - Write",
-                            type: PermissionType.Write,
+                            name: org.name + " - OrganizationGatewayAdmin",
+                            type: PermissionType.OrganizationGatewayAdmin,
+                        }),
+                        expect.objectContaining({
+                            name: org.name + " - OrganizationUserAdmin",
+                            type: PermissionType.OrganizationUserAdmin,
                             automaticallyAddNewApplications: true,
                         }),
                         expect.objectContaining({
@@ -158,7 +160,7 @@ describe("PermissionController (e2e)", () => {
         const org = await generateSavedOrganization("E2E");
 
         const dto: CreatePermissionDto = {
-            level: PermissionType.Read,
+            levels: PermissionType.Read,
             name: "E2E readers",
             organizationId: org.id,
             userIds: [],

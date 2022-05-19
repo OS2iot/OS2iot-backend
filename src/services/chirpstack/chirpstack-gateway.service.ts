@@ -24,7 +24,7 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
 import * as _ from "lodash";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
@@ -203,8 +203,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const existing = await this.getOne(gatewayId);
         const tags = dto.gateway.tags;
         tags[this.ORG_ID_KEY] = `${existing.gateway.internalOrganizationId}`;
+        // TODO: Interpolated string will never be null?
         if (tags[this.ORG_ID_KEY] != null) {
-            checkIfUserHasWriteAccessToOrganization(req, +tags[this.ORG_ID_KEY]);
+            checkIfUserHasAccessToOrganization(req, +tags[this.ORG_ID_KEY], OrganizationAccessScope.GatewayWrite);
         }
         return tags;
     }

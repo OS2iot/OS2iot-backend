@@ -212,7 +212,7 @@ export class IoTDeviceService {
         req: AuthenticatedRequest
     ): Promise<IoTDeviceMinimal[]> {
         const applications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        const organizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        const organizations = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
         return (await data).map(x => {
             return {
                 id: x.id,
@@ -961,7 +961,6 @@ export class IoTDeviceService {
                 dto.name
             );
 
-            // Save application
             const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
                 chirpstackDeviceDto,
                 loraApplications

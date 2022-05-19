@@ -10,7 +10,7 @@ import {
     Unique,
 } from "typeorm";
 import { DbBaseEntity } from "./base.entity";
-import { ApiKeyPermission } from "./permission.entity";
+import { Permission } from "./permissions/permission.entity";
 
 @Entity("api_key")
 @Unique([nameof<ApiKey>("key")])
@@ -21,9 +21,9 @@ export class ApiKey extends DbBaseEntity {
     @Column()
     name: string;
 
-    @ManyToMany(_ => ApiKeyPermission, apiKeyPm => apiKeyPm.apiKeys)
+    @ManyToMany(_ => Permission, apiKeyPm => apiKeyPm.apiKeys)
     @JoinTable()
-    permissions: ApiKeyPermission[];
+    permissions: Permission[];
 
     @OneToOne(() => User, u => u.apiKeyRef, {
         nullable: false,

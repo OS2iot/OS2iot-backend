@@ -30,12 +30,12 @@ import { Application } from "@entities/application.entity";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
-import { WritePermission } from "@entities/write-permission.entity";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { User } from "@entities/user.entity";
+import { OrganizationApplicationAdminPermission } from "@entities/permissions/organization-application-admin-permission.entity";
 
 describe("SearchController (e2e)", () => {
     let app: INestApplication;
@@ -93,7 +93,7 @@ describe("SearchController (e2e)", () => {
         await clearDatabase();
 
         // Delete all gateways created in E2E tests:
-        const existing = await chirpstackGatewayService.getAll(1000, 0);
+        const existing = await chirpstackGatewayService.getAll(1000);
         existing.result.forEach(async element => {
             if (element.name.startsWith(gatewayNamePrefix)) {
                 // Logger.debug(`Found ${element.name}, deleting.`);
@@ -127,11 +127,11 @@ describe("SearchController (e2e)", () => {
         const orgAdminUser = await generateSavedOrganizationAdminUser(org1);
         orgAdminJwt = generateValidJwtForUser(orgAdminUser);
 
-        const writePerm = org1.permissions.find(
-            x => x.type == PermissionType.Write
-        ) as WritePermission;
-        writePerm.applications = [app1_1];
-        await getManager().save(writePerm);
+        const orgAppAdminPermission = org1.permissions.find(
+            x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
+        ) as OrganizationApplicationAdminPermission;
+        orgAppAdminPermission.applications = [app1_1];
+        await getManager().save(orgAppAdminPermission);
 
         const readUser = await generateSavedReadWriteUser(org1);
         readUserJwt = generateValidJwtForUser(readUser);

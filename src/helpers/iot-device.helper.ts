@@ -7,7 +7,10 @@ import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasWriteAccessToApplication } from "./security-helper";
+import {
+    ApplicationAccessScope,
+    checkIfUserHasAccessToApplication,
+} from "./security-helper";
 
 /**
  * Iterate through the devices once, splitting it into a tuple with the data we want to log
@@ -62,11 +65,19 @@ export function ensureUpdatePayload(
             return res;
         }
 
-        checkIfUserHasWriteAccessToApplication(req, oldDevice.application.id);
+        checkIfUserHasAccessToApplication(
+            req,
+            oldDevice.application.id,
+            ApplicationAccessScope.Write
+        );
 
         if (updateDeviceDto.applicationId !== oldDevice.application.id) {
             // New application
-            checkIfUserHasWriteAccessToApplication(req, updateDeviceDto.applicationId);
+            checkIfUserHasAccessToApplication(
+                req,
+                updateDeviceDto.applicationId,
+                ApplicationAccessScope.Write
+            );
         }
         res.push(updateDeviceDto);
         return res;

@@ -20,7 +20,7 @@ import {
     ApiTags,
 } from "@nestjs/swagger";
 
-import { Read, Write } from "@auth/roles.decorator";
+import { Read, GatewayAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
@@ -29,7 +29,7 @@ import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-respons
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
-import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -47,12 +47,12 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
-    @Write()
+    @GatewayAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateGatewayDto
     ): Promise<ChirpstackResponseStatus> {
-        checkIfUserHasWriteAccessToOrganization(req, dto.organizationId);
+        checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
         try {
             const gateway = await this.chirpstackGatewayService.createNewGateway(
                 dto,
@@ -86,12 +86,8 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
-    async getAll(
-        @Query() query?: ChirpstackGetAll
-    ): Promise<ListAllGatewaysResponseDto> {
-        return await this.chirpstackGatewayService.getAll(
-            query.organizationId
-        );
+    async getAll(@Query() query?: ChirpstackGetAll): Promise<ListAllGatewaysResponseDto> {
+        return await this.chirpstackGatewayService.getAll(query.organizationId);
     }
 
     @Get(":gatewayId")
@@ -116,7 +112,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
-    @Write()
+    @GatewayAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string,
@@ -152,7 +148,7 @@ export class ChirpstackGatewayController {
     }
 
     @Delete(":gatewayId")
-    @Write()
+    @GatewayAdmin()
     async delete(
         @Req() req: AuthenticatedRequest,
         @Param("gatewayId") gatewayId: string
@@ -160,9 +156,10 @@ export class ChirpstackGatewayController {
         try {
             const gw = await this.chirpstackGatewayService.getOne(gatewayId);
             if (gw.gateway.internalOrganizationId != null) {
-                checkIfUserHasWriteAccessToOrganization(
+                checkIfUserHasAccessToOrganization(
                     req,
-                    +gw.gateway.internalOrganizationId
+                    +gw.gateway.internalOrganizationId,
+                    OrganizationAccessScope.GatewayWrite
                 );
             }
             const deleteResult = await this.chirpstackGatewayService.deleteGateway(

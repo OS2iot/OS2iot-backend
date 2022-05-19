@@ -3,7 +3,7 @@ import { Column, Entity, ManyToMany, OneToMany, Unique } from "typeorm";
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
-import { OrganizationPermission, Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 
 import { SigFoxGroup } from "./sigfox-group.entity";
 import { DeviceModel } from "./device-model.entity";
@@ -25,7 +25,7 @@ export class Organization extends DbBaseEntity {
 
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => OrganizationPermission,
+        type => Permission,
         permission => permission.organization,
         { onDelete: "CASCADE" }
     )

@@ -1,15 +1,8 @@
 import { ApiKey } from "@entities/api-key.entity";
-import {
-    Column,
-    Entity,
-    JoinTable,
-    ManyToMany,
-    Unique,
-    OneToOne,
-} from "typeorm";
-import { Organization } from "./organization.entity";
-import { Permission } from "@entities/permission.entity";
 import { DbBaseEntity } from "@entities/base.entity";
+import { Permission } from "@entities/permissions/permission.entity";
+import { Column, Entity, JoinTable, ManyToMany, OneToOne, Unique } from "typeorm";
+import { Organization } from "./organization.entity";
 
 @Entity("user")
 @Unique(["email"])
@@ -40,12 +33,16 @@ export class User extends DbBaseEntity {
     @JoinTable()
     permissions: Permission[];
 
-    @ManyToMany(_ => Organization, requestedOrganizations => requestedOrganizations.awaitingUsers, {
-        nullable: true,
-    })
+    @ManyToMany(
+        _ => Organization,
+        requestedOrganizations => requestedOrganizations.awaitingUsers,
+        {
+            nullable: true,
+        }
+    )
     @JoinTable()
     requestedOrganizations: Organization[];
-    
+
     @OneToOne(type => ApiKey, a => a.systemUser, {
         nullable: true,
         cascade: false,

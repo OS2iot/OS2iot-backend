@@ -1,6 +1,5 @@
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { OrganizationApplicationPermission } from "@entities/permission.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApplicationStatus } from "@enum/application-status.enum";
 import {
@@ -16,6 +15,7 @@ import {
 import { ApplicationDeviceType } from "./application-device-type.entity";
 import { ControlledProperty } from "./controlled-property.entity";
 import { Multicast } from "./multicast.entity";
+import { Permission } from "./permissions/permission.entity";
 import { DbBaseEntity } from "@entities/base.entity";
 
 @Entity("application")
@@ -61,11 +61,11 @@ export class Application extends DbBaseEntity {
 
     @ManyToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => OrganizationApplicationPermission,
+        type => Permission,
         permission => permission.applications
     )
     @JoinTable()
-    permissions: OrganizationApplicationPermission[];
+    permissions: Permission[];
 
     @Column({ nullable: true })
     status?: ApplicationStatus;
