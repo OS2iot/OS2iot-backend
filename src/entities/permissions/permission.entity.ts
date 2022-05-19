@@ -14,7 +14,7 @@ import { Application } from "@entities/application.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApiKey } from "@entities/api-key.entity";
 
-@Entity()
+@Entity("permission")
 export class Permission extends DbBaseEntity {
     constructor(name: string, org?: Organization, addNewApps = false) {
         super();

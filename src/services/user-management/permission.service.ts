@@ -121,7 +121,7 @@ export class PermissionService {
                 }
             )
             .leftJoin("permission.type", "type")
-            .getOneOrFail();
+            .getOne();
 
         if (globalAdmin) {
             return globalAdmin;
