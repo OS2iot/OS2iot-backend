@@ -149,30 +149,7 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
 
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
-
-        await queryRunner.query(`DELETE FROM user_permissions_permission
-WHERE "permissionId" IN
-(
-    SELECT "permission"."id" FROM user_permissions_permission
-    JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-);`);
-
-		await queryRunner.query(`DELETE FROM application_permissions_permission
-WHERE "permissionId" IN
-(
-    SELECT "permission"."id" FROM application_permissions_permission
-    JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-)`);
-
-		await queryRunner.query(`DELETE FROM api_key_permissions_permission
-WHERE "permissionId" IN
-(
-    SELECT "permission"."id" FROM api_key_permissions_permission
-    JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-)`);
+        await this.cleanupPermissionRelations(queryRunner, "'Write', 'OrganizationAdmin'");
 
         await queryRunner.query(
             `DELETE FROM "public"."permission" where type IN ('OrganizationAdmin', 'Write')`
@@ -400,6 +377,8 @@ returning id, "permission"."clonedFromId"`;
 
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
+        await this.cleanupPermissionRelations(queryRunner, "'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin'");
+
         await queryRunner.query(
             `DELETE FROM "public"."permission" where type IN ('OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin')`
         );
@@ -455,5 +434,31 @@ returning id, "permission"."clonedFromId"`;
         await queryRunner.query(`DROP TABLE "permission_type"`);
         await queryRunner.query(`DROP TYPE "public"."permission_type_type_enum"`);
         await queryRunner.query(`CREATE INDEX "IDX_71bf2818fb2ad92e208d7aeadf" ON "permission" ("type") `);
+    }
+
+    private async cleanupPermissionRelations(queryRunner: QueryRunner, permissionTypesToRemove: string) {
+        await queryRunner.query(`DELETE FROM user_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM user_permissions_permission
+    JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+);`);
+
+		await queryRunner.query(`DELETE FROM application_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM application_permissions_permission
+    JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+)`);
+
+		await queryRunner.query(`DELETE FROM api_key_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM api_key_permissions_permission
+    JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+)`);
     }
 }
