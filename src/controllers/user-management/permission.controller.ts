@@ -3,7 +3,6 @@ import {
     Body,
     Controller,
     Delete,
-    ForbiddenException,
     Get,
     NotFoundException,
     Param,
@@ -29,7 +28,6 @@ import { ListAllPermissionsResponseDto } from "@dto/list-all-permissions-respons
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import {
@@ -40,15 +38,17 @@ import {
 import { PermissionService } from "@services/user-management/permission.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UserService } from "@services/user-management/user.service";
-import { UserResponseDto } from "@dto/user-response.dto";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllPaginated } from "@dto/list-all-paginated.dto";
 import { ListAllPermissionsDto } from "@dto/list-all-permissions.dto";
 import { ApplicationService } from "@services/device-management/application.service";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { UserAdmin } from "@auth/roles.decorator";
+import { PermissionRequestAcceptUser } from "@dto/user-management/add-user-to-permission.dto";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { Organization } from "@entities/organization.entity";
+import { User } from "@entities/user.entity";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -60,7 +60,8 @@ export class PermissionController {
     constructor(
         private permissionService: PermissionService,
         private userService: UserService,
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService,
+        private organizationService: OrganizationService
     ) {}
 
     @Post()
@@ -71,7 +72,11 @@ export class PermissionController {
         @Body() dto: CreatePermissionDto
     ): Promise<Permission> {
         try {
-            checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.UserAdministrationWrite);
+            checkIfUserHasAccessToOrganization(
+                req,
+                dto.organizationId,
+                OrganizationAccessScope.UserAdministrationWrite
+            );
 
             const result = await this.permissionService.createNewPermission(
                 dto,
@@ -92,6 +97,53 @@ export class PermissionController {
         }
     }
 
+    @Put("/acceptUser")
+    @ApiOperation({ summary: "add user to permission" })
+    async addUserToPermission(
+        @Req() req: AuthenticatedRequest,
+        @Body() dto: PermissionRequestAcceptUser
+    ): Promise<User> {
+        try {
+            checkIfUserHasAccessToOrganization(
+                req,
+                dto.organizationId,
+                OrganizationAccessScope.UserAdministrationWrite
+            );
+
+            const permissions = await this.permissionService.findOneWithRelations(
+                dto.organizationId
+                );
+
+            const org: Organization = this.organizationService.mapPermissionsToOneOrganization(
+                permissions
+            );
+
+            const user: User = await this.userService.findOne(dto.userId);
+            const newUserPermissions: Permission[] = [];
+
+            for (const orgPermission of org.permissions) {
+                if (dto.permissionIds.includes(orgPermission.id)) {
+                    newUserPermissions.push(orgPermission);
+                }
+            }
+
+            const resultUser = await this.userService.acceptUser(user, org, newUserPermissions);
+
+            AuditLog.success(
+                ActionType.UPDATE,
+                Permission.name,
+                req.user.userId,
+                resultUser.id,
+                resultUser.name
+            );
+            return resultUser;
+
+        } catch (err) {
+            AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId);
+            throw err;
+        }
+    }
+
     @Put(":id")
     @ApiOperation({ summary: "Update permission" })
     @UserAdmin()
@@ -102,13 +154,12 @@ export class PermissionController {
     ): Promise<Permission> {
         try {
             const permission = await this.permissionService.getPermission(id);
-            if (permission.type == PermissionType.GlobalAdmin) {
+            if (permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)) {
                 checkIfUserIsGlobalAdmin(req);
             } else {
-                const organizationPermission = permission as OrganizationPermission;
                 checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id,
+                    permission.organization.id,
                     OrganizationAccessScope.UserAdministrationWrite
                 );
             }
@@ -142,13 +193,12 @@ export class PermissionController {
     ): Promise<DeleteResponseDto> {
         try {
             const permission = await this.permissionService.getPermission(id);
-            if (permission.type == PermissionType.GlobalAdmin) {
+            if (permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)) {
                 throw new BadRequestException("You cannot delete GlobalAdmin");
             } else {
-                const organizationPermission = permission as OrganizationPermission;
                 checkIfUserHasAccessToOrganization(
                     req,
-                    organizationPermission.organization.id,
+                    permission.organization.id,
                     OrganizationAccessScope.UserAdministrationWrite
                 );
             }
@@ -196,18 +246,17 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return permission;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id,
+                permission.organization.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
-            return organizationPermission;
+            return permission;
         }
     }
 
@@ -233,14 +282,13 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return await applicationsPromise;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission.organization.id,
+                permission.organization.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
@@ -267,14 +315,13 @@ export class PermissionController {
 
         if (
             req.user.permissions.isGlobalAdmin ||
-            permission.type == PermissionType.GlobalAdmin
+            permission.type.some(({ type }) => type === PermissionType.GlobalAdmin)
         ) {
             return await users;
         } else {
-            const organizationPermission = permission as OrganizationPermission;
             checkIfUserHasAccessToOrganization(
                 req,
-                organizationPermission?.organization?.id,
+                permission?.organization?.id,
                 OrganizationAccessScope.UserAdministrationWrite
             );
 

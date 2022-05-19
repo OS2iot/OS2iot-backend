@@ -16,15 +16,15 @@ type PermissionInfo = {
 };
 
 type UserPermissionInfo = PermissionInfo & {
-    userId?: number;
+    userIds?: number[];
 };
 
 type AppPermissionInfo = PermissionInfo & {
-    applicationId?: number;
+    applicationIds?: number[];
 };
 
 type ApiKeyPermissionInfo = PermissionInfo & {
-	apiKeyId?: number;
+	apiKeyIds?: number[];
 }
 
 type UserPermissions = {
@@ -32,33 +32,42 @@ type UserPermissions = {
     permissionId: number;
 }[];
 
-export class revisedPermissions1651142158492 implements MigrationInterface {    
-	name = "revisedPermissions1651142158492";
+/**
+ * Create a temporary enum which is a union of both old and new enum values
+ */
+const permissionTypeUnionName = "permission_type_enum_temp";
+const createPermissionTypeUnionSql = `CREATE TYPE "${permissionTypeUnionName}" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`;
+
+export class revisedPermissions1652951529000 implements MigrationInterface {
+	name = "revisedPermissions1652951529000";
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TYPE "public"."permission_type_enum" RENAME TO "permission_type_enum_old"`
         );
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
+            `CREATE TYPE "permission_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read')`
         );
 
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
         // Must be resolved by a user administrator or above or directly on the database
         await this.migrateUp(queryRunner);
-
-        // await queryRunner.query(
-        //     `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
-        // );
         await queryRunner.query(`DROP TYPE "permission_type_enum_old"`);
-        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
+
+        // Update permission so it can refer to multiple types
+        await this.migratePermissionTypeUp(queryRunner);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
         await queryRunner.query(
             `CREATE TYPE "permission_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationAdmin', 'Write', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
         );
+        // Create a temporary enum which is a union of both old and new enum values
+        await queryRunner.query(createPermissionTypeUnionSql);
+
+        // Revert permission so each one only has exactly one type (level)
+        await this.migratePermissionTypeDown(queryRunner);
+        await queryRunner.query(`COMMENT ON COLUMN "permission"."type" IS NULL`);
 
         // Migrates existing data. This can result in duplicate permissions and duplicates of its dependents
         // ASSUMPTION: this migration is only reverted immediately after executing it.
@@ -69,19 +78,17 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_old" USING "type"::"text"::"permission_type_enum_old"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum"`);
+        await queryRunner.query(`DROP TYPE IF EXISTS "permission_type_enum"`);
         await queryRunner.query(
             `ALTER TYPE "permission_type_enum_old" RENAME TO  "permission_type_enum"`
         );
+
     }
 
     private async migrateUp(queryRunner: QueryRunner): Promise<void> {
-        // Create a temporary enum which is a union of both old and new enum values
+        await queryRunner.query(createPermissionTypeUnionSql);
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
-        );
-        await queryRunner.query(
-            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
+            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "${permissionTypeUnionName}" USING "type"::"text"::"${permissionTypeUnionName}"`
         );
 
         // When migrating permisisons tied to old permission types, we need to keep track of the old id. This is for updating any dependents
@@ -142,38 +149,15 @@ export class revisedPermissions1651142158492 implements MigrationInterface {
 
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
+        await this.cleanupPermissionRelations(queryRunner, "'Write', 'OrganizationAdmin'");
 
-        await queryRunner.query(`DELETE FROM user_permissions_permission
-WHERE "permissionId" IN
-( 
-    SELECT "permission"."id" FROM user_permissions_permission
-    JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-);`);
-
-		await queryRunner.query(`DELETE FROM application_permissions_permission
-WHERE "permissionId" IN
-( 
-    SELECT "permission"."id" FROM application_permissions_permission
-    JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-)`);
-
-		await queryRunner.query(`DELETE FROM api_key_permissions_permission
-WHERE "permissionId" IN
-( 
-    SELECT "permission"."id" FROM api_key_permissions_permission
-    JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
-    WHERE permission.type IN ('Write', 'OrganizationAdmin')
-)`);
-		
         await queryRunner.query(
             `DELETE FROM "public"."permission" where type IN ('OrganizationAdmin', 'Write')`
         );
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum" USING "type"::"text"::"permission_type_enum"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+        await queryRunner.query(`DROP TYPE "${permissionTypeUnionName}"`);
     }
 
     private async migrateUserPermissions(
@@ -256,10 +240,12 @@ returning id, "permission"."clonedFromId"`;
         infos: UserPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = userPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, userId: match.userId } : info;
+            const matches = userPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches.length
+                ? { ...info, userIds: matches.map(x => x.userId) }
+                : info;
         });
-        return mappedInfos.filter(info => typeof info.userId === "number");
+        return mappedInfos.filter(info => info.userIds?.length);
     }
 
     private mapAppPermissions(
@@ -267,10 +253,12 @@ returning id, "permission"."clonedFromId"`;
         infos: AppPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = appPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, applicationId: match.applicationId } : info;
+            const matches = appPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches.length
+                ? { ...info, applicationIds: matches.map(x => x.applicationId) }
+                : info;
         });
-        return mappedInfos.filter(info => typeof info.applicationId === "number");
+        return mappedInfos.filter(info => info.applicationIds?.length);
     }
 
 	private mapApiKeyPermissions(
@@ -278,17 +266,17 @@ returning id, "permission"."clonedFromId"`;
         infos: ApiKeyPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = apiKeyPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, apiKeyId: match.apiKeyId } : info;
+            const matches = apiKeyPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches ? { ...info, apiKeyIds: matches.map(x => x.apiKeyId) } : info;
         });
-        return mappedInfos.filter(info => typeof info.apiKeyId === "number");
+        return mappedInfos.filter(info => info.apiKeyIds?.length);
     }
 
     private copyUserPermissionsQuery(infos: UserPermissionInfo[]): string {
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.userId}, ${info.id})`)
+            .map(info => info.userIds.map(userId => `(${userId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."user_permissions_permission"("userId","permissionId") VALUES
         ${insertIntoStatements}`;
@@ -298,7 +286,7 @@ returning id, "permission"."clonedFromId"`;
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.applicationId}, ${info.id})`)
+            .map(info => info.applicationIds.map(appId => `(${appId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."application_permissions_permission"("applicationId","permissionId") VALUES
         ${insertIntoStatements}`;
@@ -308,19 +296,41 @@ returning id, "permission"."clonedFromId"`;
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.apiKeyId}, ${info.id})`)
+            .map(info => info.apiKeyIds.map(keyId => `(${keyId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."api_key_permissions_permission"("apiKeyId","permissionId") VALUES
         ${insertIntoStatements}`;
     }
 
+    private async migratePermissionTypeUp(queryRunner: QueryRunner) {
+        await queryRunner.query(`DROP INDEX "public"."IDX_71bf2818fb2ad92e208d7aeadf"`);
+        await queryRunner.query(`CREATE TYPE "public"."permission_type_type_enum" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read')`);
+        await queryRunner.query(`CREATE TABLE "permission_type" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "type" "public"."permission_type_type_enum" NOT NULL, "createdById" integer, "updatedById" integer, "permissionId" integer, CONSTRAINT "PK_3f2a17e0bff1bc4e34254b27d78" PRIMARY KEY ("id"))`);
+
+        const fetchAllPermissions = `select "createdAt",
+        "updatedAt",
+        -- Casting from one enum to another requires casting it to text first
+        type::text::"public"."permission_type_type_enum",
+        "createdById",
+        "updatedById",
+        "id" AS "permissionId"
+ from "public"."permission"`;
+
+        // For each permission, create a corresponding permission type
+        await queryRunner.query(`INSERT INTO "public"."permission_type"("createdAt","updatedAt",type,"createdById","updatedById","permissionId")
+        ${fetchAllPermissions}`);
+
+        await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "type"`);
+        await queryRunner.query(`DROP TYPE "public"."permission_type_enum"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848" FOREIGN KEY ("updatedById") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b" FOREIGN KEY ("permissionId") REFERENCES "permission"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "permission_type" ADD CONSTRAINT "UQ_3acd70f5a3895ee2fb92b2a4290" UNIQUE ("type", "permissionId")`);
+    }
+
     private async migrateDown(queryRunner: QueryRunner): Promise<void> {
-        // Create a temporary enum which is a union of both old and new enum values
         await queryRunner.query(
-            `CREATE TYPE "permission_type_enum_temp" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`
-        );
-        await queryRunner.query(
-            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_temp" USING "type"::"text"::"permission_type_enum_temp"`
+            `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "${permissionTypeUnionName}" USING "type"::"text"::"${permissionTypeUnionName}"`
         );
 
         // When migrating permisisons tied to old permission types, we need to keep track of the old id. This is for updating any dependents
@@ -328,7 +338,7 @@ returning id, "permission"."clonedFromId"`;
             `ALTER TABLE "permission" ADD COLUMN "clonedFromId" integer`
         );
 
-        // Begin cloning. Store both the old and new ids as mappings
+        // Begin cloning. Store both the old and new ids as mappings. The clone must not have access to more than the original.
         const readFromUserAdminInfo: PermissionInfo[] = await queryRunner.query(
             this.copyPermissionsQuery("OrganizationUserAdmin", "Read")
         );
@@ -361,14 +371,98 @@ returning id, "permission"."clonedFromId"`;
             writeFromApplicationAdminInfo
         );
 
+        await this.migrateApiKeyPermissions(
+            queryRunner,
+            readFromUserAdminInfo,
+            readFromGatewayAdminInfo,
+            readFromApplicationAdminInfo,
+            writeFromApplicationAdminInfo
+        );
+
         // Cleanup
         await queryRunner.query(`ALTER TABLE "permission" DROP COLUMN "clonedFromId"`);
+        await this.cleanupPermissionRelations(queryRunner, "'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin'");
+
         await queryRunner.query(
             `DELETE FROM "public"."permission" where type IN ('OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin')`
         );
         await queryRunner.query(
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "permission_type_enum_old" USING "type"::"text"::"permission_type_enum_old"`
         );
-        await queryRunner.query(`DROP TYPE "permission_type_enum_temp"`);
+        await queryRunner.query(`DROP TYPE "${permissionTypeUnionName}"`);
+    }
+
+    private async migratePermissionTypeDown(queryRunner: QueryRunner) {
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "UQ_3acd70f5a3895ee2fb92b2a4290"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_b8613564bc719a6e37ff0ba243b"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_6ebf76b0f055fe09e42edfe4848"`);
+        await queryRunner.query(`ALTER TABLE "permission_type" DROP CONSTRAINT "FK_abd46fe625f90edc07441bd0bb2"`);
+
+        // Add permission level "type". It's nullable to make the migration possible
+        await queryRunner.query(`ALTER TABLE "permission" ADD "type" "${permissionTypeUnionName}"`);
+
+        // Temporary table with every permission settable by a client prioritized. Any permission with an unknown type is ignored.
+        // Unless otherwise specified, the table is automatically dropped after session end.
+        await queryRunner.query(`CREATE TEMP TABLE "permission_type_priority" ON COMMIT DROP AS
+        SELECT * FROM (
+            VALUES
+                ('GlobalAdmin'::text, 0),
+                ('OrganizationUserAdmin'::text, 10),
+                ('OrganizationApplicationAdmin'::text, 20),
+                ('OrganizationGatewayAdmin'::text, 30),
+                ('Read'::text, 40)
+        ) as t (type, priority)`);
+
+        // Migrate permission levels
+        await queryRunner.query(`UPDATE
+        public.permission pm
+    SET
+        -- The column is updated for each row with identical "permissionId"
+        -- Casting from one enum to another requires casting it to text first
+        type = highestPmType.type::text::${permissionTypeUnionName}
+    FROM
+    (
+        SELECT pt.*
+        FROM permission_type_priority ptp
+        JOIN permission_type pt ON ptp.type::${permissionTypeUnionName} = pt.type::text::${permissionTypeUnionName}
+        -- Order from lowest to highest priority. The last update for any given permission
+        -- thus be the type with highest priority (lowest value)
+        ORDER BY ptp.priority DESC
+    ) highestPmType
+    WHERE
+        pm.id = highestPmType."permissionId"`)
+
+        // Cleanup. If setting "type" to non-nullable fails, then there exists permissions without any level.
+        // This should not happen. Review them manually.
+        await queryRunner.query(`ALTER TABLE "permission" ALTER COLUMN "type" SET NOT NULL`);
+        await queryRunner.query(`DROP TABLE "permission_type"`);
+        await queryRunner.query(`DROP TYPE "public"."permission_type_type_enum"`);
+        await queryRunner.query(`CREATE INDEX "IDX_71bf2818fb2ad92e208d7aeadf" ON "permission" ("type") `);
+    }
+
+    private async cleanupPermissionRelations(queryRunner: QueryRunner, permissionTypesToRemove: string) {
+        await queryRunner.query(`DELETE FROM user_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM user_permissions_permission
+    JOIN permission ON permission.id = "public"."user_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+);`);
+
+		await queryRunner.query(`DELETE FROM application_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM application_permissions_permission
+    JOIN permission ON permission.id = "public"."application_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+)`);
+
+		await queryRunner.query(`DELETE FROM api_key_permissions_permission
+WHERE "permissionId" IN
+(
+    SELECT "permission"."id" FROM api_key_permissions_permission
+    JOIN permission ON permission.id = "public"."api_key_permissions_permission"."permissionId"
+    WHERE permission.type IN (${permissionTypesToRemove})
+)`);
     }
 }

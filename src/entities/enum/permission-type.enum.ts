@@ -4,8 +4,4 @@ export enum PermissionType {
     OrganizationGatewayAdmin = "OrganizationGatewayAdmin",
     OrganizationApplicationAdmin = "OrganizationApplicationAdmin",
     Read = "Read",
-
-    OrganizationPermission = "OrganizationPermission",
-    OrganizationApplicationPermissions = "OrganizationApplicationPermissions",
-    ApiKeyPermission = "ApiKeyPermission",
 }

@@ -39,6 +39,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { UserService } from "@services/user-management/user.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -48,7 +49,9 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 @Controller("organization")
 @GlobalAdmin()
 export class OrganizationController {
-    constructor(private organizationService: OrganizationService) {}
+    constructor(
+        private organizationService: OrganizationService,
+    ) {}
     private readonly logger = new Logger(OrganizationController.name);
 
     @Post()

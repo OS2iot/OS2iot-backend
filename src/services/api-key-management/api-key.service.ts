@@ -4,7 +4,6 @@ import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
 import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-response.dto";
 import { ListAllApiKeysDto } from "@dto/api-key/list-all-api-keys.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
-import { ApiKeyPermission } from "@entities/api-key-permission.entity";
 import { ApiKey } from "@entities/api-key.entity";
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -102,7 +101,7 @@ export class ApiKeyService {
             );
 
             apiKey.permissions = permissionsDb.map(
-                pm => ({ ...pm, apiKeys: null } as ApiKeyPermission)
+                pm => ({ ...pm, apiKeys: null })
             );
         }
 

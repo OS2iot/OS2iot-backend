@@ -49,7 +49,7 @@ export class SigFoxListenerController {
         const sigfoxDevice = await this.findSigFoxDevice(data);
 
         const dataAsString = JSON.stringify(data);
-        await this.receiveDataService.sendToKafka(
+        await this.receiveDataService.sendRawIotDeviceRequestToKafka(
             sigfoxDevice,
             dataAsString,
             IoTDeviceType.SigFox.toString(),

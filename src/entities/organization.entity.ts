@@ -1,13 +1,13 @@
-import { Column, Entity, OneToMany, Unique } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, Unique } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
-import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { Permission } from "@entities/permissions/permission.entity";
 
 import { SigFoxGroup } from "./sigfox-group.entity";
 import { DeviceModel } from "./device-model.entity";
+import { User } from "./user.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -25,7 +25,7 @@ export class Organization extends DbBaseEntity {
 
     @OneToMany(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => OrganizationPermission,
+        type => Permission,
         permission => permission.organization,
         { onDelete: "CASCADE" }
     )
@@ -52,4 +52,9 @@ export class Organization extends DbBaseEntity {
         nullable: true,
     })
     deviceModels?: DeviceModel[];
+
+    @ManyToMany(_ => User, user => user.requestedOrganizations, {
+        nullable: true,
+    })
+    awaitingUsers?: User[];
 }

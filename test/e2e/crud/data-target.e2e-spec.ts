@@ -245,6 +245,8 @@ describe("DataTargetController (e2e)", () => {
             url: "http://example.com/test-endepunkt",
             timeout: 3000,
             authorizationHeader: null,
+            tenant: '',
+            context: '',
         };
 
         await request(app.getHttpServer())
@@ -338,6 +340,8 @@ describe("DataTargetController (e2e)", () => {
             url: "http://example.com/test-endepunkt",
             timeout: 3000,
             authorizationHeader: null,
+            tenant: '',
+            context: '',
         };
 
         await request(app.getHttpServer())
@@ -378,6 +382,8 @@ describe("DataTargetController (e2e)", () => {
                 authorEmail: "e2e@test.dk",
                 resourceTitle: "Rumsensor2",
             },
+            tenant: '',
+            context: '',
         };
 
         await request(app.getHttpServer())
@@ -421,6 +427,8 @@ describe("DataTargetController (e2e)", () => {
                 authorEmail: "e2e@test.dk",
                 resourceTitle: "Rumsensor2",
             },
+            tenant: '',
+            context: '',
         };
 
         await request(app.getHttpServer())

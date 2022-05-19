@@ -31,7 +31,6 @@ import {
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { LoginDto } from "@dto/login.dto";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/permissions/organization-permission.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { AuthService } from "@services/user-management/auth.service";
