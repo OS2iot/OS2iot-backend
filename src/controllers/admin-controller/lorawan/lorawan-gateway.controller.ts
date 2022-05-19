@@ -11,7 +11,6 @@ import { Controller, Get, Param, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
-import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 
 @ApiTags("LoRaWAN gateway")
 @Controller("lorawan/gateway")

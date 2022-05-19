@@ -137,7 +137,6 @@ export class PermissionController {
                 resultUser.name
             );
             return resultUser;
-
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId);
             throw err;
