@@ -16,15 +16,15 @@ type PermissionInfo = {
 };
 
 type UserPermissionInfo = PermissionInfo & {
-    userId?: number;
+    userIds?: number[];
 };
 
 type AppPermissionInfo = PermissionInfo & {
-    applicationId?: number;
+    applicationIds?: number[];
 };
 
 type ApiKeyPermissionInfo = PermissionInfo & {
-	apiKeyId?: number;
+	apiKeyIds?: number[];
 }
 
 type UserPermissions = {
@@ -38,8 +38,8 @@ type UserPermissions = {
 const permissionTypeUnionName = "permission_type_enum_temp";
 const createPermissionTypeUnionSql = `CREATE TYPE "${permissionTypeUnionName}" AS ENUM('OrganizationAdmin', 'Write', 'GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read', 'OrganizationPermission', 'OrganizationApplicationPermissions', 'ApiKeyPermission')`;
 
-export class revisedPermissions1651142158492 implements MigrationInterface {
-	name = "revisedPermissions1651142158492";
+export class revisedPermissions1652951529000 implements MigrationInterface {
+	name = "revisedPermissions1652951529000";
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
@@ -240,10 +240,12 @@ returning id, "permission"."clonedFromId"`;
         infos: UserPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = userPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, userId: match.userId } : info;
+            const matches = userPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches.length
+                ? { ...info, userIds: matches.map(x => x.userId) }
+                : info;
         });
-        return mappedInfos.filter(info => typeof info.userId === "number");
+        return mappedInfos.filter(info => info.userIds?.length);
     }
 
     private mapAppPermissions(
@@ -251,10 +253,12 @@ returning id, "permission"."clonedFromId"`;
         infos: AppPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = appPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, applicationId: match.applicationId } : info;
+            const matches = appPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches.length
+                ? { ...info, applicationIds: matches.map(x => x.applicationId) }
+                : info;
         });
-        return mappedInfos.filter(info => typeof info.applicationId === "number");
+        return mappedInfos.filter(info => info.applicationIds?.length);
     }
 
 	private mapApiKeyPermissions(
@@ -262,17 +266,17 @@ returning id, "permission"."clonedFromId"`;
         infos: ApiKeyPermissionInfo[]
     ): PermissionInfo[] {
         const mappedInfos = infos.map(info => {
-            const match = apiKeyPermissions.find(p => p.permissionId === info.clonedFromId);
-            return match ? { ...info, apiKeyId: match.apiKeyId } : info;
+            const matches = apiKeyPermissions.filter(p => p.permissionId === info.clonedFromId);
+            return matches ? { ...info, apiKeyIds: matches.map(x => x.apiKeyId) } : info;
         });
-        return mappedInfos.filter(info => typeof info.apiKeyId === "number");
+        return mappedInfos.filter(info => info.apiKeyIds?.length);
     }
 
     private copyUserPermissionsQuery(infos: UserPermissionInfo[]): string {
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.userId}, ${info.id})`)
+            .map(info => info.userIds.map(userId => `(${userId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."user_permissions_permission"("userId","permissionId") VALUES
         ${insertIntoStatements}`;
@@ -282,7 +286,7 @@ returning id, "permission"."clonedFromId"`;
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.applicationId}, ${info.id})`)
+            .map(info => info.applicationIds.map(appId => `(${appId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."application_permissions_permission"("applicationId","permissionId") VALUES
         ${insertIntoStatements}`;
@@ -292,7 +296,7 @@ returning id, "permission"."clonedFromId"`;
         if (!infos.length) return "";
 
         const insertIntoStatements = infos
-            .map(info => `(${info.apiKeyId}, ${info.id})`)
+            .map(info => info.apiKeyIds.map(keyId => `(${keyId}, ${info.id})`))
             .join(",");
         return `INSERT INTO "public"."api_key_permissions_permission"("apiKeyId","permissionId") VALUES
         ${insertIntoStatements}`;
