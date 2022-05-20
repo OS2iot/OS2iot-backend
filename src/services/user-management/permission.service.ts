@@ -406,7 +406,7 @@ export class PermissionService {
             .leftJoin("permission.apiKeys", "apiKey")
             .leftJoin("permission.type", "type")
             .where("type.type = :permType AND apiKey.id = :id", {
-                permType: PermissionType.OrganizationUserAdmin,
+                permType: PermissionType.OrganizationApplicationAdmin,
                 id: apiKeyId,
             })
             .getRawMany();
@@ -429,7 +429,7 @@ export class PermissionService {
         apiKeyId: number
     ): Promise<UserPermissions> {
         let permissions = await this.findPermissionsForApiKey(apiKeyId);
-        if (this.isOrganizationUserAdmin(permissions)) {
+        if (this.isOrganizationApplicationAdmin(permissions)) {
             // For organization admins, we need to fetch all applications they have permissions to
             const permissionsForOrgAdmin = await this.findPermissionsForApiKeyOrgAdminWithApplications(
                 apiKeyId
@@ -468,12 +468,6 @@ export class PermissionService {
     private isOrganizationApplicationAdmin(permissions: PermissionMinimalDto[]) {
         return permissions.some(
             x => x.permission_type_type == PermissionType.OrganizationApplicationAdmin
-        );
-    }
-
-    private isOrganizationUserAdmin(permissions: PermissionMinimalDto[]) {
-        return permissions.some(
-            x => x.permission_type_type == PermissionType.OrganizationUserAdmin
         );
     }
 

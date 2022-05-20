@@ -65,10 +65,8 @@ export class DataTargetController {
                 query.applicationId = +query.applicationId;
             }
 
+            checkIfUserHasAccessToApplication(req, query.applicationId, ApplicationAccessScope.Read);
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-            if (+query.applicationId && !allowed.some(x => x === +query.applicationId)) {
-                throw new UnauthorizedException();
-            }
 
             return await this.dataTargetService.findAndCountAllWithPagination(
                 query,
