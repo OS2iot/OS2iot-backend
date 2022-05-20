@@ -34,7 +34,7 @@ import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chi
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasAccessToOrganization, OrganizationAccessScope, checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
+import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
@@ -155,7 +155,7 @@ export class IoTDeviceController {
         @Body() createDto: CreateIoTDeviceDto
     ): Promise<IoTDevice> {
         try {
-            checkIfUserHasAccessToOrganization(req, createDto.applicationId, OrganizationAccessScope.ApplicationWrite);
+            checkIfUserHasAccessToApplication(req, createDto.applicationId, ApplicationAccessScope.Write);
             const device = await this.iotDeviceService.create(createDto, req.user.userId);
             AuditLog.success(
                 ActionType.CREATE,
@@ -192,7 +192,7 @@ export class IoTDeviceController {
             if (!device) {
                 throw new NotFoundException();
             }
-            checkIfUserHasAccessToOrganization(req, device?.application?.id, OrganizationAccessScope.ApplicationWrite);
+            checkIfUserHasAccessToApplication(req, device?.application?.id, ApplicationAccessScope.Write);
             const result = await this.downlinkService.createDownlink(dto, device);
             AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
             return result;
@@ -217,10 +217,10 @@ export class IoTDeviceController {
             false
         );
         try {
-            checkIfUserHasAccessToOrganization(req, oldIotDevice.application.id, OrganizationAccessScope.ApplicationWrite);
+            checkIfUserHasAccessToApplication(req, oldIotDevice.application.id, ApplicationAccessScope.Write);
             if (updateDto.applicationId !== oldIotDevice.application.id) {
                 // New application
-                checkIfUserHasAccessToOrganization(req, updateDto.applicationId, OrganizationAccessScope.ApplicationWrite);
+                checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
             }
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
@@ -250,9 +250,9 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Body() createDto: CreateIoTDeviceBatchDto
     ): Promise<IotDeviceBatchResponseDto[]> {
-        try {            
+        try {
             createDto.data.forEach(createDto => checkIfUserHasAccessToApplication(req, createDto.applicationId, ApplicationAccessScope.Write));
-            
+
             const devices = await this.iotDeviceService.createMany(
                 createDto.data,
                 req.user.userId
@@ -348,7 +348,7 @@ export class IoTDeviceController {
                 id,
                 false
             );
-            checkIfUserHasAccessToOrganization(req, oldIotDevice?.application?.id, OrganizationAccessScope.ApplicationWrite);
+            checkIfUserHasAccessToApplication(req, oldIotDevice?.application?.id, ApplicationAccessScope.Write);
             const result = await this.iotDeviceService.delete(oldIotDevice);
             AuditLog.success(ActionType.DELETE, IoTDevice.name, req.user.userId, id);
             return new DeleteResponseDto(result.affected);

@@ -374,7 +374,7 @@ export class PermissionService {
             .getRawMany();
     }
 
-       async findPermissionsForOrgAdminWithApplications(
+    async findPermissionsForOrgAdminWithApplications(
         userId: number
     ): Promise<PermissionMinimalDto[]> {
         return await this.buildPermissionsWithApplicationsQuery()
@@ -404,7 +404,8 @@ export class PermissionService {
     ): Promise<PermissionMinimalDto[]> {
         return await this.buildPermissionsWithApplicationsQuery()
             .leftJoin("permission.apiKeys", "apiKey")
-            .where("permission.type = :permType AND apiKey.id = :id", {
+            .leftJoin("permission.type", "type")
+            .where("type.type = :permType AND apiKey.id = :id", {
                 permType: PermissionType.OrganizationUserAdmin,
                 id: apiKeyId,
             })
