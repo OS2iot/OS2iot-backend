@@ -1,11 +1,15 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { StringToNumber } from "@helpers/string-to-number-validator";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
 
 export class ListAllApplicationsDto extends ListAllEntitiesDto {
-    @ApiPropertyOptional({ description: "Filter to one organization" })
+    @IsSwaggerOptional({ description: "Filter to one organization" })
+    @StringToNumber()
     organizationId?: number;
 
-    @ApiPropertyOptional({ description: "Filter to one permission" })
+    @IsSwaggerOptional({ description: "Filter to one permission" })
+    @StringToNumber()
     permissionId?: number;
 }

@@ -44,6 +44,7 @@ import { Organization } from "@entities/organization.entity";
 import { RejectUserDto } from "@dto/user-management/reject-user.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UserAdmin()
 @ApiBearerAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -59,14 +60,12 @@ export class UserController {
 
     @Get("minimal")
     @ApiOperation({ summary: "Get all id,names of users" })
-    @Read()
     async findAllMinimal(): Promise<ListAllUsersMinimalResponseDto> {
         return await this.userService.findAllMinimal();
     }
 
     @Post()
     @ApiOperation({ summary: "Create a new User" })
-    @UserAdmin()
     async create(
         @Req() req: AuthenticatedRequest,
         @Body() createUserDto: CreateUserDto
@@ -120,7 +119,6 @@ export class UserController {
 
     @Put(":id")
     @ApiOperation({ summary: "Change a user" })
-    @UserAdmin()
     async update(
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
@@ -170,7 +168,6 @@ export class UserController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
-    @Read()
     async find(
         @Param("id", new ParseIntPipe()) id: number,
         @Query("extendedInfo") extendedInfo?: boolean
