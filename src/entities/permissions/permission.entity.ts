@@ -44,7 +44,7 @@ export class Permission extends DbBaseEntity {
     @ManyToMany(() => Application, application => application.permissions)
     applications: Application[];
 
-    // ORM-specific column for extracting the id of the application
+    // ORM-specific column for extracting only the ids of related applications
     @RelationId(nameof<Permission>("applications"))
     applicationIds: Application["id"][];
 

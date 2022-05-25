@@ -51,12 +51,13 @@ export class revisedPermissions1652951529000 implements MigrationInterface {
         );
         await queryRunner.query(createPermissionTypeUnionSql);
 
-        // Update permission so it can refer to multiple types
+        // Migrate permission types to the new permission type table without altering them
         await this.migratePermissionTypeUp(queryRunner);
-        // Migrates existing data.
+        // Migrate existing data. Old permission levels are updated to the new ones
         await this.migratePermissionUp(queryRunner);
-        await this.migratePermissionTypeUpCleanup(queryRunner);
 
+        // Cleanup
+        await this.migratePermissionTypeUpCleanup(queryRunner);
         await queryRunner.query(`DROP TYPE "${permissionTypeUnionName}"`);
         await queryRunner.query(`DROP TYPE "permission_type_enum_old"`);
     }
@@ -92,7 +93,7 @@ export class revisedPermissions1652951529000 implements MigrationInterface {
             `ALTER TABLE "permission" ALTER COLUMN "type" TYPE "${permissionTypeUnionName}" USING "type"::"text"::"${permissionTypeUnionName}"`
         );
 
-        // Begin migrating to the new permission types
+        // Begin migrating to the new permission types.
         await queryRunner.query(
             this.copyPermissionTypeQuery("OrganizationAdmin", "OrganizationUserAdmin")
         );
@@ -102,18 +103,20 @@ export class revisedPermissions1652951529000 implements MigrationInterface {
                 "OrganizationApplicationAdmin"
             )
         );
+        // OrganizationAdmin has access to all applications despite not being mapped.
+        // The new system requires an application admin to be mapped to an application to access it
         await this.migrateApplicationsForOrganizationAdminsUp(queryRunner);
-        await queryRunner.query(
-            this.copyPermissionTypeQuery("Write", "OrganizationApplicationAdmin")
-        );
-        await queryRunner.query(this.copyPermissionTypeQuery("Write", "Read"));
-
         await queryRunner.query(
             this.copyPermissionTypeQuery("OrganizationAdmin", "OrganizationGatewayAdmin")
         );
         await queryRunner.query(
             this.copyPermissionTypeQuery("OrganizationAdmin", "Read")
         );
+
+        await queryRunner.query(
+            this.copyPermissionTypeQuery("Write", "OrganizationApplicationAdmin")
+        );
+        await queryRunner.query(this.copyPermissionTypeQuery("Write", "Read"));
     }
 
     private async migrateUserPermissions(
@@ -320,7 +323,7 @@ from public.api_key_permissions_permission`);
      * @param queryRunner
      */
     private async migrateApplicationsForOrganizationAdminsUp(queryRunner: QueryRunner) {
-        // Organization admins have access to all applications despite not being explicitly mapped
+        // Get applications not mapped to existing organization admins
         const unmappedApplications: (Application & {
             permissionid: number;
         })[] = await queryRunner.query(`SELECT app.*
@@ -330,6 +333,7 @@ from public.api_key_permissions_permission`);
         JOIN public.permission_type pt ON pt."permissionId" = pm.id
         LEFT JOIN public.application_permissions_permission appPm ON appPm."permissionId" = pm."id"
         WHERE pt.type = 'OrganizationApplicationAdmin'
+        -- Ignore mapped applications
         AND appPm."applicationId" IS NULL
         AND appPm."permissionId" IS NULL`);
 
@@ -476,8 +480,8 @@ from public.api_key_permissions_permission`);
         SELECT pt.*
         FROM permission_type_priority ptp
         JOIN permission_type pt ON ptp.type::${permissionTypeUnionName} = pt.type::text::${permissionTypeUnionName}
-        -- Order from lowest to highest priority. The last update for any given permission
-        -- thus be the type with highest priority (lowest value)
+        -- Order specifically so that the last update, for any permission, is the type
+        -- with highest priority (lowest value)
         ORDER BY ptp.priority ASC
     ) highestPmType
     WHERE

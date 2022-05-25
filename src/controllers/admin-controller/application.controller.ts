@@ -108,7 +108,7 @@ export class ApplicationController {
         req: AuthenticatedRequest,
         query: ListAllApplicationsDto
     ) {
-        // If org admin give all
+        // User admins have access to all applications in the organization
         const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
         if (allFromOrg.some(x => x === query?.organizationId)) {
             return await this.applicationService.findAndCountWithPagination(query, [
@@ -116,7 +116,6 @@ export class ApplicationController {
             ]);
         }
 
-        // If not org admin only allowed ones
         const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
         return await this.applicationService.findAndCountInList(
             query,
