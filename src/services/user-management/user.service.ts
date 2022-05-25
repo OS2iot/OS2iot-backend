@@ -28,6 +28,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
 import { isPermissionType } from "@helpers/security-helper";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class UserService {
@@ -123,6 +124,9 @@ export class UserService {
     async findOneWithOrganizations(id: number): Promise<User> {
         return await this.userRepository.findOne(id, {
             relations: ["permissions", "permissions.organization", "permissions.type"],
+            loadRelationIds: {
+                relations: [`permissions.${nameof<Permission>("applicationIds")}`],
+            },
         });
     }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, forwardRef } from "@nestjs/common";
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as _ from "lodash";
 import {
@@ -32,6 +32,7 @@ import { isOrganizationApplicationPermission } from "@helpers/security-helper";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { PermissionCreator } from "@helpers/permission.helper";
 import { nameof } from "@helpers/type-helper";
+import { Translations } from "@config/constants/translations";
 
 @Injectable()
 export class PermissionService {
@@ -50,15 +51,14 @@ export class PermissionService {
         org: Organization,
         userId: number
     ): Promise<Permission[]> {
-        const { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission } = this.instantiateDefaultPermissions(org, userId);
+        const { readPermission, orgApplicationAdminPermission, orgAllAdminPermission } = this.instantiateDefaultPermissions(org, userId);
 
         // Use the manager since otherwise, we'd need a repository for each of them
         const entityManager = getManager();
         const r = await entityManager.save<Permission>([
             readPermission,
             orgApplicationAdminPermission,
-            orgAdminPermission,
-            orgGatewayAadminPermission,
+            orgAllAdminPermission,
         ]);
         r.forEach(val =>
             AuditLog.success(ActionType.CREATE, Permission.name, userId, val.id, val.name)
@@ -68,39 +68,49 @@ export class PermissionService {
 
     private instantiateDefaultPermissions(org: Organization, userId: number) {
         const nameSuffixSeparator = " - ";
-        const readSuffix = `${nameSuffixSeparator}${PermissionType.Read}`;
-        const organizationUserAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationUserAdmin}`;
-        const organizationGatewayAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationGatewayAdmin}`;
-        const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${PermissionType.OrganizationApplicationAdmin}`;
+        const allAdminSuffix = `${nameSuffixSeparator}${Translations.OrganizationAdmin}`;
+        const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${Translations.ApplicationAdmin}`;
+        const readSuffix = `${nameSuffixSeparator}${Translations.ReadLevel}`;
 
-        const readPermission = PermissionCreator.createRead(org.name + readSuffix, org, true);
+        const readPermission = PermissionCreator.createRead(
+            org.name + readSuffix,
+            org,
+            true
+        );
         const orgApplicationAdminPermission = PermissionCreator.createApplicationAdmin(
             org.name + organizationApplicationAdminSuffix,
             org,
             true
         );
-        const orgAdminPermission = PermissionCreator.createUserAdmin(
-            org.name + organizationUserAdminSuffix,
+        orgApplicationAdminPermission.type.push({
+            type: PermissionType.Read,
+        } as PermissionTypeEntity);
+
+        const orgAllAdminPermission = PermissionCreator.createUserAdmin(
+            org.name + allAdminSuffix,
             org
         );
-        const orgGatewayAadminPermission = PermissionCreator.createGatewayAdmin(
-            org.name + organizationGatewayAdminSuffix,
-            org
-        );
+        orgAllAdminPermission.type.push({
+            type: PermissionType.OrganizationApplicationAdmin,
+        } as PermissionTypeEntity);
+        orgAllAdminPermission.type.push({
+            type: PermissionType.OrganizationGatewayAdmin,
+        } as PermissionTypeEntity);
+        orgAllAdminPermission.type.push({
+            type: PermissionType.Read,
+        } as PermissionTypeEntity);
+
         this.setUserIdOnPermissions(readPermission, userId);
         this.setUserIdOnPermissions(orgApplicationAdminPermission, userId);
-        this.setUserIdOnPermissions(orgAdminPermission, userId);
-        this.setUserIdOnPermissions(orgGatewayAadminPermission, userId);
+        this.setUserIdOnPermissions(orgAllAdminPermission, userId);
 
         readPermission.createdBy = userId;
         readPermission.updatedBy = userId;
         orgApplicationAdminPermission.createdBy = userId;
         orgApplicationAdminPermission.updatedBy = userId;
-        orgAdminPermission.createdBy = userId;
-        orgAdminPermission.updatedBy = userId;
-        orgGatewayAadminPermission.createdBy = userId;
-        orgGatewayAadminPermission.updatedBy = userId;
-        return { readPermission, orgApplicationAdminPermission, orgAdminPermission, orgGatewayAadminPermission };
+        orgAllAdminPermission.createdBy = userId;
+        orgAllAdminPermission.updatedBy = userId;
+        return { readPermission, orgApplicationAdminPermission, orgAllAdminPermission };
     }
 
     private setUserIdOnPermissions(permission: Permission, userId: number) {
@@ -380,7 +390,7 @@ export class PermissionService {
         return await this.buildPermissionsWithApplicationsQuery()
             .leftJoin("permission.users", "user")
             .where("permission_type.type = :permType AND user.id = :id", {
-                permType: PermissionType.OrganizationApplicationAdmin,
+                permType: PermissionType.OrganizationUserAdmin,
                 id: userId,
             })
             .getRawMany();
@@ -406,7 +416,7 @@ export class PermissionService {
             .leftJoin("permission.apiKeys", "apiKey")
             .leftJoin("permission.type", "type")
             .where("type.type = :permType AND apiKey.id = :id", {
-                permType: PermissionType.OrganizationApplicationAdmin,
+                permType: PermissionType.OrganizationUserAdmin,
                 id: apiKeyId,
             })
             .getRawMany();
@@ -414,7 +424,7 @@ export class PermissionService {
 
     async findPermissionGroupedByLevelForUser(userId: number): Promise<UserPermissions> {
         let permissions = await this.findPermissionsForUser(userId);
-        if (this.isOrganizationApplicationAdmin(permissions)) {
+        if (this.hasAccessToAllApplicationsInOrganization(permissions)) {
             // For organization admins, we need to fetch all applications they have permissions to
             const permissionsForOrgAdmin = await this.findPermissionsForOrgAdminWithApplications(
                 userId
@@ -429,7 +439,7 @@ export class PermissionService {
         apiKeyId: number
     ): Promise<UserPermissions> {
         let permissions = await this.findPermissionsForApiKey(apiKeyId);
-        if (this.isOrganizationApplicationAdmin(permissions)) {
+        if (this.hasAccessToAllApplicationsInOrganization(permissions)) {
             // For organization admins, we need to fetch all applications they have permissions to
             const permissionsForOrgAdmin = await this.findPermissionsForApiKeyOrgAdminWithApplications(
                 apiKeyId
@@ -452,7 +462,9 @@ export class PermissionService {
             } else if (p.permission_type_type == PermissionType.OrganizationGatewayAdmin) {
                 res.orgToGatewayAdminPermissions.add(p.organization_id);
             } else if (p.permission_type_type == PermissionType.OrganizationUserAdmin) {
-                res.orgToUserAdminPermissions.add(p.organization_id);
+                // A user admin can map applications to permissions, so they should also
+                // have access to them
+                this.addOrUpdateApplicationIds(res.orgToUserAdminPermissions, p);
             } else if (p.permission_type_type == PermissionType.Read) {
                 this.addOrUpdateApplicationIds(res.orgToReadPermissions, p);
             }
@@ -465,9 +477,9 @@ export class PermissionService {
         return await this.permissionRepository.findByIds(ids);
     }
 
-    private isOrganizationApplicationAdmin(permissions: PermissionMinimalDto[]) {
+    private hasAccessToAllApplicationsInOrganization(permissions: PermissionMinimalDto[]) {
         return permissions.some(
-            x => x.permission_type_type == PermissionType.OrganizationApplicationAdmin
+            x => x.permission_type_type == PermissionType.OrganizationUserAdmin
         );
     }
 

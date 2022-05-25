@@ -3,13 +3,13 @@ import * as _ from "lodash";
 export class UserPermissions {
     constructor() {
         this.orgToReadPermissions = new Map();
-        this.orgToUserAdminPermissions = new Set();
+        this.orgToUserAdminPermissions = new Map();
         this.orgToGatewayAdminPermissions = new Set();
         this.orgToApplicationAdminPermissions = new Map();
     }
 
     orgToReadPermissions: Map<number, number[]>;
-    orgToUserAdminPermissions: Set<number>;
+    orgToUserAdminPermissions: Map<number, number[]>;
     orgToGatewayAdminPermissions: Set<number>;
     orgToApplicationAdminPermissions: Map<number, number[]>;
     isGlobalAdmin = false;
@@ -17,6 +17,7 @@ export class UserPermissions {
     getAllApplicationsWithAtLeastRead(): number[] {
         return _.union(
             this.extractValues(this.orgToReadPermissions),
+            this.extractValues(this.orgToUserAdminPermissions),
             this.getAllApplicationsWithAdmin()
         );
     }
@@ -35,12 +36,13 @@ export class UserPermissions {
     getAllOrganizationsWithAtLeastApplicationRead(): number[] {
         return _.union(
             this.extractKeys(this.orgToReadPermissions),
-            this.getAllOrganizationsWithApplicationAdmin()
+            this.getAllOrganizationsWithApplicationAdmin(),
+            this.getAllOrganizationsWithUserAdmin(),
         );
     }
 
     getAllOrganizationsWithUserAdmin(): number[] {
-        return Array.from(this.orgToUserAdminPermissions);
+        return this.extractKeys(this.orgToUserAdminPermissions);
     }
 
     getAllOrganizationsWithGatewayAdmin(): number[] {

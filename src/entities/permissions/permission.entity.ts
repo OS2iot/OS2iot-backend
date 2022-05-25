@@ -8,11 +8,13 @@ import {
     TableInheritance,
     OneToMany,
     ManyToOne,
+    RelationId,
 } from "typeorm";
 import { PermissionTypeEntity } from "./permission-type.entity";
 import { Application } from "@entities/application.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApiKey } from "@entities/api-key.entity";
+import { nameof } from "@helpers/type-helper";
 
 @Entity("permission")
 export class Permission extends DbBaseEntity {
@@ -41,6 +43,10 @@ export class Permission extends DbBaseEntity {
 
     @ManyToMany(() => Application, application => application.permissions)
     applications: Application[];
+
+    // ORM-specific column for extracting only the ids of related applications
+    @RelationId(nameof<Permission>("applications"))
+    applicationIds: Application["id"][];
 
     @Column({ nullable: true, default: false, type: Boolean })
     automaticallyAddNewApplications = false;
