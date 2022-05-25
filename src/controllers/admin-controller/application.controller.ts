@@ -109,8 +109,8 @@ export class ApplicationController {
         query: ListAllApplicationsDto
     ) {
         // If org admin give all
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
-        if (this.isOrganizationAdmin(allFromOrg, query)) {
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
+        if (allFromOrg.some(x => x === query?.organizationId)) {
             return await this.applicationService.findAndCountWithPagination(query, [
                 query.organizationId,
             ]);
@@ -123,10 +123,6 @@ export class ApplicationController {
             allowedApplications,
             [query.organizationId]
         );
-    }
-
-    private isOrganizationAdmin(allFromOrg: number[], query: ListAllApplicationsDto) {
-        return allFromOrg.some(x => x === query?.organizationId);
     }
 
     @Read()
