@@ -12,6 +12,7 @@ import {
     Query,
     Req,
     UseGuards,
+    ForbiddenException,
 } from "@nestjs/common";
 import { Logger } from "@nestjs/common";
 import {
@@ -166,6 +167,29 @@ export class UserController {
         return wasOk
     }
 
+    @Get("/awaitingUsers")
+    @ApiOperation({ summary: "Get awaiting users" })
+    async findAwaitingUsers(
+        @Req() req: AuthenticatedRequest,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        let organizationIds: number[] | undefined;
+
+        if (!req.user.permissions.isGlobalAdmin) {
+            organizationIds = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+            if (!organizationIds.length) {
+                throw new ForbiddenException();
+            }
+        }
+
+        try {
+            return await this.userService.getAwaitingUsers(query, organizationIds);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     async find(
@@ -191,18 +215,5 @@ export class UserController {
     @ApiOperation({ summary: "Get all users" })
     async findAll(@Query() query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         return await this.userService.findAll(query);
-    }
-
-    @Get("/awaitingUsers/:id")
-    @ApiOperation({ summary: "Get awaiting users" })
-    async findAwaitingUsers(
-        @Param("id", new ParseIntPipe()) organizationId: number,
-        @Query() query?: ListAllEntitiesDto
-    ): Promise<ListAllUsersResponseDto> {
-        try {
-            return await this.userService.getAwaitingUsers(organizationId, query);
-        } catch (err) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
     }
 }
