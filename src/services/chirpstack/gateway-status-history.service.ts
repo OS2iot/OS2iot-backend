@@ -91,6 +91,23 @@ export class GatewayStatusHistoryService {
         return this.mapStatusHistoryToGateway(gateway, statusHistories);
     }
 
+    public findLatestPerGateway(): Promise<GatewayStatusHistory[]> {
+        return this.gatewayStatusHistoryRepository
+            .createQueryBuilder("status_history")
+            .distinctOn([nameof<GatewayStatusHistory>("mac")])
+            .orderBy({
+                [nameof<GatewayStatusHistory>("mac")]: "ASC",
+                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+            })
+            .getMany();
+    }
+
+    public createMany(
+        histories: GatewayStatusHistory[]
+    ): Promise<GatewayStatusHistory[]> {
+        return this.gatewayStatusHistoryRepository.save(histories);
+    }
+
     private mergeStatusHistories(
         fromDate: Date,
         statusHistoriesInPeriod: GatewayStatusHistory[],
