@@ -69,10 +69,7 @@ export class ApplicationService {
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 organizationIds.length > 0
-                    ? [
-                          { id: In(allowedApplications) },
-                          { belongsTo: In(organizationIds) },
-                      ]
+                    ? { id: In(allowedApplications), belongsTo: In(organizationIds) }
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,

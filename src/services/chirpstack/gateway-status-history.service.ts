@@ -47,16 +47,7 @@ export class GatewayStatusHistoryService {
 
         // To know the status of each gateway up till the first status since the start date,
         // we must fetch the previous status
-        const latestStatusHistoryPerGatewayBeforePeriod = await this.gatewayStatusHistoryRepository
-            .createQueryBuilder("status_history")
-            .where("status_history.mac IN (:...gatewayIds)", { gatewayIds })
-            .andWhere("status_history.timestamp < :fromDate", { fromDate })
-            .distinctOn([nameof<GatewayStatusHistory>("mac")])
-            .orderBy({
-                [nameof<GatewayStatusHistory>("mac")]: "ASC",
-                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
-            })
-            .getMany();
+        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(gatewayIds, fromDate);
 
         const statusHistories = this.mergeStatusHistories(
             fromDate,
@@ -81,12 +72,20 @@ export class GatewayStatusHistoryService {
     ): Promise<GatewayStatus> {
         const fromDate = gatewayStatusIntervalToDate(timeInterval);
 
-        const statusHistories = await this.gatewayStatusHistoryRepository.find({
+        const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
             where: {
                 mac: gateway.id,
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
+
+        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate([gateway.id], fromDate);
+
+        const statusHistories = this.mergeStatusHistories(
+            fromDate,
+            statusHistoriesInPeriod,
+            latestStatusHistoryPerGatewayBeforePeriod
+        );
 
         return this.mapStatusHistoryToGateway(gateway, statusHistories);
     }
@@ -106,6 +105,19 @@ export class GatewayStatusHistoryService {
         histories: GatewayStatusHistory[]
     ): Promise<GatewayStatusHistory[]> {
         return this.gatewayStatusHistoryRepository.save(histories);
+    }
+
+    private fetchLatestStatusBeforeDate(gatewayIds: string[], date: Date) {
+        return this.gatewayStatusHistoryRepository
+            .createQueryBuilder("status_history")
+            .where("status_history.mac IN (:...gatewayIds)", { gatewayIds })
+            .andWhere("status_history.timestamp < :date", { date })
+            .distinctOn([nameof<GatewayStatusHistory>("mac")])
+            .orderBy({
+                [nameof<GatewayStatusHistory>("mac")]: "ASC",
+                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+            })
+            .getMany();
     }
 
     private mergeStatusHistories(
