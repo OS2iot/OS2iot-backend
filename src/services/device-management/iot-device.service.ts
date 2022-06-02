@@ -54,6 +54,7 @@ import { v4 as uuidv4 } from "uuid";
 import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
 import { subtractDays } from "@helpers/date.helper";
 import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
+import { Multicast } from "@entities/multicast.entity";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -467,15 +468,54 @@ export class IoTDeviceService {
     }
 
     async delete(device: IoTDevice): Promise<DeleteResult> {
-        if (device.type == IoTDeviceType.LoRaWAN) {
-            const lorawanDevice = device as LoRaWANDevice;
-            this.logger.debug(
-                `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
-            );
-            await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+        let deleteResult: DeleteResult = {
+            raw: null,
+            affected: 0
         }
 
-        return this.iotDeviceRepository.delete(device.id);
+        // If operations on chirpstack fail, rollback any mutations on the database
+        await getManager().transaction((async transactionManager => {
+            // Find and delete m-n relations with the device first
+            const iotDeviceRepository = transactionManager.getRepository(IoTDevice);
+            const multicastRepository = transactionManager.getRepository(Multicast);
+            // Get all multicasts. For some reason, filtering by device id won't return multicasts with all devices
+            const _multicasts = await multicastRepository
+                .createQueryBuilder("multicast")
+                .innerJoinAndSelect("multicast.iotDevices", "iot_device")
+                .getMany();
+
+            // Filter multicasts without the device out to avoid updating them
+            const multicastsWithDevice = _multicasts.filter(multicast =>
+                multicast.iotDevices.some(iotDevice => iotDevice.id === device.id)
+            );
+            // Remove device from the mappings. It's important that each existing mapping has been fetched
+            // as the new mappings will replace the existing ones.
+            multicastsWithDevice.forEach(
+                multicast =>
+                    (multicast.iotDevices = multicast.iotDevices?.filter(
+                        iotDevice => iotDevice.id !== device.id
+                    ))
+            );
+            await multicastRepository.save(multicastsWithDevice)
+
+            // Remove all data target connections before deleting the device. We can't do the same thing with multicasts
+            // as the relation isn't on the IoT device entity
+            device.connections = [];
+            await iotDeviceRepository.save(device);
+            deleteResult = await transactionManager.delete(IoTDevice, device.id);
+
+            // Now we can safely perform any actions against Chirpstack
+            if (device.type == IoTDeviceType.LoRaWAN) {
+                const lorawanDevice = device as LoRaWANDevice;
+                this.logger.debug(
+                    `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
+                );
+
+                await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+            }
+        }))
+
+        return deleteResult;
     }
 
     async deleteMany(ids: number[]): Promise<DeleteResult> {
