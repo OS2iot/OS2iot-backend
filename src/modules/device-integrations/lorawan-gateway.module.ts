@@ -4,6 +4,7 @@ import { HttpModule, Module } from "@nestjs/common";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import { GatewayBootstrapperService } from "@services/chirpstack/gateway-boostrapper.service";
 
 @Module({
     controllers: [LoRaWANGatewayController],
@@ -12,6 +13,7 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
         ChirpstackGatewayService,
         ChirpstackSetupNetworkServerService,
         GatewayStatusHistoryService,
+        GatewayBootstrapperService,
     ],
     exports: [GatewayStatusHistoryService],
 })

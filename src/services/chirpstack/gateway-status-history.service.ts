@@ -12,6 +12,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
+import { nameof } from "@helpers/type-helper";
 
 type GatewayId = { id: string; name: string };
 
@@ -33,12 +34,35 @@ export class GatewayStatusHistoryService {
         const gatewayIds = gateways.result.map(gateway => gateway.id);
         const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 
-        const statusHistories = await this.gatewayStatusHistoryRepository.find({
+        if (!gatewayIds.length) {
+            return { count: 0, data: [] };
+        }
+
+        const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
             where: {
                 mac: In(gatewayIds),
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
+
+        // To know the status of each gateway up till the first status since the start date,
+        // we must fetch the previous status
+        const latestStatusHistoryPerGatewayBeforePeriod = await this.gatewayStatusHistoryRepository
+            .createQueryBuilder("status_history")
+            .where("status_history.mac IN (:...gatewayIds)", { gatewayIds })
+            .andWhere("status_history.timestamp < :fromDate", { fromDate })
+            .distinctOn([nameof<GatewayStatusHistory>("mac")])
+            .orderBy({
+                [nameof<GatewayStatusHistory>("mac")]: "ASC",
+                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+            })
+            .getMany();
+
+        const statusHistories = this.mergeStatusHistories(
+            fromDate,
+            statusHistoriesInPeriod,
+            latestStatusHistoryPerGatewayBeforePeriod
+        );
 
         const data: GatewayStatus[] = this.mapStatusHistoryToGateways(
             gateways.result,
@@ -65,6 +89,39 @@ export class GatewayStatusHistoryService {
         });
 
         return this.mapStatusHistoryToGateway(gateway, statusHistories);
+    }
+
+    public findLatestPerGateway(): Promise<GatewayStatusHistory[]> {
+        return this.gatewayStatusHistoryRepository
+            .createQueryBuilder("status_history")
+            .distinctOn([nameof<GatewayStatusHistory>("mac")])
+            .orderBy({
+                [nameof<GatewayStatusHistory>("mac")]: "ASC",
+                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+            })
+            .getMany();
+    }
+
+    public createMany(
+        histories: GatewayStatusHistory[]
+    ): Promise<GatewayStatusHistory[]> {
+        return this.gatewayStatusHistoryRepository.save(histories);
+    }
+
+    private mergeStatusHistories(
+        fromDate: Date,
+        statusHistoriesInPeriod: GatewayStatusHistory[],
+        latestStatusHistoryPerGateway: GatewayStatusHistory[]
+    ): GatewayStatusHistory[] {
+        const combinedHistories = statusHistoriesInPeriod.slice();
+
+        latestStatusHistoryPerGateway.forEach(latestHistory => {
+            // Ensure that the timestamp is within the time period
+            latestHistory.timestamp = fromDate;
+            combinedHistories.push(latestHistory);
+        });
+
+        return combinedHistories;
     }
 
     private mapStatusHistoryToGateways<Gateway extends GatewayId>(
