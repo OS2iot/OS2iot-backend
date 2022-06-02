@@ -352,7 +352,7 @@ export class UserService {
             port: this.configService.get<number>("email.port"),
             auth: {
                 user: this.configService.get<string>("email.user"),
-                pass: this.configService.get<string>("email.pass")
+                pass: this.configService.get<string>("email.pass"),
             },
         });
     }
@@ -370,10 +370,17 @@ export class UserService {
         }
         try {
             await transporter.sendMail({
-                from: this.configService.get<string>("email.from"), // sender address
-                to: emails, // list of receivers
-                subject: "Ny ansøgning til din organisation!", // Subject line
-                html: `<h1>Ny ansøgning om tilladelse til organisationen "${organization.name}"!</h1><a href="${this.configService.get<string>("frontend.baseurl")}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: "${user.name}."`, // html body
+                from: this.configService.get<string>("email.from"),
+                to: emails,
+                subject: "Ny ansøgning til din organisation i OS2iot",
+                html: `<h1>Ny ansøgning om tilladelse til organisationen "${
+                    organization.name
+                }"!</h1><a href="${this.configService.get<string>(
+                    "frontend.baseurl"
+                )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: ${
+                    user.name
+                }
+                <br />Find brugeren under fanebladet "Afventende brugere".`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
@@ -392,8 +399,8 @@ export class UserService {
             await transporter.sendMail({
                 from: this.configService.get<string>("email.from"), // sender address
                 to: user.email, // list of receivers
-                subject: "Ansøgning afvist!", // Subject line
-                html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er afvist!</h1>`, // html body
+                subject: "Ansøgning i OS2iot afvist", // Subject line
+                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er afvist. Kontakt din OS2iot-administrator, hvis du vil vide mere.</h1>`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
@@ -412,8 +419,8 @@ export class UserService {
             await transporter.sendMail({
                 from: this.configService.get<string>("email.from"), // sender address
                 to: user.email, // list of receivers
-                subject: "Ansøgning bekræftet!", // Subject line
-                html: `<h1>Din ansøgning om bekræftelse hos "${organization.name}" er godkendt!</h1>`, // html body
+                subject: "Ansøgning i OS2iot godkendt", // Subject line
+                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er godkendt</h1>`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);
@@ -440,8 +447,8 @@ export class UserService {
     }
 
     async getAwaitingUsers(
-        organizationId: number,
-        query?: ListAllEntitiesDto
+        query?: ListAllEntitiesDto,
+        organizationIds?: number[]
     ): Promise<ListAllUsersResponseDto> {
         let orderBy = `user.id`;
         if (
@@ -453,14 +460,21 @@ export class UserService {
         const order: "DESC" | "ASC" =
             query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
 
-        const [data, count] = await this.userRepository
+        let usersQuery = this.userRepository
             .createQueryBuilder("user")
             .innerJoin("user.requestedOrganizations", "org")
-            .where("org.id = :id", { id: organizationId })
+            .addSelect("org.id")
             .take(+query.limit)
             .skip(+query.offset)
-            .orderBy(orderBy, order)
-            .getManyAndCount();
+            .orderBy(orderBy, order);
+
+        if (organizationIds?.length) {
+            usersQuery = usersQuery.where("org.id IN (:...organizationIds)", {
+                organizationIds,
+            });
+        }
+
+        const [data, count] = await usersQuery.getManyAndCount();
 
         return {
             data: data.map(x => x as UserResponseDto),
@@ -470,6 +484,6 @@ export class UserService {
 
     async hideWelcome(id: number): Promise<boolean> {
         const res = await this.userRepository.update(id, { showWelcomeScreen: false });
-        return !!res.affected
+        return !!res.affected;
     }
 }

@@ -55,7 +55,6 @@ export class NewKombitCreationController {
         @Req() req: AuthenticatedRequest,
         @Body() dto: CreateNewKombitUserDto
     ): Promise<User> {
-
         try {
             const user: User = await this.userService.findOne(req.user.userId);
             const permissions = await this.permissionService.findManyWithRelations(
@@ -73,7 +72,11 @@ export class NewKombitCreationController {
                     user
                 );
 
-                for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
+                for (
+                    let index = 0;
+                    index < dto.requestedOrganizationIds.length;
+                    index++
+                ) {
                     const dbOrg = await this.organizationService.findByIdWithUsers(
                         requestedOrganizations[index].id
                     );
@@ -86,7 +89,6 @@ export class NewKombitCreationController {
 
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
                 return updatedUser;
-
             } else {
                 throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
             }
@@ -118,8 +120,7 @@ export class NewKombitCreationController {
         @Req() req: AuthenticatedRequest,
         @Body() updateUserOrgsDto: UpdateUserOrgsDto
     ): Promise<UpdateUserOrgsDto> {
-
-		try {
+        try {
             const user = await this.userService.findOne(req.user.userId);
             const permissions = await this.permissionService.findManyWithRelations(
                 updateUserOrgsDto.requestedOrganizationIds
@@ -136,11 +137,8 @@ export class NewKombitCreationController {
                 );
             }
 
-            for (let index = 0; index < updateUserOrgsDto.requestedOrganizationIds.length; index++) {
-                const dbOrg = await this.organizationService.findByIdWithUsers(
-                    requestedOrganizations[index].id
-                );
-
+            for (const org of requestedOrganizations) {
+                const dbOrg = await this.organizationService.findByIdWithUsers(org.id);
                 await this.organizationService.updateAwaitingUsers(dbOrg, user);
             }
 
@@ -158,7 +156,6 @@ export class NewKombitCreationController {
         @Param("id", new ParseIntPipe()) id: number,
         @Query("extendedInfo") extendedInfo?: boolean
     ): Promise<UserResponseDto> {
-
         const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
             // Don't leak the passwordHash
