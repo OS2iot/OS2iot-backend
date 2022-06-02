@@ -47,7 +47,7 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
+import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder, EntityManager } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
 import { v4 as uuidv4 } from "uuid";
@@ -473,33 +473,16 @@ export class IoTDeviceService {
             affected: 0
         }
 
-        // If operations on chirpstack fail, rollback any mutations on the database
+        // Run these operations inside a TypeORM transaction to make sure if operations on chirpstack fail, we
+        // roll back any changes on the database to ensure consistency between devices in the OS2iot database
+        // and the Chirpstack database.
         await getManager().transaction((async transactionManager => {
             // Find and delete m-n relations with the device first
+            await this.deleteMulticastsFromDevice(transactionManager, device);
             const iotDeviceRepository = transactionManager.getRepository(IoTDevice);
-            const multicastRepository = transactionManager.getRepository(Multicast);
-            // Get all multicasts. For some reason, filtering by device id won't return multicasts with all devices
-            const _multicasts = await multicastRepository
-                .createQueryBuilder("multicast")
-                .innerJoinAndSelect("multicast.iotDevices", "iot_device")
-                .getMany();
 
-            // Filter multicasts without the device out to avoid updating them
-            const multicastsWithDevice = _multicasts.filter(multicast =>
-                multicast.iotDevices.some(iotDevice => iotDevice.id === device.id)
-            );
-            // Remove device from the mappings. It's important that each existing mapping has been fetched
-            // as the new mappings will replace the existing ones.
-            multicastsWithDevice.forEach(
-                multicast =>
-                    (multicast.iotDevices = multicast.iotDevices?.filter(
-                        iotDevice => iotDevice.id !== device.id
-                    ))
-            );
-            await multicastRepository.save(multicastsWithDevice)
-
-            // Remove all data target connections before deleting the device. We can't do the same thing with multicasts
-            // as the relation isn't on the IoT device entity
+            // Remove all data target connections before deleting the device. We can't do the same thing
+            // with multicasts as the relation isn't on the IoT device entity (bug)
             device.connections = [];
             await iotDeviceRepository.save(device);
             deleteResult = await transactionManager.delete(IoTDevice, device.id);
@@ -516,6 +499,28 @@ export class IoTDeviceService {
         }))
 
         return deleteResult;
+    }
+
+    private async deleteMulticastsFromDevice(manager: EntityManager, device: IoTDevice) {
+        const multicastRepository = manager.getRepository(Multicast);
+        // Take only the multicasts with references to the device.
+        // Filtering by device id won't return multicasts with all devices
+        const _multicasts = await multicastRepository
+            .createQueryBuilder("multicast")
+            .innerJoinAndSelect("multicast.iotDevices", "iot_device")
+            .getMany();
+
+        // Filter multicasts without the device out to avoid updating them
+        const multicastsWithDevice = _multicasts.filter(multicast => multicast.iotDevices.some(iotDevice => iotDevice.id === device.id)
+        );
+        // Remove device from the mappings. It's important that each existing mapping has been fetched
+        // as the new mappings will replace the existing ones.
+        multicastsWithDevice.forEach(
+            multicast => (multicast.iotDevices = multicast.iotDevices?.filter(
+                iotDevice => iotDevice.id !== device.id
+            ))
+        );
+        await multicastRepository.save(multicastsWithDevice);
     }
 
     async deleteMany(ids: number[]): Promise<DeleteResult> {
