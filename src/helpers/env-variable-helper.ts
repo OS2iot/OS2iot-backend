@@ -24,7 +24,7 @@ export const formatEmail = (email: string | undefined): typeof email => {
         return email;
     }
 
-    if (!email.includes(" ") && !email.includes("@")) {
+    if (email.includes(" ") || !email.includes("@")) {
         return email;
     }
 
