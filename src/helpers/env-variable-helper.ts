@@ -19,7 +19,7 @@ export function GetLogLevels(minLevel: string): LogLevel[] {
     return higherLevels;
 }
 
-export const formatEmail = (email: string | undefined): typeof email => {
+export function formatEmail(email: string | undefined): typeof email {
     if (!email || typeof email !== "string") {
         return email;
     }
