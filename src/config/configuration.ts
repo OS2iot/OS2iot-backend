@@ -1,4 +1,4 @@
-import { GetLogLevels } from "@helpers/env-variable-helper";
+import { GetLogLevels, formatEmail } from "@helpers/env-variable-helper";
 
 export default (): any => {
     return {
@@ -40,11 +40,16 @@ export default (): any => {
             port: process.env.EMAIL_PORT || 587,
             user: process.env.EMAIL_USER || "ara.kertzmann8@ethereal.email",
             pass: process.env.EMAIL_PASS || "KzRSyYReEygpFPPZdd",
-            from: process.env.EMAIL_FROM || "ara.kertzmann8@ethereal.email"
+            /**
+             * Can be formatted to show a user-friendly name before the e-mail.
+             * E.g. "OS2iot <sender@mail.com>"
+             */
+            from: process.env.EMAIL_FROM
+                ? formatEmail(process.env.EMAIL_FROM)
+                : "OS2iot ara.kertzmann8@ethereal.email",
         },
         frontend: {
-            baseurl:
-                process.env.FRONTEND_BASEURL || "http://localhost:8081"
-            }
-    	};
+            baseurl: process.env.FRONTEND_BASEURL || "http://localhost:8081",
+        },
+    };
 };

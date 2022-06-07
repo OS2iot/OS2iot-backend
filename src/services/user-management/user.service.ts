@@ -373,14 +373,14 @@ export class UserService {
                 from: this.configService.get<string>("email.from"),
                 to: emails,
                 subject: "Ny ansøgning til din organisation i OS2iot",
-                html: `<h1>Ny ansøgning om tilladelse til organisationen "${
-                    organization.name
-                }"!</h1><a href="${this.configService.get<string>(
+                html: `<p>Ny ansøgning til din organisation i OS2iot</p>
+                <p><a href="${this.configService.get<string>(
                     "frontend.baseurl"
-                )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren med navnet: ${
+                )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${
                     user.name
-                }
-                <br />Find brugeren under fanebladet "Afventende brugere".`, // html body
+                } i organisationen ${organization.name}
+                </p>
+                <p>Find brugeren under fanebladet "Afventende brugere"</p>`, // html body
             });
         } catch (error) {
             throw new BadRequestException(ErrorCodes.SendMailError);

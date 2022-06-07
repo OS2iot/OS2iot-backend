@@ -33,7 +33,7 @@ export class MqttDataTargetService extends BaseDataTargetService {
             port: config.port,
             connectTimeout: config.timeout,
         });
-        const targetForLogging = `UMqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
+        const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
 
         client.once("connect", () => {
             client.publish(
