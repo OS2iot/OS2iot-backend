@@ -5,11 +5,11 @@ import { IsOptional, IsString } from "class-validator";
 export class ListAllEntitiesDto {
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
-    @StringToNumber()
+    @StringToNumber({ allowNulls: true })
     limit? = 100;
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
-    @StringToNumber()
+    @StringToNumber({ allowNulls: true })
     offset? = 0;
     @ApiProperty({ type: String, required: false })
     @IsOptional()
