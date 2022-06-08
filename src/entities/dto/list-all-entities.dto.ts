@@ -1,3 +1,4 @@
+import { DefaultLimit, DefaultOffset } from "@config/constants/pagination-constants";
 import { StringToNumber } from "@helpers/string-to-number-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
@@ -6,11 +7,11 @@ export class ListAllEntitiesDto {
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
     @StringToNumber()
-    limit? = 100;
+    limit? = DefaultLimit;
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
     @StringToNumber()
-    offset? = 0;
+    offset? = DefaultOffset;
     @ApiProperty({ type: String, required: false })
     @IsOptional()
     @IsString()
