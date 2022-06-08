@@ -7,7 +7,7 @@ import {
 } from "@helpers/string-to-number-validator";
 import { ApiProperty, OmitType } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsOptional } from "class-validator";
+import { IsOptional, IsNumber } from "class-validator";
 
 export class ListAllApplicationsDto extends OmitType(ListAllEntitiesDto, [
     "limit",
@@ -23,11 +23,13 @@ export class ListAllApplicationsDto extends OmitType(ListAllEntitiesDto, [
 
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
+    @IsNumber()
     @Transform(({ value }) => NullableStringToNumber(value))
     limit? = DefaultLimit;
 
     @ApiProperty({ type: Number, required: false })
     @IsOptional()
+    @IsNumber()
     @Transform(({ value }) => NullableStringToNumber(value))
     offset? = DefaultOffset;
 }
