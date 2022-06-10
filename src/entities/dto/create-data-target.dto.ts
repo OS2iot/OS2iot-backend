@@ -44,7 +44,11 @@ export class CreateDataTargetDto {
     @IsString()
     @MaxLength(1024)
     @IsNotBlank("url")
-    @IsUrl({ require_tld: false, require_protocol: true })
+    @IsUrl({
+        require_tld: false,
+        require_protocol: true,
+        protocols: ["http", "https", "mqtt", "mqtts"],
+    })
     url: string;
 
     @ApiProperty({ required: true, example: 30000 })

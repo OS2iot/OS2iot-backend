@@ -32,6 +32,8 @@ export class MqttDataTargetService extends BaseDataTargetService {
             password: config.password,
             port: config.port,
             connectTimeout: config.timeout,
+            // Accept connection to servers with self-signed certificates
+            rejectUnauthorized: false,
         });
         const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
 
