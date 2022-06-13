@@ -7,7 +7,7 @@ module.exports = {
     "database": "os2iot",
     "synchronize": false,
     "logging": false,
-    "entities": ["src/entities/*.ts"],
+    "entities": ["src/entities/*.ts", "src/entities/permissions/*.ts"],
     "migrations": ["src/migration/*.ts"],
     "cli": {
         "migrationsDir": "src/migration"

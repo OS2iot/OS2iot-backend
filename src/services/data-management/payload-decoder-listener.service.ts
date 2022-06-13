@@ -1,20 +1,17 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { RecordMetadata } from "kafkajs";
-import { VM, VMScript } from "vm2";
-
-import { RawRequestDto } from "@dto/kafka/raw-request.dto";
+import { RawIoTDeviceRequestDto } from "@dto/kafka/raw-iot-device-request.dto";
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
+import { Injectable, Logger } from "@nestjs/common";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
-
-import { KafkaService } from "../kafka/kafka.service";
+import { RecordMetadata } from "kafkajs";
 import * as _ from "lodash";
-import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
+import { KafkaService } from "../kafka/kafka.service";
 import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
 
 @Injectable()
@@ -38,7 +35,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
         this.logger.debug(`RAW_REQUEST: '${JSON.stringify(payload)}'`);
 
         // Fetch related objects
-        const dto: RawRequestDto = payload.body;
+        const dto = payload.body as RawIoTDeviceRequestDto;
         const connections = await this.connectionService.findAllByIoTDeviceIdWithDeviceModel(
             dto.iotDeviceId
         );
@@ -52,7 +49,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
 
     private async doTransformationsAndSend(
         connections: ListAllConnectionsResponseDto,
-        dto: RawRequestDto
+        dto: RawIoTDeviceRequestDto
     ) {
         const uniqueCombinations = _.uniqBy(connections.data, x => x.payloadDecoder?.id);
         uniqueCombinations.forEach(async connection => {

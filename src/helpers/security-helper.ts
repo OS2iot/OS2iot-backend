@@ -1,100 +1,78 @@
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
-import { ForbiddenException } from "@nestjs/common";
+import { Permission } from "@entities/permissions/permission.entity";
+import { PermissionType } from "@enum/permission-type.enum";
+import { ForbiddenException, BadRequestException } from "@nestjs/common";
 import * as _ from "lodash";
+import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 
-export function checkIfUserHasWriteAccessToApplication(
-    req: AuthenticatedRequest,
-    applicationId: number
-): void {
-    checkIfGlobalAdminOrInList(
-        req,
-        req.user.permissions.getAllApplicationsWithAtLeastWrite(),
-        applicationId
-    );
+export enum OrganizationAccessScope {
+    ApplicationRead,
+    ApplicationWrite,
+    GatewayWrite,
+    UserAdministrationRead,
+    UserAdministrationWrite,
 }
 
-export function checkIfUserHasReadAccessToApplication(
-    req: AuthenticatedRequest,
-    applicationId: number
-): void {
-    checkIfGlobalAdminOrInList(
-        req,
-        req.user.permissions.getAllApplicationsWithAtLeastRead(),
-        applicationId
-    );
+export enum ApplicationAccessScope {
+    Read,
+    Write,
 }
 
-export function checkIfUserHasReadAccessToOrganization(
+export function checkIfUserHasAccessToOrganization(
     req: AuthenticatedRequest,
-    organizationId: number
+    organizationId: number,
+    scope: OrganizationAccessScope
 ): void {
-    if (organizationId != null) {
-        checkIfGlobalAdminOrInList(
-            req,
-            req.user.permissions.getAllOrganizationsWithAtLeastRead(),
-            organizationId
-        );
-    }
-}
+    if (!Number.isInteger(+organizationId)) return;
 
-export function checkIfUserHasWriteAccessToOrganization(
-    req: AuthenticatedRequest,
-    organizationId: number
-): void {
-    checkIfGlobalAdminOrInList(
-        req,
-        req.user.permissions.getAllOrganizationsWithAtLeastWrite(),
-        organizationId
-    );
-}
+    let allowedOrganizations: number[] = [];
 
-export function checkIfUserHasAdminAccessToOrganization(
-    req: AuthenticatedRequest,
-    organizationId: number
-): void {
-    checkIfGlobalAdminOrInList(
-        req,
-        req.user.permissions.getAllOrganizationsWithAtLeastAdmin(),
-        organizationId
-    );
-}
-
-// Checks if the user has admin access to ANY of the supplied organizations
-export function checkIfUserHasAdminAccessToAnyOrganization(
-    req: AuthenticatedRequest,
-    organisationIds: number[]
-): void {
-    if (req.user.permissions.isGlobalAdmin) {
-        return;
+    switch (scope) {
+        case OrganizationAccessScope.ApplicationRead:
+            allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
+            break;
+        case OrganizationAccessScope.ApplicationWrite:
+            allowedOrganizations = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
+            break;
+        case OrganizationAccessScope.GatewayWrite:
+            allowedOrganizations = req.user.permissions.getAllOrganizationsWithGatewayAdmin();
+            break;
+        case OrganizationAccessScope.UserAdministrationRead:
+            allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastUserAdminRead();
+            break;
+        case OrganizationAccessScope.UserAdministrationWrite:
+            allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+            break;
+        default:
+            // Should never happen
+            throw new BadRequestException("Bad organization access scope");
     }
 
-    const userAdminOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
-
-    for (const id of organisationIds) {
-        if (_.includes(userAdminOrganizations, id)) {
-            return;
-        }
-    }
-
-    throw new ForbiddenException();
+    checkIfGlobalAdminOrInList(req, allowedOrganizations, organizationId);
 }
 
-// Checks if the user has admin access to ALL of the supplied organizations
-export function checkIfUserHasAdminAccessToAllOrganizations(
+export function checkIfUserHasAccessToApplication(
     req: AuthenticatedRequest,
-    organisationIds: number[]
+    applicationId: number,
+    scope: ApplicationAccessScope
 ): void {
-    if (req.user.permissions.isGlobalAdmin) {
-        return;
+    if (!Number.isInteger(applicationId)) return;
+
+    let allowedOrganizations: number[] = [];
+
+    switch (scope) {
+        case ApplicationAccessScope.Read:
+            allowedOrganizations = req.user.permissions.getAllApplicationsWithAtLeastRead();
+            break;
+        case ApplicationAccessScope.Write:
+            allowedOrganizations = req.user.permissions.getAllApplicationsWithAdmin();
+            break;
+        default:
+            // Should never happen
+            throw new BadRequestException("Bad application access scope");
     }
 
-    const userAdminOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
-
-    for (const id of organisationIds) {        
-        if (!_.includes(userAdminOrganizations, id)) {
-            throw new ForbiddenException();
-        }
-    }    
+    checkIfGlobalAdminOrInList(req, allowedOrganizations, applicationId);
 }
 
 export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {
@@ -115,4 +93,32 @@ function checkIfGlobalAdminOrInList(
     if (!_.includes(list, +id)) {
         throw new ForbiddenException();
     }
+}
+
+export function isOrganizationPermission(p: Permission): p is Permission {
+    return [
+        PermissionType.OrganizationUserAdmin,
+        PermissionType.OrganizationApplicationAdmin,
+        PermissionType.OrganizationGatewayAdmin,
+        PermissionType.Read,
+    ].some(orgPermission => p.type.some(({ type }) => type === orgPermission));
+}
+
+export function isOrganizationApplicationPermission(p: {
+    type: PermissionTypeEntity[];
+}): p is Permission {
+    return p.type.some(
+        ({ type }) =>
+            type === PermissionType.Read ||
+            type === PermissionType.OrganizationApplicationAdmin
+    );
+}
+
+export function isPermissionType(
+    p: {
+        type: PermissionTypeEntity[];
+    },
+    targetType: PermissionType
+): p is Permission {
+    return p.type.some(({ type }) => type === targetType);
 }

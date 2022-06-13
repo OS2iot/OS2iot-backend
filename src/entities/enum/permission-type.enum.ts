@@ -1,9 +1,7 @@
 export enum PermissionType {
     GlobalAdmin = "GlobalAdmin",
-    OrganizationAdmin = "OrganizationAdmin",
-    Write = "Write",
+    OrganizationUserAdmin = "OrganizationUserAdmin",
+    OrganizationGatewayAdmin = "OrganizationGatewayAdmin",
+    OrganizationApplicationAdmin = "OrganizationApplicationAdmin",
     Read = "Read",
-    OrganizationPermission = "OrganizationPermission",
-    OrganizationApplicationPermissions = "OrganizationApplicationPermissions",
-    ApiKeyPermission = "ApiKeyPermission",
 }

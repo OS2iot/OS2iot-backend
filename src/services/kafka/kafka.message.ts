@@ -1,5 +1,5 @@
 export class KafkaPayload {
-    public body: any;
+    public body: unknown;
     public messageId: string;
     public messageType: string;
     public topicName: string;

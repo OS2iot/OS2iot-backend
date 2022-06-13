@@ -31,9 +31,7 @@ import {
 import { JwtPayloadDto } from "@dto/internal/jwt-payload.dto";
 import { LoginDto } from "@dto/login.dto";
 import { Organization } from "@entities/organization.entity";
-import { OrganizationPermission } from "@entities/organization-permission.entity";
 import { User } from "@entities/user.entity";
-import { PermissionType } from "@enum/permission-type.enum";
 import { AuthService } from "@services/user-management/auth.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UserService } from "@services/user-management/user.service";
@@ -42,6 +40,7 @@ import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
+import { isOrganizationPermission } from "@helpers/security-helper";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -187,17 +186,12 @@ export class AuthController {
             return (await this.organisationService.findAll()).data;
         }
 
-        const orgs = user.permissions.map(x => {
-            if (
-                [
-                    PermissionType.OrganizationAdmin,
-                    PermissionType.Write,
-                    PermissionType.Read,
-                ].some(p => p == x.type)
-            ) {
-                return (x as OrganizationPermission).organization;
+        const orgs = user.permissions.reduce((arr, orgP) => {
+            if (isOrganizationPermission(orgP)) {
+                arr.push(orgP.organization);
             }
-        });
+            return arr;
+        }, []);
         return _.uniqBy(orgs, x => x.id);
     }
 }

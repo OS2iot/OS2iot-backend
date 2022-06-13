@@ -7,9 +7,9 @@ import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-devic
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
 import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
-import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
@@ -80,7 +80,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         const tags = result.deviceProfile.tags;
         tags[this.UPDATED_BY_KEY] = `${req.user.userId}`;
         if (tags[this.ORG_ID_KEY] != null) {
-            checkIfUserHasWriteAccessToOrganization(req, +tags[this.ORG_ID_KEY]);
+            checkIfUserHasAccessToOrganization(req, +tags[this.ORG_ID_KEY], OrganizationAccessScope.ApplicationWrite);
         }
         return tags;
     }
@@ -94,9 +94,10 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             id
         );
         if (result.deviceProfile.tags[this.ORG_ID_KEY] != null) {
-            checkIfUserHasWriteAccessToOrganization(
+            checkIfUserHasAccessToOrganization(
                 req,
-                +result.deviceProfile.tags[this.ORG_ID_KEY]
+                +result.deviceProfile.tags[this.ORG_ID_KEY],
+                OrganizationAccessScope.ApplicationWrite
             );
         }
         return await this.delete("device-profiles", id);
