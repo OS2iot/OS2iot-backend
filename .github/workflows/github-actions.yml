@@ -5,8 +5,8 @@ on:
       - "feature/github-actions" # DEBUGGING. REMOVE BEFORE MERGE
       - "stage"
       - "master"
-    paths:
-      - "src/**"
+    # paths:
+    #   - "src/**" # DEBUGGING. ENABLE BEFORE MERGE
 jobs:
   vulnerabilities-scan:
     runs-on: ubuntu-latest
