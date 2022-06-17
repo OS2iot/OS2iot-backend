@@ -1,12 +1,11 @@
-name: GitHub Actions
+name: "[Production] OS2iot OnPush"
 on:
   push:
     branches:
-      - "feature/github-actions" # DEBUGGING. REMOVE BEFORE MERGE
       - "stage"
       - "master"
-    # paths:
-    #   - "src/**" # DEBUGGING. ENABLE BEFORE MERGE
+    paths:
+      - "src/**" # DEBUGGING. ENABLE BEFORE MERGE
 jobs:
   vulnerabilities-scan:
     runs-on: ubuntu-latest
@@ -14,8 +13,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: debricked/actions/scan@v1
         env:
-          USERNAME: ${{ secrets.DEBRICKED_USERNAME }}
-          PASSWORD: ${{ secrets.DEBRICKED_PASSWORD }}
+          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
   code-build:
     runs-on: ubuntu-latest
     steps:
