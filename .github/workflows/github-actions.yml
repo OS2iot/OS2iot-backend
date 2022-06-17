@@ -1,24 +1,24 @@
 name: GitHub Actions
 on:
-    push:
-        branches:
-            - "stage"
-            - "master"
-        paths:
-            - "src/**"
+  push:
+    branches:
+      - "stage"
+      - "master"
+    paths:
+      - "src/**"
 jobs:
-    vulnerabilities-scan:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - uses: debricked/actions/scan@v1
-              env:
-                  USERNAME: ${{ secrets.DEBRICKED_USERNAME }}
-                  PASSWORD: ${{ secrets.DEBRICKED_PASSWORD }}
-    code-build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: "Install packages"
-            - run: "npm ci"
-            - name: "Build source"
-            - run: "npm run build"
+  vulnerabilities-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: debricked/actions/scan@v1
+        env:
+          USERNAME: ${{ secrets.DEBRICKED_USERNAME }}
+          PASSWORD: ${{ secrets.DEBRICKED_PASSWORD }}
+  code-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Install packages"
+        run: "npm ci"
+      - name: "Build source"
+        run: "npm run build"
