@@ -1,7 +1,5 @@
 name: GitHub Actions
 on:
-  # Add for debugging
-  workflow_dispatch:
   push:
     branches:
       - "stage"
@@ -20,6 +18,10 @@ jobs:
   code-build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
       - name: "Install packages"
         run: "npm ci"
       - name: "Build source"
