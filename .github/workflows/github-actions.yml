@@ -2,6 +2,7 @@ name: GitHub Actions
 on:
   push:
     branches:
+      - "feature/github-actions" # DEBUGGING. REMOVE BEFORE MERGE
       - "stage"
       - "master"
     paths:
