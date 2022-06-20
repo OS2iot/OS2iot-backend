@@ -76,7 +76,7 @@
         "wait-for-expect": "^3.0.2"
     },
     "devDependencies": {
-        "@nestjs/cli": "^7.5.4",
+        "@nestjs/cli": "^8.1.7",
         "@nestjs/testing": "^7.6.1",
         "@types/bluebird": "^3.5.33",
         "@types/compression": "^1.7.0",
