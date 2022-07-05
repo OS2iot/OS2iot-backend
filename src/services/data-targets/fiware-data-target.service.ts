@@ -1,4 +1,5 @@
-import { HttpService, Injectable, Logger } from "@nestjs/common";
+import { HttpService, Injectable, Logger, Inject, CACHE_MANAGER } from "@nestjs/common";
+import { Cache } from 'cache-manager'
 import { AxiosRequestConfig } from "axios";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
@@ -9,9 +10,44 @@ import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interf
 import { FiwareDataTargetConfiguration } from "@interfaces/fiware-data-target-configuration.interface";
 import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
 
+type TokenEndpointResponse = {
+    access_token: string,
+    expires_in: number,
+}
+
+@Injectable()
+export class AuthenticationTokenProvider {
+
+    private readonly logger = new Logger(FiwareDataTargetService.name);
+
+    constructor(private httpService: HttpService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {
+    }
+
+    async getToken(config: FiwareDataTargetConfiguration): Promise<string> {
+        const token = await this.cacheManager.get<string>(config.clientId)
+        if (token) {
+            this.logger.debug('Token found')
+            return token
+        } else {
+            const buffer = Buffer.from(`${config.clientId}:${config.clientSecret}`);
+            const encodedCredentials = buffer.toString('base64');
+            const params = new URLSearchParams([['grant_type', 'client_credentials']])
+            return this.httpService.post(config.tokenEndpoint, params, {
+                headers: {
+                    'Authorization': `Basic ${encodedCredentials}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }).toPromise().then(({ data }: { data: TokenEndpointResponse }) => {
+                this.cacheManager.set(config.clientId, data.access_token, { ttl: data.expires_in })
+                return data.access_token
+            });
+        }
+    }
+}
+
 @Injectable()
 export class FiwareDataTargetService extends BaseDataTargetService {
-    constructor(private httpService: HttpService) {
+    constructor(private httpService: HttpService, private authenticationTokenProvider: AuthenticationTokenProvider) {
         super();
     }
 
@@ -22,14 +58,14 @@ export class FiwareDataTargetService extends BaseDataTargetService {
         datatarget: DataTarget,
         dto: TransformedPayloadDto
     ): Promise<DataTargetSendStatus> {
-        
+
         const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
 
-      
-        // Setup HTTP client
-        const axiosConfig = this.makeAxiosConfiguration(config);
 
-        const rawBody: string = JSON.stringify(dto.payload);      
+        // Setup HTTP client
+        const axiosConfig = await this.makeAxiosConfiguration(config);
+
+        const rawBody: string = JSON.stringify(dto.payload);
 
         const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
         const target = `FiwareDataTarget(${endpointUrl})`;
@@ -44,26 +80,28 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             );
             if (!result.status.toString().startsWith("2")) {
                 this.logger.warn(
-                    `Got a non-2xx status-code: ${result.status.toString()} and message: ${
-                        result.statusText
+                    `Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText
                     }`
                 );
             }
             return this.success(target);
-        } catch (err) {            
+        } catch (err) {
             this.logger.error(`FiwareDataTarget got error: ${err}`);
             return this.failure(target, err);
         }
     }
 
-     makeAxiosConfiguration(
+    async makeAxiosConfiguration(
         config: FiwareDataTargetConfiguration
-    ): AxiosRequestConfig {
-        
+    ): Promise<AxiosRequestConfig> {
+
         const axiosConfig: AxiosRequestConfig = {
             timeout: config.timeout,
             headers: this.getHeaders(config),
         };
+
+        this.logger.debug(`Authorization type: '${config.authorizationType}'`)
+        this.logger.debug(config)
 
         if (config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
@@ -77,28 +115,31 @@ export class FiwareDataTargetService extends BaseDataTargetService {
                 config.authorizationType === AuthorizationType.HEADER_BASED_AUTHORIZATION
             ) {
                 axiosConfig.headers["Authorization"] = config.authorizationHeader;
+            } else if (
+                config.authorizationType === AuthorizationType.OAUTH_AUTHORIZATION
+            ) {
+                const token = await this.authenticationTokenProvider.getToken(config)
+                axiosConfig.headers["Authorization"] = `Bearer ${token}`;
             }
         }
         return axiosConfig;
     }
 
-    getHeaders(config: FiwareDataTargetConfiguration) :any
-    {
-        let headers :any = {}
-        
-        if(config.context) {
-            headers = {               
-                    "Content-Type": "application/json",
-                    Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`
+    getHeaders(config: FiwareDataTargetConfiguration): any {
+        let headers: any = {}
+
+        if (config.context) {
+            headers = {
+                "Content-Type": "application/json",
+                Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`
             };
         } else {
-            headers =  {
-                "Content-Type": "application/ld+json",                
+            headers = {
+                "Content-Type": "application/ld+json",
             };
         }
 
-        if (config.tenant)
-        {
+        if (config.tenant) {
             headers["NGSILD-Tenant"] = config.tenant;
         }
 

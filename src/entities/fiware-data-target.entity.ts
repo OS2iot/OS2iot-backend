@@ -23,6 +23,15 @@ export class FiwareDataTarget extends DataTarget {
     @Column({ nullable: true })
     context: string;
 
+    @Column({ nullable: true })
+    clientId?: string;
+
+    @Column({ nullable: true })
+    clientSecret?: string;
+
+    @Column({ nullable: true })
+    tokenEndpoint?: string;
+
     @BeforeInsert()
     private beforeInsert() {       
         this.type = DataTargetType.Fiware;
@@ -33,12 +42,15 @@ export class FiwareDataTarget extends DataTarget {
             url: this.url,
             timeout: this.timeout,
             authorizationType:
-                this.authorizationHeader != ""
-                    ? AuthorizationType.HEADER_BASED_AUTHORIZATION
-                    : AuthorizationType.NO_AUTHORIZATION,
+                this.tokenEndpoint ? AuthorizationType.OAUTH_AUTHORIZATION :
+                    this.authorizationHeader ? AuthorizationType.HEADER_BASED_AUTHORIZATION :
+                        AuthorizationType.NO_AUTHORIZATION,
             authorizationHeader: this.authorizationHeader,
             tenant: this.tenant,
-            context: this.context
+            context: this.context,
+            clientId: this.clientId,
+            clientSecret: this.clientSecret,
+            tokenEndpoint: this.tokenEndpoint,
         };
     }
 }

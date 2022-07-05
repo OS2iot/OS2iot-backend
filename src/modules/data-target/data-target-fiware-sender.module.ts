@@ -1,10 +1,10 @@
-import { HttpModule, Module } from "@nestjs/common";
+import { HttpModule, CacheModule, Module } from "@nestjs/common";
 
-import { FiwareDataTargetService } from "@services/data-targets/fiware-data-target.service";
+import { FiwareDataTargetService, AuthenticationTokenProvider } from "@services/data-targets/fiware-data-target.service";
 
 @Module({
-    imports: [HttpModule],
-    providers: [FiwareDataTargetService],
+    imports: [HttpModule, CacheModule.register()],
+    providers: [FiwareDataTargetService, AuthenticationTokenProvider],
     exports: [FiwareDataTargetService],
 })
 
