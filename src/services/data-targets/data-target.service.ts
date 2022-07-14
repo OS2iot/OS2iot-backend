@@ -240,6 +240,9 @@ export class DataTargetService {
             fiwareDataTarget.url = dataTargetDto.url;
             fiwareDataTarget.timeout = dataTargetDto.timeout;
             fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
+            fiwareDataTarget.tokenEndpoint = dataTargetDto.tokenEndpoint;
+            fiwareDataTarget.clientId = dataTargetDto.clientId;
+            fiwareDataTarget.clientSecret = dataTargetDto.clientSecret;
             fiwareDataTarget.tenant = dataTargetDto.tenant;
             fiwareDataTarget.context = dataTargetDto.context;
         } else if (dataTargetDto.type === DataTargetType.MQTT) {
