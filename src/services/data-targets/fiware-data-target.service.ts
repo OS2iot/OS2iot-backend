@@ -29,18 +29,25 @@ export class AuthenticationTokenProvider {
             this.logger.debug('Token found')
             return token
         } else {
-            const buffer = Buffer.from(`${config.clientId}:${config.clientSecret}`);
-            const encodedCredentials = buffer.toString('base64');
-            const params = new URLSearchParams([['grant_type', 'client_credentials']])
-            return this.httpService.post(config.tokenEndpoint, params, {
-                headers: {
-                    'Authorization': `Basic ${encodedCredentials}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                }
-            }).toPromise().then(({ data }: { data: TokenEndpointResponse }) => {
-                this.cacheManager.set(config.clientId, data.access_token, { ttl: data.expires_in })
+            try {
+                const buffer = Buffer.from(`${config.clientId}:${config.clientSecret}`);
+                const encodedCredentials = buffer.toString('base64');
+                const params = new URLSearchParams([['grant_type', 'client_credentials']])
+                const { data }: { data: TokenEndpointResponse } = await this.httpService.post(config.tokenEndpoint, params, {
+                    headers: {
+                        'Authorization': `Basic ${encodedCredentials}`,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }).toPromise()
+
+                const clockSkew = 300
+                this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${data.expires_in} seconds)`)
+                this.cacheManager.set(config.clientId, data.access_token, { ttl: data.expires_in - clockSkew })
                 return data.access_token
-            });
+            }
+            catch (err) {
+                this.logger.error(`AuthenticationTokenProvider got error ${err}`)
+            }
         }
     }
 }
@@ -61,16 +68,14 @@ export class FiwareDataTargetService extends BaseDataTargetService {
 
         const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
 
-
-        // Setup HTTP client
-        const axiosConfig = await this.makeAxiosConfiguration(config);
-
-        const rawBody: string = JSON.stringify(dto.payload);
-
         const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
         const target = `FiwareDataTarget(${endpointUrl})`;
 
         try {
+            // Setup HTTP client
+            const axiosConfig = await this.makeAxiosConfiguration(config);
+
+            const rawBody: string = JSON.stringify(dto.payload);
             const result = await this.httpService
                 .post(endpointUrl, rawBody, axiosConfig)
                 .toPromise();
@@ -99,9 +104,6 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             timeout: config.timeout,
             headers: this.getHeaders(config),
         };
-
-        this.logger.debug(`Authorization type: '${config.authorizationType}'`)
-        this.logger.debug(config)
 
         if (config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
