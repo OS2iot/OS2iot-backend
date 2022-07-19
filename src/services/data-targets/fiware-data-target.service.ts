@@ -18,7 +18,7 @@ type TokenEndpointResponse = {
 @Injectable()
 export class AuthenticationTokenProvider {
 
-    private readonly logger = new Logger(FiwareDataTargetService.name);
+    private readonly logger = new Logger(AuthenticationTokenProvider.name);
 
     constructor(private httpService: HttpService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {
     }
