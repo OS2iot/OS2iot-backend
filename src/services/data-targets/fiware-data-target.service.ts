@@ -42,7 +42,7 @@ export class AuthenticationTokenProvider {
                     },
                 }).toPromise()
 
-                const clockSkew = 300
+                const clockSkew = 30
                 this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${data.expires_in} seconds)`)
                 this.cacheManager.set(key, data.access_token, { ttl: data.expires_in - clockSkew })
                 return data.access_token
