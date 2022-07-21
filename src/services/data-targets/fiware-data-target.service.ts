@@ -25,7 +25,6 @@ export class AuthenticationTokenProvider {
 
     async getToken(config: FiwareDataTargetConfiguration): Promise<string> {
         const key = config.clientId + config.clientSecret;
-        this.logger.debug('Key: ' + key)
         const token = await this.cacheManager.get<string>(key)
         if (token) {
             this.logger.debug('Token found')
@@ -43,8 +42,9 @@ export class AuthenticationTokenProvider {
                 }).toPromise()
 
                 const clockSkew = 30
-                this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${data.expires_in} seconds)`)
-                this.cacheManager.set(key, data.access_token, { ttl: data.expires_in - clockSkew })
+                const ttl = data.expires_in - clockSkew
+                this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${ttl} seconds)`)
+                this.cacheManager.set(key, data.access_token, { ttl })
                 return data.access_token
             }
             catch (err) {
@@ -93,7 +93,6 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             }
             return this.success(target);
         } catch (err) {
-            this.logger.debug(JSON.stringify(err.response.data));
             this.logger.error(`FiwareDataTarget got error: ${err}`);
             return this.failure(target, err);
         }
