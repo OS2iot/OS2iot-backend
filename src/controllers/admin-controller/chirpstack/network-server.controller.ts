@@ -14,8 +14,8 @@ import {
 
 import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
-import {ChirpstackSetupNetworkServerService} from "@services/chirpstack/network-server.service";
-import {ListAllDeviceProfilesResponseDto} from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
+import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
+import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/network-server")
@@ -30,7 +30,7 @@ export class NetworkServerController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find all ADR algorithms for the default network server" })
     @Read()
-    async getAllAdrAlgorithms(): Promise<ListAllDeviceProfilesResponseDto> {
+    async getAllAdrAlgorithms(): Promise<ListAllAdrAlgorithmsResponseDto> {
         return await this.networkServerService.getAdrAlgorithmsForDefaultNetworkServer();
     }
 }
