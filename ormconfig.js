@@ -11,5 +11,6 @@ module.exports = {
     "migrations": ["src/migration/*.ts"],
     "cli": {
         "migrationsDir": "src/migration"
-    }
+    },
+    "ssl": process.env.DATABASE_ENABLE_SSL === "true"
 }
