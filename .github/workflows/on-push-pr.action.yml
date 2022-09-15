@@ -1,0 +1,39 @@
+name: "[Stage, Production] Push/PR action"
+on:
+  # Trigger conditions. This action will be triggered for each condition. Ex.
+  # making a PR from stage to master, then pushing a change to stage will trigger
+  # this action, or all jobs, twice.
+  push:
+    branches:
+      - "stage"
+      - "master"
+    paths:
+      - "src/**"
+  pull_request:
+    branches:
+      - "stage"
+      - "master"
+jobs:
+  vulnerabilities-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repository
+      - uses: debricked/actions/scan@v1
+        name: Run a vulnerability scan
+        env:
+          # Token must have API access scope to run scans
+          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
+  code-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repository
+      - uses: actions/setup-node@v3
+        name: Set NodeJS version
+        with:
+          node-version: 14
+      - name: Install packages
+        run: "npm ci"
+      - name: Build source
+        run: "npm run build"

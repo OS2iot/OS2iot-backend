@@ -2,43 +2,55 @@ import * as _ from "lodash";
 
 export class UserPermissions {
     constructor() {
-        this.readPermissions = new Map();
-        this.writePermissions = new Map();
-        this.organizationAdminPermissions = new Set();
+        this.orgToReadPermissions = new Map();
+        this.orgToUserAdminPermissions = new Map();
+        this.orgToGatewayAdminPermissions = new Set();
+        this.orgToApplicationAdminPermissions = new Map();
     }
 
-    readPermissions: Map<number, number[]>;
-    writePermissions: Map<number, number[]>;
-    organizationAdminPermissions: Set<number>;
+    orgToReadPermissions: Map<number, number[]>;
+    orgToUserAdminPermissions: Map<number, number[]>;
+    orgToGatewayAdminPermissions: Set<number>;
+    orgToApplicationAdminPermissions: Map<number, number[]>;
     isGlobalAdmin = false;
 
     getAllApplicationsWithAtLeastRead(): number[] {
         return _.union(
-            this.extractValues(this.readPermissions),
-            this.getAllApplicationsWithAtLeastWrite()
+            this.extractValues(this.orgToReadPermissions),
+            this.extractValues(this.orgToUserAdminPermissions),
+            this.getAllApplicationsWithAdmin()
         );
     }
 
-    getAllApplicationsWithAtLeastWrite(): number[] {
-        return this.extractValues(this.writePermissions);
+    getAllApplicationsWithAdmin(): number[] {
+        return this.extractValues(this.orgToApplicationAdminPermissions);
     }
 
-    getAllOrganizationsWithAtLeastRead(): number[] {
+    getAllOrganizationsWithAtLeastUserAdminRead(): number[] {
         return _.union(
-            this.extractKeys(this.readPermissions),
-            this.getAllOrganizationsWithAtLeastWrite()
+            this.extractKeys(this.orgToReadPermissions),
+            this.getAllOrganizationsWithUserAdmin()
         );
     }
 
-    getAllOrganizationsWithAtLeastWrite(): number[] {
+    getAllOrganizationsWithAtLeastApplicationRead(): number[] {
         return _.union(
-            this.extractKeys(this.writePermissions),
-            this.getAllOrganizationsWithAtLeastAdmin()
+            this.extractKeys(this.orgToReadPermissions),
+            this.getAllOrganizationsWithApplicationAdmin(),
+            this.getAllOrganizationsWithUserAdmin(),
         );
     }
 
-    getAllOrganizationsWithAtLeastAdmin(): number[] {
-        return Array.from(this.organizationAdminPermissions);
+    getAllOrganizationsWithUserAdmin(): number[] {
+        return this.extractKeys(this.orgToUserAdminPermissions);
+    }
+
+    getAllOrganizationsWithGatewayAdmin(): number[] {
+        return Array.from(this.orgToGatewayAdminPermissions);
+    }
+
+    getAllOrganizationsWithApplicationAdmin(): number[] {
+        return this.extractKeys(this.orgToApplicationAdminPermissions);
     }
 
     private extractValues(map: Map<number, number[]>): number[] {

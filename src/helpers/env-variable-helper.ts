@@ -1,6 +1,6 @@
-import { LogLevel } from '@nestjs/common';
+import { LogLevel } from "@nestjs/common";
 
-const logLevels: LogLevel[] = ['log', 'error', 'warn', 'debug', 'verbose'];
+const logLevels: LogLevel[] = ["log", "error", "warn", "debug", "verbose"];
 
 // Gets a list of log levels equal to, or higher, than the supplied minimum level
 export function GetLogLevels(minLevel: string): LogLevel[] {
@@ -18,3 +18,16 @@ export function GetLogLevels(minLevel: string): LogLevel[] {
     const higherLevels = logLevels.slice(0, logIndex + 1);
     return higherLevels;
 }
+
+export function formatEmail(email: string | undefined): typeof email {
+    if (!email || typeof email !== "string") {
+        return email;
+    }
+
+    if (email.includes(" ") || !email.includes("@")) {
+        return email;
+    }
+
+    // Prefix default sender display name
+    return `OS2iot ${email}`
+};

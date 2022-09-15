@@ -198,21 +198,21 @@ describe("OrganizationController (e2e)", () => {
                     updatedAt: expect.any(String),
                     automaticallyAddNewApplications: true,
                 });
-                expect(response.body.permissions).toContainEqual({
-                    id: expect.any(Number),
-                    name: `${org.name} - Write`,
-                    type: PermissionType.Write,
-                    createdAt: expect.any(String),
-                    updatedAt: expect.any(String),
-                    automaticallyAddNewApplications: true,
-                });
-                expect(response.body.permissions).toContainEqual({
-                    id: expect.any(Number),
-                    name: `${org.name} - OrganizationAdmin`,
-                    type: PermissionType.OrganizationAdmin,
-                    createdAt: expect.any(String),
-                    updatedAt: expect.any(String),
-                });
+                expectOrgPermission(
+                    response.body.permissions,
+                    `${org.name} - OrganizationAppAdmin`,
+                    PermissionType.OrganizationApplicationAdmin
+                );
+                expectOrgPermission(
+                    response.body.permissions,
+                    `${org.name} - OrganizationGatewayAdmin`,
+                    PermissionType.OrganizationGatewayAdmin
+                );
+                expectOrgPermission(
+                    response.body.permissions,
+                    `${org.name} - OrganizationUserAdmin`,
+                    PermissionType.OrganizationUserAdmin
+                );
             });
     });
 
@@ -349,3 +349,14 @@ describe("OrganizationController (e2e)", () => {
             .expect("Content-Type", /json/);
     });
 });
+
+function expectOrgPermission(permissions: unknown, name: string, type: PermissionType) {
+    expect(permissions).toContainEqual({
+        id: expect.any(Number),
+        name,
+        type,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+    });
+}
+

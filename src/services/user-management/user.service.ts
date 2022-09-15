@@ -12,7 +12,7 @@ import { Repository } from "typeorm";
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
-import { Permission } from "@entities/permission.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
@@ -21,6 +21,14 @@ import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
+import * as nodemailer from "nodemailer";
+import { Organization } from "@entities/organization.entity";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { PermissionType } from "@enum/permission-type.enum";
+import { ConfigService } from "@nestjs/config";
+import { isPermissionType } from "@helpers/security-helper";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class UserService {
@@ -28,7 +36,8 @@ export class UserService {
         @InjectRepository(User)
         private userRepository: Repository<User>,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        private permissionService: PermissionService,
+        private configService: ConfigService
     ) {}
 
     private readonly logger = new Logger(UserService.name, true);
@@ -39,6 +48,30 @@ export class UserService {
                 email: email,
             })) > 0
         );
+    }
+
+    async acceptUser(
+        user: User,
+        org: Organization,
+        newUserPermissions: Permission[]
+    ): Promise<User> {
+        user.awaitingConfirmation = false;
+
+        if (
+            user.permissions.find(perms =>
+                newUserPermissions.some(newPerm => newPerm.id === perms.id)
+            )
+        ) {
+            throw new BadRequestException(ErrorCodes.UserAlreadyInPermission);
+        } else {
+            const index = user.requestedOrganizations.findIndex(
+                dbOrg => dbOrg.id === org.id
+            );
+            user.requestedOrganizations.splice(index, 1);
+            user.permissions.push(...newUserPermissions);
+            await this.sendVerificationMail(user, org);
+            return await this.userRepository.save(user);
+        }
     }
 
     async findOneUserByEmailWithPassword(email: string): Promise<User> {
@@ -62,7 +95,7 @@ export class UserService {
         getPermissionOrganisationInfo = false,
         getPermissionUsersInfo = false
     ): Promise<User> {
-        const relations = ["permissions"];
+        const relations = ["permissions", "requestedOrganizations"];
         if (getPermissionOrganisationInfo) {
             relations.push("permissions.organization");
         }
@@ -90,7 +123,10 @@ export class UserService {
 
     async findOneWithOrganizations(id: number): Promise<User> {
         return await this.userRepository.findOne(id, {
-            relations: ["permissions", "permissions.organization"],
+            relations: ["permissions", "permissions.organization", "permissions.type"],
+            loadRelationIds: {
+                relations: [`permissions.${nameof<Permission>("applicationIds")}`],
+            },
         });
     }
 
@@ -122,6 +158,7 @@ export class UserService {
         const mappedUser = this.mapDtoToUser(user, dto);
         mappedUser.createdBy = userId;
         mappedUser.updatedBy = userId;
+        mappedUser.showWelcomeScreen = true;
 
         await this.setPasswordHash(mappedUser, dto.password);
 
@@ -138,6 +175,7 @@ export class UserService {
     async createUserFromKombit(profile: Profile): Promise<User> {
         const user = new User();
         await this.mapKombitLoginProfileToUser(user, profile);
+        user.showWelcomeScreen = true;
 
         return await this.userRepository.save(user);
     }
@@ -234,6 +272,19 @@ export class UserService {
         }
     }
 
+    async newKombitUser(
+        dto: CreateNewKombitUserDto,
+        requestedOrganizations: Organization[],
+        user: User
+    ): Promise<User> {
+        user.email = dto.email;
+        user.awaitingConfirmation = true;
+        for (let index = 0; index < requestedOrganizations.length; index++) {
+            await this.sendOrganizationRequestMail(user, requestedOrganizations[index]);
+        }
+        return await this.userRepository.save(user);
+    }
+
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
         return await this.userRepository.findByIds(userIds);
     }
@@ -252,13 +303,13 @@ export class UserService {
         }
 
         const [data, count] = await this.userRepository.findAndCount({
-            relations: ["permissions"],
+            relations: ["permissions", "permissions.type"],
             take: +query.limit,
             skip: +query.offset,
             order: sorting,
-			where: {
-				isSystemUser: false
-			}
+            where: {
+                isSystemUser: false,
+            },
         });
 
         return {
@@ -293,5 +344,146 @@ export class UserService {
         return {
             users: result,
         };
+    }
+
+    basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
+        return nodemailer.createTransport({
+            host: this.configService.get<string>("email.host"),
+            port: this.configService.get<number>("email.port"),
+            auth: {
+                user: this.configService.get<string>("email.user"),
+                pass: this.configService.get<string>("email.pass"),
+            },
+        });
+    }
+
+    async sendOrganizationRequestMail(
+        user: User,
+        organization: Organization
+    ): Promise<void> {
+        const emails = await this.getOrgAdminEmails(organization);
+        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = this.basicMailTransporter();
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+        try {
+            await transporter.sendMail({
+                from: this.configService.get<string>("email.from"),
+                to: emails,
+                subject: "Ny ansøgning til din organisation i OS2iot",
+                html: `<p>Ny ansøgning til din organisation i OS2iot</p>
+                <p><a href="${this.configService.get<string>(
+                    "frontend.baseurl"
+                )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${
+                    user.name
+                } i organisationen ${organization.name}
+                </p>
+                <p>Find brugeren under fanebladet "Afventende brugere"</p>`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+
+    async sendRejectionMail(user: User, organization: Organization): Promise<void> {
+        const transporter = this.basicMailTransporter();
+
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+        try {
+            await transporter.sendMail({
+                from: this.configService.get<string>("email.from"), // sender address
+                to: user.email, // list of receivers
+                subject: "Ansøgning i OS2iot afvist", // Subject line
+                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er afvist. Kontakt din OS2iot-administrator, hvis du vil vide mere.</h1>`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+
+    async sendVerificationMail(user: User, organization: Organization): Promise<void> {
+        const transporter = this.basicMailTransporter();
+
+        try {
+            await transporter.verify();
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+        try {
+            await transporter.sendMail({
+                from: this.configService.get<string>("email.from"), // sender address
+                to: user.email, // list of receivers
+                subject: "Ansøgning i OS2iot godkendt", // Subject line
+                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er godkendt</h1>`, // html body
+            });
+        } catch (error) {
+            throw new BadRequestException(ErrorCodes.SendMailError);
+        }
+    }
+
+    async getOrgAdminEmails(organization: Organization): Promise<string[]> {
+        const emails: string[] = [];
+        const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
+        organization.permissions.forEach(permission => {
+            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin)) {
+                if (permission.users.length > 0) {
+                    permission.users.forEach(user => {
+                        emails.push(user.email);
+                    });
+                } else {
+                    globalAdminPermission.users.forEach(user => {
+                        emails.push(user.email);
+                    });
+                }
+            }
+        });
+        return emails;
+    }
+
+    async getAwaitingUsers(
+        query?: ListAllEntitiesDto,
+        organizationIds?: number[]
+    ): Promise<ListAllUsersResponseDto> {
+        let orderBy = `user.id`;
+        if (
+            query.orderOn !== null &&
+            (query.orderOn === "id" || query.orderOn === "name")
+        ) {
+            orderBy = `user.${query.orderOn}`;
+        }
+        const order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+
+        let usersQuery = this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.requestedOrganizations", "org")
+            .addSelect("org.id")
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order);
+
+        if (organizationIds?.length) {
+            usersQuery = usersQuery.where("org.id IN (:...organizationIds)", {
+                organizationIds,
+            });
+        }
+
+        const [data, count] = await usersQuery.getManyAndCount();
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+    }
+
+    async hideWelcome(id: number): Promise<boolean> {
+        const res = await this.userRepository.update(id, { showWelcomeScreen: false });
+        return !!res.affected;
     }
 }

@@ -1,8 +1,9 @@
-import { HttpModule, Module } from "@nestjs/common";
-
 import { ChirpstackGatewayController } from "@admin-controller/chirpstack/chirpstack-gateway.controller";
 import { DeviceProfileController } from "@admin-controller/chirpstack/device-profile.controller";
 import { ServiceProfileController } from "@admin-controller/chirpstack/service-profile.controller";
+import configuration from "@config/configuration";
+import { HttpModule, Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
@@ -16,7 +17,7 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
         ServiceProfileController,
         DeviceProfileController,
     ],
-    imports: [HttpModule],
+    imports: [HttpModule, ConfigModule.forRoot({ load: [configuration] })],
     providers: [
         GenericChirpstackConfigurationService,
         ChirpstackSetupNetworkServerService,
@@ -25,9 +26,6 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
         DeviceProfileService,
         ChirpstackDeviceService,
     ],
-    exports: [
-        ChirpstackDeviceService,
-        ChirpstackGatewayService,
-    ],
+    exports: [ChirpstackDeviceService, ChirpstackGatewayService],
 })
 export class ChirpstackAdministrationModule {}

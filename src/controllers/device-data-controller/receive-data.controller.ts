@@ -44,7 +44,7 @@ export class ReceiveDataController {
         // @HACK: Convert the 'data' back to a string.
         // NestJS / BodyParser always converts the input to an object for us.
         const dataAsString = JSON.stringify(data);
-        await this.receiveDataService.sendToKafka(
+        await this.receiveDataService.sendRawIotDeviceRequestToKafka(
             iotDevice,
             dataAsString,
             IoTDeviceType.GenericHttp.toString()

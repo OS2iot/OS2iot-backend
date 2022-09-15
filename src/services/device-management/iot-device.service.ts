@@ -47,9 +47,14 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder } from "typeorm";
+import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder, EntityManager } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+import { v4 as uuidv4 } from "uuid";
+import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
+import { subtractDays } from "@helpers/date.helper";
+import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
+import { Multicast } from "@entities/multicast.entity";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -73,7 +78,8 @@ export class IoTDeviceService {
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
         private sigfoxGroupService: SigFoxGroupService,
         private deviceModelService: DeviceModelService,
-        private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService
+        private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService,
+        private sigfoxMessagesService: SigFoxMessagesService
     ) {}
     private readonly logger = new Logger(IoTDeviceService.name);
 
@@ -207,7 +213,7 @@ export class IoTDeviceService {
         req: AuthenticatedRequest
     ): Promise<IoTDeviceMinimal[]> {
         const applications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        const organizations = req.user.permissions.getAllOrganizationsWithAtLeastAdmin();
+        const organizations = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
         return (await data).map(x => {
             return {
                 id: x.id,
@@ -462,19 +468,145 @@ export class IoTDeviceService {
     }
 
     async delete(device: IoTDevice): Promise<DeleteResult> {
-        if (device.type == IoTDeviceType.LoRaWAN) {
-            const lorawanDevice = device as LoRaWANDevice;
-            this.logger.debug(
-                `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
-            );
-            await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+        let deleteResult: DeleteResult = {
+            raw: null,
+            affected: 0
         }
 
-        return this.iotDeviceRepository.delete(device.id);
+        // Run these operations inside a TypeORM transaction to make sure if operations on chirpstack fail, we
+        // roll back any changes on the database to ensure consistency between devices in the OS2iot database
+        // and the Chirpstack database.
+        await getManager().transaction((async transactionManager => {
+            // Find and delete m-n relations with the device first
+            await this.deleteMulticastsFromDevice(transactionManager, device);
+            const iotDeviceRepository = transactionManager.getRepository(IoTDevice);
+
+            // Remove all data target connections before deleting the device. We can't do the same thing
+            // with multicasts as the relation isn't on the IoT device entity (bug)
+            device.connections = [];
+            await iotDeviceRepository.save(device);
+            deleteResult = await transactionManager.delete(IoTDevice, device.id);
+
+            // Now we can safely perform any actions against Chirpstack
+            if (device.type == IoTDeviceType.LoRaWAN) {
+                const lorawanDevice = device as LoRaWANDevice;
+                this.logger.debug(
+                    `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
+                );
+
+                await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+            }
+        }))
+
+        return deleteResult;
+    }
+
+    private async deleteMulticastsFromDevice(manager: EntityManager, device: IoTDevice) {
+        const multicastRepository = manager.getRepository(Multicast);
+        // Take only the multicasts with references to the device.
+        // Filtering by device id won't return multicasts with all devices
+        const _multicasts = await multicastRepository
+            .createQueryBuilder("multicast")
+            .innerJoinAndSelect("multicast.iotDevices", "iot_device")
+            .getMany();
+
+        // Filter multicasts without the device out to avoid updating them
+        const multicastsWithDevice = _multicasts.filter(multicast => multicast.iotDevices.some(iotDevice => iotDevice.id === device.id)
+        );
+        // Remove device from the mappings. It's important that each existing mapping has been fetched
+        // as the new mappings will replace the existing ones.
+        multicastsWithDevice.forEach(
+            multicast => (multicast.iotDevices = multicast.iotDevices?.filter(
+                iotDevice => iotDevice.id !== device.id
+            ))
+        );
+        await multicastRepository.save(multicastsWithDevice);
     }
 
     async deleteMany(ids: number[]): Promise<DeleteResult> {
         return this.iotDeviceRepository.delete(ids);
+    }
+
+    async findStats(device: IoTDevice): Promise<DeviceStatsResponseDto[]> {
+        const toDate = new Date();
+        const fromDate = subtractDays(toDate, 30);
+
+        switch (device.type) {
+            case IoTDeviceType.LoRaWAN:
+                const loraData = await this.chirpstackDeviceService.getStats(
+                    (device as LoRaWANDevice).deviceEUI
+                );
+
+                return loraData.result.map(loraStat => ({
+                    timestamp: loraStat.timestamp,
+                    rssi: loraStat.gwRssi,
+                    snr: loraStat.gwSnr,
+                    rxPacketsPerDr: loraStat.rxPacketsPerDr,
+                }));
+            case IoTDeviceType.SigFox:
+                const sigFoxData = await this.sigfoxMessagesService.getMessageSignals(
+                    device.id,
+                    fromDate,
+                    toDate
+                );
+
+                // SigFox data might contain data points on the same day. They have to be averaged
+                const sortedStats = sigFoxData
+                    .map(data => ({
+                        timestamp: data.sentTime.toISOString(),
+                        rssi: data.rssi,
+                        snr: data.snr,
+                    }))
+                    .sort(
+                        (a, b) =>
+                            new Date(a.timestamp).getTime() -
+                            new Date(b.timestamp).getTime()
+                    );
+                const averagedStats = this.averageStatsForSameDay(sortedStats);
+                return averagedStats;
+            default:
+                return null;
+        }
+    }
+
+    private averageStatsForSameDay(stats: DeviceStatsResponseDto[]) {
+        const statsSummed = stats.reduce(
+            (
+                res: Record<
+                    string,
+                    { timestamp: string; count: number; rssi: number; snr: number }
+                >,
+                item
+            ) => {
+                // Assume that the date is ISO formatted and extract only the date.
+                const dateWithoutTime = item.timestamp.split("T")[0];
+                res[dateWithoutTime] = res.hasOwnProperty(dateWithoutTime)
+                    ? {
+                          count: res[dateWithoutTime].count + 1,
+                          timestamp: item.timestamp,
+                          rssi: res[dateWithoutTime].rssi + item.rssi,
+                          snr: res[dateWithoutTime].snr + item.snr,
+                      }
+                    : {
+                          count: 1,
+                          timestamp: item.timestamp,
+                          rssi: item.rssi,
+                          snr: item.snr,
+                      };
+                return res;
+            },
+            {}
+        );
+
+        const averagedStats: DeviceStatsResponseDto[] = Object.entries(statsSummed).map(
+            ([_key, item]) => ({
+                timestamp: item.timestamp,
+                rssi: item.rssi / item.count,
+                snr: item.snr / item.count,
+            })
+        );
+
+        return averagedStats;
     }
 
     /**
@@ -526,9 +658,7 @@ export class IoTDeviceService {
 
         // Set and validate properties on each IoT device
         // Filter devices whose properties couldn't be set
-        await this.mapDeviceModels(
-            filterValidIotDeviceMaps(iotDeviceMaps)
-        );
+        await this.mapDeviceModels(filterValidIotDeviceMaps(iotDeviceMaps));
         // Filter devices which didn't have a valid device model
         await this.mapChildDtoToIoTDevice(
             filterValidIotDeviceMaps(iotDeviceMaps),
@@ -550,14 +680,14 @@ export class IoTDeviceService {
             deviceModelIds
         );
 
-		// 
+        //
         const applicationIds = iotDevicesDtoMap.reduce((ids: number[], dto) => {
             if (dto.iotDeviceDto.applicationId) {
                 ids.push(dto.iotDeviceDto.applicationId);
             }
             return ids;
-        }, []);		
-		
+        }, []);
+
         const applications = await this.applicationService.findManyWithOrganisation(
             applicationIds
         );
@@ -575,26 +705,32 @@ export class IoTDeviceService {
                 continue;
             }
 
-			// Validate DeviceModel if set
-			if (map.iotDeviceDto.deviceModelId) {
+            // Validate DeviceModel if set
+            if (map.iotDeviceDto.deviceModelId) {
+                const deviceModelMatch = deviceModels.find(
+                    model => model.id === map.iotDeviceDto.deviceModelId
+                );
 
-				const deviceModelMatch = deviceModels.find(
-					model => model.id === map.iotDeviceDto.deviceModelId
-				);
+                if (!deviceModelMatch) {
+                    map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
+                    continue;
+                }
 
-				if (!deviceModelMatch) {
-					map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
-					continue;
-				}
+                if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
+                    map.error = {
+                        message: ErrorCodes.DeviceModelOrganizationDoesNotMatch,
+                    };
+                    continue;
+                }
 
-				if (deviceModelMatch.belongsTo.id !== applicationMatch.belongsTo.id) {
-					map.error = { message: ErrorCodes.DeviceModelOrganizationDoesNotMatch };
-					continue;
-				}
-
-				map.iotDevice.deviceModel = deviceModelMatch;
-			}
+                map.iotDevice.deviceModel = deviceModelMatch;
+            }
         }
+    }
+
+    resetHttpDeviceApiKey(httpDevice: GenericHTTPDevice): Promise<GenericHTTPDevice & IoTDevice> {
+        httpDevice.apiKey = uuidv4();
+        return this.iotDeviceRepository.save(httpDevice);
     }
 
     private async getApplicationsByIds(applicationIds: number[]) {
@@ -870,7 +1006,6 @@ export class IoTDeviceService {
                 dto.name
             );
 
-            // Save application
             const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
                 chirpstackDeviceDto,
                 loraApplications

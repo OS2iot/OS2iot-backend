@@ -24,7 +24,7 @@ import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/networ
 import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
 import * as _ from "lodash";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasWriteAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
@@ -83,7 +83,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const limit = 1000;
         let allResults: GatewayResponseDto[] = [];
         let totalCount = 0;
-        let lastResults;
+        let lastResults: ListAllGatewaysResponseDto;
         do {
             // Default parameters if not set
             lastResults = await this.getAllWithPagination<ListAllGatewaysResponseDto>(
@@ -112,6 +112,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         };
     }
 
+    /**
+     * Fetch gateways individually. This gives us the tags which contain the OS2 organization id.
+     * This is a very expensive operation, but it's the only way to retrieve gateway tags.
+     * @param results
+     */
     private async enrichWithOrganizationId(results: GatewayResponseDto[]) {
         await BluebirdPromise.all(
             BluebirdPromise.map(
@@ -198,8 +203,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const existing = await this.getOne(gatewayId);
         const tags = dto.gateway.tags;
         tags[this.ORG_ID_KEY] = `${existing.gateway.internalOrganizationId}`;
+        // TODO: Interpolated string will never be null?
         if (tags[this.ORG_ID_KEY] != null) {
-            checkIfUserHasWriteAccessToOrganization(req, +tags[this.ORG_ID_KEY]);
+            checkIfUserHasAccessToOrganization(req, +tags[this.ORG_ID_KEY], OrganizationAccessScope.GatewayWrite);
         }
         return tags;
     }

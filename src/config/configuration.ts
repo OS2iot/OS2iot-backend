@@ -1,4 +1,4 @@
-import { GetLogLevels } from "@helpers/env-variable-helper";
+import { GetLogLevels, formatEmail } from "@helpers/env-variable-helper";
 
 export default (): any => {
     return {
@@ -8,7 +8,7 @@ export default (): any => {
             port: parseInt(process.env.DATABASE_PORT, 10) || 5433,
             username: process.env.DATABASE_USERNAME || "os2iot",
             password: process.env.DATABASE_PASSWORD || "toi2so",
-            ssl: process.env.DATABASE_ENABLE_SSL === "true"
+            ssl: process.env.DATABASE_ENABLE_SSL === "true",
         },
         jwt: {
             secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
@@ -17,6 +17,8 @@ export default (): any => {
         backend: {
             baseurl:
                 process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
+            deviceStatsIntervalInDays:
+                parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
         },
         kombit: {
             entryPoint:
@@ -31,6 +33,24 @@ export default (): any => {
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
         },
-        logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels('debug')
+        logLevels: process.env.LOG_LEVEL
+            ? GetLogLevels(process.env.LOG_LEVEL)
+            : GetLogLevels("debug"),
+        email: {
+            host: process.env.EMAIL_HOST || "smtp.ethereal.email",
+            port: process.env.EMAIL_PORT || 587,
+            user: process.env.EMAIL_USER || "ara.kertzmann8@ethereal.email",
+            pass: process.env.EMAIL_PASS || "KzRSyYReEygpFPPZdd",
+            /**
+             * Can be formatted to show a user-friendly name before the e-mail.
+             * E.g. "OS2iot <sender@mail.com>"
+             */
+            from: process.env.EMAIL_FROM
+                ? formatEmail(process.env.EMAIL_FROM)
+                : "OS2iot ara.kertzmann8@ethereal.email",
+        },
+        frontend: {
+            baseurl: process.env.FRONTEND_BASEURL || "http://localhost:8081",
+        },
     };
 };

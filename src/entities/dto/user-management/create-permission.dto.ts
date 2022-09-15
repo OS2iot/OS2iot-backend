@@ -1,15 +1,21 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNumber, IsString, Length } from "class-validator";
-
 import { PermissionType } from "@entities/enum/permission-type.enum";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNumber, IsString, Length, ValidateNested, IsArray, ArrayUnique } from "class-validator";
+import { PermissionTypeDto } from "./permission-type.dto";
+import { Type } from "class-transformer";
+import { ArrayDistinct } from "@helpers/array-distinct.validator";
+import { nameof } from "@helpers/type-helper";
 
 export class CreatePermissionDto {
     @ApiProperty({
         required: true,
         enum: PermissionType,
     })
-    @IsEnum(PermissionType)
-    level: "OrganizationAdmin" | "Write" | "Read";
+    @IsArray()
+    @ArrayDistinct(nameof<PermissionTypeDto>('type'))
+    @Type(() => PermissionTypeDto)
+    @ValidateNested({ each: true })
+    levels: PermissionTypeDto[]
 
     @ApiProperty({ required: true })
     @IsString()

@@ -1,3 +1,14 @@
+import {
+    BadRequestException,
+    Inject,
+    Injectable,
+    Logger,
+    forwardRef,
+    NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { In, Repository } from "typeorm";
+
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import {
@@ -8,17 +19,11 @@ import { CreateOrganizationDto } from "@dto/user-management/create-organization.
 import { UpdateOrganizationDto } from "@dto/user-management/update-organization.dto";
 import { Organization } from "@entities/organization.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    BadRequestException,
-    forwardRef,
-    Inject,
-    Injectable,
-    Logger,
-    NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+
 import { PermissionService } from "./permission.service";
+import { User } from "@entities/user.entity";
+import { UserService } from "./user.service";
+import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class OrganizationService {
@@ -26,7 +31,9 @@ export class OrganizationService {
         @InjectRepository(Organization)
         private organizationRepository: Repository<Organization>,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        private permissionService: PermissionService,
+        @Inject(forwardRef(() => UserService))
+        private userService: UserService
     ) {}
 
     private readonly logger = new Logger(OrganizationService.name, true);
@@ -60,6 +67,28 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
+    async updateAwaitingUsers(org: Organization, user: User): Promise<Organization> {
+        if (!org.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
+            org.awaitingUsers.push(user);
+        }
+        return await this.organizationRepository.save(org);
+    }
+
+    async rejectAwaitingUser(
+        user: User,
+        organization: Organization
+    ): Promise<Organization> {
+        if (organization.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
+            const index = organization.awaitingUsers.findIndex(
+                dbUser => dbUser.id === user.id
+            );
+            organization.awaitingUsers.splice(index, 1);
+            await this.userService.sendRejectionMail(user, organization);
+            return await this.organizationRepository.save(organization);
+        }
+        throw new NotFoundException(ErrorCodes.UserDoesNotExistInArray);
+    }
+
     async findAll(): Promise<ListAllOrganizationsResponseDto> {
         const [data, count] = await this.organizationRepository.findAndCount({
             relations: ["applications", "permissions"],
@@ -69,6 +98,59 @@ export class OrganizationService {
             count: count,
             data: data,
         };
+    }
+
+    mapPermissionsToOrganizations(
+        permissions: Permission[]
+    ): Organization[] {
+        const requestedOrganizations: Organization[] = [];
+
+        for (let index = 0; index < permissions.length; index++) {
+            if (
+                requestedOrganizations.find(org => {
+                    return permissions[index].organization.id === org.id;
+                })
+            ) {
+            } else {
+                requestedOrganizations.push(permissions[index].organization);
+            }
+        }
+
+        requestedOrganizations.forEach(org => {
+            org.permissions = [];
+            permissions.forEach(permission => {
+                if (org.id === permission.organization.id) {
+                    org.permissions.push(permission);
+                }
+            });
+        });
+        permissions.forEach(permission => {
+            permission.organization = null;
+        });
+
+        return requestedOrganizations;
+    }
+
+    mapPermissionsToOneOrganization(
+        permissions: Permission[]
+    ): Organization {
+        const org: Organization = new Organization();
+
+        permissions.map(permission => {
+            org.id = permission.organization.id;
+            org.name = permission.organization.name
+        });
+
+        org.permissions = [];
+        permissions.forEach(permission => {
+            if (org.id === permission.organization.id) {
+                org.permissions.push(permission);
+            }
+        });
+        permissions.forEach(permission => {
+            permission.organization = null;
+        });
+        return org;
     }
 
     async findAllPaginated(
@@ -147,6 +229,11 @@ export class OrganizationService {
             loadRelationIds: {
                 relations: ["applications.iotDevices", "createdBy", "updatedBy"],
             },
+        });
+    }
+    async findByIdWithUsers(organizationId: number): Promise<Organization> {
+        return await this.organizationRepository.findOneOrFail(organizationId, {
+            relations: ["awaitingUsers"],
         });
     }
 

@@ -24,11 +24,6 @@ import { ApplicationDeviceType } from "@entities/application-device-type.entity"
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { findValuesInRecord } from "@helpers/record.helper";
 
-type ControlledPropertyDeviceType<TType> = Omit<ControlledProperty, "type"> &
-    Omit<ApplicationDeviceType, "type"> & {
-        type: TType
-    };
-
 @Injectable()
 export class ApplicationService {
     constructor(
@@ -47,6 +42,7 @@ export class ApplicationService {
         whitelist?: number[],
         allFromOrgs?: number[]
     ): Promise<ListAllApplicationsResponseDto> {
+        const sorting = this.getSortingForApplications(query);
         const orgCondition =
             allFromOrgs != null
                 ? { id: In(whitelist), belongsTo: In(allFromOrgs) }
@@ -56,7 +52,7 @@ export class ApplicationService {
             take: query.limit,
             skip: query.offset,
             relations: ["iotDevices"],
-            order: { id: query.sort },
+            order: sorting,
         });
 
         return {
@@ -73,10 +69,7 @@ export class ApplicationService {
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 organizationIds.length > 0
-                    ? [
-                          { id: In(allowedApplications) },
-                          { belongsTo: In(organizationIds) },
-                      ]
+                    ? { id: In(allowedApplications), belongsTo: In(organizationIds) }
                     : { id: In(allowedApplications) },
             take: query.limit,
             skip: query.offset,
@@ -94,17 +87,7 @@ export class ApplicationService {
         query?: ListAllEntitiesDto,
         allowedOrganisations?: number[]
     ): Promise<ListAllApplicationsResponseDto> {
-        const sorting: { [id: string]: string | number } = {};
-        if (
-            query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "updatedAt")
-        ) {
-            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-        } else {
-            sorting["id"] = "ASC";
-        }
+        const sorting = this.getSortingForApplications(query);
         const [result, total] = await this.applicationRepository.findAndCount({
             where:
                 allowedOrganisations != null
@@ -429,16 +412,34 @@ export class ApplicationService {
     private getSortingForIoTDevices(query: ListAllEntitiesDto) {
         let orderBy = `iot_device.id`;
         if (
-            (query?.orderOn != null && query.orderOn == "id") ||
-            query.orderOn == "name" ||
-            query.orderOn == "active"
+            (query?.orderOn != null && query.orderOn === "id") ||
+            query.orderOn === "name" ||
+            query.orderOn === "active" ||
+            query.orderOn === "rssi" ||
+            query.orderOn === "snr"
         ) {
-            if (query.orderOn == "active") {
+            if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
+            } else if (query.orderOn === "rssi" || query.orderOn === "snr") {
+                orderBy = `metadata.${query.orderOn}`;
             } else {
                 orderBy = `iot_device.${query.orderOn}`;
             }
         }
         return orderBy;
+    }
+
+    private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
+        const sorting: Record<string, string | number> = {};
+        if (query.orderOn != null &&
+            (query.orderOn == "id" ||
+                query.orderOn == "name" ||
+                query.orderOn == "updatedAt")) {
+            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+        }
+        else {
+            sorting["id"] = "ASC";
+        }
+        return sorting;
     }
 }
