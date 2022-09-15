@@ -42,6 +42,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
 import { RequestWithUser, Profile } from "passport-saml/lib/passport-saml/types";
 import { isOrganizationPermission } from "@helpers/security-helper";
+import { readCertFromPath } from "@loaders/certificate";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -103,9 +104,8 @@ export class AuthController {
         this.logger.debug("Get logout Logging out ...");
         const reqConverted: RequestWithUser = req as RequestWithUser;
         const samlLogoutRequest: Profile = {
-            // TODO: From pub certificate?
-            ID: "OS2IOT-KOMBIT-ADGANGSSTYRING"
-        }
+            ID: readCertFromPath().id,
+        };
         reqConverted.samlLogoutRequest = samlLogoutRequest;
 
         this.strategy.logout(reqConverted, (err: Error, url: string): void => {
