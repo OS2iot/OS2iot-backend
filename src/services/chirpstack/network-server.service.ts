@@ -71,7 +71,7 @@ export class ChirpstackSetupNetworkServerService
     }
 
     public async getAdrAlgorithmsForDefaultNetworkServer(): Promise<ListAllAdrAlgorithmsResponseDto> {
-        const networkServerId: string = await this.getDefaultNetworkServerId();
+        const networkServerId = await this.getDefaultNetworkServerId();
         return await this.get(`network-servers/${networkServerId}/adr-algorithms`);
     }
 }
