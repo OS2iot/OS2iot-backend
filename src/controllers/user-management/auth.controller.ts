@@ -103,10 +103,12 @@ export class AuthController {
     public async logout(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
         this.logger.debug("Get logout Logging out ...");
         const reqConverted: RequestWithUser = req as RequestWithUser;
-        const samlLogoutRequest: Profile = {
-            ID: readCertFromPath().id,
-        };
-        reqConverted.samlLogoutRequest = samlLogoutRequest;
+        // TODO: Not tested as KOMBIT isn't set up locally. Test on test environment
+        // Inspecting the source code (v3.2.1), we gather that
+        // - nameID is used. Corresponds to user.name in DB
+        // - nameIDFormat is used. Might correspond to <NameIDFormat> in the public certificate XML-file
+        reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
+        reqConverted.user = { ID: readCertFromPath().id }; // ID seems unused in source code
 
         this.strategy.logout(reqConverted, (err: Error, url: string): void => {
             req.logout();
