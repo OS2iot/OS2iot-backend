@@ -6,6 +6,7 @@ import { ListAllNetworkServerResponseDto } from "@dto/chirpstack/list-all-networ
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
 
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
 
 @Injectable()
 export class ChirpstackSetupNetworkServerService
@@ -67,5 +68,10 @@ export class ChirpstackSetupNetworkServerService
         };
 
         return createNetworkServerDto;
+    }
+
+    public async getAdrAlgorithmsForDefaultNetworkServer(): Promise<ListAllAdrAlgorithmsResponseDto> {
+        const networkServerId = await this.getDefaultNetworkServerId();
+        return await this.get(`network-servers/${networkServerId}/adr-algorithms`);
     }
 }
