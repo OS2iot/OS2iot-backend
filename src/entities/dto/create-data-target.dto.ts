@@ -59,13 +59,13 @@ export class CreateDataTargetDto {
     authorizationHeader: string;
 
     @ApiProperty({ required: false })
-    tokenEndpoint: string;
+    tokenEndpoint?: string;
 
     @ApiProperty({ required: false })
-    clientId: string;
+    clientId?: string;
 
     @ApiProperty({ required: false })
-    clientSecret: string;
+    clientSecret?: string;
 
     @ApiPropertyOptional({ required: false })
     @IsOptional()
