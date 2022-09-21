@@ -9,7 +9,7 @@ import { FiwareDataTargetConfiguration } from "./interfaces/fiware-data-target-c
 @ChildEntity(DataTargetType.Fiware)
 export class FiwareDataTarget extends DataTarget {
     @Column()
-    url: string; 
+    url: string;
 
     @Column({ default: 30000, comment: "HTTP call timeout in milliseconds" })
     timeout: number;
@@ -33,7 +33,7 @@ export class FiwareDataTarget extends DataTarget {
     tokenEndpoint?: string;
 
     @BeforeInsert()
-    private beforeInsert() {       
+    private beforeInsert() {
         this.type = DataTargetType.Fiware;
     }
 
@@ -41,10 +41,11 @@ export class FiwareDataTarget extends DataTarget {
         return {
             url: this.url,
             timeout: this.timeout,
-            authorizationType:
-                this.tokenEndpoint ? AuthorizationType.OAUTH_AUTHORIZATION :
-                    this.authorizationHeader ? AuthorizationType.HEADER_BASED_AUTHORIZATION :
-                        AuthorizationType.NO_AUTHORIZATION,
+            authorizationType: this.tokenEndpoint
+                ? AuthorizationType.OAUTH_AUTHORIZATION
+                : this.authorizationHeader
+                ? AuthorizationType.HEADER_BASED_AUTHORIZATION
+                : AuthorizationType.NO_AUTHORIZATION,
             authorizationHeader: this.authorizationHeader,
             tenant: this.tenant,
             context: this.context,
