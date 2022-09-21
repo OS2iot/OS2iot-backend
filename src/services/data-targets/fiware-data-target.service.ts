@@ -31,8 +31,7 @@ export class AuthenticationTokenProvider {
             return token
         } else {
             try {
-                const buffer = Buffer.from(`${config.clientId}:${config.clientSecret}`);
-                const encodedCredentials = buffer.toString('base64');
+                const encodedCredentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
                 const params = new URLSearchParams([['grant_type', 'client_credentials']])
                 const { data }: { data: TokenEndpointResponse } = await this.httpService.post(config.tokenEndpoint, params, {
                     headers: {
