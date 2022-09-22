@@ -17,17 +17,19 @@ export class AuthenticationTokenProvider {
 
     async getToken(config: FiwareDataTargetConfiguration): Promise<string> {
         const key = config.clientId + config.clientSecret;
+
         const token = await this.cacheManager.get<string>(key)
         if (token) {
-            this.logger.debug('Token found')
             return token
         } else {
             try {
-                const encodedCredentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-                const params = new URLSearchParams([['grant_type', 'client_credentials']])
+                const params = new URLSearchParams([
+                    ['grant_type', 'client_credentials'],
+                    ['client_id', config.clientId],
+                    ['client_secret', config.clientSecret]
+                ])
                 const { data }: { data: TokenEndpointResponse } = await this.httpService.post(config.tokenEndpoint, params, {
                     headers: {
-                        'Authorization': `Basic ${encodedCredentials}`,
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                 }).toPromise()
