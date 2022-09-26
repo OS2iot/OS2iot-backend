@@ -52,6 +52,7 @@ export class AuthenticationTokenProvider {
             }
             catch (err) {
                 this.logger.error(`AuthenticationTokenProvider got error ${err}`)
+                throw err
             }
         }
     }
