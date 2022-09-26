@@ -12,4 +12,5 @@ export interface FiwareDataTargetConfiguration {
     clientId?: string;
     clientSecret?: string;
     tokenEndpoint?: string;
+    updatedAt: Date;
 }

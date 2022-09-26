@@ -52,6 +52,7 @@ export class FiwareDataTarget extends DataTarget {
             clientId: this.clientId,
             clientSecret: this.clientSecret,
             tokenEndpoint: this.tokenEndpoint,
+            updatedAt: this.updatedAt,
         };
     }
 }
