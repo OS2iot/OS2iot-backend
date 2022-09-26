@@ -3,8 +3,10 @@ import { Cache } from 'cache-manager'
 import { FiwareDataTargetConfiguration } from "../entities/interfaces/fiware-data-target-configuration.interface";
 
 type TokenEndpointResponse = {
-    access_token: string,
-    expires_in: number,
+    data: {
+        access_token: string,
+        expires_in: number,
+    }
 }
 
 @Injectable()
@@ -36,7 +38,7 @@ export class AuthenticationTokenProvider {
                     ['client_id', config.clientId],
                     ['client_secret', config.clientSecret]
                 ])
-                const { data }: { data: TokenEndpointResponse } = await this.httpService.post(config.tokenEndpoint, params, {
+                const { data }: TokenEndpointResponse = await this.httpService.post(config.tokenEndpoint, params, {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
@@ -45,7 +47,7 @@ export class AuthenticationTokenProvider {
                 const clockSkew = 30
                 const ttl = data.expires_in - clockSkew
                 this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${ttl} seconds)`)
-                this.cacheManager.set(key, data.access_token, { ttl })
+                await this.cacheManager.set(key, data.access_token, { ttl })
                 return data.access_token
             }
             catch (err) {
