@@ -44,8 +44,9 @@ export class AuthenticationTokenProvider {
                     },
                 }).toPromise()
 
-                const clockSkew = 30
-                const ttl = data.expires_in - clockSkew
+                // NOTE: TTL offset include some time for clock differences between authentication server and local server + network delay
+                const ttlOffset = 30
+                const ttl = data.expires_in - ttlOffset
                 this.logger.debug(`AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${ttl} seconds)`)
                 await this.cacheManager.set(key, data.access_token, { ttl })
                 return data.access_token
