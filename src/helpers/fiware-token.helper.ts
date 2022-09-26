@@ -15,6 +15,14 @@ export class AuthenticationTokenProvider {
     constructor(private httpService: HttpService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {
     }
 
+    async clearConfig(config: FiwareDataTargetConfiguration): Promise<void> {
+        if (config.clientId || config.clientSecret) {
+            this.logger.debug(`AuthenticationTokenProvider clearing token for ${config.clientId}`)
+            const key = config.clientId + config.clientSecret
+            return this.cacheManager.del(key)
+        }
+    }
+
     async getToken(config: FiwareDataTargetConfiguration): Promise<string> {
         const key = config.clientId + config.clientSecret;
 
