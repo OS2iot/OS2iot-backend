@@ -47,7 +47,7 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
 import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder, EntityManager } from "typeorm";
+import { DeleteResult, getManager, ILike, Repository, SelectQueryBuilder, EntityManager, In } from "typeorm";
 import { DeviceModelService } from "./device-model.service";
 import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
 import { v4 as uuidv4 } from "uuid";
@@ -84,7 +84,8 @@ export class IoTDeviceService {
     private readonly logger = new Logger(IoTDeviceService.name);
 
     async findOne(id: number): Promise<IoTDevice> {
-        return await this.iotDeviceRepository.findOneOrFail(id, {
+        return await this.iotDeviceRepository.findOneOrFail({
+            where: { id },
             relations: ["application"],
         });
     }
@@ -97,7 +98,8 @@ export class IoTDeviceService {
         if (iotDeviceIds == null || iotDeviceIds?.length == 0) {
             return [];
         }
-        return await this.iotDeviceRepository.findByIds(iotDeviceIds, {
+        return await this.iotDeviceRepository.find({
+            where: { id: In(iotDeviceIds) },
             relations: ["application"],
         });
     }
@@ -312,21 +314,21 @@ export class IoTDeviceService {
     }
 
     async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {
-        return await this.genericHTTPDeviceRepository.findOne({ apiKey: key });
+        return await this.genericHTTPDeviceRepository.findOneBy({ apiKey: key });
     }
 
     async findSigFoxDeviceByDeviceIdAndDeviceTypeId(
         deviceId: string,
         apiKey: string
     ): Promise<SigFoxDevice> {
-        return await this.sigfoxRepository.findOne({
-            deviceId: deviceId,
+        return await this.sigfoxRepository.findOneBy({
+            deviceId,
             deviceTypeId: apiKey,
         });
     }
 
     async findLoRaWANDeviceByDeviceEUI(deviceEUI: string): Promise<LoRaWANDevice> {
-        return await this.loRaWANDeviceRepository.findOne({
+        return await this.loRaWANDeviceRepository.findOneBy({
             deviceEUI: ILike(deviceEUI),
         });
     }
@@ -422,7 +424,7 @@ export class IoTDeviceService {
         updateDto: UpdateIoTDeviceDto,
         userId: number
     ): Promise<IoTDevice> {
-        const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail(id);
+        const existingIoTDevice = await this.iotDeviceRepository.findOneByOrFail({ id });
         const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = [
             { iotDevice: existingIoTDevice, iotDeviceDto: updateDto },
         ];

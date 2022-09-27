@@ -76,7 +76,8 @@ export class DataTargetService {
     }
 
     async findOne(id: number): Promise<DataTarget> {
-        return await this.dataTargetRepository.findOneOrFail(id, {
+        return await this.dataTargetRepository.findOneOrFail({
+            where: { id },
             relations: ["application", "openDataDkDataset"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -85,7 +86,7 @@ export class DataTargetService {
     }
 
     async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
-        return await this.dataTargetRepository.find({
+        return await this.dataTargetRepository.findBy({
             application: { id: applicationId },
         });
     }
@@ -154,7 +155,8 @@ export class DataTargetService {
         updateDataTargetDto: UpdateDataTargetDto,
         userId: number
     ): Promise<DataTarget> {
-        const existing = await this.dataTargetRepository.findOneOrFail(id, {
+        const existing = await this.dataTargetRepository.findOneOrFail({
+            where: { id },
             relations: ["openDataDkDataset"],
         });
 
@@ -231,12 +233,12 @@ export class DataTargetService {
         dataTarget: DataTarget
     ) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
-            const httpPushDataTarget = (dataTarget as HttpPushDataTarget);
+            const httpPushDataTarget = dataTarget as HttpPushDataTarget;
             httpPushDataTarget.url = dataTargetDto.url;
             httpPushDataTarget.timeout = dataTargetDto.timeout;
             httpPushDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
         } else if (dataTargetDto.type === DataTargetType.Fiware) {
-            const fiwareDataTarget = (dataTarget as FiwareDataTarget);
+            const fiwareDataTarget = dataTarget as FiwareDataTarget;
             fiwareDataTarget.url = dataTargetDto.url;
             fiwareDataTarget.timeout = dataTargetDto.timeout;
             fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
@@ -254,7 +256,7 @@ export class DataTargetService {
         }
     }
 
-    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any):T {
+    private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
         return new childDataTargetType();
     }
 }

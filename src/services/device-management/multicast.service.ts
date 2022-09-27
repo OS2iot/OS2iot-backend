@@ -112,7 +112,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     }
 
     async findOne(id: number): Promise<Multicast> {
-        return await this.multicastRepository.findOneOrFail(id, {
+        return await this.multicastRepository.findOneOrFail({
+            where: { id },
             relations: ["application", "lorawanMulticastDefinition", "iotDevices"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],

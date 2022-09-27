@@ -36,7 +36,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         super(internalHttpService);
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
-    private readonly logger = new Logger(ChirpstackGatewayService.name, true);
+    private readonly logger = new Logger(ChirpstackGatewayService.name, { timestamp: true });
     private readonly ORG_ID_KEY = "internalOrganizationId";
     private readonly UPDATED_BY_KEY = "os2iot-updated-by";
     private readonly CREATED_BY_KEY = "os2iot-created-by";

@@ -137,23 +137,24 @@ export class ApplicationService {
     }
 
     async findOneWithoutRelations(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id);
+        return await this.applicationRepository.findOneByOrFail({ id });
     }
 
     async findOneWithOrganisation(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id, {
+        return await this.applicationRepository.findOneOrFail({where: {id},
             relations: ["belongsTo"],
         });
     }
 
     async findManyWithOrganisation(ids: number[]): Promise<Application[]> {
-        return await this.applicationRepository.findByIds(ids, {
+        return await this.applicationRepository.find({
+            where: {id: In(ids)},
             relations: ["belongsTo"],
         });
     }
 
     async findOne(id: number): Promise<Application> {
-        const app = await this.applicationRepository.findOneOrFail(id, {
+        const app = await this.applicationRepository.findOneOrFail({where: {id},
             relations: [
                 "iotDevices",
                 "dataTargets",
@@ -197,7 +198,7 @@ export class ApplicationService {
         if (ids == null || ids?.length == 0) {
             return [];
         }
-        return await this.applicationRepository.find({ id: In(ids) });
+        return await this.applicationRepository.findBy({ id: In(ids) });
     }
 
     async create(
@@ -229,7 +230,8 @@ export class ApplicationService {
         updateApplicationDto: UpdateApplicationDto,
         userId: number
     ): Promise<Application> {
-        const existingApplication = await this.applicationRepository.findOneOrFail(id, {
+        const existingApplication = await this.applicationRepository.findOneOrFail({
+            where: { id },
             relations: [
                 nameof<Application>("iotDevices"),
                 nameof<Application>("dataTargets"),
@@ -250,7 +252,7 @@ export class ApplicationService {
 
     async delete(id: number): Promise<DeleteResult> {
         const application = await this.applicationRepository.findOne({
-            where: { id: id },
+            where: { id },
             relations: ["iotDevices", "multicasts"],
         });
 
@@ -288,8 +290,8 @@ export class ApplicationService {
 
     async isNameValidAndNotUsed(name: string, id?: number): Promise<boolean> {
         if (name) {
-            const applicationsWithName = await this.applicationRepository.find({
-                name: name,
+            const applicationsWithName = await this.applicationRepository.findBy({
+                name,
             });
 
             if (id) {

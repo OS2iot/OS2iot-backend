@@ -203,8 +203,8 @@ export class PermissionService {
     async findManyWithRelations(organizationIds: number[]): Promise<Permission[]>
     {
         const perm = await this.permissionRepository.find({
+            where: { organization: { id: In(organizationIds) } },
             relations: ["organization", "users", "type"],
-            where: {organization: {id: In(organizationIds)}}
         });
 
         return perm;
@@ -213,8 +213,8 @@ export class PermissionService {
     async findOneWithRelations(organizationId: number): Promise<Permission[]>
     {
         const perm = await this.permissionRepository.find({
+            where: { organization: { id: organizationId } },
             relations: ["organization", "users", "type"],
-            where: {organization: {id: organizationId}}
         });
 
         return perm;
@@ -226,7 +226,7 @@ export class PermissionService {
         userId: number
     ): Promise<Permission> {
         const permission = await getManager().findOne(Permission, {
-            where: { id: id },
+            where: { id },
             relations: ["organization", "users", "applications", "type"],
         });
 
@@ -323,7 +323,7 @@ export class PermissionService {
 
     async getPermission(id: number): Promise<Permission> {
         return await getManager().findOneOrFail(Permission, {
-            where: { id: id },
+            where: { id },
             relations: ["organization", "users", "applications", "type"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
