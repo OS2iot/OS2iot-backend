@@ -27,38 +27,44 @@ export class FiwareDataTargetService extends BaseDataTargetService {
 
         const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
 
-        const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
-        const target = `FiwareDataTarget(${endpointUrl})`;
-
         // NOTE: For context broker secured with OAuth2 we want to have extra retry in case the cached token is expired.
         const retries = config.tokenEndpoint ? 1 : 0
 
-        return this.retry(async () => {
-            try {
-                // Setup HTTP client
-                const axiosConfig = await this.makeAxiosConfiguration(config);
+        return this.retry(async () => this.sendInternal(config, dto), retries)
+    }
 
-                const rawBody: string = JSON.stringify(dto.payload);
-                const result = await this.httpService
-                    .post(endpointUrl, rawBody, axiosConfig)
-                    .toPromise();
+    async sendInternal(
+        config: FiwareDataTargetConfiguration,
+        dto: TransformedPayloadDto
+    ): Promise<DataTargetSendStatus> {
 
-                this.logger.debug(
-                    `FiwareDataTarget result: '${JSON.stringify(result.data)}'`
+        const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
+        const target = `FiwareDataTarget(${endpointUrl})`;
+
+        try {
+            // Setup HTTP client
+            const axiosConfig = await this.makeAxiosConfiguration(config);
+
+            const rawBody: string = JSON.stringify(dto.payload);
+            const result = await this.httpService
+                .post(endpointUrl, rawBody, axiosConfig)
+                .toPromise();
+
+            this.logger.debug(
+                `FiwareDataTarget result: '${JSON.stringify(result.data)}'`
+            );
+            if (!result.status.toString().startsWith("2")) {
+                this.logger.warn(
+                    `Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText
+                    }`
                 );
-                if (!result.status.toString().startsWith("2")) {
-                    this.logger.warn(
-                        `Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText
-                        }`
-                    );
-                }
-                return this.success(target);
-            } catch (err) {
-                this.logger.error(`FiwareDataTarget got error: ${err}`);
-                this.authenticationTokenProvider.clearConfig(config);
-                return this.failure(target, err);
             }
-        }, retries)
+            return this.success(target);
+        } catch (err) {
+            this.logger.error(`FiwareDataTarget got error: ${err}`);
+            this.authenticationTokenProvider.clearConfig(config);
+            return this.failure(target, err);
+        }
     }
 
     async retry(action: () => Promise<DataTargetSendStatus>, retries: number): Promise<DataTargetSendStatus> {
