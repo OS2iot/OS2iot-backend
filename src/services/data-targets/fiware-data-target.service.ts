@@ -30,6 +30,7 @@ export class FiwareDataTargetService extends BaseDataTargetService {
         const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
         const target = `FiwareDataTarget(${endpointUrl})`;
 
+        // NOTE: For context broker secured with OAuth2 we want to have extra retry in case the cached token is expired.
         const retries = config.tokenEndpoint ? 1 : 0
 
         return this.retry(async () => {
