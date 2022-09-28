@@ -11,12 +11,14 @@ import { DeviceProfileService } from "@services/chirpstack/device-profile.servic
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
+import { NetworkServerController } from "@admin-controller/chirpstack/network-server.controller";
 
 @Module({
     controllers: [
         ChirpstackGatewayController,
         ServiceProfileController,
         DeviceProfileController,
+        NetworkServerController
     ],
     imports: [HttpModule, ConfigModule.forRoot({ load: [configuration] })],
     providers: [
