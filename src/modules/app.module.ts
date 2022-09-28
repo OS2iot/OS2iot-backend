@@ -21,7 +21,8 @@ import { KafkaModule } from "@modules/kafka.module";
 import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
-import { HttpModule, Module } from "@nestjs/common";
+import { HttpModule } from "@nestjs/axios";
+import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -58,10 +59,6 @@ import { NewKombitCreationModule } from "./user-management/new-kombit-creation.m
                 ssl: configService.get<boolean>("database.ssl"),
             }),
         }),
-        // LoggerModule.forRoot({
-        //     pinoHttp: { useLevel: "debug", autoLogging: false },
-        //     exclude: [{ method: RequestMethod.GET, path: "" }],
-        // }),
         KafkaModule,
         ScheduleModule.forRoot(),
         HttpModule,

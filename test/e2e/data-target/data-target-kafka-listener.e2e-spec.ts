@@ -1,4 +1,4 @@
-import { HttpService, INestApplication } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { NoOpLogger } from "../no-op-logger";
@@ -22,6 +22,7 @@ import { KafkaPayload } from "@services/kafka/kafka.message";
 import { KafkaService } from "@services/kafka/kafka.service";
 
 import { clearDatabase } from "../test-helpers";
+import { HttpService } from "@nestjs/axios";
 
 describe("DataTargetKafkaListener (e2e)", () => {
     let app: INestApplication;

@@ -1,6 +1,5 @@
 import {
     BadRequestException,
-    HttpService,
     Injectable,
     InternalServerErrorException,
     Logger,
@@ -26,6 +25,7 @@ import * as _ from "lodash";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {

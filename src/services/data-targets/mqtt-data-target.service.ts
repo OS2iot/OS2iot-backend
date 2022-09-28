@@ -5,7 +5,8 @@ import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { MqttDataTargetConfiguration } from "@interfaces/mqtt-data-target-configuration.interface";
-import { HttpService, Injectable, Logger } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { Injectable, Logger } from "@nestjs/common";
 import * as mqtt from "mqtt";
 import { BaseDataTargetService } from "./base-data-target.service";
 

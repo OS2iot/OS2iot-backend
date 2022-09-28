@@ -1,13 +1,3 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import {
-    DeleteResult,
-    EntityManager,
-    getConnection,
-    Repository,
-    SelectQueryBuilder,
-} from "typeorm";
-
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
@@ -21,7 +11,10 @@ import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
+import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
 
 @Injectable()
 export class DataTargetService {

@@ -6,14 +6,13 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     BadRequestException,
     forwardRef,
-    HttpService,
     Inject,
     Injectable,
     Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { DeleteResult, getConnection, Repository, SelectQueryBuilder } from "typeorm";
+import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
 import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import { ApplicationService } from "./application.service";
@@ -32,6 +31,7 @@ import {
 } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
