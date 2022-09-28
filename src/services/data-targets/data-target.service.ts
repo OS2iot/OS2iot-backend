@@ -2,26 +2,26 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
     DeleteResult,
+    EntityManager,
+    getConnection,
     Repository,
     SelectQueryBuilder,
-    getConnection,
-    getManager,
 } from "typeorm";
 
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
+import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ApplicationService } from "@services/device-management/application.service";
-import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
-import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
-import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
-import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -36,8 +36,7 @@ export class DataTargetService {
         query?: ListAllDataTargetsDto,
         applicationIds?: number[]
     ): Promise<ListAllDataTargetsResponseDto> {
-        let queryBuilder = getConnection()
-            .getRepository(DataTarget)
+        let queryBuilder = this.dataTargetRepository
             .createQueryBuilder("datatarget")
             .innerJoinAndSelect("datatarget.application", "application")
             .limit(query.limit)
@@ -146,7 +145,7 @@ export class DataTargetService {
         mappedDataTarget.createdBy = userId;
         mappedDataTarget.updatedBy = userId;
         // Use the generic manager since we cannot use a general repository.
-        const entityManager = getManager();
+        const entityManager = this.dataTargetRepository.manager;
         return await entityManager.save(mappedDataTarget, {});
     }
 

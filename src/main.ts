@@ -1,4 +1,3 @@
-import { Logger } from "nestjs-pino";
 import { Logger as BuiltInLogger } from "@nestjs/common";
 import * as fs from "fs";
 import * as express from "express";

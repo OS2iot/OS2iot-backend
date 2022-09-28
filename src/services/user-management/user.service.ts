@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
@@ -288,7 +288,7 @@ export class UserService {
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
-        return await this.userRepository.findByIds(userIds);
+        return await this.userRepository.findBy({ id: In(userIds) });
     }
 
     async findAll(query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {

@@ -59,8 +59,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         const orderByColumn = this.getSortingForMulticasts(query);
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
 
-        let queryBuilder = getConnection()
-            .getRepository(Multicast)
+        let queryBuilder = this.multicastRepository
             .createQueryBuilder("multicast")
             .innerJoinAndSelect("multicast.application", "application")
             .innerJoinAndSelect(

@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 
-const dataSource = new DataSource({
+const os2IotContext = new DataSource({
     type: "postgres",
     host: process.env.DATABASE_HOSTNAME || "host.docker.internal",
     port: parseInt(process.env.DATABASE_PORT ?? "", 10) || 5433,
@@ -17,6 +17,6 @@ const dataSource = new DataSource({
 });
 
 /**
- * For CLI migration use only
+ * For CLI migration use only!
  */
-export default dataSource;
+export default os2IotContext;

@@ -42,8 +42,8 @@ import { NewKombitCreationModule } from "./user-management/new-kombit-creation.m
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
-            useFactory: async (configService: ConfigService) => ({
-                type: "postgres" as const,
+            useFactory: (configService: ConfigService) => ({
+                type: "postgres",
                 host: configService.get<string>("database.host"),
                 port: configService.get<number>("database.port"),
                 username: configService.get<string>("database.username"),
