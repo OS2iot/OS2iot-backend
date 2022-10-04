@@ -26,7 +26,7 @@ export class FiwareDataTarget extends DataTarget {
     @Column({ nullable: true })
     clientId?: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, select: false })
     clientSecret?: string;
 
     @Column({ nullable: true })

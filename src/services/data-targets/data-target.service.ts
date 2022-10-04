@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
     DeleteResult,
@@ -22,13 +22,16 @@ import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
+import { ClientSecretProvider, CLIENT_SECRET_PROVIDER } from "../../helpers/fiware-token.helper";
+import { Client } from "mqtt";
 
 @Injectable()
 export class DataTargetService {
     constructor(
         @InjectRepository(DataTarget)
         private dataTargetRepository: Repository<DataTarget>,
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService,
+        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider
     ) {}
     private readonly logger = new Logger(DataTargetService.name);
 
@@ -96,6 +99,7 @@ export class DataTargetService {
     ): Promise<DataTarget[]> {
         const res = await this.dataTargetRepository
             .createQueryBuilder("dt")
+            .addSelect('dt.clientSecret')
             .innerJoin(
                 "iot_device_payload_decoder_data_target_connection",
                 "con",
@@ -154,9 +158,11 @@ export class DataTargetService {
         updateDataTargetDto: UpdateDataTargetDto,
         userId: number
     ): Promise<DataTarget> {
-        const existing = await this.dataTargetRepository.findOneOrFail(id, {
-            relations: ["openDataDkDataset"],
-        });
+        const existing = await this.dataTargetRepository.createQueryBuilder('target')
+            .addSelect('target.clientSecret')
+            .leftJoinAndSelect('target.openDataDkDataset', 'openDataDkDataset')
+            .where('target.id = :id', { id })
+            .getOneOrFail();
 
         const mappedDataTarget = await this.mapDtoToDataTarget(
             updateDataTargetDto,
@@ -206,7 +212,7 @@ export class DataTargetService {
             throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
-        this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
+        await this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
 
         return dataTarget;
     }
@@ -226,7 +232,7 @@ export class DataTargetService {
         return o;
     }
 
-    private mapDtoToTypeSpecificDataTarget(
+    private async mapDtoToTypeSpecificDataTarget(
         dataTargetDto: CreateDataTargetDto,
         dataTarget: DataTarget
     ) {
@@ -242,7 +248,11 @@ export class DataTargetService {
             fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
             fiwareDataTarget.tokenEndpoint = dataTargetDto.tokenEndpoint;
             fiwareDataTarget.clientId = dataTargetDto.clientId;
-            fiwareDataTarget.clientSecret = dataTargetDto.clientSecret;
+
+            // NOTE: If there is no client secret we keep it as it was
+            if (dataTargetDto.clientSecret) {
+                fiwareDataTarget.clientSecret = await this.clientSecretProvider.store(dataTargetDto.clientSecret);
+            }
             fiwareDataTarget.tenant = dataTargetDto.tenant;
             fiwareDataTarget.context = dataTargetDto.context;
         } else if (dataTargetDto.type === DataTargetType.MQTT) {

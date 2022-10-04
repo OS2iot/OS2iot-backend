@@ -1,5 +1,6 @@
 import { CACHE_MANAGER, HttpService, Inject, Injectable, Logger } from "@nestjs/common"
 import { Cache } from 'cache-manager'
+import { Client } from "mqtt";
 import { FiwareDataTargetConfiguration } from "../entities/interfaces/fiware-data-target-configuration.interface";
 
 type TokenEndpointResponse = {
@@ -9,12 +10,32 @@ type TokenEndpointResponse = {
     }
 }
 
+export const CLIENT_SECRET_PROVIDER = 'ClientSecretProvider'
+export interface ClientSecretProvider {
+    getClientSecret(secretRef: string): Promise<string>
+    store(secret: string): Promise<string>
+}
+
+@Injectable()
+export class PlainTextClientSecretProvider implements ClientSecretProvider {
+    getClientSecret(secretRef: string): Promise<string> {
+        return Promise.resolve(secretRef)
+    }
+
+    store(secret: string): Promise<string> {
+        return Promise.resolve(secret)
+    }
+}
+
 @Injectable()
 export class AuthenticationTokenProvider {
 
     private readonly logger = new Logger(AuthenticationTokenProvider.name);
 
-    constructor(private httpService: HttpService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {
+    constructor(
+        private httpService: HttpService,
+        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache) {
     }
 
     async clearConfig(config: FiwareDataTargetConfiguration): Promise<void> {
@@ -33,10 +54,11 @@ export class AuthenticationTokenProvider {
             return token
         } else {
             try {
+                const clientSecret = await this.clientSecretProvider.getClientSecret(config.clientSecret)
                 const params = new URLSearchParams([
                     ['grant_type', 'client_credentials'],
                     ['client_id', config.clientId],
-                    ['client_secret', config.clientSecret]
+                    ['client_secret', clientSecret]
                 ])
                 const { data }: TokenEndpointResponse = await this.httpService.post(config.tokenEndpoint, params, {
                     headers: {
