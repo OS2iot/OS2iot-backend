@@ -62,7 +62,7 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             return this.success(target);
         } catch (err) {
             this.logger.error(`FiwareDataTarget got error: ${err}`);
-            this.authenticationTokenProvider.clearConfig(config);
+            await this.authenticationTokenProvider.clearConfig(config);
             return this.failure(target, err);
         }
     }
