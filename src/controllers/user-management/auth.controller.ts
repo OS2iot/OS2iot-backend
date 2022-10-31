@@ -40,7 +40,9 @@ import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
+import { RequestWithUser, Profile } from "passport-saml/lib/passport-saml/types";
 import { isOrganizationPermission } from "@helpers/security-helper";
+import { readCertFromPath } from "@loaders/certificate";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -99,8 +101,19 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: "Initiates the SAML logout flow" })
     public async logout(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
-        this.logger.debug("Get logout Logging out ...");
-        this.strategy.logout(req, (err: Error, url: string): void => {
+        this.logger.debug("Logging out ...");
+        const reqConverted: RequestWithUser = req as RequestWithUser;
+        // TODO: Not tested as KOMBIT isn't set up locally. Test on test environment
+        // Inspecting the source code (v3.2.1), we gather that
+        // - ID is unknown. Might be unused or required for @InResponseTo in saml.js
+        // - nameID is used. Corresponds to user.name in DB
+        // - nameIDFormat is used. Might correspond to <NameIDFormat> in the public certificate XML-file
+        reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
+        reqConverted.user = { ID: readCertFromPath().id };
+        // TODO: Remove after test
+        this.logger.debug(`KOMBIT logout request: ${JSON.stringify(req)}`)
+
+        this.strategy.logout(reqConverted, (err: Error, url: string): void => {
             req.logout();
             this.logger.debug("Inside callback");
             if (!err) {

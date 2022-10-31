@@ -1,10 +1,11 @@
+import configuration from "@config/configuration";
+import { UserResponseDto } from "@dto/user-response.dto";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { readCertFromPath } from "@loaders/certificate";
 import { Injectable, Logger } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { AuthService } from "@services/user-management/auth.service";
 import { Profile, Strategy } from "passport-saml";
-import { UserResponseDto } from "@dto/user-response.dto";
-import configuration from "@config/configuration";
-import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
@@ -26,6 +27,7 @@ export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
             logoutUrl: configuration()["kombit"]["entryPoint"],
             entryPoint: configuration()["kombit"]["entryPoint"],
             identifierFormat: "",
+            cert: readCertFromPath().cert,
             privateCert: configuration()["kombit"]["certificatePrivateKey"],
             decryptionPvk: configuration()["kombit"]["certificatePrivateKey"],
             signatureAlgorithm: "sha256",
