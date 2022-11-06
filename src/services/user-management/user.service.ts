@@ -336,6 +336,24 @@ export class UserService {
         };
     }
 
+    async getUsersOnOrganization(
+        organizationId: number//,
+        // query: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        const [data, count] = await this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.permissions", "p")
+            .where('"p"."organizationId" = :organizationId', { organizationId: organizationId })
+            // .take(+query.limit)
+            // .skip(+query.offset)
+            .getManyAndCount();
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+    }
+
     async findAllMinimal(): Promise<ListAllUsersMinimalResponseDto> {
         const result = await this.userRepository.find({
             select: ["id", "name"],

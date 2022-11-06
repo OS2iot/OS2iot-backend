@@ -13,6 +13,7 @@ import {
     Req,
     UseGuards,
     ForbiddenException,
+    UnauthorizedException,
 } from "@nestjs/common";
 import { Logger } from "@nestjs/common";
 import {
@@ -55,7 +56,7 @@ export class UserController {
     constructor(
         private userService: UserService,
         private organizationService: OrganizationService
-    ) {}
+    ) { }
 
     private readonly logger = new Logger(UserController.name);
 
@@ -206,6 +207,26 @@ export class UserController {
             );
 
             return user;
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    @Get("organizationUsers/:organizationId")
+    @ApiOperation({ summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization" })
+    async findByOrganizationId(
+        @Req() req: AuthenticatedRequest,
+        @Param("organizationId", new ParseIntPipe()) organizationId: number
+    ): Promise<ListAllUsersResponseDto> {
+        try {
+            // Check if user has access to organization
+            let organizationsWithAdmin = req.user.permissions.getAllOrganizationsWithUserAdmin();
+            if (organizationsWithAdmin.indexOf(organizationId) < 0) {
+                throw new UnauthorizedException("User does not have org admin permissions for this organization");
+            }
+
+            // Get user objects
+            return await this.userService.getUsersOnOrganization(organizationId);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
