@@ -24,7 +24,7 @@ export default (): any => {
             entryPoint:
                 process.env.KOMBIT_ENTRYPOINT ||
                 "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
-            certificatePublicKeyPath: process.env.KOMBIT_CERTIFICATEPUBLICKEYPATH || null,
+            certificatePublicKeyPath: process.env.KOMBIT_CERTIFICATEPUBLICKEYPATH || "",
             certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
             roleUri:
                 process.env.KOMBIT_ROLE_NAME ||

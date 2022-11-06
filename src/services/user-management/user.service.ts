@@ -337,15 +337,26 @@ export class UserService {
     }
 
     async getUsersOnOrganization(
-        organizationId: number//,
-        // query: ListAllEntitiesDto
+        organizationId: number,
+        query: ListAllEntitiesDto
     ): Promise<ListAllUsersResponseDto> {
+        let orderBy = `user.id`;
+        if (
+            query.orderOn !== null &&
+            (query.orderOn === "id" || query.orderOn === "name")
+        ) {
+            orderBy = `user.${query.orderOn}`;
+        }
+        const order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        
         const [data, count] = await this.userRepository
             .createQueryBuilder("user")
             .innerJoin("user.permissions", "p")
             .where('"p"."organizationId" = :organizationId', { organizationId: organizationId })
-            // .take(+query.limit)
-            // .skip(+query.offset)
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order)
             .getManyAndCount();
 
         return {

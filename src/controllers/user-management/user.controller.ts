@@ -196,13 +196,13 @@ export class UserController {
     async findAwaitingUsersByOrganizationId(
         @Req() req: AuthenticatedRequest,
         @Param("organizationId", new ParseIntPipe()) organizationId: number,
-        @Query() query?: ListAllEntitiesDto        
+        @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllUsersResponseDto> {
         // Check if user has access to organization
         if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
             throw new ForbiddenException();
         }
-        
+
         try {
             return await this.userService.getAwaitingUsers(query, [organizationId]);
         } catch (err) {
@@ -235,7 +235,8 @@ export class UserController {
     @ApiOperation({ summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization" })
     async findByOrganizationId(
         @Req() req: AuthenticatedRequest,
-        @Param("organizationId", new ParseIntPipe()) organizationId: number
+        @Param("organizationId", new ParseIntPipe()) organizationId: number,
+        @Query() query?: ListAllEntitiesDto
     ): Promise<ListAllUsersResponseDto> {
         try {
             // Check if user has access to organization
@@ -244,7 +245,7 @@ export class UserController {
             }
 
             // Get user objects
-            return await this.userService.getUsersOnOrganization(organizationId);
+            return await this.userService.getUsersOnOrganization(organizationId, query);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
