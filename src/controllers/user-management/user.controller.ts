@@ -191,6 +191,25 @@ export class UserController {
         }
     }
 
+    @Get("/awaitingUsers/:organizationId")
+    @ApiOperation({ summary: "Get awaiting users" })
+    async findAwaitingUsersByOrganizationId(
+        @Req() req: AuthenticatedRequest,
+        @Param("organizationId", new ParseIntPipe()) organizationId: number,
+        @Query() query?: ListAllEntitiesDto        
+    ): Promise<ListAllUsersResponseDto> {
+        // Check if user has access to organization
+        if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
+            throw new ForbiddenException();
+        }
+        
+        try {
+            return await this.userService.getAwaitingUsers(query, [organizationId]);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     async find(
@@ -220,9 +239,8 @@ export class UserController {
     ): Promise<ListAllUsersResponseDto> {
         try {
             // Check if user has access to organization
-            let organizationsWithAdmin = req.user.permissions.getAllOrganizationsWithUserAdmin();
-            if (organizationsWithAdmin.indexOf(organizationId) < 0) {
-                throw new UnauthorizedException("User does not have org admin permissions for this organization");
+            if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
+                throw new ForbiddenException("User does not have org admin permissions for this organization");
             }
 
             // Get user objects
