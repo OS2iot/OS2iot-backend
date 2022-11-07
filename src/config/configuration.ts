@@ -23,8 +23,8 @@ export default (): any => {
         kombit: {
             entryPoint:
                 process.env.KOMBIT_ENTRYPOINT ||
-                "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
-            certificatePublicKeyPath: process.env.KOMBIT_CERTIFICATEPUBLICKEYPATH || "",
+                "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",            
+            certificatePublicKey: process.env.KOMBIT_CERTIFICATEPUBLICKEY || "INSERT_KOMBIT_CERT", // Public certificate from Kombit Test server
             certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
             roleUri:
                 process.env.KOMBIT_ROLE_NAME ||
