@@ -265,7 +265,7 @@ export class PermissionService {
     ): Promise<ListAllPermissionsResponseDto> {
         const orderBy = this.getSorting(query);
         const order: "DESC" | "ASC" =
-            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+            query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
         let qb: SelectQueryBuilder<Permission> = this.permissionRepository
             .createQueryBuilder("permission")
             .leftJoinAndSelect("permission.organization", "org")
@@ -294,7 +294,7 @@ export class PermissionService {
     private getSorting(query: ListAllPermissionsDto | undefined) {
         let orderBy = `permission.id`;
         if (
-            query?.orderOn != null &&
+            query?.orderOn !== null &&
             (query.orderOn === "id" ||
                 query.orderOn === "name" ||
                 query.orderOn === "type" ||
@@ -449,21 +449,21 @@ export class PermissionService {
         const res = new UserPermissions();
 
         permissions.forEach(p => {
-            if (p.permission_type_type == PermissionType.GlobalAdmin) {
+            if (p.permission_type_type === PermissionType.GlobalAdmin) {
                 res.isGlobalAdmin = true;
             } else if (
-                p.permission_type_type == PermissionType.OrganizationApplicationAdmin
+                p.permission_type_type === PermissionType.OrganizationApplicationAdmin
             ) {
                 this.addOrUpdateApplicationIds(res.orgToApplicationAdminPermissions, p);
             } else if (
-                p.permission_type_type == PermissionType.OrganizationGatewayAdmin
+                p.permission_type_type === PermissionType.OrganizationGatewayAdmin
             ) {
                 res.orgToGatewayAdminPermissions.add(p.organization_id);
-            } else if (p.permission_type_type == PermissionType.OrganizationUserAdmin) {
+            } else if (p.permission_type_type === PermissionType.OrganizationUserAdmin) {
                 // A user admin can map applications to permissions, so they should also
                 // have access to them
                 this.addOrUpdateApplicationIds(res.orgToUserAdminPermissions, p);
-            } else if (p.permission_type_type == PermissionType.Read) {
+            } else if (p.permission_type_type === PermissionType.Read) {
                 this.addOrUpdateApplicationIds(res.orgToReadPermissions, p);
             }
         });

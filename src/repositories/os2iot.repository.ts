@@ -14,6 +14,7 @@ const os2IotContext = new DataSource({
     entities: ["src/entities/*.ts", "src/entities/permissions/*.ts"],
     // From v3, it's no longer used as output path...
     migrations: ["src/migration/*.ts"],
+    ssl: process.env.DATABASE_ENABLE_SSL === "true"
 });
 
 /**
