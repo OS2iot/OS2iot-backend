@@ -63,7 +63,7 @@
         "passport-headerapikey": "^1.2.2",
         "passport-jwt": "^4.0.0",
         "passport-local": "^1.0.0",
-        "passport-saml": "^3.2.2",
+        "passport-saml": "^3.2.4",
         "pg": "^8.5.1",
         "protobufjs": "^6.11.3",
         "reflect-metadata": "^0.1.13",
