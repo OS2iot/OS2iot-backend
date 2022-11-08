@@ -1,16 +1,15 @@
 import { SigFoxApiUsersResponseDto } from "@dto/sigfox/external/sigfox-api-users-response.dto";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { HttpService } from "@nestjs/axios";
 import {
     BadRequestException,
     HttpException,
-    HttpService,
     HttpStatus,
     Injectable,
     Logger,
     UnauthorizedException,
 } from "@nestjs/common";
-import { ApiTooManyRequestsResponse } from "@nestjs/swagger";
 import { AxiosRequestConfig, Method } from "axios";
 import { ISetupCache, setupCache } from "axios-cache-adapter";
 

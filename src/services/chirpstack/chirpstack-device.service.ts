@@ -1,4 +1,4 @@
-import { BadRequestException, HttpService, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
 import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
@@ -31,6 +31,7 @@ import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-app
 import { groupBy } from "lodash";
 import { LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {

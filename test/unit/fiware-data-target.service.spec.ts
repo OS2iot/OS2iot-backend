@@ -1,10 +1,10 @@
-import { HttpService } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
 import { FiwareDataTargetService } from "@services/data-targets/fiware-data-target.service";
 import { FiwareDataTargetConfiguration } from "@interfaces/fiware-data-target-configuration.interface";
+import { HttpService } from "@nestjs/axios";
 
 describe("FiwareDataTargetService", () => {
     let service: FiwareDataTargetService;
@@ -34,9 +34,9 @@ describe("FiwareDataTargetService", () => {
             url: "http://example.com/endpoint",
             timeout: 1337,
             authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
-            authorizationHeader: "Bearer AbCdEf123456",        
+            authorizationHeader: "Bearer AbCdEf123456",
         };
-      
+
         const res = service.makeAxiosConfiguration(config);
 
         expect(res).toMatchObject({
@@ -56,13 +56,13 @@ describe("FiwareDataTargetService", () => {
             context: "http://contextfile.json",
             tenant: "Test"
         };
-      
+
         const res = service.makeAxiosConfiguration(config);
 
         expect(res).toMatchObject({
             timeout: 0,
             headers: {
-                "Content-Type": "application/json",   
+                "Content-Type": "application/json",
                 "Link":  '<http://contextfile.json>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
                 "NGSILD-Tenant": 'Test',
             },

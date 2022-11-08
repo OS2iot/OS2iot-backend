@@ -21,7 +21,7 @@ export class ApiKeyService {
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService
     ) {}
-    private readonly logger = new Logger(ApiKeyService.name, true);
+    private readonly logger = new Logger(ApiKeyService.name, { timestamp: true });
 
     findOne(key: string): Promise<ApiKey> {
         return this.apiKeyRepository.findOne({

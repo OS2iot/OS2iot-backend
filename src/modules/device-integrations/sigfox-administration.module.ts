@@ -1,6 +1,6 @@
-import { HttpModule, Module } from "@nestjs/common";
-
 import { SharedModule } from "@modules/shared.module";
+import { HttpModule } from "@nestjs/axios";
+import { Module } from "@nestjs/common";
 import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigfox-administation.service";
 
 @Module({

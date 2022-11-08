@@ -1,13 +1,14 @@
-import { HttpService, Injectable, Logger } from "@nestjs/common";
-import { AxiosRequestConfig } from "axios";
-import { AuthorizationType } from "@enum/authorization-type.enum";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
-import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { AuthorizationType } from "@enum/authorization-type.enum";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { HttpPushDataTargetConfiguration } from "@interfaces/http-push-data-target-configuration.interface";
 import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.interface";
+import { HttpService } from "@nestjs/axios";
+import { Injectable, Logger } from "@nestjs/common";
 import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
+import { AxiosRequestConfig } from "axios";
 
 @Injectable()
 export class HttpPushDataTargetService extends BaseDataTargetService {
@@ -22,10 +23,9 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
         datatarget: DataTarget,
         dto: TransformedPayloadDto
     ): Promise<DataTargetSendStatus> {
-
         const data: HttpPushDataTargetData = {
             rawBody: JSON.stringify(dto.payload),
-            mimeType: "application/json"            
+            mimeType: "application/json",
         };
         const config: HttpPushDataTargetConfiguration = (datatarget as HttpPushDataTarget).toConfiguration();
 
