@@ -127,9 +127,22 @@ export class UserController {
         @Body() dto: UpdateUserDto
     ): Promise<UserResponseDto> {
         try {
+            // Verify that we have admin access to the user and that the user is on an organization
+            const dbUser = await this.userService.findOneWithOrganizations(id);
+            if (!dbUser.permissions || dbUser.permissions.length < 1) {                
+                throw new ForbiddenException();
+            }
+
+            // Has to be admin for at least one organization containing the user
+            if (!dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
+                throw new ForbiddenException();
+            }                      
+            
+            // Only a global admin can modify a global admin user
             if (dto.globalAdmin) {
                 checkIfUserIsGlobalAdmin(req);
             }
+            
             // Don't leak the passwordHash
             const { passwordHash: _, ...user } = await this.userService.updateUser(
                 id,

@@ -42,7 +42,6 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
 import { RequestWithUser, Profile } from "passport-saml/lib/passport-saml/types";
 import { isOrganizationPermission } from "@helpers/security-helper";
-import { readCertFromPath } from "@loaders/certificate";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -106,10 +105,12 @@ export class AuthController {
         // TODO: Not tested as KOMBIT isn't set up locally. Test on test environment
         // Inspecting the source code (v3.2.1), we gather that
         // - ID is unknown. Might be unused or required for @InResponseTo in saml.js
-        // - nameID is used. Corresponds to user.name in DB
-        // - nameIDFormat is used. Might correspond to <NameIDFormat> in the public certificate XML-file
+        // - nameID is used. Corresponds to user.nameId in DB
+        // - nameIDFormat is used. Correspond to <NameIDFormat> in the public certificate
         reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
-        reqConverted.user = { ID: readCertFromPath().id };
+        // reqConverted.user.nameID = reqConverted.user.nameID;
+        reqConverted.user.nameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+        // reqConverted.user = { reqCo };
         // TODO: Remove after test
         this.logger.debug(`KOMBIT logout request: ${JSON.stringify(req)}`)
 

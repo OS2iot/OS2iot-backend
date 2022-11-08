@@ -242,7 +242,9 @@ export class UserService {
 
         const mappedUser = this.mapDtoToUser(user, dto);
         mappedUser.updatedBy = userId;
-        if (dto.password != null && dto.password != undefined) {
+
+        // If nameId set, this is a Kombit user and we are NOT allowed to set the password
+        if (dto.password && !mappedUser.nameId) {
             this.logger.log(
                 `Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`
             );
