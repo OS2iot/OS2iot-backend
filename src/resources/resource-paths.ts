@@ -1,8 +1,30 @@
-import { join } from "path";
+import { join, sep } from "path";
 
-const goToRootFolder = "../../";
+const recurseLimit = 10;
+const srcFolder = `${sep}src`;
+const buildFolder = `${sep}dist`;
+
+const traverseUpUntilSrcFolder = (currentPath: string, traverseCount = 0): string => {
+    const parentFolder = join(currentPath, "..");
+
+    if (traverseCount > recurseLimit || parentFolder === currentPath) {
+        return currentPath;
+    }
+
+    if (
+        currentPath.endsWith(srcFolder) ||
+        currentPath.endsWith(`${srcFolder}${sep}`) ||
+        currentPath.endsWith(buildFolder) ||
+        currentPath.endsWith(`${buildFolder}${sep}`)
+    ) {
+        return currentPath;
+    }
+
+    return traverseUpUntilSrcFolder(parentFolder, ++traverseCount);
+};
 
 export const ChirpstackStateTemplatePath = join(
-    __dirname,
-    `${goToRootFolder}resources/chirpstack-state.proto`
+    traverseUpUntilSrcFolder(__dirname),
+    "..",
+    `resources/chirpstack-state.proto`
 );

@@ -61,7 +61,8 @@ export class DeviceModelService {
     }
 
     async getById(id: number): Promise<DeviceModel> {
-        return this.repository.findOne(id, {
+        return this.repository.findOne({
+            where: { id },
             loadRelationIds: {
                 relations: ["belongsTo", "createdBy", "updatedBy"],
             },
@@ -69,7 +70,8 @@ export class DeviceModelService {
     }
 
     async getByIdWithRelations(id: number): Promise<DeviceModel> {
-        return this.repository.findOne(id, {
+        return this.repository.findOne({
+            where: { id },
             relations: ["belongsTo"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -78,7 +80,8 @@ export class DeviceModelService {
     }
 
     async getByIdsWithRelations(ids: number[]): Promise<DeviceModel[]> {
-        return this.repository.findByIds(ids, {
+        return this.repository.find({
+            where: { id: In(ids) },
             relations: ["belongsTo"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],

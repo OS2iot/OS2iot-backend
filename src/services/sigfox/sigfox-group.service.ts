@@ -6,7 +6,7 @@ import {
     UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { FindOneOptions, Repository, FindConditions } from "typeorm";
+import { FindOneOptions, Repository, FindOptionsWhere } from "typeorm";
 
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
 import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
@@ -96,14 +96,16 @@ export class SigFoxGroupService {
     }
 
     async findOneForPermissionCheck(id: number): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail(id, {
+        return await this.repository.findOneOrFail({
+            where: { id },
             relations: ["belongsTo"],
             select: ["username", "sigfoxGroupId", "id"],
         });
     }
 
     async findOneWithPassword(id: number): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail(id, {
+        return await this.repository.findOneOrFail({
+            where: { id },
             relations: ["belongsTo"],
             select: [
                 "username",
@@ -120,19 +122,23 @@ export class SigFoxGroupService {
     }
 
     async findOneByGroupId(groupId: string, orgId?: number): Promise<SigFoxGroup> {
-        const conditions: FindConditions<SigFoxGroup> = {
+        const conditions: FindOptionsWhere<SigFoxGroup> = {
             sigfoxGroupId: groupId,
         };
-        const options: FindOneOptions<SigFoxGroup> = {
-            relations: ["belongsTo"],
-            select: ["id", "username", "password", "sigfoxGroupId"],
-        };
+
         if (orgId) {
             conditions.belongsTo = {
                 id: orgId,
             };
         }
-        return await this.repository.findOneOrFail(conditions, options);
+
+        const options: FindOneOptions<SigFoxGroup> = {
+            where: conditions,
+            relations: ["belongsTo"],
+            select: ["id", "username", "password", "sigfoxGroupId"],
+        };
+
+        return await this.repository.findOneOrFail(options);
     }
 
     async create(

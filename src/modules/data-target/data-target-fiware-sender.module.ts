@@ -1,5 +1,5 @@
-import { HttpModule, Module } from "@nestjs/common";
-
+import { HttpModule } from "@nestjs/axios";
+import { Module } from "@nestjs/common";
 import { FiwareDataTargetService } from "@services/data-targets/fiware-data-target.service";
 
 @Module({
@@ -7,5 +7,4 @@ import { FiwareDataTargetService } from "@services/data-targets/fiware-data-targ
     providers: [FiwareDataTargetService],
     exports: [FiwareDataTargetService],
 })
-
 export class DataTargetFiwareSenderModule {}

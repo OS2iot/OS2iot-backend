@@ -9,7 +9,7 @@ export class ApiKeyInfoService {
         private organizationService: OrganizationService
     ) {}
 
-    private readonly logger = new Logger(ApiKeyInfoService.name, true);
+    private readonly logger = new Logger(ApiKeyInfoService.name, { timestamp: true });
 
     findOrganization(orgId: number): Promise<Organization> {
         return this.organizationService.findById(orgId);

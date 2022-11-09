@@ -3,7 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class AuditLog {
-    static readonly logger = new Logger(AuditLog.name, false);
+    static readonly logger = new Logger(AuditLog.name, { timestamp: false });
 
     static log(
         actionType: ActionType,

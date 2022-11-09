@@ -5,14 +5,21 @@ import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { isHexadecimal, isUUID } from "class-validator";
 import * as _ from "lodash";
-import { getManager, SelectQueryBuilder } from "typeorm";
+import { Repository, SelectQueryBuilder } from "typeorm";
 
 @Injectable()
 export class SearchService {
-    constructor(private gatewayService: ChirpstackGatewayService) {}
+    constructor(
+        private gatewayService: ChirpstackGatewayService,
+        @InjectRepository(IoTDevice)
+        private iotDeviceRepository: Repository<IoTDevice>,
+        @InjectRepository(Application)
+        private applicationRepository: Repository<Application>
+    ) {}
 
     private readonly SEARCH_RESULT_LIMIT = 100;
     private readonly logger = new Logger(SearchService.name);
@@ -85,9 +92,11 @@ export class SearchService {
 
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
         const escapedQuery = encodeURI(trimmedQuery);
-        const gateways = await this.gatewayService.getAllWithPagination<
-            ListAllGatewaysResponseDto
-        >(`gateways?search=${escapedQuery}`, 1000, 0);
+        const gateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
+            `gateways?search=${escapedQuery}`,
+            1000,
+            0
+        );
 
         const mapped = await Promise.all(
             gateways.result.map(async x => {
@@ -122,8 +131,8 @@ export class SearchService {
         req: AuthenticatedRequest,
         trimmedQuery: string
     ): Promise<SearchResultDto[]> {
-        const qb = getManager()
-            .createQueryBuilder(Application, "app")
+        const qb = this.applicationRepository
+            .createQueryBuilder("app")
             .where('"app"."name" ilike :name', { name: `%${trimmedQuery}%` });
 
         return await this.applySecuityAndSelect(req, qb, "app", "id");
@@ -206,7 +215,7 @@ export class SearchService {
     }
 
     private getIoTDeviceQueryBuilder() {
-        return getManager().createQueryBuilder(IoTDevice, "device");
+        return this.iotDeviceRepository.createQueryBuilder("device");
     }
 
     // eslint-disable-next-line max-lines-per-function

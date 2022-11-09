@@ -6,14 +6,13 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import {
     BadRequestException,
     forwardRef,
-    HttpService,
     Inject,
     Injectable,
     Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { DeleteResult, getConnection, Repository, SelectQueryBuilder } from "typeorm";
+import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
 import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import { ApplicationService } from "./application.service";
@@ -32,6 +31,7 @@ import {
 } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
@@ -59,8 +59,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         const orderByColumn = this.getSortingForMulticasts(query);
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
 
-        let queryBuilder = getConnection()
-            .getRepository(Multicast)
+        let queryBuilder = this.multicastRepository
             .createQueryBuilder("multicast")
             .innerJoinAndSelect("multicast.application", "application")
             .innerJoinAndSelect(
@@ -112,7 +111,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     }
 
     async findOne(id: number): Promise<Multicast> {
-        return await this.multicastRepository.findOneOrFail(id, {
+        return await this.multicastRepository.findOneOrFail({
+            where: { id },
             relations: ["application", "lorawanMulticastDefinition", "iotDevices"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],

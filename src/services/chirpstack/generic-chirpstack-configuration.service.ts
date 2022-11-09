@@ -1,6 +1,5 @@
 import {
     BadRequestException,
-    HttpService,
     Injectable,
     InternalServerErrorException,
     Logger,
@@ -16,6 +15,7 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { JwtToken } from "./jwt-token";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
