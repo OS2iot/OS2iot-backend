@@ -219,10 +219,7 @@ export class UserService {
         if (user.nameId != null) {
             if (dto.name && user.name != dto.name) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-            }
-            if (dto.email) {
-                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-            }
+            }            
             if (dto.password) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
