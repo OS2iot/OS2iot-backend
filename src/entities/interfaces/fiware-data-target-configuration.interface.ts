@@ -9,4 +9,8 @@ export interface FiwareDataTargetConfiguration {
     authorizationHeader?: string;
     tenant?: string;
     context?: string;
+    clientId?: string;
+    clientSecret?: string;
+    tokenEndpoint?: string;
+    updatedAt: Date;
 }
