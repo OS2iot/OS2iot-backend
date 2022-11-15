@@ -119,6 +119,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
                 x.internalOrganizationId = +dp.deviceProfile.internalOrganizationId;
                 x.createdBy = +dp.deviceProfile.createdBy;
                 x.updatedBy = +dp.deviceProfile.updatedBy;
+                x.adrAlgorithmID = x.adrAlgorithmID ? x.adrAlgorithmID : "default";
             })
         );
 
