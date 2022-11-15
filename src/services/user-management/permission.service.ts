@@ -294,6 +294,7 @@ export class PermissionService {
     private getSorting(query: ListAllPermissionsDto | undefined) {
         let orderBy = `permission.id`;
         if (
+            query &&
             query?.orderOn !== null &&
             (query.orderOn === "id" ||
                 query.orderOn === "name" ||
