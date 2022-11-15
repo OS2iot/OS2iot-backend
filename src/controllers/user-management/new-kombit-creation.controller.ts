@@ -66,8 +66,8 @@ export class NewKombitCreationController {
             );
 
             if (!dbUser.email) {
-                // The desired email is already in use for another user (this will throw an error in the database)
-                if (this.userService.isEmailUsedByAUser(dto.email)) {
+                // The desired email is already in use for another user (this would also throw an error in the database)
+                if (await this.userService.isEmailUsedByAUser(dto.email)) {
                     throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
                 }
 

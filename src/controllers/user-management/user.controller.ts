@@ -129,12 +129,10 @@ export class UserController {
         try {
             // Verify that we have admin access to the user and that the user is on an organization
             const dbUser = await this.userService.findOneWithOrganizations(id);
-            if (!dbUser.permissions || dbUser.permissions.length < 1) {                
-                throw new ForbiddenException();
-            }
 
-            // Has to be admin for at least one organization containing the user
-            if (!dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
+            // Requesting user has to be admin for at least one organization containing the user 
+            // _OR_ be global admin
+            if (!req.user.permissions.isGlobalAdmin && !dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
                 throw new ForbiddenException();
             }                      
             
