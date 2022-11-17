@@ -119,6 +119,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
                 x.internalOrganizationId = +dp.deviceProfile.internalOrganizationId;
                 x.createdBy = +dp.deviceProfile.createdBy;
                 x.updatedBy = +dp.deviceProfile.updatedBy;
+                x.adrAlgorithmID = x.adrAlgorithmID ? x.adrAlgorithmID : "default";
             })
         );
 
@@ -135,6 +136,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         ];
         result.deviceProfile.createdBy = +result.deviceProfile.tags[this.CREATED_BY_KEY];
         result.deviceProfile.updatedBy = +result.deviceProfile.tags[this.UPDATED_BY_KEY];
+        result.deviceProfile.adrAlgorithmID = result.deviceProfile.adrAlgorithmID ? result.deviceProfile.adrAlgorithmID : "default";
 
         result.deviceProfile.tags[this.ORG_ID_KEY] = undefined;
         result.deviceProfile.tags[this.CREATED_BY_KEY] = undefined;

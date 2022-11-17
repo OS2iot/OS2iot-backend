@@ -19,7 +19,8 @@ export class PayloadDecoderService {
     ) {}
 
     async findOne(id: number): Promise<PayloadDecoder> {
-        return await this.payloadDecoderRepository.findOneOrFail(id, {
+        return await this.payloadDecoderRepository.findOneOrFail({
+            where: { id },
             relations: ["organization"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -42,10 +43,10 @@ export class PayloadDecoderService {
 
     async findAndCountWithPagination(
         query: ListAllEntitiesDto,
-        organizationId: number
+        organizationId: number | null | undefined
     ): Promise<ListAllPayloadDecoderResponseDto> {
         const [result, total] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationId != null ? { organization: organizationId } : {},
+            where: organizationId ? { id: organizationId } : {},
             take: query.limit,
             skip: query.offset,
             order: this.getSorting(query),
@@ -78,7 +79,9 @@ export class PayloadDecoderService {
         updateDto: UpdatePayloadDecoderDto,
         userId: number
     ): Promise<PayloadDecoder> {
-        const payloadDecoder = await this.payloadDecoderRepository.findOneOrFail(id);
+        const payloadDecoder = await this.payloadDecoderRepository.findOneByOrFail({
+            id,
+        });
 
         const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
             updateDto,

@@ -36,7 +36,7 @@ export class OrganizationService {
         private userService: UserService
     ) {}
 
-    private readonly logger = new Logger(OrganizationService.name, true);
+    private readonly logger = new Logger(OrganizationService.name, { timestamp: true });
 
     async create(dto: CreateOrganizationDto, userId: number): Promise<Organization> {
         const organization = new Organization();
@@ -220,11 +220,12 @@ export class OrganizationService {
     }
 
     async findById(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOneOrFail(organizationId);
+        return await this.organizationRepository.findOneByOrFail({ id: organizationId});
     }
 
     async findByIdWithRelations(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOneOrFail(organizationId, {
+        return await this.organizationRepository.findOneOrFail({
+            where: { id: organizationId },
             relations: ["permissions"],
             loadRelationIds: {
                 relations: ["applications.iotDevices", "createdBy", "updatedBy"],
@@ -232,13 +233,15 @@ export class OrganizationService {
         });
     }
     async findByIdWithUsers(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOneOrFail(organizationId, {
+        return await this.organizationRepository.findOneOrFail({
+            where: { id: organizationId },
             relations: ["awaitingUsers"],
         });
     }
 
     async findByIdWithPermissions(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOneOrFail(organizationId, {
+        return await this.organizationRepository.findOneOrFail({
+            where: { id: organizationId },
             relations: ["permissions"],
         });
     }

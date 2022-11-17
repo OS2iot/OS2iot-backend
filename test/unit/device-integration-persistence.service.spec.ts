@@ -1,4 +1,3 @@
-import { HttpService } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 
@@ -19,6 +18,7 @@ import { DeviceIntegrationPersistenceService } from "@services/data-management/d
 import { ApplicationService } from "@services/device-management/application.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { HttpService } from '@nestjs/axios';
 
 import {
     generateApplication,

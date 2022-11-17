@@ -13,6 +13,7 @@ import {
     Req,
     UseGuards,
     ForbiddenException,
+    UnauthorizedException,
 } from "@nestjs/common";
 import { Logger } from "@nestjs/common";
 import {
@@ -55,7 +56,7 @@ export class UserController {
     constructor(
         private userService: UserService,
         private organizationService: OrganizationService
-    ) {}
+    ) { }
 
     private readonly logger = new Logger(UserController.name);
 
@@ -126,9 +127,20 @@ export class UserController {
         @Body() dto: UpdateUserDto
     ): Promise<UserResponseDto> {
         try {
+            // Verify that we have admin access to the user and that the user is on an organization
+            const dbUser = await this.userService.findOneWithOrganizations(id);
+
+            // Requesting user has to be admin for at least one organization containing the user 
+            // _OR_ be global admin
+            if (!req.user.permissions.isGlobalAdmin && !dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
+                throw new ForbiddenException();
+            }                      
+            
+            // Only a global admin can modify a global admin user
             if (dto.globalAdmin) {
                 checkIfUserIsGlobalAdmin(req);
             }
+            
             // Don't leak the passwordHash
             const { passwordHash: _, ...user } = await this.userService.updateUser(
                 id,
@@ -190,6 +202,25 @@ export class UserController {
         }
     }
 
+    @Get("/awaitingUsers/:organizationId")
+    @ApiOperation({ summary: "Get awaiting users" })
+    async findAwaitingUsersByOrganizationId(
+        @Req() req: AuthenticatedRequest,
+        @Param("organizationId", new ParseIntPipe()) organizationId: number,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        // Check if user has access to organization
+        if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
+            throw new ForbiddenException();
+        }
+
+        try {
+            return await this.userService.getAwaitingUsers(query, [organizationId]);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
     @Get(":id")
     @ApiOperation({ summary: "Get one user" })
     async find(
@@ -206,6 +237,26 @@ export class UserController {
             );
 
             return user;
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    @Get("organizationUsers/:organizationId")
+    @ApiOperation({ summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization" })
+    async findByOrganizationId(
+        @Req() req: AuthenticatedRequest,
+        @Param("organizationId", new ParseIntPipe()) organizationId: number,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        try {
+            // Check if user has access to organization
+            if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
+                throw new ForbiddenException("User does not have org admin permissions for this organization");
+            }
+
+            // Get user objects
+            return await this.userService.getUsersOnOrganization(organizationId, query);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }

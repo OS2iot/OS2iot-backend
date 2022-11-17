@@ -28,6 +28,10 @@ export class DeviceProfileDto {
     regParamsRevision: "A" | "B";
 
     @ApiProperty({ required: false })
+    @IsString()
+    adrAlgorithmID?: string;
+
+    @ApiProperty({ required: false })
     @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
     @Min(0)
     @IsInt()

@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
@@ -40,12 +40,12 @@ export class UserService {
         private configService: ConfigService
     ) {}
 
-    private readonly logger = new Logger(UserService.name, true);
+    private readonly logger = new Logger(UserService.name, { timestamp: true });
 
     async isEmailUsedByAUser(email: string): Promise<boolean> {
         return (
             (await this.userRepository.count({
-                email: email,
+                where: { email },
             })) > 0
         );
     }
@@ -75,19 +75,17 @@ export class UserService {
     }
 
     async findOneUserByEmailWithPassword(email: string): Promise<User> {
-        return await this.userRepository.findOne(
-            { email: email },
-            {
-                select: [
-                    "id",
-                    "name",
-                    "email",
-                    "active",
-                    "passwordHash", // This is requiredsince passwordHash normally is hidden.
-                    "lastLogin",
-                ],
-            }
-        );
+        return await this.userRepository.findOne({
+            where: { email },
+            select: [
+                "id",
+                "name",
+                "email",
+                "active",
+                "passwordHash", // This is required since passwordHash normally is hidden.
+                "lastLogin",
+            ],
+        });
     }
 
     async findOne(
@@ -103,7 +101,8 @@ export class UserService {
             relations.push("permissions.users");
         }
 
-        return await this.userRepository.findOne(id, {
+        return await this.userRepository.findOne({
+            where: { id },
             relations: relations,
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -115,14 +114,15 @@ export class UserService {
         return (
             (await this.userRepository.count({
                 where: {
-                    id: id,
+                    id,
                 },
             })) > 0
         );
     }
 
     async findOneWithOrganizations(id: number): Promise<User> {
-        return await this.userRepository.findOne(id, {
+        return await this.userRepository.findOne({
+            where: { id },
             relations: ["permissions", "permissions.organization", "permissions.type"],
             loadRelationIds: {
                 relations: [`permissions.${nameof<Permission>("applicationIds")}`],
@@ -131,14 +131,15 @@ export class UserService {
     }
 
     async findOneByNameId(nameId: string): Promise<User> {
-        return await this.userRepository.findOne({
+        return await this.userRepository.findOneBy({
             nameId: nameId,
         });
     }
 
     async findUserPermissions(id: number): Promise<Permission[]> {
         return (
-            await this.userRepository.findOne(id, {
+            await this.userRepository.findOne({
+                where: { id },
                 relations: ["permissions"],
             })
         ).permissions;
@@ -218,10 +219,7 @@ export class UserService {
         if (user.nameId != null) {
             if (dto.name && user.name != dto.name) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-            }
-            if (dto.email) {
-                throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-            }
+            }            
             if (dto.password) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
@@ -236,13 +234,16 @@ export class UserService {
     }
 
     async updateUser(id: number, dto: UpdateUserDto, userId: number): Promise<User> {
-        const user = await this.userRepository.findOne(id, {
+        const user = await this.userRepository.findOne({
+            where: { id },
             relations: ["permissions"],
         });
 
         const mappedUser = this.mapDtoToUser(user, dto);
         mappedUser.updatedBy = userId;
-        if (dto.password != null && dto.password != undefined) {
+
+        // If nameId set, this is a Kombit user and we are NOT allowed to set the password
+        if (dto.password && !mappedUser.nameId) {
             this.logger.log(
                 `Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`
             );
@@ -286,7 +287,7 @@ export class UserService {
     }
 
     async findManyUsersByIds(userIds: number[]): Promise<User[]> {
-        return await this.userRepository.findByIds(userIds);
+        return await this.userRepository.findBy({ id: In(userIds) });
     }
 
     async findAll(query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
@@ -328,6 +329,35 @@ export class UserService {
             .where('"p"."id" = :permissionId', { permissionId: permissionId })
             .take(+query.limit)
             .skip(+query.offset)
+            .getManyAndCount();
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+    }
+
+    async getUsersOnOrganization(
+        organizationId: number,
+        query: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        let orderBy = `user.id`;
+        if (
+            query.orderOn !== null &&
+            (query.orderOn === "id" || query.orderOn === "name")
+        ) {
+            orderBy = `user.${query.orderOn}`;
+        }
+        const order: "DESC" | "ASC" =
+            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        
+        const [data, count] = await this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.permissions", "p")
+            .where('"p"."organizationId" = :organizationId', { organizationId: organizationId })
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order)
             .getManyAndCount();
 
         return {

@@ -47,7 +47,7 @@ export class NewKombitCreationController {
         private organizationService: OrganizationService,
         private userService: UserService,
         private permissionService: PermissionService
-    ) {}
+    ) { }
 
     @Put("createNewKombitUser")
     @ApiOperation({ summary: "Create kombit-user Email" })
@@ -56,7 +56,7 @@ export class NewKombitCreationController {
         @Body() dto: CreateNewKombitUserDto
     ): Promise<User> {
         try {
-            const user: User = await this.userService.findOne(req.user.userId);
+            const dbUser: User = await this.userService.findOne(req.user.userId);
             const permissions = await this.permissionService.findManyWithRelations(
                 dto.requestedOrganizationIds
             );
@@ -65,11 +65,16 @@ export class NewKombitCreationController {
                 permissions
             );
 
-            if (!user.email) {
+            if (!dbUser.email) {
+                // The desired email is already in use for another user (this would also throw an error in the database)
+                if (await this.userService.isEmailUsedByAUser(dto.email)) {
+                    throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
+                }
+
                 const updatedUser: User = await this.userService.newKombitUser(
                     dto,
                     requestedOrganizations,
-                    user
+                    dbUser
                 );
 
                 for (

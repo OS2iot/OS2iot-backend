@@ -1,40 +1,46 @@
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { Inject, Injectable, forwardRef, ConflictException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { DeleteResult, getManager, In, QueryBuilder, Repository } from "typeorm";
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { UpdateApplicationDto } from "@dto/update-application.dto";
-import { Application } from "@entities/application.entity";
-import { OrganizationService } from "@services/user-management/organization.service";
-import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
-import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
-import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
-import { PermissionService } from "@services/user-management/permission.service";
-import { ErrorCodes } from "@enum/error-codes.enum";
-import { IoTDevice } from "@entities/iot-device.entity";
+import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
-import { MulticastService } from "./multicast.service";
-import { nameof } from "@helpers/type-helper";
-import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
+import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
+import { Application } from "@entities/application.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
+import { IoTDevice } from "@entities/iot-device.entity";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
+import {
+    ApplicationDeviceTypes,
+    ApplicationDeviceTypeUnion,
+    IoTDeviceType,
+} from "@enum/device-type.enum";
+import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
+import { nameof } from "@helpers/type-helper";
+import { ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { PermissionService } from "@services/user-management/permission.service";
+import { DeleteResult, In, Repository } from "typeorm";
+import { MulticastService } from "./multicast.service";
 
 @Injectable()
 export class ApplicationService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
+        @InjectRepository(IoTDevice)
+        private iotDeviceRepository: Repository<IoTDevice>,
         @Inject(forwardRef(() => OrganizationService))
         private organizationService: OrganizationService,
         private multicastService: MulticastService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService,
+        private permissionService: PermissionService
     ) {}
 
     async findAndCountInList(
@@ -137,23 +143,26 @@ export class ApplicationService {
     }
 
     async findOneWithoutRelations(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id);
+        return await this.applicationRepository.findOneByOrFail({ id });
     }
 
     async findOneWithOrganisation(id: number): Promise<Application> {
-        return await this.applicationRepository.findOneOrFail(id, {
+        return await this.applicationRepository.findOneOrFail({
+            where: { id },
             relations: ["belongsTo"],
         });
     }
 
     async findManyWithOrganisation(ids: number[]): Promise<Application[]> {
-        return await this.applicationRepository.findByIds(ids, {
+        return await this.applicationRepository.find({
+            where: { id: In(ids) },
             relations: ["belongsTo"],
         });
     }
 
     async findOne(id: number): Promise<Application> {
-        const app = await this.applicationRepository.findOneOrFail(id, {
+        const app = await this.applicationRepository.findOneOrFail({
+            where: { id },
             relations: [
                 "iotDevices",
                 "dataTargets",
@@ -197,7 +206,7 @@ export class ApplicationService {
         if (ids == null || ids?.length == 0) {
             return [];
         }
-        return await this.applicationRepository.find({ id: In(ids) });
+        return await this.applicationRepository.findBy({ id: In(ids) });
     }
 
     async create(
@@ -229,7 +238,8 @@ export class ApplicationService {
         updateApplicationDto: UpdateApplicationDto,
         userId: number
     ): Promise<Application> {
-        const existingApplication = await this.applicationRepository.findOneOrFail(id, {
+        const existingApplication = await this.applicationRepository.findOneOrFail({
+            where: { id },
             relations: [
                 nameof<Application>("iotDevices"),
                 nameof<Application>("dataTargets"),
@@ -250,7 +260,7 @@ export class ApplicationService {
 
     async delete(id: number): Promise<DeleteResult> {
         const application = await this.applicationRepository.findOne({
-            where: { id: id },
+            where: { id },
             relations: ["iotDevices", "multicasts"],
         });
 
@@ -288,8 +298,8 @@ export class ApplicationService {
 
     async isNameValidAndNotUsed(name: string, id?: number): Promise<boolean> {
         if (name) {
-            const applicationsWithName = await this.applicationRepository.find({
-                name: name,
+            const applicationsWithName = await this.applicationRepository.findBy({
+                name,
             });
 
             if (id) {
@@ -377,8 +387,8 @@ export class ApplicationService {
         const orderByColumn = this.getSortingForIoTDevices(query);
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
 
-        const [data, count] = await getManager()
-            .createQueryBuilder(IoTDevice, "iot_device")
+        const [data, count] = await this.iotDeviceRepository
+            .createQueryBuilder("iot_device")
             .where('"iot_device"."applicationId" = :id', { id: appId })
             .leftJoinAndSelect("iot_device.latestReceivedMessage", "metadata")
             .skip(query?.offset ? +query.offset : 0)
@@ -429,15 +439,18 @@ export class ApplicationService {
         return orderBy;
     }
 
-    private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
+    private getSortingForApplications(
+        query: ListAllEntitiesDto
+    ): Record<string, string | number> {
         const sorting: Record<string, string | number> = {};
-        if (query.orderOn != null &&
+        if (
+            query.orderOn != null &&
             (query.orderOn == "id" ||
                 query.orderOn == "name" ||
-                query.orderOn == "updatedAt")) {
+                query.orderOn == "updatedAt")
+        ) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-        }
-        else {
+        } else {
             sorting["id"] = "ASC";
         }
         return sorting;

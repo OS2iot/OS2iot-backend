@@ -53,6 +53,15 @@ export class UserPermissions {
         return this.extractKeys(this.orgToApplicationAdminPermissions);
     }
 
+    hasUserAdminOnOrganization(organizationId: number): boolean {
+        if (this.isGlobalAdmin) {
+            return true;
+        } else {
+            let organizationsWithAdmin = this.getAllOrganizationsWithUserAdmin();
+            return organizationsWithAdmin.indexOf(organizationId) > -1;
+        }        
+    }
+
     private extractValues(map: Map<number, number[]>): number[] {
         let res: number[] = [];
 

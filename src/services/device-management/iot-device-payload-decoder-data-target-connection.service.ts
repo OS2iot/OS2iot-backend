@@ -4,7 +4,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { InjectRepository } from "@nestjs/typeorm";
 import {
     DeleteResult,
-    FindConditions,
+    FindOptionsWhere,
     In,
     Repository,
     SelectQueryBuilder,
@@ -69,7 +69,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     }
 
     private async findAllWithWhere(
-        where?: FindConditions<IoTDevicePayloadDecoderDataTargetConnection>,
+        where?: FindOptionsWhere<IoTDevicePayloadDecoderDataTargetConnection>,
         limit?: number,
         offset?: number,
         sort?: "ASC" | "DESC" | 1 | -1
@@ -202,7 +202,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
             }
             return await this.findAllWithWhere({
                 dataTarget: {
-                    id: id,
+                    id,
                     application: {
                         id: In(allowed),
                     },
@@ -211,7 +211,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         } else {
             return await this.findAllWithWhere({
                 dataTarget: {
-                    id: id,
+                    id,
                 },
             });
         }
@@ -219,7 +219,8 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
 
     async findOne(id: number): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         try {
-            return await this.repository.findOneOrFail(id, {
+            return await this.repository.findOneOrFail({
+                where: { id },
                 relations: [
                     "iotDevices",
                     "payloadDecoder",
@@ -256,7 +257,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
         let connection;
         try {
-            connection = await this.repository.findOneOrFail(id);
+            connection = await this.repository.findOneByOrFail({ id });
         } catch (err) {
             throw new NotFoundException(
                 `Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`

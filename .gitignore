@@ -157,3 +157,8 @@ coverage-e2e
 
 # secrets
 secrets/
+
+# Visual Studio
+applicationhost.config
+*.suo
+.vs/

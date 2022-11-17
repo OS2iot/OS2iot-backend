@@ -1,4 +1,4 @@
-import { HttpService, INestApplication } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -24,6 +24,7 @@ import { PayloadDecoderModule } from "@modules/device-management/payload-decoder
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
 import waitForExpect from "wait-for-expect";
 import { NoOpLogger } from "./no-op-logger";
+import { HttpService } from "@nestjs/axios";
 
 describe("End-to-End (e2e)", () => {
     let app: INestApplication;

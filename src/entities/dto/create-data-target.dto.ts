@@ -58,6 +58,15 @@ export class CreateDataTargetDto {
     @ApiProperty({ required: false, default: "", example: null })
     authorizationHeader: string;
 
+    @ApiProperty({ required: false })
+    tokenEndpoint?: string;
+
+    @ApiProperty({ required: false })
+    clientId?: string;
+
+    @ApiProperty({ required: false })
+    clientSecret?: string;
+
     @ApiPropertyOptional({ required: false })
     @IsOptional()
     @ValidateNested({ each: true })

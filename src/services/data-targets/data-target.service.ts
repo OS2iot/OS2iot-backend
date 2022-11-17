@@ -1,34 +1,30 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import {
-    DeleteResult,
-    Repository,
-    SelectQueryBuilder,
-    getConnection,
-    getManager,
-} from "typeorm";
-
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
+import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
+import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
+import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
+import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
-import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
-import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
-import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
-import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
+import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
+import { ClientSecretProvider, CLIENT_SECRET_PROVIDER } from "../../helpers/fiware-token.helper";
+import { Client } from "mqtt";
 
 @Injectable()
 export class DataTargetService {
     constructor(
         @InjectRepository(DataTarget)
         private dataTargetRepository: Repository<DataTarget>,
-        private applicationService: ApplicationService
+        private applicationService: ApplicationService,
+        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider
     ) {}
     private readonly logger = new Logger(DataTargetService.name);
 
@@ -36,8 +32,7 @@ export class DataTargetService {
         query?: ListAllDataTargetsDto,
         applicationIds?: number[]
     ): Promise<ListAllDataTargetsResponseDto> {
-        let queryBuilder = getConnection()
-            .getRepository(DataTarget)
+        let queryBuilder = this.dataTargetRepository
             .createQueryBuilder("datatarget")
             .innerJoinAndSelect("datatarget.application", "application")
             .limit(query.limit)
@@ -76,7 +71,8 @@ export class DataTargetService {
     }
 
     async findOne(id: number): Promise<DataTarget> {
-        return await this.dataTargetRepository.findOneOrFail(id, {
+        return await this.dataTargetRepository.findOneOrFail({
+            where: { id },
             relations: ["application", "openDataDkDataset"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
@@ -85,7 +81,7 @@ export class DataTargetService {
     }
 
     async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
-        return await this.dataTargetRepository.find({
+        return await this.dataTargetRepository.findBy({
             application: { id: applicationId },
         });
     }
@@ -96,6 +92,7 @@ export class DataTargetService {
     ): Promise<DataTarget[]> {
         const res = await this.dataTargetRepository
             .createQueryBuilder("dt")
+            .addSelect('dt.clientSecret')
             .innerJoin(
                 "iot_device_payload_decoder_data_target_connection",
                 "con",
@@ -145,7 +142,7 @@ export class DataTargetService {
         mappedDataTarget.createdBy = userId;
         mappedDataTarget.updatedBy = userId;
         // Use the generic manager since we cannot use a general repository.
-        const entityManager = getManager();
+        const entityManager = this.dataTargetRepository.manager;
         return await entityManager.save(mappedDataTarget, {});
     }
 
@@ -154,9 +151,11 @@ export class DataTargetService {
         updateDataTargetDto: UpdateDataTargetDto,
         userId: number
     ): Promise<DataTarget> {
-        const existing = await this.dataTargetRepository.findOneOrFail(id, {
-            relations: ["openDataDkDataset"],
-        });
+        const existing = await this.dataTargetRepository.createQueryBuilder('target')
+            .addSelect('target.clientSecret')
+            .leftJoinAndSelect('target.openDataDkDataset', 'openDataDkDataset')
+            .where('target.id = :id', { id })
+            .getOneOrFail();
 
         const mappedDataTarget = await this.mapDtoToDataTarget(
             updateDataTargetDto,
@@ -206,7 +205,7 @@ export class DataTargetService {
             throw new BadRequestException(ErrorCodes.IdMissing);
         }
 
-        this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
+        await this.mapDtoToTypeSpecificDataTarget(dataTargetDto, dataTarget);
 
         return dataTarget;
     }
@@ -226,20 +225,27 @@ export class DataTargetService {
         return o;
     }
 
-    private mapDtoToTypeSpecificDataTarget(
+    private async mapDtoToTypeSpecificDataTarget(
         dataTargetDto: CreateDataTargetDto,
         dataTarget: DataTarget
     ) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
-            const httpPushDataTarget = (dataTarget as HttpPushDataTarget);
+            const httpPushDataTarget = dataTarget as HttpPushDataTarget;
             httpPushDataTarget.url = dataTargetDto.url;
             httpPushDataTarget.timeout = dataTargetDto.timeout;
             httpPushDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
         } else if (dataTargetDto.type === DataTargetType.Fiware) {
-            const fiwareDataTarget = (dataTarget as FiwareDataTarget);
+            const fiwareDataTarget = dataTarget as FiwareDataTarget;
             fiwareDataTarget.url = dataTargetDto.url;
             fiwareDataTarget.timeout = dataTargetDto.timeout;
             fiwareDataTarget.authorizationHeader = dataTargetDto.authorizationHeader;
+            fiwareDataTarget.tokenEndpoint = dataTargetDto.tokenEndpoint;
+            fiwareDataTarget.clientId = dataTargetDto.clientId;
+
+            // NOTE: If there is no client secret we keep it as it was
+            if (dataTargetDto.clientSecret) {
+                fiwareDataTarget.clientSecret = await this.clientSecretProvider.store(dataTargetDto.clientSecret);
+            }
             fiwareDataTarget.tenant = dataTargetDto.tenant;
             fiwareDataTarget.context = dataTargetDto.context;
         } else if (dataTargetDto.type === DataTargetType.MQTT) {
@@ -254,7 +260,7 @@ export class DataTargetService {
         }
     }
 
-    private  createDataTargetByDto<T extends DataTarget>(childDataTargetType: any):T {
+    private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
         return new childDataTargetType();
     }
 }

@@ -1,6 +1,5 @@
 import {
     BadRequestException,
-    HttpService,
     Injectable,
     InternalServerErrorException,
     Logger,
@@ -26,6 +25,7 @@ import * as _ from "lodash";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -36,7 +36,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         super(internalHttpService);
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
-    private readonly logger = new Logger(ChirpstackGatewayService.name, true);
+    private readonly logger = new Logger(ChirpstackGatewayService.name, { timestamp: true });
     private readonly ORG_ID_KEY = "internalOrganizationId";
     private readonly UPDATED_BY_KEY = "os2iot-updated-by";
     private readonly CREATED_BY_KEY = "os2iot-created-by";
