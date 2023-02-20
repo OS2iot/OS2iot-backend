@@ -32,8 +32,6 @@ export async function setupNestJs(
                 // but doesn't have the proper decorator (like @IsNumber() for a number property)
                 return new BadRequestException(errors);
             },
-            // Fix CVE-2019-18413. Issue: https://github.com/typestack/class-validator/issues/438
-            forbidUnknownValues: true,
         })
     );
     app.enableCors();
