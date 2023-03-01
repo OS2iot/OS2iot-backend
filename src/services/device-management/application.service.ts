@@ -391,6 +391,7 @@ export class ApplicationService {
             .createQueryBuilder("iot_device")
             .where('"iot_device"."applicationId" = :id', { id: appId })
             .leftJoinAndSelect("iot_device.latestReceivedMessage", "metadata")
+            .leftJoinAndSelect("iot_device.deviceModel", "deviceModel")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
             .orderBy(orderByColumn, direction)
