@@ -66,8 +66,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         await this.consumer.on(this.consumer.events.STOP, () => {
             this.logger.debug("STOP ... ");
         });
-        await this.consumer.on(this.consumer.events.CRASH, ({ error }) => {
-            this.logger.debug("CRASH ... " + error);
+        await this.consumer.on(this.consumer.events.CRASH, ({ payload }) => {
+            this.logger.debug("CRASH ... " + payload);
         });
         await this.consumer.on(this.consumer.events.DISCONNECT, () => {
             this.logger.debug("DISCONNECT ... ");
@@ -132,18 +132,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         kafkaTopic: string,
         kafkaMessage: KafkaPayload
     ): Promise<void | RecordMetadata[]> {
-        this.logger.debug(`Connecting producer ...`);
-        await this.producer.connect();
-        this.logger.debug(`Connected ...`);
         const metadata = await this.producer
             .send({
                 topic: kafkaTopic,
                 messages: [{ value: JSON.stringify(kafkaMessage) }],
             })
             .catch(e => this.logger.error(e.message, e));
-        this.logger.debug(`Sent from producer`);
-        await this.producer.disconnect();
-        this.logger.debug(`Disconnected ...`);
         return metadata;
     }
 }
