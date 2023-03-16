@@ -30,7 +30,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         const kafkaConfig = {
             clientId: process.env.KAFKA_CLIENTID || "os2iot-client",
             brokers: [
-                `${process.env.KAFKA_HOSTNAME || "localhost"}:${
+                `${ process.env.KAFKA_HOSTNAME || "localhost" }:${
                     process.env.KAFKA_PORT || "9093"
                 }`,
             ],
@@ -66,8 +66,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         await this.consumer.on(this.consumer.events.STOP, () => {
             this.logger.debug("STOP ... ");
         });
-        await this.consumer.on(this.consumer.events.CRASH, ({ error }) => {
-            this.logger.debug("CRASH ... " + error);
+        await this.consumer.on(this.consumer.events.CRASH, ({ payload }) => {
+            this.logger.debug("CRASH ... " + payload);
         });
         await this.consumer.on(this.consumer.events.DISCONNECT, () => {
             this.logger.debug("DISCONNECT ... ");
@@ -96,16 +96,16 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 autoCommit: true,
                 autoCommitThreshold: 1,
                 eachMessage: async ({
-                    topic,
-                    message,
-                }: {
+                                        topic,
+                                        message,
+                                    }: {
                     topic: string;
                     message: KafkaMessage;
                 }) => {
                     try {
                         const arr = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
                         this.logger.debug(
-                            `Got kafka message, have ${arr.length} receivers ...`
+                            `Got kafka message, have ${ arr.length } receivers ...`
                         );
                         arr.forEach(async tuple => {
                             const object = tuple[0];
@@ -118,8 +118,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                             await fn.apply(object, [msg]);
                         });
                     } catch (err) {
-                        this.logger.error(`Error occurred in eachMessage: ${err}`);
-                        this.logger.error(`${JSON.stringify(err)}`);
+                        this.logger.error(`Error occurred in eachMessage: ${ err }`);
+                        this.logger.error(`${ JSON.stringify(err) }`);
                     }
                 },
             })
@@ -132,18 +132,18 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         kafkaTopic: string,
         kafkaMessage: KafkaPayload
     ): Promise<void | RecordMetadata[]> {
-        this.logger.debug(`Connecting producer ...`);
-        await this.producer.connect();
-        this.logger.debug(`Connected ...`);
+        const message = {
+            topic: kafkaTopic,
+            messages: [{ value: JSON.stringify(kafkaMessage) }],
+        };
         const metadata = await this.producer
-            .send({
-                topic: kafkaTopic,
-                messages: [{ value: JSON.stringify(kafkaMessage) }],
-            })
-            .catch(e => this.logger.error(e.message, e));
-        this.logger.debug(`Sent from producer`);
-        await this.producer.disconnect();
-        this.logger.debug(`Disconnected ...`);
+            .send(message)
+            .catch(async e => {
+                await this.producer.connect()
+                this.logger.warn("Kafka failed sending message, retrying", e)
+                await this.producer.send(message).catch(e => this.logger.error(e.message, e)
+                )
+            });
         return metadata;
     }
 }
