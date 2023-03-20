@@ -134,6 +134,11 @@ export const deviceModelSchema = {
                     description:
                         "Property. Model:'https://schema.org/Text'. Device's manufacturer name.",
                 },
+                name: {
+                    type: "string",
+                    description:
+                        "Property. Model:'https://schema.org/Text'. Device's model name in Portal"
+                }
             },
         },
     ],
@@ -145,5 +150,6 @@ export const deviceModelSchema = {
         "manufacturerName",
         "brandName",
         "modelName",
+        "name"
     ],
 };
