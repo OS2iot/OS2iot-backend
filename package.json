@@ -57,7 +57,7 @@
         "class-validator": "^0.14.0",
         "compression": "^1.7.4",
         "cookie-parser": "^1.4.5",
-        "kafkajs": "^1.15.0",
+        "kafkajs": "^2.2.4",
         "lodash": "^4.17.20",
         "mqtt": "^4.3.7",
         "njwt": "^1.0.0",
