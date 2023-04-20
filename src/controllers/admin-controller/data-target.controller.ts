@@ -13,7 +13,6 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import { UnauthorizedException } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
