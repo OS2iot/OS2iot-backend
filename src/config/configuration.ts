@@ -39,15 +39,15 @@ export default (): any => {
         email: {
             host: process.env.EMAIL_HOST || "smtp.ethereal.email",
             port: process.env.EMAIL_PORT || 587,
-            user: process.env.EMAIL_USER || "ara.kertzmann8@ethereal.email",
-            pass: process.env.EMAIL_PASS || "KzRSyYReEygpFPPZdd",
+            user: process.env.EMAIL_USER || "tremayne38@ethereal.email",
+            pass: process.env.EMAIL_PASS || "UjbMtRZNkrUcVJsvTM",
             /**
              * Can be formatted to show a user-friendly name before the e-mail.
              * E.g. "OS2iot <sender@mail.com>"
              */
             from: process.env.EMAIL_FROM
                 ? formatEmail(process.env.EMAIL_FROM)
-                : "OS2iot ara.kertzmann8@ethereal.email",
+                : "OS2iot tremayne38@ethereal.email",
         },
         frontend: {
             baseurl: process.env.FRONTEND_BASEURL || "http://localhost:8081",

@@ -17,12 +17,13 @@ import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiForbiddenResponse,
+    ApiNotFoundResponse,
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
@@ -40,6 +41,8 @@ import {
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { OddkMailInfo } from "@dto/oddk-mail-info.dto";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -49,7 +52,10 @@ import { ActionType } from "@entities/audit-log-entry";
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class DataTargetController {
-    constructor(private dataTargetService: DataTargetService) {}
+    constructor(
+        private dataTargetService: DataTargetService,
+        private organizationService: OrganizationService
+    ) {}
 
     @Get()
     @ApiOperation({ summary: "Find all DataTargets" })
@@ -64,7 +70,11 @@ export class DataTargetController {
                 query.applicationId = +query.applicationId;
             }
 
-            checkIfUserHasAccessToApplication(req, query.applicationId, ApplicationAccessScope.Read);
+            checkIfUserHasAccessToApplication(
+                req,
+                query.applicationId,
+                ApplicationAccessScope.Read
+            );
             const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
 
             return await this.dataTargetService.findAndCountAllWithPagination(
@@ -82,7 +92,11 @@ export class DataTargetController {
     ): Promise<DataTarget> {
         try {
             const dataTarget = await this.dataTargetService.findOne(id);
-            checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
+            checkIfUserHasAccessToApplication(
+                req,
+                dataTarget.application.id,
+                ApplicationAccessScope.Read
+            );
             return dataTarget;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -131,9 +145,17 @@ export class DataTargetController {
     ): Promise<DataTarget> {
         const oldDataTarget = await this.dataTargetService.findOne(id);
         try {
-            checkIfUserHasAccessToApplication(req, oldDataTarget.application.id, ApplicationAccessScope.Write);
+            checkIfUserHasAccessToApplication(
+                req,
+                oldDataTarget.application.id,
+                ApplicationAccessScope.Write
+            );
             if (oldDataTarget.application.id !== updateDto.applicationId) {
-                checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
+                checkIfUserHasAccessToApplication(
+                    req,
+                    updateDto.applicationId,
+                    ApplicationAccessScope.Write
+                );
             }
         } catch (err) {
             AuditLog.fail(
@@ -171,7 +193,11 @@ export class DataTargetController {
     ): Promise<DeleteResponseDto> {
         try {
             const dt = await this.dataTargetService.findOne(id);
-            checkIfUserHasAccessToApplication(req, dt.application.id, ApplicationAccessScope.Write);
+            checkIfUserHasAccessToApplication(
+                req,
+                dt.application.id,
+                ApplicationAccessScope.Write
+            );
             const result = await this.dataTargetService.delete(id);
 
             if (result.affected === 0) {
@@ -186,5 +212,48 @@ export class DataTargetController {
             }
             throw new NotFoundException(err);
         }
+    }
+
+    @Get("getOpenDataDkRegistered/:organizationId")
+    @ApiOperation({ summary: "Get OpenDataDkRegistered-status for given OrganizationId" })
+    @ApiNotFoundResponse()
+    @Read()
+    async getOpenDataDkRegistered(@Param("organizationId", new ParseIntPipe()) organizationId: number): Promise<boolean> {
+        try {
+            return (await this.organizationService.findById(organizationId))?.openDataDkRegistered;
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    @Put("updateOpenDataDkRegistered/:organizationId")
+    @ApiOperation({
+        summary: "Update the OpenDataDkRegistered to true, for the given OrganizationId - to stop showing the dialog for sending ODDK-mail on creation of new datatargets",
+    })
+    @ApiNotFoundResponse()
+    async updateOpenDataDkRegistered(
+        @Req() req: AuthenticatedRequest,
+        @Param("organizationId", new ParseIntPipe()) organizationId: number
+    ): Promise<boolean> {
+        try {
+            await this.organizationService.updateOpenDataDkRegistered(organizationId, req.user.userId);
+            return true;
+        } catch (err) {
+            if (err.name == "EntityNotFound") {
+                throw new NotFoundException();
+            }
+            throw err;
+        }
+    }
+
+    @Post("sendOpenDataDkMail")
+    @ApiOperation({summary: "Send mail for registering datatargets to Open Data DK, for the given OrganizationId"})
+    async sendOpenDataDkMail(
+        @Req() req: AuthenticatedRequest,
+        @Body() mailInfoDto: OddkMailInfo
+    ): Promise<boolean> {
+        await this.dataTargetService.sendOpenDataDkMail(mailInfoDto, req.user.userId);
+        await this.organizationService.updateOpenDataDkRegistered(mailInfoDto.organizationId, req.user.userId);
+        return true;
     }
 }
