@@ -29,7 +29,7 @@ import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
-import { OpenDataDkDataTarget } from "@entities/opendatadk-push-data-target.entity";
+import { OpenDataDkDataTarget } from "@entities/open-data-dk-push-data-target.entity";
 
 @Module({
     imports: [
