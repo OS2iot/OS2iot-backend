@@ -1,18 +1,33 @@
-import { Module } from "@nestjs/common";
-
 import { DataTargetController } from "@admin-controller/data-target.controller";
+import configuration from "@config/configuration";
 import { ApplicationModule } from "@modules/device-management/application.module";
 import { SharedModule } from "@modules/shared.module";
+import { OrganizationModule } from "@modules/user-management/organization.module";
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import { DataTargetService } from "@services/data-targets/data-target.service";
-import { CLIENT_SECRET_PROVIDER, PlainTextClientSecretProvider } from "../../helpers/fiware-token.helper";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
+import {
+    CLIENT_SECRET_PROVIDER,
+    PlainTextClientSecretProvider,
+} from "../../helpers/fiware-token.helper";
 
 @Module({
-    imports: [SharedModule, ApplicationModule],
+    imports: [
+        SharedModule,
+        ApplicationModule,
+        OrganizationModule,
+        ConfigModule.forRoot({ load: [configuration] }),
+    ],
     exports: [DataTargetService],
     controllers: [DataTargetController],
-    providers: [DataTargetService, {
-        provide: CLIENT_SECRET_PROVIDER,
-        useClass: PlainTextClientSecretProvider
-    }],
+    providers: [
+        DataTargetService,
+        OS2IoTMail,
+        {
+            provide: CLIENT_SECRET_PROVIDER,
+            useClass: PlainTextClientSecretProvider,
+        },
+    ],
 })
 export class DataTargetModule {}

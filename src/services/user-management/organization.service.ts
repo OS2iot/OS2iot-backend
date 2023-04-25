@@ -67,6 +67,16 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
+    async updateOpenDataDkRegistered(
+        id: number,
+        userId: number
+    ): Promise<Organization> {
+        const org = await this.findByIdWithRelations(id);
+        org.openDataDkRegistered = true;
+        org.updatedBy = userId;
+        return await this.organizationRepository.save(org);
+    }
+
     async updateAwaitingUsers(org: Organization, user: User): Promise<Organization> {
         if (!org.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
             org.awaitingUsers.push(user);

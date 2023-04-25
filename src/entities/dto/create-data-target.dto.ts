@@ -40,6 +40,7 @@ export class CreateDataTargetDto {
     @ApiProperty({ required: true })
     type: DataTargetType;
 
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type !== DataTargetType.OpenDataDK)
     @ApiProperty({ required: true, example: "https://example.com/endpoint" })
     @IsString()
     @MaxLength(1024)
@@ -51,6 +52,7 @@ export class CreateDataTargetDto {
     })
     url: string;
 
+    @ValidateIf((obj: CreateDataTargetDto) => obj.type !== DataTargetType.OpenDataDK)
     @ApiProperty({ required: true, example: 30000 })
     @IsInt()
     timeout: number;
