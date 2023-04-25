@@ -29,6 +29,7 @@ import { ReceivedMessageSigFoxSignals } from "@entities/received-message-sigfox-
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
+import {MQTTBrokerDevice} from "@entities/mqtt-broker-device.entity";
 
 @Module({
     imports: [
@@ -61,6 +62,7 @@ import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
             ReceivedMessageSigFoxSignals,
             PermissionTypeEntity,
             GatewayStatusHistory,
+            MQTTBrokerDevice
         ]),
     ],
     providers: [AuditLog],

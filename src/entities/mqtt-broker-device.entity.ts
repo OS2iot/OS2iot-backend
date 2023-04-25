@@ -5,9 +5,9 @@ import {AuthenticationType} from "@enum/authentication-type";
 
 @ChildEntity(IoTDeviceType.MQTTBroker)
 export class MQTTBrokerDevice extends IoTDevice {
-    // TODO: Add missing fields
+    // TODO: Add missing fields (url etc.)
     @Column("enum", {
-        enum: AuthenticationType
+        enum: AuthenticationType,
     })
     authenticationType: AuthenticationType;
 

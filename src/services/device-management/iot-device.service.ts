@@ -1,69 +1,52 @@
-import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
-import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
-import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
-import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
-import { CreateIoTDeviceDto } from "@dto/create-iot-device.dto";
-import { CreateSigFoxSettingsDto } from "@dto/create-sigfox-settings.dto";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { CreateIoTDeviceMapDto } from "@dto/iot-device/create-iot-device-map.dto";
-import { IotDeviceBatchResponseDto } from "@dto/iot-device/iot-device-batch-response.dto";
-import { UpdateIoTDeviceBatchDto } from "@dto/iot-device/update-iot-device-batch.dto";
+import {DeviceDownlinkQueueResponseDto} from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
+import {ChirpstackDeviceId} from "@dto/chirpstack/chirpstack-device-id.dto";
+import {DeviceStatsResponseDto} from "@dto/chirpstack/device/device-stats.response.dto";
+import {ListAllChirpstackApplicationsResponseDto} from "@dto/chirpstack/list-all-applications-response.dto";
+import {CreateIoTDeviceDto} from "@dto/create-iot-device.dto";
+import {CreateSigFoxSettingsDto} from "@dto/create-sigfox-settings.dto";
+import {AuthenticatedRequest} from "@dto/internal/authenticated-request";
+import {CreateIoTDeviceMapDto} from "@dto/iot-device/create-iot-device-map.dto";
+import {IotDeviceBatchResponseDto} from "@dto/iot-device/iot-device-batch-response.dto";
+import {UpdateIoTDeviceBatchDto} from "@dto/iot-device/update-iot-device-batch.dto";
 import {
     IoTDeviceMinimal,
     IoTDeviceMinimalRaw,
     ListAllIoTDevicesMinimalResponseDto,
 } from "@dto/list-all-iot-devices-minimal-response.dto";
-import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
-import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
-import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
-import {
-    SigFoxApiDeviceContent,
-    SigFoxApiDeviceResponse,
-} from "@dto/sigfox/external/sigfox-api-device-response.dto";
-import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
-import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
-import { Application } from "@entities/application.entity";
-import { DeviceModel } from "@entities/device-model.entity";
-import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { Multicast } from "@entities/multicast.entity";
-import { SigFoxDevice } from "@entities/sigfox-device.entity";
-import { SigFoxGroup } from "@entities/sigfox-group.entity";
-import { iotDeviceTypeMap } from "@enum/device-type-mapping";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { ActivationType } from "@enum/lorawan-activation-type.enum";
-import { subtractDays } from "@helpers/date.helper";
-import {
-    filterValidIotDeviceMaps,
-    isValidIoTDeviceMap,
-    mapAllDevicesByProcessed,
-} from "@helpers/iot-device.helper";
-import {
-    BadRequestException,
-    Injectable,
-    Logger,
-    NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { ApplicationService } from "@services/device-management/application.service";
-import { SigFoxApiDeviceTypeService } from "@services/sigfox/sigfox-api-device-type.service";
-import { SigFoxApiDeviceService } from "@services/sigfox/sigfox-api-device.service";
-import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
-import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
-import {
-    DeleteResult,
-    EntityManager,
-    ILike,
-    In,
-    Repository,
-    SelectQueryBuilder,
-} from "typeorm";
-import { v4 as uuidv4 } from "uuid";
-import { DeviceModelService } from "./device-model.service";
-import { IoTLoRaWANDeviceService } from "./iot-lorawan-device.service";
+import {LoRaWANDeviceWithChirpstackDataDto} from "@dto/lorawan-device-with-chirpstack-data.dto";
+import {SigFoxDeviceWithBackendDataDto} from "@dto/sigfox-device-with-backend-data.dto";
+import {CreateSigFoxApiDeviceRequestDto} from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
+import {SigFoxApiDeviceContent, SigFoxApiDeviceResponse,} from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import {UpdateSigFoxApiDeviceRequestDto} from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
+import {UpdateIoTDeviceDto} from "@dto/update-iot-device.dto";
+import {Application} from "@entities/application.entity";
+import {DeviceModel} from "@entities/device-model.entity";
+import {ErrorCodes} from "@entities/enum/error-codes.enum";
+import {GenericHTTPDevice} from "@entities/generic-http-device.entity";
+import {IoTDevice} from "@entities/iot-device.entity";
+import {LoRaWANDevice} from "@entities/lorawan-device.entity";
+import {Multicast} from "@entities/multicast.entity";
+import {SigFoxDevice} from "@entities/sigfox-device.entity";
+import {SigFoxGroup} from "@entities/sigfox-group.entity";
+import {iotDeviceTypeMap} from "@enum/device-type-mapping";
+import {IoTDeviceType} from "@enum/device-type.enum";
+import {ActivationType} from "@enum/lorawan-activation-type.enum";
+import {subtractDays} from "@helpers/date.helper";
+import {filterValidIotDeviceMaps, isValidIoTDeviceMap, mapAllDevicesByProcessed,} from "@helpers/iot-device.helper";
+import {BadRequestException, Injectable, Logger, NotFoundException,} from "@nestjs/common";
+import {InjectRepository} from "@nestjs/typeorm";
+import {ChirpstackDeviceService} from "@services/chirpstack/chirpstack-device.service";
+import {ApplicationService} from "@services/device-management/application.service";
+import {SigFoxApiDeviceTypeService} from "@services/sigfox/sigfox-api-device-type.service";
+import {SigFoxApiDeviceService} from "@services/sigfox/sigfox-api-device.service";
+import {SigFoxGroupService} from "@services/sigfox/sigfox-group.service";
+import {SigFoxMessagesService} from "@services/sigfox/sigfox-messages.service";
+import {DeleteResult, EntityManager, ILike, In, Repository, SelectQueryBuilder,} from "typeorm";
+import {v4 as uuidv4} from "uuid";
+import {DeviceModelService} from "./device-model.service";
+import {IoTLoRaWANDeviceService} from "./iot-lorawan-device.service";
+import {MQTTBrokerDevice} from "@entities/mqtt-broker-device.entity";
+import {AuthenticationType} from "@enum/authentication-type";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -81,6 +64,8 @@ export class IoTDeviceService {
         private iotDeviceRepository: Repository<IoTDevice>,
         @InjectRepository(LoRaWANDevice)
         private loRaWANDeviceRepository: Repository<LoRaWANDevice>,
+        // @InjectRepository(MQTTBrokerDevice)
+        // private mqttDeviceRepository: Repository<MQTTBrokerDevice>,
         private entityManager: EntityManager,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
@@ -779,23 +764,25 @@ export class IoTDeviceService {
             try {
                 if (map.iotDevice.constructor.name === LoRaWANDevice.name) {
                     const cast = map.iotDevice as LoRaWANDevice;
-                    const loraDevice = await this.mapLoRaWANDevice(
+                    map.iotDevice = await this.mapLoRaWANDevice(
                         map.iotDeviceDto,
                         cast,
                         isUpdate,
                         loraDeviceEuis,
                         loraApplications
                     );
-
-                    map.iotDevice = loraDevice;
                 } else if (map.iotDevice.constructor.name === SigFoxDevice.name) {
                     const cast = map.iotDevice as SigFoxDevice;
-                    const sigfoxDevice = await this.mapSigFoxDevice(
+                    map.iotDevice = await this.mapSigFoxDevice(
                         map.iotDeviceDto,
                         cast
                     );
-
-                    map.iotDevice = sigfoxDevice;
+                } else if (map.iotDevice.constructor.name === MQTTBrokerDevice.name) {
+                    const cast = map.iotDevice as MQTTBrokerDevice;
+                    map.iotDevice = await this.mapMQTTBrokerDevice(
+                        map.iotDeviceDto,
+                        cast
+                    )
                 }
             } catch (error) {
                 map.error = {
@@ -1101,5 +1088,24 @@ export class IoTDeviceService {
         } else {
             throw new BadRequestException(ErrorCodes.MissingABPInfo);
         }
+    }
+
+    private async mapMQTTBrokerDevice(
+        iotDeviceDto: CreateIoTDeviceDto,
+        cast: MQTTBrokerDevice
+    ): Promise<MQTTBrokerDevice> {
+        // TODO: This is where we would make certificate + actual broker topic
+        cast.authenticationType = iotDeviceDto.mqttBrokerSettings.authenticationType;
+        switch (cast.authenticationType){
+            case AuthenticationType.PASSWORD:
+                cast.password = iotDeviceDto.mqttBrokerSettings.password;
+                cast.username = iotDeviceDto.mqttBrokerSettings.username;
+                break;
+            case AuthenticationType.CERTIFICATE:
+                break;
+
+        }
+
+        return cast;
     }
 }
