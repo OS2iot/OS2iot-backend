@@ -18,6 +18,7 @@ import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
 import { IsMetadataJson } from "@helpers/is-metadata-json.validator";
 import { nameof } from "@helpers/type-helper";
+import {CreateMqttBrokerSettingsDto} from "@dto/create-mqtt-broker-settings.dto";
 
 export class CreateIoTDeviceDto {
     @ApiProperty({ required: true })
@@ -81,4 +82,10 @@ export class CreateIoTDeviceDto {
     @ValidateNested({ each: true })
     @Type(() => CreateSigFoxSettingsDto)
     sigfoxSettings?: CreateSigFoxSettingsDto;
+
+    @ApiProperty({required: false})
+    @ValidateIf(o => o.type == IoTDeviceType.MQTTBroker)
+    @ValidateNested({each: true})
+    @Type(() => CreateMqttBrokerSettingsDto)
+    mqttBrokerSettings?: CreateMqttBrokerSettingsDto
 }
