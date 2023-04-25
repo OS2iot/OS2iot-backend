@@ -29,6 +29,7 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
 import { isPermissionType } from "@helpers/security-helper";
 import { nameof } from "@helpers/type-helper";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
 
 @Injectable()
 export class UserService {
@@ -37,7 +38,8 @@ export class UserService {
         private userRepository: Repository<User>,
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService,
-        private configService: ConfigService
+        private configService: ConfigService,
+        private oS2IoTMail: OS2IoTMail,
     ) {}
 
     private readonly logger = new Logger(UserService.name, { timestamp: true });
@@ -376,85 +378,39 @@ export class UserService {
         };
     }
 
-    basicMailTransporter(): nodemailer.Transporter<SMTPTransport.SentMessageInfo> {
-        return nodemailer.createTransport({
-            host: this.configService.get<string>("email.host"),
-            port: this.configService.get<number>("email.port"),
-            auth: {
-                user: this.configService.get<string>("email.user"),
-                pass: this.configService.get<string>("email.pass"),
-            },
-        });
-    }
-
     async sendOrganizationRequestMail(
         user: User,
         organization: Organization
     ): Promise<void> {
         const emails = await this.getOrgAdminEmails(organization);
-        const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = this.basicMailTransporter();
-        try {
-            await transporter.verify();
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
-        try {
-            await transporter.sendMail({
-                from: this.configService.get<string>("email.from"),
-                to: emails,
-                subject: "Ny ansøgning til din organisation i OS2iot",
-                html: `<p>Ny ansøgning til din organisation i OS2iot</p>
-                <p><a href="${this.configService.get<string>(
-                    "frontend.baseurl"
-                )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${
-                    user.name
-                } i organisationen ${organization.name}
-                </p>
-                <p>Find brugeren under fanebladet "Afventende brugere"</p>`, // html body
-            });
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
+        await this.oS2IoTMail.sendMail({
+            to: emails,
+            subject: "Ny ansøgning til din organisation i OS2iot",
+            html: `<p>Ny ansøgning til din organisation i OS2iot</p>
+            <p><a href="${this.configService.get<string>(
+                "frontend.baseurl"
+            )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${
+                user.name
+            } i organisationen ${organization.name}
+            </p>
+            <p>Find brugeren under fanebladet "Afventende brugere"</p>`, // html body
+        });
     }
 
     async sendRejectionMail(user: User, organization: Organization): Promise<void> {
-        const transporter = this.basicMailTransporter();
-
-        try {
-            await transporter.verify();
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
-        try {
-            await transporter.sendMail({
-                from: this.configService.get<string>("email.from"), // sender address
-                to: user.email, // list of receivers
-                subject: "Ansøgning i OS2iot afvist", // Subject line
-                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er afvist. Kontakt din OS2iot-administrator, hvis du vil vide mere.</h1>`, // html body
-            });
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
+        await this.oS2IoTMail.sendMail({
+            to: user.email, // list of receivers
+            subject: "Ansøgning i OS2iot afvist", // Subject line
+            html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er afvist. Kontakt din OS2iot-administrator, hvis du vil vide mere.</h1>`, // html body
+        });
     }
 
     async sendVerificationMail(user: User, organization: Organization): Promise<void> {
-        const transporter = this.basicMailTransporter();
-
-        try {
-            await transporter.verify();
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
-        try {
-            await transporter.sendMail({
-                from: this.configService.get<string>("email.from"), // sender address
-                to: user.email, // list of receivers
-                subject: "Ansøgning i OS2iot godkendt", // Subject line
-                html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er godkendt</h1>`, // html body
-            });
-        } catch (error) {
-            throw new BadRequestException(ErrorCodes.SendMailError);
-        }
+        await this.oS2IoTMail.sendMail({
+            to: user.email, // list of receivers
+            subject: "Ansøgning i OS2iot godkendt", // Subject line
+            html: `<h1>Din ansøgning om tilknytning til organisationen ${organization.name} i OS2iot er godkendt</h1>`, // html body
+        });
     }
 
     async getOrgAdminEmails(organization: Organization): Promise<string[]> {

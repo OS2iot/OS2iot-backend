@@ -8,11 +8,12 @@ import { UserController } from "@user-management-controller/user.controller";
 import { OrganizationModule } from "./organization.module";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
 
 @Module({
     imports: [SharedModule, ConfigModule.forRoot({ load: [configuration] }), forwardRef(() => PermissionModule), forwardRef(() => OrganizationModule)],
     controllers: [UserController],
-    providers: [UserService, UserBootstrapperService],
+    providers: [UserService, UserBootstrapperService, OS2IoTMail],
     exports: [UserService],
 })
 export class UserModule {}

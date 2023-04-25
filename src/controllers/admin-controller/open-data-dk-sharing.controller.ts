@@ -3,7 +3,6 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { Controller, Get, NotFoundException, Param, ParseIntPipe } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { OpenDataDkSharingService } from "@services/data-management/open-data-dk-sharing.service";
-import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 
 @ApiTags("OpenData.dk")
