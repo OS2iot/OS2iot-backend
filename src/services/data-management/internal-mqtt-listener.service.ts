@@ -11,7 +11,6 @@ export class InternalMqttListenerService implements OnApplicationBootstrap {
         private iotDeviceService: IoTDeviceService
     ) {}
 
-    // TODO two clients needed?
     private MQTT_URL = `mqtt://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}:${
         process.env.MQTT_BROKER_PASSWORD_PORT || "8884"
     }`;
@@ -23,6 +22,7 @@ export class InternalMqttListenerService implements OnApplicationBootstrap {
     private readonly MQTT_DEVICE_DATA_TOPIC = this.MQTT_DEVICE_DATA_PREFIX + "#";
 
     public async onApplicationBootstrap(): Promise<void> {
+        // TODO Fix auth here
         this.client = connect(this.MQTT_URL, {
             clean: true,
             clientId: "globaladminsupermasteroftheuniverse",

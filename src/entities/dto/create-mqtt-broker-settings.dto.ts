@@ -1,4 +1,4 @@
-﻿import { AuthenticationType } from "@enum/authentication-type";
+﻿import { AuthenticationType } from "@enum/authentication-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsString, ValidateIf } from "class-validator";
 
