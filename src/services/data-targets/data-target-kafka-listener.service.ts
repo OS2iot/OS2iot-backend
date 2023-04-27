@@ -108,5 +108,5 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
 
     private onSendDone = (status: DataTargetSendStatus, targetType: DataTargetType) => {
         this.logger.debug(`Sent to ${targetType} target: ${JSON.stringify(status)}`);
-    }
+    };
 }

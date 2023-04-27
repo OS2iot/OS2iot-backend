@@ -14,6 +14,7 @@ import { DeviceModelModule } from "./device-model.module";
 import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-payload-decoder.controller";
 import { IoTLoRaWANDeviceModule } from "./iot-lorawan-device.module";
 import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
+import { MqttService } from "@services/mqtt/mqtt.service";
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service"
         PeriodicSigFoxCleanupService,
         IoTDeviceDownlinkService,
         SigFoxMessagesService,
+        MqttService,
     ],
 })
 export class IoTDeviceModule {}
