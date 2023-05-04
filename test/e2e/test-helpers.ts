@@ -137,25 +137,9 @@ export function generateGlobalAdminPermission(): GlobalAdminPermission {
     return new GlobalAdminPermission();
 }
 
-export async function generateSavedGlobalAdminPermission(): Promise<
-    GlobalAdminPermission
-> {
+export async function generateSavedGlobalAdminPermission(): Promise<GlobalAdminPermission> {
     return await getManager().save(generateGlobalAdminPermission());
 }
-
-// TODO: Due to the changes in permissions, these are no longer valid.
-// See generateSavedOrganizationAdminUser()
-// export function generateOrganizationAdminPermission(
-//     org: Organization
-// ): OrganizationAdminPermission {
-//     return new OrganizationAdminPermission("E2E Test - Org admin", org);
-// }
-
-// export async function generateSavedOrganizationAdminPermission(
-//     org: Organization
-// ): Promise<OrganizationAdminPermission> {
-//     return await getManager().save(generateOrganizationAdminPermission(org));
-// }
 
 export function generateDeviceModel(
     org: Organization,
@@ -199,9 +183,19 @@ export function generateOrganization(name?: string): Organization {
     const USER_ADMIN_SUFFIX = " - OrganizationUserAdmin";
 
     const readPermission = new ReadPermission(org.name + READ_SUFFIX, org, true);
-    const appAdminPermission = new OrganizationApplicationAdminPermission(org.name + APP_ADMIN_SUFFIX, org, true);
-    const gatewayAdminPermission = new OrganizationGatewayAdminPermission(org.name + GATEWAY_ADMIN_SUFFIX, org);
-    const userAdminPermission = new OrganizationUserAdminPermission(org.name + USER_ADMIN_SUFFIX, org);
+    const appAdminPermission = new OrganizationApplicationAdminPermission(
+        org.name + APP_ADMIN_SUFFIX,
+        org,
+        true
+    );
+    const gatewayAdminPermission = new OrganizationGatewayAdminPermission(
+        org.name + GATEWAY_ADMIN_SUFFIX,
+        org
+    );
+    const userAdminPermission = new OrganizationUserAdminPermission(
+        org.name + USER_ADMIN_SUFFIX,
+        org
+    );
     org.permissions = [
         appAdminPermission,
         gatewayAdminPermission,
@@ -257,24 +251,23 @@ export async function generateSavedGlobalAdminUser(): Promise<User> {
 export async function generateSavedOrganizationAdminUser(
     org: Organization
 ): Promise<User> {
-    // let orgAdmin = org.permissions.find(x => x.type == PermissionType.OrganizationAdmin);
-    // if (!orgAdmin) {
-    //     orgAdmin = await generateSavedOrganizationAdminPermission(org);
-    // }
-    // const user = await getManager().save(generateUser([orgAdmin]));
-
-    // return user;
-
-    // TODO: Due to the changes in permissions, this test is no longer valid
     // Tests aren't used anymore. Instead of "fixing" it, we throw an exception to raise awareness
     throw new NotImplementedException();
 }
 
 export async function generateSavedReadWriteUser(org: Organization): Promise<User> {
-    const appAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin));
-    const gatewayAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationGatewayAdmin));
-    const userAdminPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.OrganizationUserAdmin));
-    const readPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.Read));
+    const appAdminPerm = org.permissions.find(x =>
+        x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
+    );
+    const gatewayAdminPerm = org.permissions.find(x =>
+        x.type.some(({ type }) => type === PermissionType.OrganizationGatewayAdmin)
+    );
+    const userAdminPerm = org.permissions.find(x =>
+        x.type.some(({ type }) => type === PermissionType.OrganizationUserAdmin)
+    );
+    const readPerm = org.permissions.find(x =>
+        x.type.some(({ type }) => type === PermissionType.Read)
+    );
     return await getManager().save(
         generateUser([appAdminPerm, gatewayAdminPerm, userAdminPerm, readPerm])
     );

@@ -43,6 +43,7 @@ import {
 import {
     BadRequestException,
     Injectable,
+    InternalServerErrorException,
     Logger,
     NotFoundException,
 } from "@nestjs/common";
@@ -68,6 +69,10 @@ import { MQTTBrokerDevice } from "@entities/mqtt-broker-device.entity";
 import { MqttService } from "@services/mqtt/mqtt.service";
 import { MQTTBrokerDeviceDTO } from "@dto/mqtt-broker-device.dto";
 import { AuthenticationType } from "@enum/authentication-type.enum";
+import { MQTTPermissionLevel } from "@enum/mqtt-permission-level.enum";
+import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
+import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
+import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -87,7 +92,9 @@ export class IoTDeviceService {
         @InjectRepository(LoRaWANDevice)
         private loRaWANDeviceRepository: Repository<LoRaWANDevice>,
         @InjectRepository(MQTTBrokerDevice)
-        private mqttDeviceRepository: Repository<MQTTBrokerDevice>,
+        private mqttBrokerDeviceRepository: Repository<MQTTBrokerDevice>,
+        @InjectRepository(MQTTSubscriberDevice)
+        private mqttSubscriberDeviceRepository: Repository<MQTTSubscriberDevice>,
         private entityManager: EntityManager,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
@@ -97,8 +104,10 @@ export class IoTDeviceService {
         private deviceModelService: DeviceModelService,
         private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService,
         private sigfoxMessagesService: SigFoxMessagesService,
-        private mqttService: MqttService
+        private mqttService: MqttService,
+        private internalMqttClientListenerService: InternalMqttClientListenerService
     ) {}
+
     private readonly logger = new Logger(IoTDeviceService.name);
 
     async findOne(id: number): Promise<IoTDevice> {
@@ -142,6 +151,8 @@ export class IoTDeviceService {
                 return await this.enrichSigFoxDevice(iotDevice);
             } else if (iotDevice.type === IoTDeviceType.MQTTBroker) {
                 return await this.enrichMQTTBrokerDevice(iotDevice);
+            } else if (iotDevice.type === IoTDeviceType.MQTTSubscriber) {
+                return await this.enrichMQTTSubscriberDevice(iotDevice);
             }
         }
 
@@ -354,8 +365,22 @@ export class IoTDeviceService {
     }
 
     async findMQTTDevice(id: number): Promise<MQTTBrokerDevice> {
-        return await this.mqttDeviceRepository.findOne({
+        return await this.mqttBrokerDeviceRepository.findOne({
             where: { id },
+        });
+    }
+
+    async isMQTTListenerSeeded(): Promise<boolean> {
+        return (
+            (await this.mqttBrokerDeviceRepository.count({
+                where: { permissions: MQTTPermissionLevel.superUser },
+            })) > 0
+        );
+    }
+
+    async getAllMQTTSubscribers(): Promise<MQTTSubscriberDevice[]> {
+        return await this.mqttSubscriberDeviceRepository.find({
+            where: { type: IoTDeviceType.MQTTSubscriber },
         });
     }
 
@@ -411,6 +436,7 @@ export class IoTDeviceService {
             ? await this.iotDeviceRepository.save(validIotDevices)
             : [];
 
+        // Set deviceId related values on new mqtt devices
         await this.handleNewMQTTDevices(dbIotDevices);
 
         // Return a new list with all processed and failed devices
@@ -526,6 +552,10 @@ export class IoTDeviceService {
                 );
 
                 await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
+            } else if (device.type === IoTDeviceType.MQTTSubscriber) {
+                this.internalMqttClientListenerService.removeMQTTClient(
+                    device as MQTTSubscriberDevice
+                );
             }
         });
 
@@ -810,6 +840,12 @@ export class IoTDeviceService {
                 } else if (map.iotDevice.constructor.name === MQTTBrokerDevice.name) {
                     const cast = map.iotDevice as MQTTBrokerDevice;
                     map.iotDevice = await this.mapMQTTBrokerDevice(
+                        map.iotDeviceDto,
+                        cast
+                    );
+                } else if (map.iotDevice.constructor.name === MQTTSubscriberDevice.name) {
+                    const cast = map.iotDevice as MQTTSubscriberDevice;
+                    map.iotDevice = await this.mapMQTTSubscriberDevice(
                         map.iotDeviceDto,
                         cast
                     );
@@ -1124,22 +1160,59 @@ export class IoTDeviceService {
         iotDeviceDto: CreateIoTDeviceDto,
         cast: MQTTBrokerDevice
     ): Promise<MQTTBrokerDevice> {
-        cast.authenticationType = iotDeviceDto.mqttBrokerSettings.authenticationType;
+        const settings = iotDeviceDto.mqttBrokerSettings;
+        cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttPassword ??= this.mqttService.hashPassword(
-                    iotDeviceDto.mqttBrokerSettings.mqttPassword
+                cast.mqttpassword ??= this.mqttService.hashPassword(
+                    settings.mqttpassword
                 );
-                cast.mqttUsername = iotDeviceDto.mqttBrokerSettings.mqttUsername;
+                cast.mqttusername = settings.mqttusername;
                 break;
             case AuthenticationType.CERTIFICATE:
-                cast.certificate ??= await this.mqttService.generateCertificate();
+                if (cast.deviceCertificate === undefined) {
+                    const certificateDetails = await this.mqttService.generateCertificate(
+                        cast
+                    );
+                    cast.deviceCertificate = certificateDetails.deviceCertificate;
+                    cast.deviceCertificateKey = certificateDetails.deviceCertificateKey;
+                    cast.caCertificate = certificateDetails.ca;
+                    cast.mqttusername = iotDeviceDto.name;
+                    cast.mqttpassword = undefined;
+                }
                 break;
         }
 
         const topicDetails = await this.mqttService.createTopic(cast);
         cast.mqttURL = topicDetails.uRL;
-        cast.mqttTopicName = topicDetails.topicName;
+        cast.mqttPort = topicDetails.port;
+        cast.mqtttopicname = topicDetails.topicName;
+        cast.permissions = MQTTPermissionLevel.write; // Hardcoded write permission for now, as communication is oneway
+
+        return cast;
+    }
+
+    private async mapMQTTSubscriberDevice(
+        iotDeviceDto: CreateIoTDeviceDto,
+        cast: MQTTSubscriberDevice
+    ): Promise<MQTTSubscriberDevice> {
+        const settings = iotDeviceDto.mqttSubscriberSettings;
+        cast.authenticationType = settings.authenticationType;
+        switch (cast.authenticationType) {
+            case AuthenticationType.PASSWORD:
+                cast.mqttpassword ??= settings.mqttpassword; // TODO: Encrypt this
+                cast.mqttusername = settings.mqttusername;
+                break;
+            case AuthenticationType.CERTIFICATE:
+                cast.caCertificate = settings.caCertificate;
+                cast.deviceCertificate = settings.deviceCertificate;
+                cast.deviceCertificateKey = settings.deviceCertificateKey; // TODO: Encrypt this
+                break;
+        }
+
+        cast.mqttURL = settings.mqttURL;
+        cast.mqttPort = settings.mqttPort;
+        cast.mqtttopicname = settings.mqtttopicname;
 
         return cast;
     }
@@ -1148,27 +1221,71 @@ export class IoTDeviceService {
         const device = iotDevice as MQTTBrokerDeviceDTO;
         device.mqttBrokerSettings = {
             authenticationType: device.authenticationType,
-            certificate: device.certificate,
-            mqttTopicName: device.mqttTopicName,
+            caCertificate: device.caCertificate,
+            deviceCertificate: device.deviceCertificate,
+            deviceCertificateKey: device.deviceCertificateKey,
+            mqtttopicname: device.mqtttopicname,
             mqttURL: device.mqttURL,
-            mqttUsername: device.mqttUsername,
-            mqttPassword: device.mqttPassword,
+            mqttPort: device.mqttPort,
+            mqttusername: device.mqttusername,
+            mqttpassword: device.mqttpassword,
+            permissions: device.permissions,
+        };
+        return device;
+    }
+
+    private async enrichMQTTSubscriberDevice(iotDevice: IoTDevice) {
+        const device = iotDevice as MQTTSubscriberDeviceDTO;
+        device.mqttSubscriberSettings = {
+            authenticationType: device.authenticationType,
+            caCertificate: device.caCertificate,
+            deviceCertificate: device.deviceCertificate,
+            deviceCertificateKey: device.deviceCertificateKey,
+            mqtttopicname: device.mqtttopicname,
+            mqttURL: device.mqttURL,
+            mqttPort: device.mqttPort,
+            mqttusername: device.mqttusername,
+            mqttpassword: device.mqttpassword,
+            permissions: MQTTPermissionLevel.read,
         };
         return device;
     }
 
     private async handleNewMQTTDevices(dbIotDevices: IoTDevice[]) {
-        const newMQTTDevices = dbIotDevices.filter((d: MQTTBrokerDevice) =>
-            d.mqttTopicName.includes("undefined")
+        await this.fixMQTTBrokerTopics(dbIotDevices);
+        await this.createNewMQTTClients(dbIotDevices);
+    }
+
+    private async fixMQTTBrokerTopics(dbIotDevices: IoTDevice[]) {
+        const newMQTTBrokers = dbIotDevices.filter((d: MQTTBrokerDevice) =>
+            d.mqtttopicname.includes("undefined")
         );
         const remappedMQTT = [];
-        for (const iotDevice of newMQTTDevices) {
+        for (const iotDevice of newMQTTBrokers) {
             const mqttBrokerDevice = iotDevice as MQTTBrokerDevice;
-            mqttBrokerDevice.mqttTopicName = (
+            mqttBrokerDevice.mqtttopicname = (
                 await this.mqttService.createTopic(mqttBrokerDevice)
             ).topicName;
             remappedMQTT.push(mqttBrokerDevice);
         }
         await this.iotDeviceRepository.save(remappedMQTT);
+    }
+
+    private async createNewMQTTClients(dbIotDevices: IoTDevice[]) {
+        const newMQTTSubscribers = dbIotDevices.filter(
+            (d: MQTTSubscriberDevice) => d.type === IoTDeviceType.MQTTSubscriber
+        );
+        try {
+            this.internalMqttClientListenerService.createMQTTClients(
+                newMQTTSubscribers as MQTTSubscriberDevice[]
+            );
+            // If something goes wrong delete the devices again.
+        } catch (e) {
+            await this.iotDeviceRepository.remove(dbIotDevices);
+            throw new InternalServerErrorException(
+                e,
+                "Something went wrong on creating MQTT subscriber. Device removed"
+            );
+        }
     }
 }

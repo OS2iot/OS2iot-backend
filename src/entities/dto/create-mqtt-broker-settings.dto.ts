@@ -10,10 +10,10 @@ export class CreateMqttBrokerSettingsDto {
     @ValidateIf(d => d.authenticationType === AuthenticationType.PASSWORD)
     @ApiProperty({ required: true })
     @IsString()
-    mqttUsername: string;
+    mqttusername: string;
 
     @ValidateIf(d => d.authenticationType === AuthenticationType.PASSWORD)
     @ApiProperty({ required: true })
     @IsString()
-    mqttPassword: string;
+    mqttpassword: string;
 }

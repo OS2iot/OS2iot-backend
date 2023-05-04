@@ -1,11 +1,10 @@
-﻿import { BeforeInsert, ChildEntity, Column } from "typeorm";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { IoTDevice } from "@entities/iot-device.entity";
+﻿import { IoTDevice } from "@entities/iot-device.entity";
+import { BeforeInsert, ChildEntity, Column } from "typeorm";
 import { AuthenticationType } from "@enum/authentication-type.enum";
-import { MQTTPermissionLevel } from "@enum/mqtt-permission-level.enum";
+import { IoTDeviceType } from "@enum/device-type.enum";
 
-@ChildEntity(IoTDeviceType.MQTTBroker)
-export class MQTTBrokerDevice extends IoTDevice {
+@ChildEntity(IoTDeviceType.MQTTSubscriber)
+export class MQTTSubscriberDevice extends IoTDevice {
     @Column("enum", {
         enum: AuthenticationType,
     })
@@ -35,14 +34,8 @@ export class MQTTBrokerDevice extends IoTDevice {
     @Column({ nullable: true })
     mqtttopicname: string;
 
-    @Column("enum", {
-        nullable: true,
-        enum: MQTTPermissionLevel,
-    })
-    permissions: MQTTPermissionLevel;
-
     @BeforeInsert()
     private beforeInsert() {
-        this.type = IoTDeviceType.MQTTBroker;
+        this.type = IoTDeviceType.MQTTSubscriber;
     }
 }

@@ -4,14 +4,61 @@ import { random } from "crypto-js/lib-typedarrays";
 import { algo, enc, PBKDF2 } from "crypto-js";
 import { ApplicationService } from "@services/device-management/application.service";
 import { AuthenticationType } from "@enum/authentication-type.enum";
+import * as fs from "fs";
+import { createCertificate, createCSR, createPrivateKey } from "pem";
+import { caCertPath, caKeyPath } from "@resources/resource-paths";
 
 @Injectable()
 export class MqttService {
     constructor(private applicationService: ApplicationService) {}
 
-    // TODO: NotYetImplemented
-    public async generateCertificate() {
-        return "fakeCert";
+    public async generateCertificate(
+        device: MQTTBrokerDevice
+    ): Promise<CertificateDetails> {
+        const certificateDetails = new CertificateDetails();
+        try {
+            createPrivateKey(2048, (err, key) => {
+                if (err) {
+                    console.log("keyerr", err);
+                    return;
+                }
+                certificateDetails.deviceCertificateKey = key.key;
+                createCSR(
+                    {
+                        commonName: device.name,
+                        clientKey: key.key,
+                    },
+                    function (err, { csr }) {
+                        if (err) throw err;
+                        const caCert = fs.readFileSync(caCertPath);
+                        const caKey = fs.readFileSync(caKeyPath).toString();
+                        createCertificate(
+                            {
+                                csr: csr,
+                                serviceKey: caKey,
+                                serviceCertificate: caCert,
+                                serial: Date.now(),
+                                days: 365,
+                                serviceKeyPassword: process.env.CA_KEY_PASSWORD || "test",
+                            },
+                            async function (err, cert) {
+                                if (err) throw err;
+
+                                certificateDetails.deviceCertificate = cert.certificate;
+                                certificateDetails.ca = caCert.toString();
+                            }
+                        );
+                    }
+                );
+            });
+            while (certificateDetails.deviceCertificate === undefined) {
+                const wait = new Promise(resolve => setTimeout(resolve, 100));
+                await wait;
+            }
+            return certificateDetails;
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     public async createTopic(device: MQTTBrokerDevice): Promise<TopicDetails> {
@@ -19,10 +66,11 @@ export class MqttService {
             device.application.id
         );
         const port =
-            device.authenticationType === AuthenticationType.PASSWORD ? "8884" : "8885";
+            device.authenticationType === AuthenticationType.PASSWORD ? "8885" : "8884";
         return {
-            uRL: `mqtt://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}:${port}`,
+            uRL: `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`,
             topicName: `devices/${application.belongsTo.id}/${device.application.id}/${device.id}`,
+            port: Number(port),
         };
     }
 
@@ -49,4 +97,11 @@ export class MqttService {
 export interface TopicDetails {
     uRL: string;
     topicName: string;
+    port: number;
+}
+
+class CertificateDetails {
+    ca: string;
+    deviceCertificate: string;
+    deviceCertificateKey: string;
 }
