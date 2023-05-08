@@ -4,10 +4,15 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { SharedModule } from "@modules/shared.module";
 import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
 import { InternalMqttBrokerListenerService } from "@services/data-management/internal-mqtt-broker-listener.service";
+import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Module({
     imports: [ReceiveDataModule, forwardRef(() => IoTDeviceModule), SharedModule],
-    providers: [InternalMqttClientListenerService, InternalMqttBrokerListenerService],
+    providers: [
+        InternalMqttClientListenerService,
+        InternalMqttBrokerListenerService,
+        EncryptionHelperService,
+    ],
     exports: [InternalMqttClientListenerService, InternalMqttBrokerListenerService],
 })
 export class InternalMqttListenerModule {}

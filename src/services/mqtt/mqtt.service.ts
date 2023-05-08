@@ -12,21 +12,19 @@ import { caCertPath, caKeyPath } from "@resources/resource-paths";
 export class MqttService {
     constructor(private applicationService: ApplicationService) {}
 
-    public async generateCertificate(
-        device: MQTTBrokerDevice
-    ): Promise<CertificateDetails> {
+    public async generateCertificate(deviceName: string): Promise<CertificateDetails> {
         const certificateDetails = new CertificateDetails();
         try {
-            createPrivateKey(2048, (err, key) => {
+            createPrivateKey(2048, (err, { key }) => {
                 if (err) {
                     console.log("keyerr", err);
                     return;
                 }
-                certificateDetails.deviceCertificateKey = key.key;
+                certificateDetails.deviceCertificateKey = key;
                 createCSR(
                     {
-                        commonName: device.name,
-                        clientKey: key.key,
+                        commonName: deviceName,
+                        clientKey: key,
                     },
                     function (err, { csr }) {
                         if (err) throw err;

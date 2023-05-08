@@ -16,6 +16,7 @@ import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service"
 import { MqttService } from "@services/mqtt/mqtt.service";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
+import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { InternalMqttListenerModule } from "@modules/device-integrations/interna
         SigFoxMessagesService,
         MqttService,
         IoTDeviceService,
+        EncryptionHelperService,
     ],
 })
 export class IoTDeviceModule {}

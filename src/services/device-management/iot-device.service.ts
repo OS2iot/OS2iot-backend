@@ -73,6 +73,7 @@ import { MQTTPermissionLevel } from "@enum/mqtt-permission-level.enum";
 import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
 import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
 import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
+import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -105,7 +106,8 @@ export class IoTDeviceService {
         private ioTLoRaWANDeviceService: IoTLoRaWANDeviceService,
         private sigfoxMessagesService: SigFoxMessagesService,
         private mqttService: MqttService,
-        private internalMqttClientListenerService: InternalMqttClientListenerService
+        private internalMqttClientListenerService: InternalMqttClientListenerService,
+        private encryptionHelperService: EncryptionHelperService
     ) {}
 
     private readonly logger = new Logger(IoTDeviceService.name);
@@ -370,12 +372,10 @@ export class IoTDeviceService {
         });
     }
 
-    async isMQTTListenerSeeded(): Promise<boolean> {
-        return (
-            (await this.mqttBrokerDeviceRepository.count({
-                where: { permissions: MQTTPermissionLevel.superUser },
-            })) > 0
-        );
+    async getMqttListener(): Promise<MQTTBrokerDevice> {
+        return await this.mqttBrokerDeviceRepository.findOne({
+            where: { permissions: MQTTPermissionLevel.superUser },
+        });
     }
 
     async getAllMQTTSubscribers(): Promise<MQTTSubscriberDevice[]> {
@@ -1172,10 +1172,12 @@ export class IoTDeviceService {
             case AuthenticationType.CERTIFICATE:
                 if (cast.deviceCertificate === undefined) {
                     const certificateDetails = await this.mqttService.generateCertificate(
-                        cast
+                        cast.name
                     );
                     cast.deviceCertificate = certificateDetails.deviceCertificate;
-                    cast.deviceCertificateKey = certificateDetails.deviceCertificateKey;
+                    cast.deviceCertificateKey = this.encryptionHelperService.basicEncrypt(
+                        certificateDetails.deviceCertificateKey
+                    );
                     cast.caCertificate = certificateDetails.ca;
                     cast.mqttusername = iotDeviceDto.name;
                     cast.mqttpassword = undefined;
@@ -1187,7 +1189,7 @@ export class IoTDeviceService {
         cast.mqttURL = topicDetails.uRL;
         cast.mqttPort = topicDetails.port;
         cast.mqtttopicname = topicDetails.topicName;
-        cast.permissions = MQTTPermissionLevel.write; // Hardcoded write permission for now, as communication is oneway
+        cast.permissions = MQTTPermissionLevel.write; // Hardcoded 'write' permission for now, as communication is oneway
 
         return cast;
     }
@@ -1200,13 +1202,17 @@ export class IoTDeviceService {
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttpassword ??= settings.mqttpassword; // TODO: Encrypt this
+                cast.mqttpassword ??= this.encryptionHelperService.basicEncrypt(
+                    settings.mqttpassword
+                );
                 cast.mqttusername = settings.mqttusername;
                 break;
             case AuthenticationType.CERTIFICATE:
                 cast.caCertificate = settings.caCertificate;
                 cast.deviceCertificate = settings.deviceCertificate;
-                cast.deviceCertificateKey = settings.deviceCertificateKey; // TODO: Encrypt this
+                cast.deviceCertificateKey = this.encryptionHelperService.basicEncrypt(
+                    settings.deviceCertificateKey
+                );
                 break;
         }
 
@@ -1223,7 +1229,9 @@ export class IoTDeviceService {
             authenticationType: device.authenticationType,
             caCertificate: device.caCertificate,
             deviceCertificate: device.deviceCertificate,
-            deviceCertificateKey: device.deviceCertificateKey,
+            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(
+                device.deviceCertificateKey
+            ),
             mqtttopicname: device.mqtttopicname,
             mqttURL: device.mqttURL,
             mqttPort: device.mqttPort,

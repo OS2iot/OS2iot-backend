@@ -24,8 +24,12 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     ) {}
 
     private MQTT_URL = `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`;
-    private MQTT_PORT = `${process.env.MQTT_BROKER_PASSWORD_PORT || "8885"}`;
-    client: Client;
+    private MQTT_PASSWORD_PORT = `${process.env.MQTT_BROKER_PASSWORD_PORT || "8885"}`;
+    private MQTT_CERTIFICATE_PORT = `${
+        process.env.MQTT_BROKER_CERTIFICATE_PORT || "8884"
+    }`;
+    passwordClient: Client;
+    certificateClient: Client;
 
     private readonly logger = new Logger(InternalMqttBrokerListenerService.name);
 
@@ -34,22 +38,36 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
 
     public async onApplicationBootstrap(): Promise<void> {
         await this.seedSuperUser();
-
+        const superUser = await this.iotDeviceService.getMqttListener();
         // TODO: get this file from somewhere else (Keyvault?, just in proj root?)
         const caCert = fs.readFileSync(caCertPath);
-        this.client = connect(this.MQTT_URL, {
+        this.passwordClient = connect(this.MQTT_URL, {
             clean: true,
-            port: Number(this.MQTT_PORT),
-            clientId: "globaladminsupermasteroftheuniverse",
-            username: "SuperUser",
-            password: "SuperUser",
+            port: Number(this.MQTT_PASSWORD_PORT),
+            clientId: "PasswordSuperUserClient",
+            username: superUser.name,
+            password: "SuperUser", // Connection has to be made with unhashed password
             ca: caCert,
         });
+        // TODO: Removed while monitoring the need for 2 clients
+        // this.certificateClient = connect(this.MQTT_URL, {
+        //     clean: true,
+        //     port: Number(this.MQTT_CERTIFICATE_PORT),
+        //     clientId: "CertificateSuperUserClient",
+        //     ca: caCert,
+        //     cert: superUser.deviceCertificate,
+        //     key: superUser.deviceCertificateKey,
+        // });
 
-        this.client.on("connect", () => {
-            this.client.subscribe(this.MQTT_DEVICE_DATA_TOPIC);
+        this.configureClient(this.passwordClient);
+        // this.configureClient(this.certificateClient);
+    }
 
-            this.client.on("message", async (topic, message) => {
+    private configureClient(client: Client) {
+        client.on("connect", () => {
+            client.subscribe(this.MQTT_DEVICE_DATA_TOPIC);
+
+            client.on("message", async (topic, message) => {
                 this.logger.debug(
                     `Received MQTT - Topic: '${topic}' - message: '${message}'`
                 );
@@ -62,7 +80,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
                 }
             });
 
-            this.logger.debug("Connected to MQTT.Internal");
+            this.logger.debug("Connected to MQTT Internal");
         });
     }
 
@@ -86,12 +104,16 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     }
 
     private async seedSuperUser() {
-        if (await this.iotDeviceService.isMQTTListenerSeeded()) {
+        if (await this.iotDeviceService.getMqttListener()) {
             this.logger.debug(
                 "MQTT Listener superuser already exists. New one wont be seeded"
             );
             return;
         }
+
+        const certificateDetails = await this.mqttService.generateCertificate(
+            "SuperUser"
+        );
 
         await this.mqttBrokerDeviceRepository.save({
             type: IoTDeviceType.MQTTBroker,
@@ -103,6 +125,8 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             mqttpassword: this.mqttService.hashPassword("SuperUser"),
             mqttusername: "SuperUser",
             permissions: MQTTPermissionLevel.superUser,
+            deviceCertificate: certificateDetails.deviceCertificate,
+            deviceCertificateKey: certificateDetails.deviceCertificateKey,
         });
         this.logger.log("Created MQTT Listener SuperUser");
     }

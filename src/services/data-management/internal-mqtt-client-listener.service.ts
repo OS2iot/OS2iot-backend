@@ -11,13 +11,15 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { MqttClientId } from "@config/constants/mqtt-constants";
+import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Injectable()
 export class InternalMqttClientListenerService implements OnApplicationBootstrap {
     constructor(
         private receiveDataService: ReceiveDataService,
         @Inject(forwardRef(() => IoTDeviceService))
-        private iotDeviceService: IoTDeviceService
+        private iotDeviceService: IoTDeviceService,
+        private encryptionHelperService: EncryptionHelperService
     ) {
         this.clientDictionary = new Map<number, Client>();
     }
@@ -37,15 +39,14 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
 
     public createMQTTClients(mqttSubscribers: MQTTSubscriberDevice[]) {
         mqttSubscribers.forEach(d => {
-            const key = d.deviceCertificateKey;
             const client = connect(d.mqttURL, {
                 clean: true,
                 port: d.mqttPort,
                 clientId: MqttClientId + ": " + d.name,
                 username: d.mqttusername,
-                password: d.mqttpassword,
+                password: this.encryptionHelperService.basicDecrypt(d.mqttpassword),
                 cert: d.deviceCertificate,
-                key: key,
+                key: this.encryptionHelperService.basicDecrypt(d.deviceCertificateKey),
                 ca: d.caCertificate,
                 rejectUnauthorized: false,
             });
