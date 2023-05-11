@@ -48,7 +48,7 @@ export class CreateMqttSubscriberSettingsDto {
     @ValidateIf(d => d.authenticationType === AuthenticationType.CERTIFICATE)
     @ApiProperty({ required: true })
     @IsString()
-    @Matches(/^-----BEGIN PRIVATE KEY-----([\s\S]*)-----END PRIVATE KEY-----\s?$/, {
+    @Matches(/^-----([\s\S]*)-----\s?$/, {
         message: "Enhends certifikatnøglen er forkert format",
     })
     deviceCertificateKey: string;

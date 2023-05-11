@@ -1,20 +1,21 @@
-﻿import { Injectable } from "@nestjs/common";
-import * as fs from "fs";
-import { encryptionKey } from "@resources/resource-paths";
-import { AES, enc } from "crypto-js";
+﻿import {Injectable} from "@nestjs/common";
+import {AES, enc} from "crypto-js";
 
 @Injectable()
 export class EncryptionHelperService {
+    private encryptionKey;
+    constructor() {
+        this.encryptionKey = process.env.ENCRYPTION_SYMMETRIC_KEY;
+    }
+
     public basicEncrypt(input: string): string {
-        const key = fs.readFileSync(encryptionKey).toString();
-        return AES.encrypt(input, key).toString();
+        return AES.encrypt(input, this.encryptionKey).toString();
     }
 
     public basicDecrypt(encryptedInput: string): string {
         if (!encryptedInput) {
             return undefined;
         }
-        const key = fs.readFileSync(encryptionKey).toString();
-        return AES.decrypt(encryptedInput, key).toString(enc.Utf8);
+        return AES.decrypt(encryptedInput, this.encryptionKey).toString(enc.Utf8);
     }
 }

@@ -12,6 +12,7 @@ import {
     Post,
     Put,
     Req,
+    StreamableFile,
     UseGuards,
 } from "@nestjs/common";
 import {
@@ -60,7 +61,7 @@ import {
 import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTBrokerDeviceDTO } from "@dto/mqtt-broker-device.dto";
-import {MQTTSubscriberDeviceDTO} from "@dto/mqtt-subscriber-device.dto";
+import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -436,6 +437,25 @@ export class IoTDeviceController {
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
             throw err;
+        }
+    }
+
+    @Get("getDevicesMetadataCsv/:applicationId")
+    @ApiOperation({
+        summary: "Get csv containing metadata for all devices in an application",
+    })
+    @ApiBadRequestResponse()
+    async getDevicesMetadataCsv(
+        @Req() req: AuthenticatedRequest,
+        @Param("applicationId", new ParseIntPipe()) applicationId: number
+    ): Promise<StreamableFile> {
+        try {
+            const csvFile = await this.iotDeviceService.getDevicesMetadataCsv(
+                applicationId
+            );
+            return new StreamableFile(csvFile);
+        } catch (err) {
+            this.logger.error(err);
         }
     }
 }

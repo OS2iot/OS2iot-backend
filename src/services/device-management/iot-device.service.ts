@@ -74,6 +74,7 @@ import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
 import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
 import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
+import { CsvGeneratorService } from "@services/csv-generator.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -107,7 +108,8 @@ export class IoTDeviceService {
         private sigfoxMessagesService: SigFoxMessagesService,
         private mqttService: MqttService,
         private internalMqttClientListenerService: InternalMqttClientListenerService,
-        private encryptionHelperService: EncryptionHelperService
+        private encryptionHelperService: EncryptionHelperService,
+        private csvGeneratorService: CsvGeneratorService
     ) {}
 
     private readonly logger = new Logger(IoTDeviceService.name);
@@ -959,6 +961,17 @@ export class IoTDeviceService {
         return devices;
     }
 
+    async getDevicesMetadataCsv(applicationId: number) {
+        const iotDevices = await this.iotDeviceRepository
+            .createQueryBuilder("device")
+            .select("device.*")
+            .where("device.applicationId = :applicationId", { applicationId })
+            .execute();
+
+        const csvString = this.csvGeneratorService.generateDeviceMetadataCsv(iotDevices);
+        return Buffer.from(csvString);
+    }
+
     private async doEditInSigFoxBackend(
         currentSigFoxSettings: SigFoxApiDeviceContent,
         dto: CreateIoTDeviceDto,
@@ -1248,12 +1261,14 @@ export class IoTDeviceService {
             authenticationType: device.authenticationType,
             caCertificate: device.caCertificate,
             deviceCertificate: device.deviceCertificate,
-            deviceCertificateKey: device.deviceCertificateKey,
+            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(
+                device.deviceCertificateKey
+            ),
             mqtttopicname: device.mqtttopicname,
             mqttURL: device.mqttURL,
             mqttPort: device.mqttPort,
             mqttusername: device.mqttusername,
-            mqttpassword: device.mqttpassword,
+            mqttpassword: this.encryptionHelperService.basicDecrypt(device.mqttpassword),
             permissions: MQTTPermissionLevel.read,
         };
         return device;
@@ -1265,8 +1280,10 @@ export class IoTDeviceService {
     }
 
     private async fixMQTTBrokerTopics(dbIotDevices: IoTDevice[]) {
-        const newMQTTBrokers = dbIotDevices.filter((d: MQTTBrokerDevice) =>
-            d.mqtttopicname.includes("undefined")
+        const newMQTTBrokers = dbIotDevices.filter(
+            (d: MQTTBrokerDevice) =>
+                d.type === IoTDeviceType.MQTTBroker &&
+                d.mqtttopicname.includes("undefined")
         );
         const remappedMQTT = [];
         for (const iotDevice of newMQTTBrokers) {

@@ -31,8 +31,3 @@ export const ChirpstackStateTemplatePath = join(
 export const caCertPath = join(traverseUpUntilSrcFolder(__dirname), "resources/ca.crt");
 
 export const caKeyPath = join(traverseUpUntilSrcFolder(__dirname), "resources/ca.key");
-
-export const encryptionKey = join(
-    traverseUpUntilSrcFolder(__dirname),
-    "resources/secret-key.pem"
-);

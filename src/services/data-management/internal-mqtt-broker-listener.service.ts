@@ -4,7 +4,6 @@ import { Client, connect } from "mqtt";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import * as fs from "fs";
-import * as path from "path";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { InjectRepository } from "@nestjs/typeorm";
 import { MQTTBrokerDevice } from "@entities/mqtt-broker-device.entity";
