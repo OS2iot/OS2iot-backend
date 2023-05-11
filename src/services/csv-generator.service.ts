@@ -6,8 +6,9 @@ import { Point } from "geojson";
 @Injectable()
 export class CsvGeneratorService {
     public generateDeviceMetadataCsv(devices: IoTDevice[]) {
-        const first = (devices[0] as unknown) as iotDeviceCsvDto;
-        const csvHeader = Object.keys(first).join(",");
+        const csvHeader = (Object.keys(IotDeviceCsvDto) as Array<
+            keyof typeof IotDeviceCsvDto
+        >).join(",");
         let csvString = csvHeader + "\n";
         devices.forEach(device => {
             csvString += this.generateCsvRow(device);
@@ -25,7 +26,10 @@ export class CsvGeneratorService {
                     csvRow += (entry[1] as Date).toLocaleString() + ",";
                     break;
                 case "location":
-                    csvRow += entry[1] as Point;
+                    csvRow +=
+                        `Lat: ${(entry[1] as Point).coordinates[1]} Long: ${
+                            (entry[1] as Point).coordinates[0]
+                        }` + ",";
                     break;
                 default:
                     csvRow += entry[1] + ",";
@@ -36,8 +40,10 @@ export class CsvGeneratorService {
     }
 }
 
-export interface iotDeviceCsvDto {
+export class IotDeviceCsvDto {
     name: string;
     type: IoTDeviceType;
     deviceEUI: string;
+    latitude: number;
+    longitude: number;
 }

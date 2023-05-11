@@ -74,7 +74,7 @@ import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
 import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
 import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
-import { CsvGeneratorService } from "@services/csv-generator.service";
+import { CsvGeneratorService, IotDeviceCsvDto } from "@services/csv-generator.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -964,9 +964,8 @@ export class IoTDeviceService {
     async getDevicesMetadataCsv(applicationId: number) {
         const iotDevices = await this.iotDeviceRepository
             .createQueryBuilder("device")
-            .select("device.*")
             .where("device.applicationId = :applicationId", { applicationId })
-            .execute();
+            .getMany();
 
         const csvString = this.csvGeneratorService.generateDeviceMetadataCsv(iotDevices);
         return Buffer.from(csvString);
