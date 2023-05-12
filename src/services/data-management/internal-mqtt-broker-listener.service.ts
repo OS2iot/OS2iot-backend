@@ -23,10 +23,8 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     ) {}
 
     private MQTT_URL = `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`;
-    private MQTT_PASSWORD_PORT = `${process.env.MQTT_BROKER_PASSWORD_PORT || "8885"}`;
-    private MQTT_CERTIFICATE_PORT = `${
-        process.env.MQTT_BROKER_CERTIFICATE_PORT || "8884"
-    }`;
+    private MQTT_PASSWORD_PORT = "8885";
+    private MQTT_CERTIFICATE_PORT = "8884";
     passwordClient: Client;
     certificateClient: Client;
 
@@ -38,7 +36,6 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     public async onApplicationBootstrap(): Promise<void> {
         await this.seedSuperUser();
         const superUser = await this.iotDeviceService.getMqttListener();
-        // TODO: get this file from somewhere else (Keyvault?, just in proj root?)
         const caCert = fs.readFileSync(caCertPath);
         this.passwordClient = connect(this.MQTT_URL, {
             clean: true,

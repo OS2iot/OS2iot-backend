@@ -5,6 +5,9 @@ import { AuthenticationType } from "@enum/authentication-type.enum";
 export class CreateMqttSubscriberSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
+    @Matches(/^mqtts?:\/\/\S+/, {
+        message: "Der skal tilføjes protokol (mqtt/mqtts) på url",
+    })
     mqttURL: string;
 
     @ApiProperty({ required: true })
