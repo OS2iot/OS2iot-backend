@@ -78,7 +78,7 @@
         "swagger-ui-express": "^4.1.5",
         "typeorm": "^0.3.10",
         "uuid": "^8.3.2",
-        "vm2": "^3.9.11",
+        "vm2": "^3.9.17",
         "wait-for-expect": "^3.0.2"
     },
     "devDependencies": {
