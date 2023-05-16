@@ -380,9 +380,9 @@ export class IoTDeviceService {
         });
     }
 
-    async getAllMQTTSubscribers(): Promise<MQTTSubscriberDevice[]> {
+    async getAllValidMQTTSubscribers(): Promise<MQTTSubscriberDevice[]> {
         return await this.mqttSubscriberDeviceRepository.find({
-            where: { type: IoTDeviceType.MQTTSubscriber },
+            where: { type: IoTDeviceType.MQTTSubscriber, invalidMqttConfig: false },
         });
     }
 
@@ -562,6 +562,11 @@ export class IoTDeviceService {
         });
 
         return deleteResult;
+    }
+
+    async markMqttSubscriberAsInvalid(device: MQTTSubscriberDevice) {
+        device.invalidMqttConfig = true;
+        await this.mqttSubscriberDeviceRepository.save(device);
     }
 
     private async deleteMulticastsFromDevice(manager: EntityManager, device: IoTDevice) {
@@ -1191,7 +1196,7 @@ export class IoTDeviceService {
                         certificateDetails.deviceCertificateKey
                     );
                     cast.caCertificate = certificateDetails.ca;
-                    cast.mqttusername = iotDeviceDto.name;
+                    cast.mqttusername = cast.name;
                     cast.mqttpassword = undefined;
                 }
                 break;

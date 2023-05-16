@@ -37,7 +37,8 @@ export class MqttService {
                                 serviceCertificate: caCert,
                                 serial: Date.now(),
                                 days: 365,
-                                serviceKeyPassword: process.env.CA_KEY_PASSWORD || "test",
+                                serviceKeyPassword:
+                                    process.env.CA_KEY_PASSWORD || "iterator",
                             },
                             async function (err, cert) {
                                 if (err) throw err;
@@ -49,6 +50,8 @@ export class MqttService {
                     }
                 );
             });
+
+            // createPrivateKey function behaves like an async function, but cannot be awaited. This ensures waiting till it's done
             while (certificateDetails.deviceCertificate === undefined) {
                 const wait = new Promise(resolve => setTimeout(resolve, 100));
                 await wait;

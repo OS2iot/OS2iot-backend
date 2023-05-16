@@ -34,6 +34,9 @@ export class MQTTSubscriberDevice extends IoTDevice {
     @Column({ nullable: true })
     mqtttopicname: string;
 
+    @Column({ default: false })
+    invalidMqttConfig: boolean;
+
     @BeforeInsert()
     private beforeInsert() {
         this.type = IoTDeviceType.MQTTSubscriber;

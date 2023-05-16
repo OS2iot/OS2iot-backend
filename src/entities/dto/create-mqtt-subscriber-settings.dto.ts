@@ -11,7 +11,7 @@ export class CreateMqttSubscriberSettingsDto {
     mqttURL: string;
 
     @ApiProperty({ required: true })
-    @IsNumber()
+    @IsNumber(undefined, { message: "Port skal udfyldes" })
     mqttPort: number;
 
     @ApiProperty({ required: true })
@@ -19,7 +19,7 @@ export class CreateMqttSubscriberSettingsDto {
     mqtttopicname: string;
 
     @ApiProperty({ required: true })
-    @IsEnum(AuthenticationType, { message: "Der skal vælges en Autentifikations type" })
+    @IsEnum(AuthenticationType, { message: "Der skal vælges en autentifikations type" })
     authenticationType: AuthenticationType;
 
     @ValidateIf(d => d.authenticationType === AuthenticationType.PASSWORD)

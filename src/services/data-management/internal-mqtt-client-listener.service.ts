@@ -29,9 +29,9 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
 
     public async onApplicationBootstrap(): Promise<void> {
         // Get all subscriber devices
-        const mqttSubscribers = await this.iotDeviceService.getAllMQTTSubscribers();
+        const mqttSubscribers = await this.iotDeviceService.getAllValidMQTTSubscribers();
 
-        // Create clients for each device (Could share on a broker level)
+        // Create clients for each device
         this.createMQTTClients(
             mqttSubscribers.filter(d => !this.clientDictionary.has(d.id))
         );
@@ -58,7 +58,7 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
     public removeMQTTClient(mqttSubscriber: MQTTSubscriberDevice) {
         this.clientDictionary
             .get(mqttSubscriber.id)
-            .end(false, {}, () => this.clientDictionary.delete(mqttSubscriber.id));
+            ?.end(false, {}, () => this.clientDictionary.delete(mqttSubscriber.id));
         this.logger.debug(`Removed client for deviceId: ${mqttSubscriber.id}`);
     }
 
@@ -69,6 +69,13 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
             client.on("message", async (topic, message) => {
                 await this.handleMessage(message.toString(), device);
             });
+        });
+        client.on("close", async () => {
+            this.logger.error(
+                `Something went wrong while connecting device ${device.name} removed client`
+            );
+            this.removeMQTTClient(device);
+            await this.iotDeviceService.markMqttSubscriberAsInvalid(device);
         });
         this.logger.debug(`Connected to ${device.mqttURL} for deviceId: ${device.id}`);
     }

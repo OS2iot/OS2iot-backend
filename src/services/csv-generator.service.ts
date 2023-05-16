@@ -1,9 +1,7 @@
 ﻿import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { Point } from "geojson";
 import { AuthenticationType } from "@enum/authentication-type.enum";
-import { forEach } from "lodash";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Injectable()
@@ -37,9 +35,10 @@ export class CsvGeneratorService {
             deviceCertificate,
         } = device;
 
-        const mqttpassword = this.encryptionHelperService.basicDecrypt(
-            device.mqttpassword
-        );
+        const mqttpassword =
+            device.type === IoTDeviceType.MQTTSubscriber
+                ? this.encryptionHelperService.basicDecrypt(device.mqttpassword)
+                : device.mqttpassword;
         const deviceCertificateKey = this.encryptionHelperService.basicDecrypt(
             device.deviceCertificateKey
         );

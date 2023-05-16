@@ -36,8 +36,8 @@ import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-    checkIfUserHasAccessToApplication,
     ApplicationAccessScope,
+    checkIfUserHasAccessToApplication,
 } from "@helpers/security-helper";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
@@ -450,6 +450,11 @@ export class IoTDeviceController {
         @Param("applicationId", new ParseIntPipe()) applicationId: number
     ): Promise<StreamableFile> {
         try {
+            checkIfUserHasAccessToApplication(
+                req,
+                applicationId,
+                ApplicationAccessScope.Read
+            );
             const csvFile = await this.iotDeviceService.getDevicesMetadataCsv(
                 applicationId
             );

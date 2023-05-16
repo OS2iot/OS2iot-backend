@@ -22,7 +22,11 @@ export class ReceiveDataService {
     ): Promise<void> {
         const dto = new RawIoTDeviceRequestDto();
         dto.iotDeviceId = iotDevice.id;
-        dto.rawPayload = JSON.parse(data);
+        try {
+            dto.rawPayload = JSON.parse(data);
+        } catch (e) {
+            dto.rawPayload = JSON.parse("{}");
+        }
         const payload = this.buildMessage(dto, type, KafkaTopic.RAW_REQUEST, timestamp);
 
         await this.doSendToKafka(payload, KafkaTopic.RAW_REQUEST);

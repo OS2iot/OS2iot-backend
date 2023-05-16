@@ -73,25 +73,25 @@ export class CreateIoTDeviceDto {
     deviceModelId?: number;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.LoRaWAN)
+    @ValidateIf(o => o.type === IoTDeviceType.LoRaWAN)
     @ValidateNested({ each: true })
     @Type(() => CreateLoRaWANSettingsDto)
     lorawanSettings?: CreateLoRaWANSettingsDto;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.SigFox)
+    @ValidateIf(o => o.type === IoTDeviceType.SigFox)
     @ValidateNested({ each: true })
     @Type(() => CreateSigFoxSettingsDto)
     sigfoxSettings?: CreateSigFoxSettingsDto;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.MQTTBroker)
+    @ValidateIf(o => o.type === IoTDeviceType.MQTTBroker)
     @ValidateNested({ each: true })
     @Type(() => CreateMqttBrokerSettingsDto)
     mqttBrokerSettings?: CreateMqttBrokerSettingsDto;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.MQTTSubscriber)
+    @ValidateIf(o => o.type === IoTDeviceType.MQTTSubscriber)
     @ValidateNested({ each: true })
     @Type(() => CreateMqttSubscriberSettingsDto)
     mqttSubscriberSettings?: CreateMqttSubscriberSettingsDto;

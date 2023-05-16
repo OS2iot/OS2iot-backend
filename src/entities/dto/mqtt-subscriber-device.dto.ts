@@ -2,7 +2,5 @@
 import { MQTTDetails } from "@dto/mqtt-broker-device.dto";
 
 export class MQTTSubscriberDeviceDTO extends MQTTSubscriberDevice {
-    mqttSubscriberSettings: MQTTSubscriberDetails;
+    mqttSubscriberSettings: MQTTDetails;
 }
-
-export class MQTTSubscriberDetails extends MQTTDetails {}

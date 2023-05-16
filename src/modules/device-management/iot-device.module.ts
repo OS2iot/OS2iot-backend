@@ -17,7 +17,7 @@ import { MqttService } from "@services/mqtt/mqtt.service";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
-import {CsvGeneratorService} from "@services/csv-generator.service";
+import { CsvGeneratorService } from "@services/csv-generator.service";
 
 @Module({
     imports: [
@@ -41,7 +41,7 @@ import {CsvGeneratorService} from "@services/csv-generator.service";
         MqttService,
         IoTDeviceService,
         EncryptionHelperService,
-        CsvGeneratorService
+        CsvGeneratorService,
     ],
 })
 export class IoTDeviceModule {}

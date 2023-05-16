@@ -22,12 +22,11 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
         private mqttBrokerDeviceRepository: Repository<MQTTBrokerDevice>
     ) {}
 
+    private superUserName = "SuperUser";
+    private superuserPassword = process.env.MQTT_SUPER_USER_PASSWORD || "SuperUser";
     private MQTT_URL = `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`;
     private MQTT_PASSWORD_PORT = "8885";
-    private MQTT_CERTIFICATE_PORT = "8884";
     passwordClient: Client;
-    certificateClient: Client;
-
     private readonly logger = new Logger(InternalMqttBrokerListenerService.name);
 
     private readonly MQTT_DEVICE_DATA_PREFIX = "devices/";
@@ -42,21 +41,11 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             port: Number(this.MQTT_PASSWORD_PORT),
             clientId: "PasswordSuperUserClient",
             username: superUser.name,
-            password: "SuperUser", // Connection has to be made with unhashed password
+            password: this.superuserPassword,
             ca: caCert,
         });
-        // TODO: Removed while monitoring the need for 2 clients
-        // this.certificateClient = connect(this.MQTT_URL, {
-        //     clean: true,
-        //     port: Number(this.MQTT_CERTIFICATE_PORT),
-        //     clientId: "CertificateSuperUserClient",
-        //     ca: caCert,
-        //     cert: superUser.deviceCertificate,
-        //     key: superUser.deviceCertificateKey,
-        // });
 
         this.configureClient(this.passwordClient);
-        // this.configureClient(this.certificateClient);
     }
 
     private configureClient(client: Client) {
@@ -108,7 +97,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
         }
 
         const certificateDetails = await this.mqttService.generateCertificate(
-            "SuperUser"
+            this.superUserName
         );
 
         await this.mqttBrokerDeviceRepository.save({
@@ -116,10 +105,10 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             applicationId: null,
             latitude: 0,
             longitude: 0,
-            name: "SuperUser",
+            name: this.superUserName,
             authenticationType: AuthenticationType.PASSWORD,
-            mqttpassword: this.mqttService.hashPassword("SuperUser"),
-            mqttusername: "SuperUser",
+            mqttpassword: this.mqttService.hashPassword(this.superuserPassword),
+            mqttusername: this.superUserName,
             permissions: MQTTPermissionLevel.superUser,
             deviceCertificate: certificateDetails.deviceCertificate,
             deviceCertificateKey: certificateDetails.deviceCertificateKey,
