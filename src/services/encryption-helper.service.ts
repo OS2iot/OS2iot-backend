@@ -5,7 +5,7 @@ import {AES, enc} from "crypto-js";
 export class EncryptionHelperService {
     private encryptionKey;
     constructor() {
-        this.encryptionKey = process.env.ENCRYPTION_SYMMETRIC_KEY;
+        this.encryptionKey = process.env.ENCRYPTION_SYMMETRIC_KEY || "SecretKey";
     }
 
     public basicEncrypt(input: string): string {
