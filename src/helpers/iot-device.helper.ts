@@ -11,6 +11,9 @@ import {
     ApplicationAccessScope,
     checkIfUserHasAccessToApplication,
 } from "./security-helper";
+import { CreateMqttSubscriberSettingsDto } from "@dto/create-mqtt-subscriber-settings.dto";
+import { AuthenticationType } from "@enum/authentication-type.enum";
+import { CreateMqttBrokerSettingsDto } from "@dto/create-mqtt-broker-settings.dto";
 
 /**
  * Iterate through the devices once, splitting it into a tuple with the data we want to log
@@ -117,4 +120,43 @@ export function mapAllDevicesByProcessed(
         },
         error: iotDeviceMap.error,
     });
+}
+
+export function validateMQTTBroker(settings: CreateMqttBrokerSettingsDto) {
+    if (settings.authenticationType === undefined) {
+        throw new Error("Autentifikationstype er påkrevet");
+    }
+    if (
+        settings.authenticationType === AuthenticationType.PASSWORD &&
+        (settings.mqttpassword === undefined || settings.mqttusername === undefined)
+    ) {
+        throw new Error("Brugernavn eller kodeord er ikke sat");
+    }
+}
+
+export function validateMQTTSubscriber(settings: CreateMqttSubscriberSettingsDto) {
+    if (
+        settings.mqtttopicname === undefined ||
+        settings.mqttURL === undefined ||
+        settings.mqttPort === undefined ||
+        settings.authenticationType === undefined
+    ) {
+        throw new Error("Påkrævede felter til mqtt forbindelsen ikke sat korrekt");
+    }
+
+    if (
+        settings.authenticationType === AuthenticationType.PASSWORD &&
+        (settings.mqttpassword === undefined || settings.mqttusername === undefined)
+    ) {
+        throw new Error("Brugernavn eller kodeord er ikke sat");
+    }
+
+    if (
+        settings.authenticationType === AuthenticationType.CERTIFICATE &&
+        (settings.caCertificate === undefined ||
+            settings.deviceCertificate === undefined ||
+            settings.deviceCertificateKey === undefined)
+    ) {
+        throw new Error("Et certifikat er ikke sat");
+    }
 }

@@ -39,6 +39,8 @@ import {
     filterValidIotDeviceMaps,
     isValidIoTDeviceMap,
     mapAllDevicesByProcessed,
+    validateMQTTBroker,
+    validateMQTTSubscriber,
 } from "@helpers/iot-device.helper";
 import {
     BadRequestException,
@@ -1178,6 +1180,7 @@ export class IoTDeviceService {
         cast: MQTTBrokerDevice
     ): Promise<MQTTBrokerDevice> {
         const settings = iotDeviceDto.mqttBrokerSettings;
+        validateMQTTBroker(settings);
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
@@ -1216,6 +1219,7 @@ export class IoTDeviceService {
         cast: MQTTSubscriberDevice
     ): Promise<MQTTSubscriberDevice> {
         const settings = iotDeviceDto.mqttSubscriberSettings;
+        validateMQTTSubscriber(settings);
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
