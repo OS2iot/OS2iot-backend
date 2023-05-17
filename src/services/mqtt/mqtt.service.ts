@@ -38,7 +38,7 @@ export class MqttService {
                                 serial: Date.now(),
                                 days: 365,
                                 serviceKeyPassword:
-                                    process.env.CA_KEY_PASSWORD || "iterator",
+                                    process.env.CA_KEY_PASSWORD || "os2iot",
                             },
                             async function (err, cert) {
                                 if (err) throw err;
