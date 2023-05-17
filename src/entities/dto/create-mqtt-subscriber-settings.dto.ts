@@ -36,7 +36,7 @@ export class CreateMqttSubscriberSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$/, {
-        message: "CA certifikatet er forkert format",
+        message: "CA certifikatet mangler eller er forkert format",
     })
     caCertificate: string;
 
@@ -44,7 +44,7 @@ export class CreateMqttSubscriberSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$/, {
-        message: "Enheds certifikatet er forkert format",
+        message: "Enheds certifikat mangler eller er forkert format",
     })
     deviceCertificate: string;
 
@@ -52,7 +52,7 @@ export class CreateMqttSubscriberSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/^-----([\s\S]*)-----\s?$/, {
-        message: "Enhends certifikatnøglen er forkert format",
+        message: "Enhends certifikatnøgle mangler eller er forkert format",
     })
     deviceCertificateKey: string;
 }
