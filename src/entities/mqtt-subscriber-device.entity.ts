@@ -17,7 +17,7 @@ export class MQTTSubscriberDevice extends IoTDevice {
     deviceCertificate: string;
 
     @Column({ nullable: true })
-    deviceCertificateKey: string; // Should be encrypted at a minimum
+    deviceCertificateKey: string;
 
     @Column({ nullable: true })
     mqttusername: string;

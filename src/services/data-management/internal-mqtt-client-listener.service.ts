@@ -38,7 +38,15 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
     }
 
     public createMQTTClients(mqttSubscribers: MQTTSubscriberDevice[]) {
-        mqttSubscribers.forEach(d => {
+        mqttSubscribers.forEach(async d => {
+            // Cannot create clients without a topic
+            if (!d.mqtttopicname) {
+                this.logger.error(
+                    `Something went wrong while connecting device ${d.name} removed client`
+                );
+                await this.iotDeviceService.markMqttSubscriberAsInvalid(d);
+                return;
+            }
             const client = connect(d.mqttURL, {
                 clean: true,
                 port: d.mqttPort,
@@ -69,13 +77,6 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
             client.on("message", async (topic, message) => {
                 await this.handleMessage(message.toString(), device);
             });
-        });
-        client.on("close", async () => {
-            this.logger.error(
-                `Something went wrong while connecting device ${device.name} removed client`
-            );
-            this.removeMQTTClient(device);
-            await this.iotDeviceService.markMqttSubscriberAsInvalid(device);
         });
         this.logger.debug(`Connected to ${device.mqttURL} for deviceId: ${device.id}`);
     }
