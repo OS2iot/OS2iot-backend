@@ -77,6 +77,8 @@ import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
 import { InternalMqttClientListenerService } from "@services/data-management/internal-mqtt-client-listener.service";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
 import { CsvGeneratorService } from "@services/csv-generator.service";
+import * as fs from "fs";
+import { caCertPath } from "@resources/resource-paths";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -1248,7 +1250,7 @@ export class IoTDeviceService {
         const device = iotDevice as MQTTBrokerDeviceDTO;
         device.mqttBrokerSettings = {
             authenticationType: device.authenticationType,
-            caCertificate: device.caCertificate,
+            caCertificate: device.caCertificate ?? fs.readFileSync(caCertPath).toString(),
             deviceCertificate: device.deviceCertificate,
             deviceCertificateKey: this.encryptionHelperService.basicDecrypt(
                 device.deviceCertificateKey
