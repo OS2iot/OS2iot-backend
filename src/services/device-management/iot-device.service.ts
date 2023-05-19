@@ -980,7 +980,6 @@ export class IoTDeviceService {
             if (d.type !== IoTDeviceType.LoRaWAN) {
                 continue;
             }
-            // TODO: Do some batching here to avoid nuking chirpstack if 600 devices come in
             await this.chirpstackDeviceService.enrichLoRaWANDevice(d);
         }
 
