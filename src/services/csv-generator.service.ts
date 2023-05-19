@@ -3,6 +3,7 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
+import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
 @Injectable()
 export class CsvGeneratorService {
@@ -23,9 +24,10 @@ export class CsvGeneratorService {
             name,
             type,
             location,
+            commentOnLocation,
+            comment,
+            deviceModelId,
             apiKey,
-            deviceEUI,
-            downlinkPayload,
             mqttURL,
             mqttPort,
             mqtttopicname,
@@ -33,6 +35,7 @@ export class CsvGeneratorService {
             mqttusername,
             caCertificate,
             deviceCertificate,
+            lorawanSettings,
         } = device;
 
         const mqttpassword = this.encryptionHelperService.basicDecrypt(
@@ -42,15 +45,31 @@ export class CsvGeneratorService {
             device.deviceCertificateKey
         );
 
-        let csvRow = `${name},${type},${location.coordinates[1]},${
-            location.coordinates[0]
-        },${apiKey ?? ""},${deviceEUI ?? ""},${downlinkPayload ?? ""},${mqttURL ?? ""},${
-            mqttPort ?? ""
-        },${mqtttopicname ?? ""},${authenticationType ?? ""},${mqttusername ?? ""},${
-            mqttpassword ?? ""
-        },${this.base64Encode(caCertificate) ?? ""},${
-            this.base64Encode(deviceCertificate) ?? ""
-        },${this.base64Encode(deviceCertificateKey) ?? ""}`;
+        let csvRow =
+            `${name},` +
+            `,` +
+            `${type},` +
+            `${location.coordinates[1] ?? ""},` +
+            `${location.coordinates[0] ?? ""},` +
+            `${commentOnLocation ?? ""},` +
+            `${comment ?? ""},` +
+            `${deviceModelId ?? ""},` +
+            `${apiKey ?? ""},` +
+            `${mqttURL ?? ""},` +
+            `${mqttPort ?? ""},` +
+            `${mqtttopicname ?? ""},` +
+            `${authenticationType ?? ""},` +
+            `${mqttusername ?? ""},` +
+            `${mqttpassword ?? ""},` +
+            `${this.base64Encode(caCertificate) ?? ""},` +
+            `${this.base64Encode(deviceCertificate) ?? ""},` +
+            `${this.base64Encode(deviceCertificateKey) ?? ""},` +
+            `${lorawanSettings?.devEUI ?? ""},` +
+            `${lorawanSettings?.serviceProfileID ?? ""},` +
+            `${lorawanSettings?.deviceProfileID ?? ""},` +
+            `${lorawanSettings?.skipFCntCheck ?? ""},` +
+            `${lorawanSettings?.activationType ?? ""},` +
+            `${lorawanSettings?.OTAAapplicationKey ?? ""}`;
 
         return csvRow;
     }
@@ -65,12 +84,14 @@ export class CsvGeneratorService {
 
 export class IotDeviceCsvDto {
     name: string;
+    id: number;
     type: IoTDeviceType;
     latitude: number;
     longitude: number;
+    commentOnLocation: string;
+    comment: string;
+    deviceModelId: number;
     apiKey: string;
-    deviceEUI: string;
-    downlinkPayload: string;
     mqttURL: string;
     mqttPort: number;
     mqtttopic: string;
@@ -80,23 +101,37 @@ export class IotDeviceCsvDto {
     caCertificate: string;
     deviceCertificate: string;
     deviceCertificateKey: string;
+    devEUI: string;
+    serviceProfileId: number;
+    deviceProfileId: number;
+    skipFCntCheck: boolean;
+    activationType: ActivationType;
+    OTAAapplicationKey: string;
 }
 
 const csvFields = [
     "name",
+    "id",
     "type",
     "latitude",
     "longitude",
+    "commentOnLocation",
+    "comment",
+    "deviceModelId",
     "apiKey",
-    "deviceEUI",
-    "downlinkPayload",
     "mqttURL",
     "mqttPort",
-    "mqtttopic",
+    "mqtttopicname",
     "authenticationType",
     "mqttusername",
     "mqttpassword",
     "caCertificate",
     "deviceCertificate",
     "deviceCertificateKey",
+    "devEUI",
+    "serviceProfileID",
+    "deviceProfileID",
+    "skipFCntCheck",
+    "activationType",
+    "OTAAapplicationKey",
 ];

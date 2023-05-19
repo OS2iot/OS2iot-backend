@@ -976,6 +976,14 @@ export class IoTDeviceService {
             .where("device.applicationId = :applicationId", { applicationId })
             .getMany();
 
+        for (const d of iotDevices) {
+            if (d.type !== IoTDeviceType.LoRaWAN) {
+                continue;
+            }
+            // TODO: Do some batching here to avoid nuking chirpstack if 600 devices come in
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(d);
+        }
+
         const csvString = this.csvGeneratorService.generateDeviceMetadataCsv(iotDevices);
         return Buffer.from(csvString);
     }
