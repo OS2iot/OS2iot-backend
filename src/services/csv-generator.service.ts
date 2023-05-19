@@ -22,6 +22,7 @@ export class CsvGeneratorService {
     private generateCsvRow(device: any): string {
         const {
             name,
+            id,
             type,
             location,
             commentOnLocation,
@@ -47,7 +48,7 @@ export class CsvGeneratorService {
 
         let csvRow =
             `${name},` +
-            `,` +
+            `${id},` +
             `${type},` +
             `${location.coordinates[1] ?? ""},` +
             `${location.coordinates[0] ?? ""},` +
