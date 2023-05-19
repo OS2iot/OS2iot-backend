@@ -41,6 +41,9 @@ export class MQTTBrokerDevice extends IoTDevice {
     })
     permissions: MQTTPermissionLevel;
 
+    @Column({ nullable: true })
+    mqttpasswordhash: string;
+
     @BeforeInsert()
     private beforeInsert() {
         this.type = IoTDeviceType.MQTTBroker;

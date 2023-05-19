@@ -28,17 +28,16 @@ export class CsvGeneratorService {
             downlinkPayload,
             mqttURL,
             mqttPort,
-            mqtttopic,
+            mqtttopicname,
             authenticationType,
             mqttusername,
             caCertificate,
             deviceCertificate,
         } = device;
 
-        const mqttpassword =
-            device.type === IoTDeviceType.MQTTSubscriber
-                ? this.encryptionHelperService.basicDecrypt(device.mqttpassword)
-                : device.mqttpassword;
+        const mqttpassword = this.encryptionHelperService.basicDecrypt(
+            device.mqttpassword
+        );
         const deviceCertificateKey = this.encryptionHelperService.basicDecrypt(
             device.deviceCertificateKey
         );
@@ -47,7 +46,7 @@ export class CsvGeneratorService {
             location.coordinates[0]
         },${apiKey ?? ""},${deviceEUI ?? ""},${downlinkPayload ?? ""},${mqttURL ?? ""},${
             mqttPort ?? ""
-        },${mqtttopic ?? ""},${authenticationType ?? ""},${mqttusername ?? ""},${
+        },${mqtttopicname ?? ""},${authenticationType ?? ""},${mqttusername ?? ""},${
             mqttpassword ?? ""
         },${this.base64Encode(caCertificate) ?? ""},${
             this.base64Encode(deviceCertificate) ?? ""

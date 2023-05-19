@@ -1186,7 +1186,10 @@ export class IoTDeviceService {
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttpassword ??= this.mqttService.hashPassword(
+                cast.mqttpasswordhash ??= this.mqttService.hashPassword(
+                    settings.mqttpassword
+                );
+                cast.mqttpassword ??= this.encryptionHelperService.basicEncrypt(
                     settings.mqttpassword
                 );
                 cast.mqttusername = settings.mqttusername;
@@ -1203,6 +1206,7 @@ export class IoTDeviceService {
                     cast.caCertificate = certificateDetails.ca;
                     cast.mqttusername = cast.name;
                     cast.mqttpassword = undefined;
+                    cast.mqttpasswordhash = undefined;
                 }
                 break;
         }
@@ -1259,7 +1263,7 @@ export class IoTDeviceService {
             mqttURL: device.mqttURL,
             mqttPort: device.mqttPort,
             mqttusername: device.mqttusername,
-            mqttpassword: device.mqttpassword,
+            mqttpassword: this.encryptionHelperService.basicDecrypt(device.mqttpassword),
             permissions: device.permissions,
         };
         return device;

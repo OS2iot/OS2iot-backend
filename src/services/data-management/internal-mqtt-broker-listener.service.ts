@@ -107,7 +107,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             longitude: 0,
             name: this.superUserName,
             authenticationType: AuthenticationType.PASSWORD,
-            mqttpassword: this.mqttService.hashPassword(this.superuserPassword),
+            mqttpasswordhash: this.mqttService.hashPassword(this.superuserPassword),
             mqttusername: this.superUserName,
             permissions: MQTTPermissionLevel.superUser,
             deviceCertificate: certificateDetails.deviceCertificate,
