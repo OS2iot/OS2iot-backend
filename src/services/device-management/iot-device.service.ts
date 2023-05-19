@@ -858,7 +858,8 @@ export class IoTDeviceService {
                     const cast = map.iotDevice as MQTTSubscriberDevice;
                     map.iotDevice = await this.mapMQTTSubscriberDevice(
                         map.iotDeviceDto,
-                        cast
+                        cast,
+                        isUpdate
                     );
                 }
             } catch (error) {
@@ -1193,10 +1194,10 @@ export class IoTDeviceService {
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttpasswordhash ??= this.mqttService.hashPassword(
+                cast.mqttpasswordhash = this.mqttService.hashPassword(
                     settings.mqttpassword
                 );
-                cast.mqttpassword ??= this.encryptionHelperService.basicEncrypt(
+                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(
                     settings.mqttpassword
                 );
                 cast.mqttusername = settings.mqttusername;
@@ -1229,14 +1230,15 @@ export class IoTDeviceService {
 
     private async mapMQTTSubscriberDevice(
         iotDeviceDto: CreateIoTDeviceDto,
-        cast: MQTTSubscriberDevice
+        cast: MQTTSubscriberDevice,
+        isUpdate: boolean = false
     ): Promise<MQTTSubscriberDevice> {
         const settings = iotDeviceDto.mqttSubscriberSettings;
         validateMQTTSubscriber(settings);
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttpassword ??= this.encryptionHelperService.basicEncrypt(
+                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(
                     settings.mqttpassword
                 );
                 cast.mqttusername = settings.mqttusername;
@@ -1253,6 +1255,11 @@ export class IoTDeviceService {
         cast.mqttURL = settings.mqttURL;
         cast.mqttPort = settings.mqttPort;
         cast.mqtttopicname = settings.mqtttopicname;
+
+        if (isUpdate) {
+            await this.internalMqttClientListenerService.removeMQTTClient(cast);
+            await this.createNewMQTTClients([cast]);
+        }
 
         return cast;
     }
