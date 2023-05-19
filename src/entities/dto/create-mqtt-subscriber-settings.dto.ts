@@ -1,5 +1,12 @@
 ﻿import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNumber, IsString, Matches, ValidateIf } from "class-validator";
+import {
+    IsEnum,
+    IsNumber,
+    IsString,
+    Matches,
+    MinLength,
+    ValidateIf,
+} from "class-validator";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 
 export class CreateMqttSubscriberSettingsDto {
@@ -25,11 +32,13 @@ export class CreateMqttSubscriberSettingsDto {
     @ValidateIf(d => d.authenticationType === AuthenticationType.PASSWORD)
     @ApiProperty({ required: true })
     @IsString()
+    @MinLength(1)
     mqttusername: string;
 
     @ValidateIf(d => d.authenticationType === AuthenticationType.PASSWORD)
     @ApiProperty({ required: true })
     @IsString()
+    @MinLength(1)
     mqttpassword: string;
 
     @ValidateIf(d => d.authenticationType === AuthenticationType.CERTIFICATE)
