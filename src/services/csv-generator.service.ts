@@ -12,8 +12,7 @@ export class CsvGeneratorService {
         const csvHeader = csvFields.join(",");
         let csvString = csvHeader + "\n";
         devices.forEach(device => {
-            csvString +=
-                this.generateCsvRow((device as unknown) as IotDeviceCsvDto) + "\n";
+            csvString += this.generateCsvRow(device) + "\n";
         });
         return csvString;
     }
@@ -81,33 +80,6 @@ export class CsvGeneratorService {
         }
         return Buffer.from(input, "binary").toString("base64");
     }
-}
-
-export class IotDeviceCsvDto {
-    name: string;
-    id: number;
-    type: IoTDeviceType;
-    latitude: number;
-    longitude: number;
-    commentOnLocation: string;
-    comment: string;
-    deviceModelId: number;
-    apiKey: string;
-    mqttURL: string;
-    mqttPort: number;
-    mqtttopic: string;
-    authenticationType: AuthenticationType;
-    mqttusername: string;
-    mqttpassword: string;
-    caCertificate: string;
-    deviceCertificate: string;
-    deviceCertificateKey: string;
-    devEUI: string;
-    serviceProfileId: number;
-    deviceProfileId: number;
-    skipFCntCheck: boolean;
-    activationType: ActivationType;
-    OTAAapplicationKey: string;
 }
 
 const csvFields = [
