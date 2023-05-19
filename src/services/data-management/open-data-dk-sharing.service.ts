@@ -149,7 +149,6 @@ export class OpenDataDkSharingService {
         ds.accessLevel = "public";
 
         ds.identifier = this.generateUrl(organization, dataset);
-        ds.license = dataset.license;
         ds.landingPage = undefined;
         ds.title = dataset.name;
         ds.description = dataset.description;
@@ -174,6 +173,7 @@ export class OpenDataDkSharingService {
         distribution["@type"] = "dcat:Distribution";
         distribution.mediaType = "application/json";
         distribution.format = "JSON";
+        distribution.license = dataset.license;
 
         distribution.accessURL = this.generateUrl(organization, dataset);
         distribution.title = dataset.resourceTitle;
