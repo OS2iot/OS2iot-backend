@@ -159,4 +159,7 @@ export function validateMQTTSubscriber(settings: CreateMqttSubscriberSettingsDto
     ) {
         throw new Error("Et certifikat er ikke sat");
     }
+    if (settings.mqttPort < 0 || settings.mqttPort > 65535) {
+        throw new Error("Port skal være mellem 0 og 65535");
+    }
 }

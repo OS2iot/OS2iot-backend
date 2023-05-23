@@ -73,12 +73,18 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
     private setupClient(client: Client, device: MQTTSubscriberDevice) {
         client.on("connect", () => {
             client.subscribe(device.mqtttopicname);
+            this.logger.debug(
+                `Connected to ${device.mqttURL} for deviceId: ${device.id}`
+            );
 
             client.on("message", async (topic, message) => {
                 await this.handleMessage(message.toString(), device);
             });
         });
-        this.logger.debug(`Connected to ${device.mqttURL} for deviceId: ${device.id}`);
+        client.on("end", async () => {
+            await this.iotDeviceService.markMqttSubscriberAsInvalid(device);
+            this.removeMQTTClient(device);
+        });
     }
 
     private async handleMessage(message: string, device: MQTTSubscriberDevice) {

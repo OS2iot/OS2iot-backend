@@ -2,5 +2,9 @@
 import { MQTTDetails } from "@dto/mqtt-broker-device.dto";
 
 export class MQTTSubscriberDeviceDTO extends MQTTSubscriberDevice {
-    mqttSubscriberSettings: MQTTDetails;
+    mqttSubscriberSettings: MQTTSubscriberSettingsDTO;
+}
+
+export class MQTTSubscriberSettingsDTO extends MQTTDetails {
+    invalidMqttConfig: boolean;
 }

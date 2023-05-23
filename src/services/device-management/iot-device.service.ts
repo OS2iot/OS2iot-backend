@@ -1259,6 +1259,7 @@ export class IoTDeviceService {
         if (isUpdate) {
             await this.internalMqttClientListenerService.removeMQTTClient(cast);
             await this.createNewMQTTClients([cast]);
+            cast.invalidMqttConfig = false;
         }
 
         return cast;
@@ -1298,6 +1299,7 @@ export class IoTDeviceService {
             mqttusername: device.mqttusername,
             mqttpassword: this.encryptionHelperService.basicDecrypt(device.mqttpassword),
             permissions: MQTTPermissionLevel.read,
+            invalidMqttConfig: device.invalidMqttConfig
         };
         return device;
     }

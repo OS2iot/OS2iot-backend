@@ -4,6 +4,8 @@ import {
     IsNumber,
     IsString,
     Matches,
+    Max,
+    Min,
     MinLength,
     ValidateIf,
 } from "class-validator";
@@ -19,6 +21,8 @@ export class CreateMqttSubscriberSettingsDto {
 
     @ApiProperty({ required: true })
     @IsNumber(undefined, { message: "Port skal udfyldes" })
+    @Min(0, {message: "Port skal være over 0"})
+    @Max(65535, {message: "Port skal være under 65535"})
     mqttPort: number;
 
     @ApiProperty({ required: true })
