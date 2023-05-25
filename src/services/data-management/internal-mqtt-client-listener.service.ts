@@ -8,7 +8,7 @@
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { Client, connect } from "mqtt";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
+import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { MqttClientId } from "@config/constants/mqtt-constants";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
@@ -29,7 +29,7 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
 
     public async onApplicationBootstrap(): Promise<void> {
         // Get all subscriber devices
-        const mqttSubscribers = await this.iotDeviceService.getAllValidMQTTSubscribers();
+        const mqttSubscribers = await this.iotDeviceService.getAllValidMQTTExternalBrokers();
 
         // Create clients for each device
         this.createMQTTClients(
@@ -37,14 +37,14 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
         );
     }
 
-    public createMQTTClients(mqttSubscribers: MQTTSubscriberDevice[]) {
+    public createMQTTClients(mqttSubscribers: MQTTExternalBrokerDevice[]) {
         mqttSubscribers.forEach(async d => {
             // Cannot create clients without a topic
             if (!d.mqtttopicname) {
                 this.logger.error(
                     `Something went wrong while connecting device ${d.name} removed client`
                 );
-                await this.iotDeviceService.markMqttSubscriberAsInvalid(d);
+                await this.iotDeviceService.markMqttExternalBrokerAsInvalid(d);
                 return;
             }
             const client = connect(d.mqttURL, {
@@ -63,14 +63,14 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
         });
     }
 
-    public removeMQTTClient(mqttSubscriber: MQTTSubscriberDevice) {
+    public removeMQTTClient(mqttSubscriber: MQTTExternalBrokerDevice) {
         this.clientDictionary
             .get(mqttSubscriber.id)
             ?.end(false, {}, () => this.clientDictionary.delete(mqttSubscriber.id));
         this.logger.debug(`Removed client for deviceId: ${mqttSubscriber.id}`);
     }
 
-    private setupClient(client: Client, device: MQTTSubscriberDevice) {
+    private setupClient(client: Client, device: MQTTExternalBrokerDevice) {
         client.on("connect", () => {
             client.subscribe(device.mqtttopicname);
             this.logger.debug(
@@ -82,16 +82,16 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
             });
         });
         client.on("end", async () => {
-            await this.iotDeviceService.markMqttSubscriberAsInvalid(device);
+            await this.iotDeviceService.markMqttExternalBrokerAsInvalid(device);
             this.removeMQTTClient(device);
         });
     }
 
-    private async handleMessage(message: string, device: MQTTSubscriberDevice) {
+    private async handleMessage(message: string, device: MQTTExternalBrokerDevice) {
         await this.receiveDataService.sendRawIotDeviceRequestToKafka(
             device,
             message,
-            IoTDeviceType.MQTTSubscriber.toString()
+            IoTDeviceType.MQTTExternalBroker.toString()
         );
     }
 }

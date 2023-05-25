@@ -6,7 +6,7 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 import * as fs from "fs";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { InjectRepository } from "@nestjs/typeorm";
-import { MQTTBrokerDevice } from "@entities/mqtt-broker-device.entity";
+import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
 import { Repository } from "typeorm";
 import { MQTTPermissionLevel } from "@enum/mqtt-permission-level.enum";
 import { MqttService } from "@services/mqtt/mqtt.service";
@@ -18,8 +18,8 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
         private receiveDataService: ReceiveDataService,
         private iotDeviceService: IoTDeviceService,
         private mqttService: MqttService,
-        @InjectRepository(MQTTBrokerDevice)
-        private mqttBrokerDeviceRepository: Repository<MQTTBrokerDevice>
+        @InjectRepository(MQTTInternalBrokerDevice)
+        private mqttInternalBrokerDeviceRepository: Repository<MQTTInternalBrokerDevice>
     ) {}
 
     private superUserName = "SuperUser";
@@ -34,7 +34,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
 
     public async onApplicationBootstrap(): Promise<void> {
         await this.seedSuperUser();
-        const superUser = await this.iotDeviceService.getMqttListener();
+        const superUser = await this.iotDeviceService.getMqttSuperUser();
         const caCert = fs.readFileSync(caCertPath);
         this.passwordClient = connect(this.MQTT_URL, {
             clean: true,
@@ -84,12 +84,12 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
         await this.receiveDataService.sendRawIotDeviceRequestToKafka(
             iotDevice,
             message,
-            IoTDeviceType.MQTTBroker.toString()
+            IoTDeviceType.MQTTInternalBroker.toString()
         );
     }
 
     private async seedSuperUser() {
-        if (await this.iotDeviceService.getMqttListener()) {
+        if (await this.iotDeviceService.getMqttSuperUser()) {
             this.logger.debug(
                 "MQTT Listener superuser already exists. New one wont be seeded"
             );
@@ -100,8 +100,8 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             this.superUserName
         );
 
-        await this.mqttBrokerDeviceRepository.save({
-            type: IoTDeviceType.MQTTBroker,
+        await this.mqttInternalBrokerDeviceRepository.save({
+            type: IoTDeviceType.MQTTInternalBroker,
             applicationId: null,
             latitude: 0,
             longitude: 0,

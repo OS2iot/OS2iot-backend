@@ -11,7 +11,7 @@ import {
 } from "class-validator";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 
-export class CreateMqttSubscriberSettingsDto {
+export class CreateMqttExternalBrokerSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/^mqtts?:\/\/\S+/, {
@@ -21,8 +21,8 @@ export class CreateMqttSubscriberSettingsDto {
 
     @ApiProperty({ required: true })
     @IsNumber(undefined, { message: "Port skal udfyldes" })
-    @Min(0, {message: "Port skal være over 0"})
-    @Max(65535, {message: "Port skal være under 65535"})
+    @Min(0, { message: "Port skal være over 0" })
+    @Max(65535, { message: "Port skal være under 65535" })
     mqttPort: number;
 
     @ApiProperty({ required: true })
@@ -65,7 +65,7 @@ export class CreateMqttSubscriberSettingsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/^-----([\s\S]*)-----\s?$/, {
-        message: "Enhends certifikatnøgle mangler eller er forkert format",
+        message: "Enheds certifikatnøgle mangler eller er forkert format",
     })
     deviceCertificateKey: string;
 }

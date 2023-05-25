@@ -1,8 +1,8 @@
 export enum IoTDeviceType {
     GenericHttp = "GENERIC_HTTP",
     LoRaWAN = "LORAWAN",
-    MQTTBroker = "MQTT_BROKER",
-    MQTTSubscriber = "MQTT_SUBSCRIBER",
+    MQTTInternalBroker = "MQTT_INTERNAL_BROKER",
+    MQTTExternalBroker = "MQTT_EXTERNAL_BROKER",
     SigFox = "SIGFOX",
 }
 

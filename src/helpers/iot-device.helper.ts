@@ -11,9 +11,9 @@ import {
     ApplicationAccessScope,
     checkIfUserHasAccessToApplication,
 } from "./security-helper";
-import { CreateMqttSubscriberSettingsDto } from "@dto/create-mqtt-subscriber-settings.dto";
+import { CreateMqttExternalBrokerSettingsDto } from "@dto/create-mqtt-external-broker-settings.dto";
 import { AuthenticationType } from "@enum/authentication-type.enum";
-import { CreateMqttBrokerSettingsDto } from "@dto/create-mqtt-broker-settings.dto";
+import { CreateMqttInternalBrokerSettingsDto } from "@dto/create-mqtt-internal-broker-settings.dto";
 
 /**
  * Iterate through the devices once, splitting it into a tuple with the data we want to log
@@ -122,7 +122,7 @@ export function mapAllDevicesByProcessed(
     });
 }
 
-export function validateMQTTBroker(settings: CreateMqttBrokerSettingsDto) {
+export function validateMQTTInternalBroker(settings: CreateMqttInternalBrokerSettingsDto) {
     if (settings.authenticationType === undefined) {
         throw new Error("Autentifikationstype er påkrevet");
     }
@@ -134,7 +134,7 @@ export function validateMQTTBroker(settings: CreateMqttBrokerSettingsDto) {
     }
 }
 
-export function validateMQTTSubscriber(settings: CreateMqttSubscriberSettingsDto) {
+export function validateMQTTExternalBroker(settings: CreateMqttExternalBrokerSettingsDto) {
     if (
         settings.mqtttopicname === undefined ||
         settings.mqttURL === undefined ||

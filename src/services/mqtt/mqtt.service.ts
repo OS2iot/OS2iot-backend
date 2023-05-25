@@ -1,5 +1,5 @@
 ﻿import { Injectable } from "@nestjs/common";
-import { MQTTBrokerDevice } from "@entities/mqtt-broker-device.entity";
+import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
 import { random } from "crypto-js/lib-typedarrays";
 import { algo, enc, PBKDF2 } from "crypto-js";
 import { ApplicationService } from "@services/device-management/application.service";
@@ -62,7 +62,7 @@ export class MqttService {
         }
     }
 
-    public async createTopic(device: MQTTBrokerDevice): Promise<TopicDetails> {
+    public async createTopic(device: MQTTInternalBrokerDevice): Promise<TopicDetails> {
         const application = await this.applicationService.findOneWithOrganisation(
             device.application.id
         );

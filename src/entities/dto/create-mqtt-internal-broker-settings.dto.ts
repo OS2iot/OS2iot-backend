@@ -2,7 +2,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsString, MinLength, ValidateIf } from "class-validator";
 
-export class CreateMqttBrokerSettingsDto {
+export class CreateMqttInternalBrokerSettingsDto {
     @ApiProperty({ required: true })
     @IsEnum(AuthenticationType)
     authenticationType: AuthenticationType;

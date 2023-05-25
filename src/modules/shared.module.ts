@@ -30,8 +30,8 @@ import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 import { OpenDataDkDataTarget } from "@entities/open-data-dk-push-data-target.entity";
-import { MQTTBrokerDevice } from "@entities/mqtt-broker-device.entity";
-import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
+import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
+import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
 
 @Module({
     imports: [
@@ -65,8 +65,8 @@ import { MQTTSubscriberDevice } from "@entities/mqtt-subscriber-device.entity";
             ReceivedMessageSigFoxSignals,
             PermissionTypeEntity,
             GatewayStatusHistory,
-            MQTTBrokerDevice,
-            MQTTSubscriberDevice,
+            MQTTInternalBrokerDevice,
+            MQTTExternalBrokerDevice,
         ]),
     ],
     providers: [AuditLog],

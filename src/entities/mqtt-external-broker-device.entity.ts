@@ -3,8 +3,8 @@ import { BeforeInsert, ChildEntity, Column } from "typeorm";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { IoTDeviceType } from "@enum/device-type.enum";
 
-@ChildEntity(IoTDeviceType.MQTTSubscriber)
-export class MQTTSubscriberDevice extends IoTDevice {
+@ChildEntity(IoTDeviceType.MQTTExternalBroker)
+export class MQTTExternalBrokerDevice extends IoTDevice {
     @Column("enum", {
         enum: AuthenticationType,
     })
@@ -39,6 +39,6 @@ export class MQTTSubscriberDevice extends IoTDevice {
 
     @BeforeInsert()
     private beforeInsert() {
-        this.type = IoTDeviceType.MQTTSubscriber;
+        this.type = IoTDeviceType.MQTTExternalBroker;
     }
 }

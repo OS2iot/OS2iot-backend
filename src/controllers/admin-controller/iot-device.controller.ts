@@ -60,8 +60,8 @@ import {
 } from "@helpers/iot-device.helper";
 import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.response.dto";
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
-import { MQTTBrokerDeviceDTO } from "@dto/mqtt-broker-device.dto";
-import { MQTTSubscriberDeviceDTO } from "@dto/mqtt-subscriber-device.dto";
+import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
+import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -89,8 +89,8 @@ export class IoTDeviceController {
         | IoTDevice
         | LoRaWANDeviceWithChirpstackDataDto
         | SigFoxDeviceWithBackendDataDto
-        | MQTTBrokerDeviceDTO
-        | MQTTSubscriberDeviceDTO
+        | MQTTInternalBrokerDeviceDTO
+        | MQTTExternalBrokerDeviceDTO
     > {
         let result = undefined;
         try {

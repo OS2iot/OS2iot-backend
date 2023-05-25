@@ -4,8 +4,8 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { MQTTPermissionLevel } from "@enum/mqtt-permission-level.enum";
 
-@ChildEntity(IoTDeviceType.MQTTBroker)
-export class MQTTBrokerDevice extends IoTDevice {
+@ChildEntity(IoTDeviceType.MQTTInternalBroker)
+export class MQTTInternalBrokerDevice extends IoTDevice {
     @Column("enum", {
         enum: AuthenticationType,
     })
@@ -46,6 +46,6 @@ export class MQTTBrokerDevice extends IoTDevice {
 
     @BeforeInsert()
     private beforeInsert() {
-        this.type = IoTDeviceType.MQTTBroker;
+        this.type = IoTDeviceType.MQTTInternalBroker;
     }
 }
