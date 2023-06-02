@@ -11,6 +11,9 @@ import {
     ApplicationAccessScope,
     checkIfUserHasAccessToApplication,
 } from "./security-helper";
+import { CreateMqttExternalBrokerSettingsDto } from "@dto/create-mqtt-external-broker-settings.dto";
+import { AuthenticationType } from "@enum/authentication-type.enum";
+import { CreateMqttInternalBrokerSettingsDto } from "@dto/create-mqtt-internal-broker-settings.dto";
 
 /**
  * Iterate through the devices once, splitting it into a tuple with the data we want to log
@@ -117,4 +120,46 @@ export function mapAllDevicesByProcessed(
         },
         error: iotDeviceMap.error,
     });
+}
+
+export function validateMQTTInternalBroker(settings: CreateMqttInternalBrokerSettingsDto) {
+    if (settings.authenticationType === undefined) {
+        throw new Error("Autentifikationstype er påkrevet");
+    }
+    if (
+        settings.authenticationType === AuthenticationType.PASSWORD &&
+        (settings.mqttpassword === undefined || settings.mqttusername === undefined)
+    ) {
+        throw new Error("Brugernavn eller kodeord er ikke sat");
+    }
+}
+
+export function validateMQTTExternalBroker(settings: CreateMqttExternalBrokerSettingsDto) {
+    if (
+        settings.mqtttopicname === undefined ||
+        settings.mqttURL === undefined ||
+        settings.mqttPort === undefined ||
+        settings.authenticationType === undefined
+    ) {
+        throw new Error("Påkrævede felter til mqtt forbindelsen ikke sat korrekt");
+    }
+
+    if (
+        settings.authenticationType === AuthenticationType.PASSWORD &&
+        (settings.mqttpassword === undefined || settings.mqttusername === undefined)
+    ) {
+        throw new Error("Brugernavn eller kodeord er ikke sat");
+    }
+
+    if (
+        settings.authenticationType === AuthenticationType.CERTIFICATE &&
+        (settings.caCertificate === undefined ||
+            settings.deviceCertificate === undefined ||
+            settings.deviceCertificateKey === undefined)
+    ) {
+        throw new Error("Et certifikat er ikke sat");
+    }
+    if (settings.mqttPort < 0 || settings.mqttPort > 65535) {
+        throw new Error("Port skal være mellem 0 og 65535");
+    }
 }

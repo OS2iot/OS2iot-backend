@@ -34,6 +34,7 @@ import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { SearchModule } from "./search.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
 import { NewKombitCreationModule } from "./user-management/new-kombit-creation.module";
+import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
 
 @Module({
     imports: [
@@ -73,6 +74,7 @@ import { NewKombitCreationModule } from "./user-management/new-kombit-creation.m
         PayloadDecoderModule,
         IoTDevicePayloadDecoderDataTargetConnectionModule,
         ChirpstackMqttListenerModule,
+        InternalMqttListenerModule,
         PayloadDecoderKafkaModule,
         DefaultModule,
         AuthModule,

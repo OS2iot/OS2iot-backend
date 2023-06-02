@@ -1,7 +1,8 @@
 # compiled output
 /dist
 /node_modules
-
+ca.crt
+ca.key
 # Logs
 logs
 *.log

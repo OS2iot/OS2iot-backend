@@ -18,6 +18,8 @@ import { CreateLoRaWANSettingsDto } from "./create-lorawan-settings.dto";
 import { CreateSigFoxSettingsDto } from "./create-sigfox-settings.dto";
 import { IsMetadataJson } from "@helpers/is-metadata-json.validator";
 import { nameof } from "@helpers/type-helper";
+import { CreateMqttInternalBrokerSettingsDto } from "@dto/create-mqtt-internal-broker-settings.dto";
+import { CreateMqttExternalBrokerSettingsDto } from "@dto/create-mqtt-external-broker-settings.dto";
 
 export class CreateIoTDeviceDto {
     @ApiProperty({ required: true })
@@ -71,14 +73,26 @@ export class CreateIoTDeviceDto {
     deviceModelId?: number;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.LoRaWAN)
+    @ValidateIf(o => o.type === IoTDeviceType.LoRaWAN)
     @ValidateNested({ each: true })
     @Type(() => CreateLoRaWANSettingsDto)
     lorawanSettings?: CreateLoRaWANSettingsDto;
 
     @ApiProperty({ required: false })
-    @ValidateIf(o => o.type == IoTDeviceType.SigFox)
+    @ValidateIf(o => o.type === IoTDeviceType.SigFox)
     @ValidateNested({ each: true })
     @Type(() => CreateSigFoxSettingsDto)
     sigfoxSettings?: CreateSigFoxSettingsDto;
+
+    @ApiProperty({ required: false })
+    @ValidateIf(o => o.type === IoTDeviceType.MQTTInternalBroker)
+    @ValidateNested({ each: true })
+    @Type(() => CreateMqttInternalBrokerSettingsDto)
+    mqttInternalBrokerSettings?: CreateMqttInternalBrokerSettingsDto;
+
+    @ApiProperty({ required: false })
+    @ValidateIf(o => o.type === IoTDeviceType.MQTTExternalBroker)
+    @ValidateNested({ each: true })
+    @Type(() => CreateMqttExternalBrokerSettingsDto)
+    mqttExternalBrokerSettings?: CreateMqttExternalBrokerSettingsDto;
 }

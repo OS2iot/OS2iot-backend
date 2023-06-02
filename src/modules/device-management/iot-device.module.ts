@@ -1,5 +1,4 @@
 import { forwardRef, Module } from "@nestjs/common";
-
 import { IoTDeviceController } from "@admin-controller/iot-device.controller";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ApplicationModule } from "@modules/device-management/application.module";
@@ -14,6 +13,11 @@ import { DeviceModelModule } from "./device-model.module";
 import { IoTDevicePayloadDecoderController } from "@admin-controller/iot-device-payload-decoder.controller";
 import { IoTLoRaWANDeviceModule } from "./iot-lorawan-device.module";
 import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service";
+import { MqttService } from "@services/mqtt/mqtt.service";
+import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
+import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
+import { EncryptionHelperService } from "@services/encryption-helper.service";
+import { CsvGeneratorService } from "@services/csv-generator.service";
 
 @Module({
     imports: [
@@ -23,16 +27,21 @@ import { SigFoxMessagesService } from "@services/sigfox/sigfox-messages.service"
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
         DeviceModelModule,
+        ReceiveDataModule,
         forwardRef(() => SigfoxDeviceModule),
         forwardRef(() => IoTLoRaWANDeviceModule),
+        InternalMqttListenerModule,
     ],
-    exports: [IoTDeviceService],
+    exports: [MqttService, IoTDeviceService],
     controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],
     providers: [
-        IoTDeviceService,
         PeriodicSigFoxCleanupService,
         IoTDeviceDownlinkService,
         SigFoxMessagesService,
+        MqttService,
+        IoTDeviceService,
+        EncryptionHelperService,
+        CsvGeneratorService,
     ],
 })
 export class IoTDeviceModule {}

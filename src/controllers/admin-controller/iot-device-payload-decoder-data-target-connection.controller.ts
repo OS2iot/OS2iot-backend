@@ -24,7 +24,7 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
@@ -36,7 +36,10 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto as UpdateConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
+import {
+    checkIfUserHasAccessToApplication,
+    ApplicationAccessScope,
+} from "@helpers/security-helper";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -184,7 +187,11 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     ) {
         const iotDevices = await this.iotDeviceService.findManyByIds(ids);
         iotDevices.forEach(x => {
-            checkIfUserHasAccessToApplication(req, x.application.id, ApplicationAccessScope.Write);
+            checkIfUserHasAccessToApplication(
+                req,
+                x.application.id,
+                ApplicationAccessScope.Write
+            );
         });
     }
 
@@ -231,7 +238,11 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
         const newIotDevice = await this.iotDeviceService.findOne(
             updateDto.iotDeviceIds[0]
         );
-        checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
+        checkIfUserHasAccessToApplication(
+            req,
+            newIotDevice.application.id,
+            ApplicationAccessScope.Write
+        );
         const oldConnection = await this.service.findOne(id);
         await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
         const oldIds = oldConnection.iotDevices.map(x => x.id);
