@@ -16,6 +16,7 @@ export class Distribution {
     "@type": string;
     title?: string;
     format: string;
+    license: string;
     mediaType: string;
     accessURL: string;
 }
@@ -24,7 +25,6 @@ export class Dataset {
     @Expose({ name: "@type" })
     "@type": string;
     identifier: string;
-    license: string;
     landingPage: string;
     title: string;
     description: string;

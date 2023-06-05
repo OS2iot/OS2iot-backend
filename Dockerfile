@@ -5,6 +5,8 @@ ENV NODE_ENV build
 
 RUN npm install -g nest eslint jest
 
+RUN apk add openssl
+
 USER node
 
 # ENV NPM_CONFIG_PREFIX=/home/node/.npm-global

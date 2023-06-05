@@ -2,6 +2,7 @@ import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
 import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
+import { OddkMailInfo } from "@dto/oddk-mail-info.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
@@ -14,17 +15,21 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
-import { ClientSecretProvider, CLIENT_SECRET_PROVIDER } from "../../helpers/fiware-token.helper";
-import { Client } from "mqtt";
+import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
+import { User } from "@entities/user.entity";
 
 @Injectable()
 export class DataTargetService {
     constructor(
         @InjectRepository(DataTarget)
         private dataTargetRepository: Repository<DataTarget>,
+        @InjectRepository(User)
+        private userRepository: Repository<User>,
         private applicationService: ApplicationService,
-        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider
+        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider,
+        private oS2IoTMail: OS2IoTMail,
     ) {}
     private readonly logger = new Logger(DataTargetService.name);
 
@@ -262,5 +267,27 @@ export class DataTargetService {
 
     private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
         return new childDataTargetType();
+    }
+
+    public async sendOpenDataDkMail(
+        mailInfoDto: OddkMailInfo,
+        userId: number,
+    ): Promise<boolean> {
+        const user = await this.userRepository.findOneByOrFail({id: userId});
+        await this.oS2IoTMail.sendMailChecked({
+            to: "info@opendata.dk",
+            subject: "Ny integration til OS2IoT",
+            html: `<p>
+                Hej Open Data DK,<br>
+                <br>
+                Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
+                I kan høste fra ${mailInfoDto.sharingUrl} <br>
+                Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
+                <br>`
+                + (mailInfoDto.comment ? ('Kommentar: ' + mailInfoDto.comment + '<br><br>') : '')
+                + 'Mvh.<br>' + user.name + '<br>' + user.email
+            + '</p>',
+        });
+        return true;
     }
 }

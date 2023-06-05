@@ -111,7 +111,7 @@ export class AuthService {
             // User doesn't have brugersystemrolle ...
             throw new UnauthorizedException(ErrorCodes.MissingRole);
         }
-        // TODO: Check if they have attribute to allow them into OS2IOT
+        // Check if they have attribute to allow them into OS2IOT
         let user = await this.usersService.findOneByNameId(profile.nameID);
         if (user) {
             this.logger.debug(

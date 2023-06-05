@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { ReceiveDataController } from "@device-data-controller/receive-data.controller";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
@@ -13,8 +13,8 @@ import { HttpModule } from "@nestjs/axios";
         SharedModule,
         ChirpstackAdministrationModule,
         HttpModule,
-        ApplicationModule,
-        IoTDeviceModule,
+        forwardRef(() => ApplicationModule),
+        forwardRef(() => IoTDeviceModule),
     ],
     exports: [ReceiveDataService],
     controllers: [ReceiveDataController],
