@@ -473,6 +473,9 @@ export class PermissionService {
     }
 
     async findManyByIds(ids: number[]): Promise<Permission[]> {
+        if (ids == null || ids?.length == 0) {
+            return [];
+        }
         return await this.permissionRepository.findBy({ id: In(ids) });
     }
 

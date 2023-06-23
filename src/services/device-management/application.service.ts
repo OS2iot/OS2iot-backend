@@ -336,6 +336,9 @@ export class ApplicationService {
         application.contactPhone = applicationDto.contactPhone;
         application.personalData = applicationDto.personalData;
         application.hardware = applicationDto.hardware;
+        application.permissions = await this.permissionService.findManyByIds(
+            applicationDto.permissionIds
+        );
 
         // Set metadata dependencies
         application.controlledProperties = applicationDto.controlledProperties

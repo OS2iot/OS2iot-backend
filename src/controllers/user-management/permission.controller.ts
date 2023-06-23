@@ -112,7 +112,7 @@ export class PermissionController {
 
             const permissions = await this.permissionService.findOneWithRelations(
                 dto.organizationId
-                );
+            );
 
             const org: Organization = this.organizationService.mapPermissionsToOneOrganization(
                 permissions
@@ -127,7 +127,11 @@ export class PermissionController {
                 }
             }
 
-            const resultUser = await this.userService.acceptUser(user, org, newUserPermissions);
+            const resultUser = await this.userService.acceptUser(
+                user,
+                org,
+                newUserPermissions
+            );
 
             AuditLog.success(
                 ActionType.UPDATE,
