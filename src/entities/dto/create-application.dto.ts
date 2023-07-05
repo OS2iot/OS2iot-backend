@@ -90,4 +90,13 @@ export class CreateApplicationDto {
     @ArrayUnique()
     @IsEnum(ApplicationDeviceTypes, { each: true })
     deviceTypes?: ApplicationDeviceTypeUnion[];
+
+    @ApiProperty({
+        required: false,
+        type: "array",
+        items: {
+            type: "number",
+        },
+    })
+    permissionIds?: number[];
 }

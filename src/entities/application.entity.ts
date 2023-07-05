@@ -10,6 +10,7 @@ import {
     ManyToMany,
     ManyToOne,
     OneToMany,
+    RelationId,
     Unique,
 } from "typeorm";
 import { ApplicationDeviceType } from "./application-device-type.entity";
@@ -17,6 +18,7 @@ import { ControlledProperty } from "./controlled-property.entity";
 import { Multicast } from "./multicast.entity";
 import { Permission } from "./permissions/permission.entity";
 import { DbBaseEntity } from "@entities/base.entity";
+import { nameof } from "@helpers/type-helper";
 
 @Entity("application")
 @Unique(["name"])
@@ -66,6 +68,9 @@ export class Application extends DbBaseEntity {
     )
     @JoinTable()
     permissions: Permission[];
+
+    @RelationId(nameof<Application>("permissions"))
+    permissionIds: Permission["id"][];
 
     @Column({ nullable: true })
     status?: ApplicationStatus;
