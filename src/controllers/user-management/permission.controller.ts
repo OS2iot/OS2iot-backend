@@ -222,18 +222,14 @@ export class PermissionController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllPermissionsDto
     ): Promise<ListAllPermissionsResponseDto> {
-        if (req.user.permissions.isGlobalAdmin) {
-            return this.permissionService.getAllPermissions(query);
-        } else {
-            if (query.organisationId === undefined) {
-                const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
-                return this.permissionService.getAllPermissionsInOrganizations(
-                    allowedOrganizations,
-                    query
-                );
-            }
-            return this.permissionService.getAllPermissions(query);
+        if (!req.user.permissions.isGlobalAdmin && query.organisationId === undefined) {
+            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+            return this.permissionService.getAllPermissionsInOrganizations(
+                allowedOrganizations,
+                query
+            );
         }
+        return this.permissionService.getAllPermissions(query);
     }
 
     @Get(":id")
