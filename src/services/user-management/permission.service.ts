@@ -275,12 +275,13 @@ export class PermissionService {
             .skip(query?.offset ? +query.offset : 0)
             .orderBy(orderBy, order);
 
-        if (query?.userId) {
-            qb = qb.where("user.id = :userId", { userId: +query.userId });
-        } else if (orgs) {
-            qb.where({ organization: In(orgs) });
+        if (query?.userId !== undefined && query.userId !== "undefined") {
+            qb = qb.andWhere("user.id = :userId", { userId: +query.userId });
+        }
+        if (orgs) {
+            qb = qb.andWhere({ organization: In(orgs) });
         } else if (query?.organisationId) {
-            qb = qb.where("org.id = :orgId", { orgId: +query.organisationId });
+            qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
         }
 
         const [data, count] = await qb.getManyAndCount();

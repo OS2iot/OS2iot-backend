@@ -171,6 +171,7 @@ export class ApplicationService {
                 "belongsTo",
                 nameof<Application>("controlledProperties"),
                 nameof<Application>("deviceTypes"),
+                "permissions",
             ],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],

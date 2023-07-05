@@ -6,5 +6,5 @@ export class ListAllPermissionsDto extends ListAllEntitiesDto {
     organisationId?: number;
 
     @ApiProperty({ type: String, required: false })
-    userId?: number;
+    userId?: string;
 }
