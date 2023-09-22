@@ -12,12 +12,21 @@ import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
+import {
+    BadRequestException,
+    forwardRef,
+    Inject,
+    Injectable,
+    Logger,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
-import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
+import {
+    CLIENT_SECRET_PROVIDER,
+    ClientSecretProvider,
+} from "../../helpers/fiware-token.helper";
 import { User } from "@entities/user.entity";
 
 @Injectable()
@@ -27,9 +36,11 @@ export class DataTargetService {
         private dataTargetRepository: Repository<DataTarget>,
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        @Inject(forwardRef(() => ApplicationService))
         private applicationService: ApplicationService,
-        @Inject(CLIENT_SECRET_PROVIDER) private clientSecretProvider: ClientSecretProvider,
-        private oS2IoTMail: OS2IoTMail,
+        @Inject(CLIENT_SECRET_PROVIDER)
+        private clientSecretProvider: ClientSecretProvider,
+        private oS2IoTMail: OS2IoTMail
     ) {}
     private readonly logger = new Logger(DataTargetService.name);
 
@@ -97,7 +108,7 @@ export class DataTargetService {
     ): Promise<DataTarget[]> {
         const res = await this.dataTargetRepository
             .createQueryBuilder("dt")
-            .addSelect('dt.clientSecret')
+            .addSelect("dt.clientSecret")
             .innerJoin(
                 "iot_device_payload_decoder_data_target_connection",
                 "con",
