@@ -10,6 +10,7 @@ import { SharedModule } from "@modules/shared.module";
 import { HttpModule } from "@nestjs/axios";
 import { Module } from "@nestjs/common";
 import { PayloadDecoderListenerService } from "@services/data-management/payload-decoder-listener.service";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { PayloadDecoderListenerService } from "@services/data-management/payload
         HttpModule,
         ApplicationModule,
         PayloadDecoderExecutorModuleModule,
+        ChirpstackAdministrationModule,
     ],
     controllers: [PayloadDecoderController],
     providers: [PayloadDecoderListenerService],
