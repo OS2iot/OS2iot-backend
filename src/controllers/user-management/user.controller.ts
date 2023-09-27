@@ -33,7 +33,11 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { checkIfUserIsGlobalAdmin, checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import {
+    checkIfUserIsGlobalAdmin,
+    checkIfUserHasAccessToOrganization,
+    OrganizationAccessScope,
+} from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
@@ -56,7 +60,7 @@ export class UserController {
     constructor(
         private userService: UserService,
         private organizationService: OrganizationService
-    ) { }
+    ) {}
 
     private readonly logger = new Logger(UserController.name);
 
@@ -111,7 +115,11 @@ export class UserController {
         @Req() req: AuthenticatedRequest,
         @Body() body: RejectUserDto
     ): Promise<Organization> {
-        checkIfUserHasAccessToOrganization(req, body.orgId, OrganizationAccessScope.UserAdministrationWrite);
+        checkIfUserHasAccessToOrganization(
+            req,
+            body.orgId,
+            OrganizationAccessScope.UserAdministrationWrite
+        );
 
         const user = await this.userService.findOne(body.userIdToReject);
         const organization = await this.organizationService.findByIdWithUsers(body.orgId);
@@ -130,17 +138,22 @@ export class UserController {
             // Verify that we have admin access to the user and that the user is on an organization
             const dbUser = await this.userService.findOneWithOrganizations(id);
 
-            // Requesting user has to be admin for at least one organization containing the user 
+            // Requesting user has to be admin for at least one organization containing the user
             // _OR_ be global admin
-            if (!req.user.permissions.isGlobalAdmin && !dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
+            if (
+                !req.user.permissions.isGlobalAdmin &&
+                !dbUser.permissions.some(perm =>
+                    req.user.permissions.hasUserAdminOnOrganization(perm.organization.id)
+                )
+            ) {
                 throw new ForbiddenException();
-            }                      
-            
+            }
+
             // Only a global admin can modify a global admin user
             if (dto.globalAdmin) {
                 checkIfUserIsGlobalAdmin(req);
             }
-            
+
             // Don't leak the passwordHash
             const { passwordHash: _, ...user } = await this.userService.updateUser(
                 id,
@@ -176,7 +189,7 @@ export class UserController {
             req.user.username
         );
 
-        return wasOk
+        return wasOk;
     }
 
     @Get("/awaitingUsers")
@@ -232,7 +245,6 @@ export class UserController {
             // Don't leak the passwordHash
             const { passwordHash: _, ...user } = await this.userService.findOne(
                 id,
-                getExtendedInfo,
                 getExtendedInfo
             );
 
@@ -243,7 +255,10 @@ export class UserController {
     }
 
     @Get("organizationUsers/:organizationId")
-    @ApiOperation({ summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization" })
+    @ApiOperation({
+        summary:
+            "Get all users for an organization. Requires UserAdmin priviledges for the specified organization",
+    })
     async findByOrganizationId(
         @Req() req: AuthenticatedRequest,
         @Param("organizationId", new ParseIntPipe()) organizationId: number,
@@ -252,7 +267,9 @@ export class UserController {
         try {
             // Check if user has access to organization
             if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
-                throw new ForbiddenException("User does not have org admin permissions for this organization");
+                throw new ForbiddenException(
+                    "User does not have org admin permissions for this organization"
+                );
             }
 
             // Get user objects
