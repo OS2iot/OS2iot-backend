@@ -280,7 +280,10 @@ export class PermissionService {
         }
         if (orgs) {
             qb = qb.andWhere({ organization: In(orgs) });
-        } else if (query?.organisationId) {
+        } else if (
+            query?.organisationId !== undefined &&
+            query.organisationId !== "undefined"
+        ) {
             qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
         }
 

@@ -3,7 +3,7 @@ import configuration from "@config/configuration";
 import { ApplicationModule } from "@modules/device-management/application.module";
 import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
@@ -15,7 +15,7 @@ import {
 @Module({
     imports: [
         SharedModule,
-        ApplicationModule,
+        forwardRef(() => ApplicationModule),
         OrganizationModule,
         ConfigModule.forRoot({ load: [configuration] }),
     ],
