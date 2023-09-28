@@ -27,6 +27,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { PermissionService } from "@services/user-management/permission.service";
 import { DeleteResult, In, Repository } from "typeorm";
 import { MulticastService } from "./multicast.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 
 @Injectable()
 export class ApplicationService {
@@ -40,7 +41,9 @@ export class ApplicationService {
         private multicastService: MulticastService,
         private chirpstackDeviceService: ChirpstackDeviceService,
         @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
+        private permissionService: PermissionService,
+        @Inject(forwardRef(() => DataTargetService))
+        private dataTargetService: DataTargetService
     ) {}
 
     async findAndCountInList(
@@ -262,7 +265,7 @@ export class ApplicationService {
     async delete(id: number): Promise<DeleteResult> {
         const application = await this.applicationRepository.findOne({
             where: { id },
-            relations: ["iotDevices", "multicasts"],
+            relations: ["iotDevices", "multicasts", "dataTargets"],
         });
 
         // Don't allow delete if this application contains any sigfox devices.
@@ -272,6 +275,10 @@ export class ApplicationService {
             })
         ) {
             throw new ConflictException(ErrorCodes.DeleteNotAllowedHasSigfoxDevice);
+        }
+
+        for (const dataTarget of application.dataTargets) {
+            await this.dataTargetService.delete(dataTarget.id);
         }
 
         // Delete all LoRaWAN devices in ChirpStack
@@ -293,7 +300,6 @@ export class ApplicationService {
                 dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
             );
         }
-
         return this.applicationRepository.delete(id);
     }
 

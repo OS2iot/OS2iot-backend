@@ -39,7 +39,7 @@ export class UserService {
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService,
         private configService: ConfigService,
-        private oS2IoTMail: OS2IoTMail,
+        private oS2IoTMail: OS2IoTMail
     ) {}
 
     private readonly logger = new Logger(UserService.name, { timestamp: true });
@@ -90,17 +90,13 @@ export class UserService {
         });
     }
 
-    async findOne(
-        id: number,
-        getPermissionOrganisationInfo = false,
-        getPermissionUsersInfo = false
-    ): Promise<User> {
+    async findOne(id: number, getExtendedInformation: boolean = false): Promise<User> {
         const relations = ["permissions", "requestedOrganizations"];
-        if (getPermissionOrganisationInfo) {
+
+        if (getExtendedInformation) {
             relations.push("permissions.organization");
-        }
-        if (getPermissionUsersInfo) {
             relations.push("permissions.users");
+            relations.push("permissions.type");
         }
 
         return await this.userRepository.findOne({
@@ -221,7 +217,7 @@ export class UserService {
         if (user.nameId != null) {
             if (dto.name && user.name != dto.name) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-            }            
+            }
             if (dto.password) {
                 throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
             }
@@ -352,11 +348,13 @@ export class UserService {
         }
         const order: "DESC" | "ASC" =
             query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
-        
+
         const [data, count] = await this.userRepository
             .createQueryBuilder("user")
             .innerJoin("user.permissions", "p")
-            .where('"p"."organizationId" = :organizationId', { organizationId: organizationId })
+            .where('"p"."organizationId" = :organizationId', {
+                organizationId: organizationId,
+            })
             .take(+query.limit)
             .skip(+query.offset)
             .orderBy(orderBy, order)

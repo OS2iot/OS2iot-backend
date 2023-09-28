@@ -24,11 +24,11 @@ export class PayloadDecoderExecutorService {
         rawPayload: JSON
     ): string {
         const vm2Logger = new Logger(`${PayloadDecoderExecutorService.name}-VM2`);
-        
+
         // Make copies of inputs to untrusted code to avoid unintended side effects if the code chooses to modify these
         const iotDeviceCopy = JSON.parse(JSON.stringify(iotDevice));
         const payloadCopy = JSON.parse(JSON.stringify(rawPayload));
-        
+
         const vm = new VM({
             timeout: 5000,
             sandbox: {

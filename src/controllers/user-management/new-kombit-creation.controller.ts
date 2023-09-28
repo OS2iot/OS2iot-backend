@@ -165,11 +165,7 @@ export class NewKombitCreationController {
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.findOne(
-                id,
-                getExtendedInfo,
-                getExtendedInfo
-            );
+            const { passwordHash, ...user } = await this.userService.findOne(id, getExtendedInfo);
 
             return user;
         } catch (err) {

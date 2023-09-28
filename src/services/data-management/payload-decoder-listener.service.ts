@@ -13,11 +13,14 @@ import { RecordMetadata } from "kafkajs";
 import * as _ from "lodash";
 import { KafkaService } from "../kafka/kafka.service";
 import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Injectable()
 export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
     constructor(
         private connectionService: IoTDevicePayloadDecoderDataTargetConnectionService,
+        private chirpstackDeviceService: ChirpstackDeviceService,
         private kafkaService: KafkaService,
         private executor: PayloadDecoderExecutorService
     ) {
@@ -52,10 +55,10 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
         dto: RawIoTDeviceRequestDto
     ) {
         const uniqueCombinations = _.uniqBy(connections.data, x => x.payloadDecoder?.id);
-        uniqueCombinations.forEach(async connection => {
+        for (const connection of uniqueCombinations) {
             try {
                 const iotDevice = connection.iotDevices.find(
-                    x => x.id == dto.iotDeviceId
+                    x => x.id === dto.iotDeviceId
                 );
 
                 await this.decodeAndSendTransformed(
@@ -66,7 +69,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             } catch (err) {
                 this.logger.error(err);
             }
-        });
+        }
     }
 
     private async decodeAndSendTransformed(
@@ -99,10 +102,21 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
                 `Decoding payload of IoT-Device ${relatedIoTDevice.id} with decoder ${payloadDecoder?.id}`
             );
 
+            let localDevice = relatedIoTDevice;
+            // Check if lorawanSettings are read, if they are the iotDevice needs enrichment
+            if (
+                relatedIoTDevice.type === IoTDeviceType.LoRaWAN &&
+                payloadDecoder.decodingFunction.includes("lorawanSettings")
+            ) {
+                localDevice = await this.chirpstackDeviceService.enrichLoRaWANDevice(
+                    relatedIoTDevice
+                );
+            }
+
             // Decode the payload
-            res = await this.executor.callUntrustedCode(
+            res = this.executor.callUntrustedCode(
                 payloadDecoder.decodingFunction,
-                relatedIoTDevice,
+                localDevice,
                 rawPayload
             );
 
