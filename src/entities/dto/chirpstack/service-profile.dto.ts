@@ -32,14 +32,14 @@ export class ServiceProfileDto {
 
     @ApiProperty({ required: false })
     @IsInt()
-    @Min(0)
-    @Max(5)
+    @Min(0, { message: "Max data rate må ikke være negativ" })
+    @Max(7, { message: "Max data rate må ikke være større end 7" })
     drMax?: number;
 
     @ApiProperty({ required: true })
     @IsInt()
-    @Min(0)
-    @Max(5)
+    @Min(0, { message: "Min data rate må ikke være negativ" })
+    @Max(7, { message: "Min data rate må ikke være større end 7" })
     drMin?: number;
 
     @ApiProperty({ required: false })
