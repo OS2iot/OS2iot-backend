@@ -1,7 +1,6 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
-import { VM, VMScript } from "vm2";
-import { ExternalCopy, Isolate, Reference } from "isolated-vm";
+import { ExternalCopy, Isolate } from "isolated-vm";
 
 @Injectable()
 export class PayloadDecoderExecutorService {
