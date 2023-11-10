@@ -109,13 +109,14 @@ export class AuthController {
         // - nameIDFormat is used. Correspond to <NameIDFormat> in the public certificate
         reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
         // reqConverted.user.nameID = reqConverted.user.nameID;
-        reqConverted.user.nameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+        reqConverted.user.nameIDFormat =
+            "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
         // reqConverted.user = { reqCo };
         // TODO: Remove after test
-        this.logger.debug(`KOMBIT logout request: ${JSON.stringify(req)}`)
+        this.logger.debug(`KOMBIT logout request: ${JSON.stringify(req)}`);
 
         this.strategy.logout(reqConverted, (err: Error, url: string): void => {
-            req.logout();
+            req.logout(err1 => {});
             this.logger.debug("Inside callback");
             if (!err) {
                 this.logger.debug("No errors");
@@ -134,7 +135,7 @@ export class AuthController {
         @Res() res: Response
     ): Promise<void> {
         this.logger.debug("Get callback Logging out ...");
-        req.logout();
+        req.logout(err1 => {});
         res.send("Logged out ...");
     }
 
