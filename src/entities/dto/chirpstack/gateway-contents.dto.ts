@@ -1,9 +1,11 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+    IsHexadecimal,
     IsJSON,
     IsOptional,
     IsString,
+    Length,
     Matches,
     MaxLength,
     MinLength,
@@ -39,7 +41,8 @@ export class GatewayContentsDto {
 
     @ApiProperty({ required: true })
     @IsString()
-    @Matches(/[0-9A-Fa-f]{16}/)
+    @IsHexadecimal()
+    @Length(16, 16)
     id: string;
 
     @ApiProperty({ required: false })
