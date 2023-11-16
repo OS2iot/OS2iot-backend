@@ -2,14 +2,14 @@ import {
     Body,
     Controller,
     Get,
+    Logger,
     Post,
     Req,
-    Res,
-    UseGuards,
     Request,
-    Logger,
+    Res,
     UnauthorizedException,
     UseFilters,
+    UseGuards,
 } from "@nestjs/common";
 import {
     ApiBearerAuth,
@@ -40,8 +40,9 @@ import { Request as expressRequest, Response } from "express";
 import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
-import { RequestWithUser, Profile } from "passport-saml/lib/passport-saml/types";
 import { isOrganizationPermission } from "@helpers/security-helper";
+import { RequestWithUser } from "passport-saml/lib/passport-saml/types";
+import Configuration from "@config/configuration";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -89,11 +90,11 @@ export class AuthController {
 
         const { nameId, id } = req.user;
         const jwt = await this.authService.issueJwt(nameId, id, true);
-        if (redirectTarget) {
-            return res.redirect(`${redirectTarget}?jwt=${jwt.accessToken}`);
-        }
-
-        return await res.status(201).json(jwt);
+        let baseUrl: string;
+        baseUrl = redirectTarget
+            ? redirectTarget
+            : Configuration()["frontend"]["baseurl"];
+        return res.redirect(`${baseUrl}?jwt=${jwt.accessToken}`);
     }
 
     @Get("kombit/logout")
@@ -102,27 +103,29 @@ export class AuthController {
     public async logout(@Req() req: expressRequest, @Res() res: Response): Promise<any> {
         this.logger.debug("Logging out ...");
         const reqConverted: RequestWithUser = req as RequestWithUser;
-        // TODO: Not tested as KOMBIT isn't set up locally. Test on test environment
+
         // Inspecting the source code (v3.2.1), we gather that
         // - ID is unknown. Might be unused or required for @InResponseTo in saml.js
         // - nameID is used. Corresponds to user.nameId in DB
         // - nameIDFormat is used. Correspond to <NameIDFormat> in the public certificate
         reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
-        // reqConverted.user.nameID = reqConverted.user.nameID;
-        reqConverted.user.nameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
-        // reqConverted.user = { reqCo };
-        // TODO: Remove after test
-        this.logger.debug(`KOMBIT logout request: ${JSON.stringify(req)}`)
+        reqConverted.user.nameIDFormat =
+            "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
 
         this.strategy.logout(reqConverted, (err: Error, url: string): void => {
-            req.logout();
-            this.logger.debug("Inside callback");
-            if (!err) {
-                this.logger.debug("No errors");
-                res.redirect(url);
-            } else {
-                this.logger.error(`Logout failed with error: ${JSON.stringify(err)}`);
-            }
+            req.logout(err1 => {
+                this.logger.debug("Inside callback");
+                if (Object.keys(err1).length === 0) {
+                    this.logger.debug("No errors");
+                    res.redirect(url);
+                } else {
+                    this.logger.error(
+                        `Logout failed with error: ${JSON.stringify(
+                            err
+                        )} and inner Err: ${JSON.stringify(err1)}`
+                    );
+                }
+            });
         });
     }
 
@@ -134,7 +137,6 @@ export class AuthController {
         @Res() res: Response
     ): Promise<void> {
         this.logger.debug("Get callback Logging out ...");
-        req.logout();
         res.send("Logged out ...");
     }
 
