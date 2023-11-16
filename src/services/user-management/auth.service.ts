@@ -67,6 +67,7 @@ export class AuthService {
                 return base64Xml;
             })
             .catch((err: any) => {
+                this.logger.error("Err: " + err);
                 this.logger.error("Could not load attribute in SAML response");
                 return null;
             });
@@ -80,13 +81,12 @@ export class AuthService {
         return await parser
             .parseStringPromise(decodedXml)
             .then((doc: XMLOutput) => {
-                return doc["PrivilegeList"][
-                    "PrivilegeGroup"
-                ].some((privilegeGroups: XMLOutput) =>
-                    privilegeGroups["Privilege"].some(
-                        (privileges: XMLOutput) =>
-                            privileges["_"].indexOf(this.KOMBIT_ROLE_URI) > -1
-                    )
+                return doc["PrivilegeList"]["PrivilegeGroup"].some(
+                    (privilegeGroups: XMLOutput) =>
+                        privilegeGroups["Privilege"].some(
+                            (privileges: XMLOutput) =>
+                                privileges["_"].indexOf(this.KOMBIT_ROLE_URI) > -1
+                        )
                 );
             })
             .catch((err: any) => {
