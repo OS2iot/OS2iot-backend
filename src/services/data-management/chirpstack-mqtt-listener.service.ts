@@ -51,9 +51,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
             this.client.subscribe(this.CHIRPSTACK_MQTT_GATEWAY_TOPIC);
 
             this.client.on("message", async (topic, message) => {
-                this.logger.debug(
-                    `Received MQTT - Topic: '${topic}' - message: '${message}'`
-                );
+                this.logger.debug(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
 
                 if (topic.startsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX)) {
                     await this.receiveMqttMessage(message.toString());
@@ -77,12 +75,12 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     async receiveMqttMessage(message: string): Promise<void> {
         const dto: ChirpstackMQTTMessageDto = JSON.parse(message);
         const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(
-            dto.devEUI
+            dto.deviceInfo.devEui
         );
 
         if (!iotDevice) {
             this.logger.warn(
-                `Chirpstack sent MQTT message for devEUI ${dto.devEUI}, but that's not registered in OS2IoT`
+                `Chirpstack sent MQTT message for devEUI ${dto.deviceInfo.devEui}, but that's not registered in OS2IoT`
             );
             return;
         }
@@ -94,27 +92,19 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
         );
     }
 
-    async receiveMqttGatewayStatusMessage(
-        message: Record<string, unknown>
-    ): Promise<void> {
+    async receiveMqttGatewayStatusMessage(message: Record<string, unknown>): Promise<void> {
         if (
             message &&
-            hasProps(
-                message,
-                nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")
-            ) &&
+            hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")) &&
             typeof message.gatewayId === "string"
         ) {
             const dto: ChirpstackMQTTConnectionStateMessageDto = {
-                gatewayId: Buffer.from(message.gatewayId, "base64").toString("hex"),
+                gatewayId: message.gatewayId,
                 isOnline: message.state === "ONLINE",
             };
             const jsonDto = JSON.stringify(dto);
 
-            await this.receiveDataService.sendRawGatewayStateToKafka(
-                dto.gatewayId,
-                jsonDto
-            );
+            await this.receiveDataService.sendRawGatewayStateToKafka(dto.gatewayId, jsonDto);
         } else {
             this.logger.error(
                 `Gateway status message is not properly formatted. Gateway id, if any, is ${message?.id}`

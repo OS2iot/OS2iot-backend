@@ -1,10 +1,11 @@
-import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
+import { Type } from "class-transformer";
 
-export class DetailedGatewayResponseDto extends GatewayResponseDto {
-    discoveryEnabled: boolean;
-    gatewayProfileID: string;
-    boards: any[];
-    tags: { [id: string]: string | number };
-    tagsString: string;
-    metadata: JSON;
+export class DetailedGatewayResponseDto extends GatewayResponseGrpcDto {
+    discoveryEnabled?: boolean;
+    gatewayProfileID?: string;
+    boards?: any[];
+    metadata?: JSON;
+    @Type(() => Array<[string, string]>)
+    tagsMap: Array<[string, string]>;
 }

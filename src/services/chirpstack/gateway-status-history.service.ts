@@ -14,7 +14,7 @@ import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { nameof } from "@helpers/type-helper";
 
-type GatewayId = { id: string; name: string };
+type GatewayId = { gatewayId: string; name: string };
 
 @Injectable()
 export class GatewayStatusHistoryService {
@@ -31,7 +31,7 @@ export class GatewayStatusHistoryService {
         // Very expensive operation. Since no gateway data is stored on the backend database, we need
         // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
         const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
-        const gatewayIds = gateways.result.map(gateway => gateway.id);
+        const gatewayIds = gateways.resultList.map(gateway => gateway.gatewayId);
         const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 
         if (!gatewayIds.length) {
@@ -44,7 +44,6 @@ export class GatewayStatusHistoryService {
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
-
         // To know the status of each gateway up till the first status since the start date,
         // we must fetch the previous status
         const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(gatewayIds, fromDate);
@@ -56,7 +55,7 @@ export class GatewayStatusHistoryService {
         );
 
         const data: GatewayStatus[] = this.mapStatusHistoryToGateways(
-            gateways.result,
+            gateways.resultList,
             statusHistories
         );
 
@@ -74,12 +73,12 @@ export class GatewayStatusHistoryService {
 
         const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
             where: {
-                mac: gateway.id,
+                mac: gateway.gatewayId,
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
 
-        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate([gateway.id], fromDate);
+        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate([gateway.gatewayId], fromDate);
 
         const statusHistories = this.mergeStatusHistories(
             fromDate,
@@ -151,7 +150,7 @@ export class GatewayStatusHistoryService {
     ) {
         const statusTimestamps = statusHistories.reduce(
             (res: GatewayStatus["statusTimestamps"], history) => {
-                if (history.mac === gateway.id) {
+                if (history.mac === gateway.gatewayId) {
                     res.push({
                         timestamp: history.timestamp,
                         wasOnline: history.wasOnline,
@@ -164,7 +163,7 @@ export class GatewayStatusHistoryService {
         );
 
         return {
-            id: gateway.id,
+            id: gateway.gatewayId,
             name: gateway.name,
             statusTimestamps,
         };

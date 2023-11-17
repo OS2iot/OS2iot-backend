@@ -1,22 +1,16 @@
-import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
+import { Location } from "@chirpstack/chirpstack-api/common/common_pb";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
-export class GatewayResponseDto {
-    id: string;
+export class GatewayResponseGrpcDto {
+    gatewayId: string;
     name: string;
     description: string;
-    organizationID: string;
-    networkServerID: string;
-    location: CommonLocationDto;
-    tags: { [id: string]: string | number };
-    tagsString: string;
-
-    networkServerName?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    firstSeenAt?: string;
-    lastSeenAt?: string;
-
-    internalOrganizationId: number;
+    organizationID?: string;
+    location?: Location.AsObject;
+    createdAt?: Timestamp.AsObject;
+    updatedAt?: Timestamp.AsObject;
+    lastSeenAt?: Timestamp.AsObject;
+    internalOrganizationId?: number;
     updatedBy?: number;
     createdBy?: number;
 }

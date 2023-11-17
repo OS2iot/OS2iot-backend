@@ -5,7 +5,7 @@ import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.
 import { ListAllServiceProfilesResponseDto } from "@dto/chirpstack/list-all-service-profiles-response.dto";
 import { UpdateServiceProfileDto } from "@dto/chirpstack/update-service-profile.dto";
 
-import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";

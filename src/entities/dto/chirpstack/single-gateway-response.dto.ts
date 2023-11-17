@@ -1,13 +1,11 @@
 import { DetailedGatewayResponseDto } from "@dto/chirpstack/detailed-gateway-response.dto";
 import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 
 export class SingleGatewayResponseDto {
-    gateway: DetailedGatewayResponseDto;
-
-    createdAt?: string;
-    updatedAt?: string;
-    firstSeenAt?: string;
-    lastSeenAt?: string;
-
-    stats: GatewayStatsElementDto[];
+    gateway?: DetailedGatewayResponseDto;
+    createdAt?: Date;
+    updatedAt?: Date;
+    lastSeenAt?: Timestamp.AsObject;
+    stats?: GatewayStatsElementDto[];
 }

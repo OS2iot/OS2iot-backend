@@ -1235,7 +1235,7 @@ export class IoTDeviceService {
     private async mapMQTTExternalBrokerDevice(
         iotDeviceDto: CreateIoTDeviceDto,
         cast: MQTTExternalBrokerDevice,
-        isUpdate: boolean = false
+        isUpdate = false
     ): Promise<MQTTExternalBrokerDevice> {
         const settings = iotDeviceDto.mqttExternalBrokerSettings;
         validateMQTTExternalBroker(settings);

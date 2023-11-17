@@ -5,18 +5,12 @@ import { CreateNetworkServerDto } from "@dto/chirpstack/create-network-server.dt
 import { ListAllNetworkServerResponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
 import { NetworkServerDto } from "@dto/chirpstack/network-server.dto";
 
-import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
 
 @Injectable()
-export class ChirpstackSetupNetworkServerService
-    extends GenericChirpstackConfigurationService
-    implements OnModuleInit {
+export class ChirpstackSetupNetworkServerService extends GenericChirpstackConfigurationService {
     networkServerName = "OS2iot";
-
-    async onModuleInit(): Promise<void> {
-        await this.bootstrapChirpstackNetworkServerConfiguration();
-    }
 
     public async bootstrapChirpstackNetworkServerConfiguration(): Promise<void> {
         const networkServers = await this.getNetworkServers(100, 0);

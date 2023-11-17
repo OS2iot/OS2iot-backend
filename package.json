@@ -29,6 +29,8 @@
         "typeorm-e2e": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig-e2e.json"
     },
     "dependencies": {
+        "@chirpstack/chirpstack-api": "4.5.1",
+        "@grpc/grpc-js": "1.9.9",
         "@nestjs/axios": "^2.0.0",
         "@nestjs/common": "^9.1.2",
         "@nestjs/config": "^2.2.0",

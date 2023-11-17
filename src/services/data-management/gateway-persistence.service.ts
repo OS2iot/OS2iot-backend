@@ -54,6 +54,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
         messageState: ChirpstackMQTTConnectionStateMessageDto
     ) {
         const statusHistory = new GatewayStatusHistory();
+        dto.gatewayId
         statusHistory.mac = dto.gatewayId;
         statusHistory.timestamp = dto.unixTimestamp
             ? new Date(dto.unixTimestamp)

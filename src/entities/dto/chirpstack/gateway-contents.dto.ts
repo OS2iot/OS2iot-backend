@@ -40,7 +40,7 @@ export class GatewayContentsDto {
     @ApiProperty({ required: true })
     @IsString()
     @Matches(/[0-9A-Fa-f]{16}/)
-    id: string;
+    gatewayId: string;
 
     @ApiProperty({ required: false })
     @ValidateNested({ each: true })
