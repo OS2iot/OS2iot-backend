@@ -12,11 +12,7 @@ import { ControlledProperty } from "@entities/controlled-property.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
-import {
-    ApplicationDeviceTypes,
-    ApplicationDeviceTypeUnion,
-    IoTDeviceType,
-} from "@enum/device-type.enum";
+import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
@@ -28,6 +24,7 @@ import { PermissionService } from "@services/user-management/permission.service"
 import { DeleteResult, In, Repository } from "typeorm";
 import { MulticastService } from "./multicast.service";
 import { DataTargetService } from "@services/data-targets/data-target.service";
+import { DataTargetType } from "@enum/data-target-type.enum";
 
 @Injectable()
 export class ApplicationService {
@@ -53,9 +50,7 @@ export class ApplicationService {
     ): Promise<ListAllApplicationsResponseDto> {
         const sorting = this.getSortingForApplications(query);
         const orgCondition =
-            allFromOrgs != null
-                ? { id: In(whitelist), belongsTo: In(allFromOrgs) }
-                : { id: In(whitelist) };
+            allFromOrgs != null ? { id: In(whitelist), belongsTo: In(allFromOrgs) } : { id: In(whitelist) };
         const [result, total] = await this.applicationRepository.findAndCount({
             where: orgCondition,
             take: query.limit,
@@ -98,15 +93,22 @@ export class ApplicationService {
     ): Promise<ListAllApplicationsResponseDto> {
         const sorting = this.getSortingForApplications(query);
         const [result, total] = await this.applicationRepository.findAndCount({
-            where:
-                allowedOrganisations != null
-                    ? { belongsTo: In(allowedOrganisations) }
-                    : {},
+            where: allowedOrganisations != null ? { belongsTo: In(allowedOrganisations) } : {},
             take: +query.limit,
             skip: +query.offset,
-            relations: ["iotDevices"],
+            relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
             order: sorting,
         });
+
+        // Since openDataDkEnabled is not a database attribute sorting has to be done manually after reading
+        if (query.orderOn === "openDataDkEnabled") {
+            result.sort(
+                (a, b) =>
+                    (query.sort.toLowerCase() === "asc" ? -1 : 1) *
+                    (Number(!!a.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)) -
+                        Number(!!b.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)))
+            );
+        }
 
         return {
             data: result,
@@ -121,14 +123,11 @@ export class ApplicationService {
         let orderBy = `application.id`;
         if (
             query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "updatedAt")
+            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "updatedAt")
         ) {
             orderBy = `application.${query.orderOn}`;
         }
-        const order: "DESC" | "ASC" =
-            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
             .innerJoin("application.permissions", "perm")
@@ -192,15 +191,11 @@ export class ApplicationService {
         app.iotDevices.forEach(x => {
             if (x.type == IoTDeviceType.LoRaWAN) {
                 const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = allFromChirpstack.result.find(
-                    cs => cs.devEUI == loraDevice.deviceEUI
-                );
+                const matchingDevice = allFromChirpstack.result.find(cs => cs.devEUI == loraDevice.deviceEUI);
                 if (matchingDevice) {
                     loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
-                    loraDevice.lorawanSettings.deviceStatusBattery =
-                        matchingDevice.deviceStatusBattery;
-                    loraDevice.lorawanSettings.deviceStatusMargin =
-                        matchingDevice.deviceStatusMargin;
+                    loraDevice.lorawanSettings.deviceStatusBattery = matchingDevice.deviceStatusBattery;
+                    loraDevice.lorawanSettings.deviceStatusMargin = matchingDevice.deviceStatusMargin;
                 }
             }
         });
@@ -213,17 +208,10 @@ export class ApplicationService {
         return await this.applicationRepository.findBy({ id: In(ids) });
     }
 
-    async create(
-        createApplicationDto: CreateApplicationDto,
-        userId: number
-    ): Promise<Application> {
+    async create(createApplicationDto: CreateApplicationDto, userId: number): Promise<Application> {
         const application = new Application();
 
-        const mappedApplication = await this.mapApplicationDtoToApplication(
-            createApplicationDto,
-            application,
-            userId
-        );
+        const mappedApplication = await this.mapApplicationDtoToApplication(createApplicationDto, application, userId);
         mappedApplication.iotDevices = [];
         mappedApplication.dataTargets = [];
         mappedApplication.multicasts = [];
@@ -237,11 +225,7 @@ export class ApplicationService {
         return app;
     }
 
-    async update(
-        id: number,
-        updateApplicationDto: UpdateApplicationDto,
-        userId: number
-    ): Promise<Application> {
+    async update(id: number, updateApplicationDto: UpdateApplicationDto, userId: number): Promise<Application> {
         const existingApplication = await this.applicationRepository.findOneOrFail({
             where: { id },
             relations: [
@@ -282,9 +266,7 @@ export class ApplicationService {
         }
 
         // Delete all LoRaWAN devices in ChirpStack
-        const loRaWANDevices = application.iotDevices.filter(
-            device => device.type === IoTDeviceType.LoRaWAN
-        );
+        const loRaWANDevices = application.iotDevices.filter(device => device.type === IoTDeviceType.LoRaWAN);
 
         for (const device of loRaWANDevices) {
             const lwDevice = device as LoRaWANDevice;
@@ -329,9 +311,7 @@ export class ApplicationService {
     ): Promise<Application> {
         application.name = applicationDto.name;
         application.description = applicationDto.description;
-        application.belongsTo = await this.organizationService.findById(
-            applicationDto.organizationId
-        );
+        application.belongsTo = await this.organizationService.findById(applicationDto.organizationId);
         application.status = applicationDto.status;
         // Setting a date to 'undefined' will set it to today in the database
         application.startDate = applicationDto.startDate ?? null;
@@ -343,9 +323,7 @@ export class ApplicationService {
         application.contactPhone = applicationDto.contactPhone;
         application.personalData = applicationDto.personalData;
         application.hardware = applicationDto.hardware;
-        application.permissions = await this.permissionService.findManyByIds(
-            applicationDto.permissionIds
-        );
+        application.permissions = await this.permissionService.findManyByIds(applicationDto.permissionIds);
 
         // Set metadata dependencies
         application.controlledProperties = applicationDto.controlledProperties
@@ -371,12 +349,7 @@ export class ApplicationService {
     buildControlledPropertyDeviceType<
         T extends Record<string, string>,
         Entity extends ControlledProperty | ApplicationDeviceType
-    >(
-        validKeys: T,
-        clientTypes: string[],
-        userId: number,
-        entity: { new (): Entity }
-    ): Entity[] {
+    >(validKeys: T, clientTypes: string[], userId: number, entity: { new (): Entity }): Entity[] {
         // Filter out invalid client values
         const matchingValues = findValuesInRecord(validKeys, clientTypes);
 
@@ -390,10 +363,7 @@ export class ApplicationService {
         });
     }
 
-    async findDevicesForApplication(
-        appId: number,
-        query: ListAllEntitiesDto
-    ): Promise<ListAllIoTDevicesResponseDto> {
+    async findDevicesForApplication(appId: number, query: ListAllEntitiesDto): Promise<ListAllIoTDevicesResponseDto> {
         const orderByColumn = this.getSortingForIoTDevices(query);
         const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
 
@@ -412,16 +382,11 @@ export class ApplicationService {
         const loraDevices = data.filter(
             device => device.type === IoTDeviceType.LoRaWAN
         ) as LoRaWANDeviceWithChirpstackDataDto[];
-        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(
-            loraDevices
-        );
+        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(loraDevices);
         const loraApplications = applications.map(app => app.application);
 
         for (const device of loraDevices) {
-            await this.chirpstackDeviceService.enrichLoRaWANDevice(
-                device,
-                loraApplications
-            );
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(device, loraApplications);
         }
 
         return {
@@ -450,15 +415,20 @@ export class ApplicationService {
         return orderBy;
     }
 
-    private getSortingForApplications(
-        query: ListAllEntitiesDto
-    ): Record<string, string | number> {
+    private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
         const sorting: Record<string, string | number> = {};
         if (
+            // TODO: Make this nicer
             query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "updatedAt")
+            (query.orderOn === "id" ||
+                query.orderOn === "name" ||
+                query.orderOn === "updatedAt" ||
+                query.orderOn === "status" ||
+                query.orderOn === "startDate" ||
+                query.orderOn === "endDate" ||
+                query.orderOn === "owner" ||
+                query.orderOn === "contactPerson" ||
+                query.orderOn === "personalData")
         ) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
         } else {
