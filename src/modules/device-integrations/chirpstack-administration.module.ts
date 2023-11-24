@@ -18,7 +18,7 @@ import { NetworkServerController } from "@admin-controller/chirpstack/network-se
         ChirpstackGatewayController,
         ServiceProfileController,
         DeviceProfileController,
-        NetworkServerController
+        NetworkServerController,
     ],
     imports: [HttpModule, ConfigModule.forRoot({ load: [configuration] })],
     providers: [
@@ -29,6 +29,6 @@ import { NetworkServerController } from "@admin-controller/chirpstack/network-se
         DeviceProfileService,
         ChirpstackDeviceService,
     ],
-    exports: [ChirpstackDeviceService, ChirpstackGatewayService],
+    exports: [ChirpstackDeviceService, ChirpstackGatewayService, DeviceProfileService],
 })
 export class ChirpstackAdministrationModule {}
