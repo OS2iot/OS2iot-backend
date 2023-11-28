@@ -4,17 +4,13 @@ import {
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { GatewayStatus } from "@dto/chirpstack/backend/gateway-status.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
-import {
-    GatewayStatusInterval,
-    gatewayStatusIntervalToDate,
-} from "@enum/gateway-status-interval.enum";
+import { GatewayStatusInterval, gatewayStatusIntervalToDate } from "@enum/gateway-status-interval.enum";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { nameof } from "@helpers/type-helper";
-
-type GatewayId = { id: string; name: string };
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
 export class GatewayStatusHistoryService {
@@ -25,13 +21,11 @@ export class GatewayStatusHistoryService {
     ) {}
     private readonly logger = new Logger(GatewayStatusHistoryService.name);
 
-    public async findAllWithChirpstack(
-        query: ListAllGatewayStatusDto
-    ): Promise<GatewayGetAllStatusResponseDto> {
+    public async findAllWithChirpstack(query: ListAllGatewayStatusDto): Promise<GatewayGetAllStatusResponseDto> {
         // Very expensive operation. Since no gateway data is stored on the backend database, we need
         // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
         const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
-        const gatewayIds = gateways.result.map(gateway => gateway.id);
+        const gatewayIds = gateways.result.map(gateway => gateway.gatewayId);
         const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 
         if (!gatewayIds.length) {
@@ -55,10 +49,7 @@ export class GatewayStatusHistoryService {
             latestStatusHistoryPerGatewayBeforePeriod
         );
 
-        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(
-            gateways.result,
-            statusHistories
-        );
+        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.result, statusHistories);
 
         return {
             data,
@@ -66,20 +57,20 @@ export class GatewayStatusHistoryService {
         };
     }
 
-    public async findOne<Gateway extends GatewayId>(
-        gateway: Gateway,
-        timeInterval: GatewayStatusInterval
-    ): Promise<GatewayStatus> {
+    public async findOne(gateway: GatewayResponseDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
         const fromDate = gatewayStatusIntervalToDate(timeInterval);
 
         const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
             where: {
-                mac: gateway.id,
+                mac: gateway.gatewayId,
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
 
-        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate([gateway.id], fromDate);
+        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(
+            [gateway.gatewayId],
+            fromDate
+        );
 
         const statusHistories = this.mergeStatusHistories(
             fromDate,
@@ -101,9 +92,7 @@ export class GatewayStatusHistoryService {
             .getMany();
     }
 
-    public createMany(
-        histories: GatewayStatusHistory[]
-    ): Promise<GatewayStatusHistory[]> {
+    public createMany(histories: GatewayStatusHistory[]): Promise<GatewayStatusHistory[]> {
         return this.gatewayStatusHistoryRepository.save(histories);
     }
 
@@ -136,8 +125,8 @@ export class GatewayStatusHistoryService {
         return combinedHistories;
     }
 
-    private mapStatusHistoryToGateways<Gateway extends GatewayId>(
-        gateways: Gateway[],
+    private mapStatusHistoryToGateways(
+        gateways: GatewayResponseDto[],
         statusHistories: GatewayStatusHistory[]
     ): GatewayStatus[] {
         return gateways.map(gateway => {
@@ -145,26 +134,20 @@ export class GatewayStatusHistoryService {
         });
     }
 
-    private mapStatusHistoryToGateway<Gateway extends GatewayId>(
-        gateway: Gateway,
-        statusHistories: GatewayStatusHistory[]
-    ) {
-        const statusTimestamps = statusHistories.reduce(
-            (res: GatewayStatus["statusTimestamps"], history) => {
-                if (history.mac === gateway.id) {
-                    res.push({
-                        timestamp: history.timestamp,
-                        wasOnline: history.wasOnline,
-                    });
-                }
+    private mapStatusHistoryToGateway(gateway: GatewayResponseDto, statusHistories: GatewayStatusHistory[]) {
+        const statusTimestamps = statusHistories.reduce((res: GatewayStatus["statusTimestamps"], history) => {
+            if (history.mac === gateway.gatewayId) {
+                res.push({
+                    timestamp: history.timestamp,
+                    wasOnline: history.wasOnline,
+                });
+            }
 
-                return res;
-            },
-            []
-        );
+            return res;
+        }, []);
 
         return {
-            id: gateway.id,
+            id: gateway.gatewayId,
             name: gateway.name,
             statusTimestamps,
         };

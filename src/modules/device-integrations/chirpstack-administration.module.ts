@@ -12,6 +12,8 @@ import { GenericChirpstackConfigurationService } from "@services/chirpstack/gene
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ServiceProfileService } from "@services/chirpstack/service-profile.service";
 import { NetworkServerController } from "@admin-controller/chirpstack/network-server.controller";
+import { SharedModule } from "@modules/shared.module";
+import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
     controllers: [
@@ -20,7 +22,7 @@ import { NetworkServerController } from "@admin-controller/chirpstack/network-se
         DeviceProfileController,
         NetworkServerController,
     ],
-    imports: [HttpModule, ConfigModule.forRoot({ load: [configuration] })],
+    imports: [SharedModule, HttpModule, OrganizationModule, ConfigModule.forRoot({ load: [configuration] })],
     providers: [
         GenericChirpstackConfigurationService,
         ChirpstackSetupNetworkServerService,

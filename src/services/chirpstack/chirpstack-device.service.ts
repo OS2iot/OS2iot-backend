@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
-import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
-import { ChirpstackDeviceActivationDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import {
+    ChirpstackDeviceActivationContentsDto,
+    ChirpstackDeviceActivationDto,
+} from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import {
     ChirpstackDeviceKeysContentDto,

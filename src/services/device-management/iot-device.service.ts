@@ -319,7 +319,6 @@ export class IoTDeviceService {
         return await this.loRaWANDeviceRepository
             .createQueryBuilder("iot_device")
             .where('"OTAAapplicationKey" is null')
-            .take(25)
             .getMany();
     }
 

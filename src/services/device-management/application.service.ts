@@ -391,7 +391,6 @@ export class ApplicationService {
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
             .orderBy(orderByColumn, direction)
-            .addOrderBy("name", "ASC")
             .getManyAndCount();
 
         if (query.orderOn === "dataTargets") {
