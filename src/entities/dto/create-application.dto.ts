@@ -99,4 +99,9 @@ export class CreateApplicationDto {
         },
     })
     permissionIds?: number[];
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    @MaxLength(1024)
+    chirpstackId?: string;
 }

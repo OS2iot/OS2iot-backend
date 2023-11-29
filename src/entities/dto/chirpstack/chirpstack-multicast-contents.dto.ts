@@ -1,6 +1,5 @@
 import { multicastGroup } from "@enum/multicast-type.enum";
 import { ApiProperty } from "@nestjs/swagger";
-import { Matches } from "class-validator";
 
 export class ChirpstackMulticastContentsDto {
     @ApiProperty({ required: true })
@@ -21,7 +20,7 @@ export class ChirpstackMulticastContentsDto {
     mcNwkSKey: string;
     @ApiProperty({ required: true })
     name: string;
-    @ApiProperty({ required: false })
-    pingSlotPeriod: number;
-   
+    @ApiProperty({ required: true })
+    id: string;
+
 }

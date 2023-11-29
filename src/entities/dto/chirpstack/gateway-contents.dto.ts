@@ -60,15 +60,12 @@ export class GatewayContentsDto {
     name: string;
 
     @ApiHideProperty()
-    networkServerID: string;
-
-    @ApiHideProperty()
-    organizationID: string;
+    tenantId: string;
 
     @ApiProperty({ required: false })
     @IsJSON()
     tagsString?: string;
 
     @ApiHideProperty()
-    tags?: { [id: string]: string | number };
+    tags?: { [id: string]: string };
 }

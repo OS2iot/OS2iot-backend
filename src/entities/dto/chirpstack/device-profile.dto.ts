@@ -1,14 +1,9 @@
-import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import {
-    IsArray,
-    IsInt,
-    IsNumber,
-    IsOptional,
-    IsString,
-    Length,
-    Min,
-    ValidateIf,
-} from "class-validator";
+    MacVersionMap,
+    RegParamsRevisionMap,
+} from "@chirpstack/chirpstack-api/common/common_pb";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
+import { IsInt, IsNotEmpty, IsOptional, IsString, Length, Min, ValidateIf } from "class-validator";
 
 export class DeviceProfileDto {
     @ApiProperty({ required: true })
@@ -17,15 +12,13 @@ export class DeviceProfileDto {
     name: string;
 
     @ApiProperty({ required: true })
-    macVersion: "1.0.0" | "1.0.1" | "1.0.2" | "1.0.3" | "1.1.0";
+    @IsNotEmpty()
+    macVersion: MacVersionMap[keyof MacVersionMap];
 
     @ApiProperty({ required: true })
-    @IsInt()
-    @Min(0)
-    maxEIRP: number;
+    @IsNotEmpty()
 
-    @ApiProperty({ required: true })
-    regParamsRevision: "A" | "B";
+    regParamsRevision: RegParamsRevisionMap[keyof RegParamsRevisionMap];
 
     @ApiProperty({ required: false })
     @IsString()
@@ -42,36 +35,11 @@ export class DeviceProfileDto {
     @IsInt()
     classCTimeout?: number;
 
-    @ApiProperty({ required: true })
-    @IsInt()
-    @Min(0)
-    geolocBufferTTL: number;
-
-    @ApiProperty({ required: true })
-    @IsInt()
-    @Min(0)
-    geolocMinBufferSize: number;
-
-    @ApiProperty({ required: false })
-    maxDutyCycle?: number;
-
     @ApiProperty({ required: false })
     id?: string;
 
     @ApiHideProperty()
-    networkServerID?: string;
-
-    @ApiHideProperty()
     organizationID?: string;
-
-    @ApiProperty({ required: false })
-    payloadCodec?: string;
-
-    @ApiProperty({ required: false })
-    payloadDecoderScript?: string;
-
-    @ApiProperty({ required: false })
-    payloadEncoderScript?: string;
 
     @ApiProperty({ required: false })
     @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
@@ -90,7 +58,7 @@ export class DeviceProfileDto {
     pingSlotPeriod?: number;
 
     @ApiProperty({ required: false })
-    rfRegion?: string;
+    rfRegion?: string
 
     @ApiProperty({ required: false })
     @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
@@ -117,15 +85,6 @@ export class DeviceProfileDto {
     rxFreq2?: number;
 
     @ApiProperty({ required: false })
-    @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
-    @IsArray()
-    @IsNumber({ maxDecimalPlaces: 0 }, { each: true })
-    factoryPresetFreqs: number[];
-
-    @ApiProperty({ required: false })
-    supports32BitFCnt?: boolean;
-
-    @ApiProperty({ required: false })
     supportsClassB?: boolean;
 
     @ApiProperty({ required: false })
@@ -135,7 +94,9 @@ export class DeviceProfileDto {
     supportsJoin?: boolean;
 
     @ApiHideProperty()
-    tags?: { [id: string]: string | number };
+    tags?: { [id: string]: string };
+    @ApiHideProperty()
+    tagsMap?: Array<[string, string]>;
 
     @ApiHideProperty()
     internalOrganizationId?: number;
@@ -145,4 +106,6 @@ export class DeviceProfileDto {
 
     @ApiHideProperty()
     createdBy?: number;
+    @ApiProperty({ required: false })
+    devStatusReqFreq?: number;
 }

@@ -15,7 +15,6 @@ import {
     ParseIntPipe,
     Logger,
 } from "@nestjs/common";
-import { MulticastService } from "../../services/device-management/multicast.service";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
 import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import {
@@ -44,6 +43,7 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { MulticastDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-multicast-downlink-queue-response.dto";
 import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
 import { CreateChirpstackMulticastQueueItemResponse } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
+import { MulticastService } from "@services/chirpstack/multicast.service";
 
 @ApiTags("Multicast")
 @UseGuards(ComposeAuthGuard, RolesGuard)

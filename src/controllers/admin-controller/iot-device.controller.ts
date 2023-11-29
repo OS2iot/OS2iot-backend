@@ -62,6 +62,7 @@ import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.resp
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
+import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -94,10 +95,7 @@ export class IoTDeviceController {
     > {
         let result = undefined;
         try {
-            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-                id,
-                true
-            );
+            result = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, true);
         } catch (err) {
             this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
@@ -106,11 +104,7 @@ export class IoTDeviceController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
 
-        checkIfUserHasAccessToApplication(
-            req,
-            result.application.id,
-            ApplicationAccessScope.Read
-        );
+        checkIfUserHasAccessToApplication(req, result.application.id, ApplicationAccessScope.Read);
 
         return result;
     }
@@ -123,10 +117,7 @@ export class IoTDeviceController {
     ): Promise<DeviceDownlinkQueueResponseDto> {
         let device = undefined;
         try {
-            device = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-                id,
-                true
-            );
+            device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, true);
         } catch (err) {
             this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
         }
@@ -134,16 +125,12 @@ export class IoTDeviceController {
         if (!device) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
-        checkIfUserHasAccessToApplication(
-            req,
-            device.application.id,
-            ApplicationAccessScope.Read
-        );
-        if (device.type == IoTDeviceType.LoRaWAN) {
+        checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
+        if (device.type === IoTDeviceType.LoRaWAN) {
             return this.chirpstackDeviceService.getDownlinkQueue(
                 (device as LoRaWANDevice).deviceEUI
             );
-        } else if (device.type == IoTDeviceType.SigFox) {
+        } else if (device.type === IoTDeviceType.SigFox) {
             return this.iotDeviceService.getDownlinkForSigfox(device as SigFoxDevice);
         } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
@@ -159,11 +146,7 @@ export class IoTDeviceController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<DeviceStatsResponseDto[]> {
         const device = await this.iotDeviceService.findOne(id);
-        checkIfUserHasAccessToApplication(
-            req,
-            device.application.id,
-            ApplicationAccessScope.Read
-        );
+        checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
 
         return this.iotDeviceService.findStats(device);
     }
@@ -194,9 +177,7 @@ export class IoTDeviceController {
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
             this.logger.error(
-                `Failed to create IoTDevice from dto: ${JSON.stringify(
-                    createDto
-                )}. Error: ${err}`
+                `Failed to create IoTDevice from dto: ${JSON.stringify(createDto)}. Error: ${err}`
             );
             throw err;
         }
@@ -210,11 +191,9 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: CreateIoTDeviceDownlinkDto
-    ): Promise<void | CreateChirpstackDeviceQueueItemResponse> {
+    ): Promise<void | PostReturnInterface> {
         try {
-            const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(
-                id
-            );
+            const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
             if (!device) {
                 throw new NotFoundException();
             }
@@ -265,11 +244,7 @@ export class IoTDeviceController {
             throw err;
         }
 
-        const iotDevice = await this.iotDeviceService.update(
-            id,
-            updateDto,
-            req.user.userId
-        );
+        const iotDevice = await this.iotDeviceService.update(id, updateDto, req.user.userId);
         AuditLog.success(
             ActionType.UPDATE,
             IoTDevice.name,
@@ -297,15 +272,10 @@ export class IoTDeviceController {
                 )
             );
 
-            const devices = await this.iotDeviceService.createMany(
-                createDto.data,
-                req.user.userId
-            );
+            const devices = await this.iotDeviceService.createMany(createDto.data, req.user.userId);
 
             // Iterate through the devices once, splitting it into a tuple with the data we want to log
-            const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(
-                devices
-            );
+            const { deviceIds, deviceNames } = buildIoTDeviceCreateUpdateAuditData(devices);
 
             if (!deviceIds.length) {
                 AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
@@ -322,9 +292,7 @@ export class IoTDeviceController {
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, IoTDevice.name, req.user.userId);
             this.logger.error(
-                `Failed to create IoTDevice from dto: ${JSON.stringify(
-                    createDto
-                )}. Error: ${err}`
+                `Failed to create IoTDevice from dto: ${JSON.stringify(createDto)}. Error: ${err}`
             );
             throw err;
         }
@@ -346,12 +314,7 @@ export class IoTDeviceController {
 
         try {
             validDevices.data = updateDto.data.reduce(
-                ensureIoTDeviceUpdatePayload(
-                    validDevices,
-                    oldIotDevices,
-                    devicesNotFound,
-                    req
-                ),
+                ensureIoTDeviceUpdatePayload(validDevices, oldIotDevices, devicesNotFound, req),
                 []
             );
         } catch (err) {
@@ -422,9 +385,7 @@ export class IoTDeviceController {
             );
 
             if (oldIotDevice.type !== IoTDeviceType.GenericHttp) {
-                throw new BadRequestException(
-                    "The requested device is not a generic HTTP device"
-                );
+                throw new BadRequestException("The requested device is not a generic HTTP device");
             }
 
             const result = await this.iotDeviceService.resetHttpDeviceApiKey(
@@ -450,14 +411,8 @@ export class IoTDeviceController {
         @Param("applicationId", new ParseIntPipe()) applicationId: number
     ): Promise<StreamableFile> {
         try {
-            checkIfUserHasAccessToApplication(
-                req,
-                applicationId,
-                ApplicationAccessScope.Read
-            );
-            const csvFile = await this.iotDeviceService.getDevicesMetadataCsv(
-                applicationId
-            );
+            checkIfUserHasAccessToApplication(req, applicationId, ApplicationAccessScope.Read);
+            const csvFile = await this.iotDeviceService.getDevicesMetadataCsv(applicationId);
             return new StreamableFile(csvFile);
         } catch (err) {
             this.logger.error(err);

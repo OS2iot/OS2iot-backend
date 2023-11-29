@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { IsHexadecimal, IsOptional, IsString, IsUUID, Length, Matches } from "class-validator";
+import { IsHexadecimal, IsOptional, IsString, IsUUID, Length } from "class-validator";
 
 export class ChirpstackDeviceContentsDto {
     @ApiHideProperty()
@@ -14,16 +14,12 @@ export class ChirpstackDeviceContentsDto {
     @ApiProperty({ required: true })
     @IsString()
     @IsHexadecimal()
-    @Length(16,16)
+    @Length(16, 16)
     devEUI: string;
 
     @ApiProperty({ required: true })
     @IsUUID()
     deviceProfileID: string;
-
-    @ApiProperty({ required: true })
-    @IsUUID()
-    serviceProfileID: string;
 
     @ApiProperty({ required: false, default: false })
     @IsOptional()
@@ -34,13 +30,10 @@ export class ChirpstackDeviceContentsDto {
     skipFCntCheck?: boolean;
 
     @ApiProperty({ required: false, default: {} })
-    variables?: JSON;
+    variables?: Array<[string, string]>;
 
     @ApiProperty({ required: false, default: {} })
-    tags?: JSON;
-
-    @ApiProperty({ required: false, default: {} })
-    OTAAapplicationKey: string;
+    tags?: Array<[string, string]>;
 
     @ApiHideProperty()
     deviceStatusBattery?: number;

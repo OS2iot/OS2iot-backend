@@ -1,5 +1,4 @@
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
@@ -20,14 +19,21 @@ import {
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
-import { ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
+import {
+    BadRequestException,
+    ConflictException,
+    forwardRef,
+    Inject,
+    Injectable,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { DeleteResult, In, Repository } from "typeorm";
-import { MulticastService } from "./multicast.service";
 import { DataTargetService } from "@services/data-targets/data-target.service";
+import { MulticastService } from "@services/chirpstack/multicast.service";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 
 @Injectable()
 export class ApplicationService {
@@ -43,7 +49,8 @@ export class ApplicationService {
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService,
         @Inject(forwardRef(() => DataTargetService))
-        private dataTargetService: DataTargetService
+        private dataTargetService: DataTargetService,
+        private chirpstackApplicationService: ApplicationChirpstackService
     ) {}
 
     async findAndCountInList(
@@ -98,10 +105,7 @@ export class ApplicationService {
     ): Promise<ListAllApplicationsResponseDto> {
         const sorting = this.getSortingForApplications(query);
         const [result, total] = await this.applicationRepository.findAndCount({
-            where:
-                allowedOrganisations != null
-                    ? { belongsTo: In(allowedOrganisations) }
-                    : {},
+            where: allowedOrganisations != null ? { belongsTo: In(allowedOrganisations) } : {},
             take: +query.limit,
             skip: +query.offset,
             relations: ["iotDevices"],
@@ -121,14 +125,11 @@ export class ApplicationService {
         let orderBy = `application.id`;
         if (
             query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "updatedAt")
+            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "updatedAt")
         ) {
             orderBy = `application.${query.orderOn}`;
         }
-        const order: "DESC" | "ASC" =
-            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
             .innerJoin("application.permissions", "perm")
@@ -180,30 +181,8 @@ export class ApplicationService {
                 relations: ["createdBy", "updatedBy"],
             },
         });
-        if (app.iotDevices.some(x => x.type == IoTDeviceType.LoRaWAN)) {
-            await this.matchWithChirpstackStatusData(app);
-        }
 
         return app;
-    }
-
-    private async matchWithChirpstackStatusData(app: Application) {
-        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus();
-        app.iotDevices.forEach(x => {
-            if (x.type == IoTDeviceType.LoRaWAN) {
-                const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = allFromChirpstack.result.find(
-                    cs => cs.devEUI == loraDevice.deviceEUI
-                );
-                if (matchingDevice) {
-                    loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
-                    loraDevice.lorawanSettings.deviceStatusBattery =
-                        matchingDevice.deviceStatusBattery;
-                    loraDevice.lorawanSettings.deviceStatusMargin =
-                        matchingDevice.deviceStatusMargin;
-                }
-            }
-        });
     }
 
     async findManyByIds(ids: number[]): Promise<Application[]> {
@@ -213,10 +192,7 @@ export class ApplicationService {
         return await this.applicationRepository.findBy({ id: In(ids) });
     }
 
-    async create(
-        createApplicationDto: CreateApplicationDto,
-        userId: number
-    ): Promise<Application> {
+    async create(createApplicationDto: CreateApplicationDto, userId: number): Promise<Application> {
         const application = new Application();
 
         const mappedApplication = await this.mapApplicationDtoToApplication(
@@ -230,11 +206,19 @@ export class ApplicationService {
         mappedApplication.createdBy = userId;
         mappedApplication.updatedBy = userId;
 
-        const app = await this.applicationRepository.save(mappedApplication);
+        try {
+            const chirpId = await this.chirpstackApplicationService.createApplication(
+                createApplicationDto
+            );
+            mappedApplication.chirpstackId = chirpId.id;
+            const app = await this.applicationRepository.save(mappedApplication);
 
-        await this.permissionService.autoAddPermissionsToApplication(app);
+            await this.permissionService.autoAddPermissionsToApplication(app);
 
-        return app;
+            return app;
+        } catch (e) {
+            throw new BadRequestException(ErrorCodes.InvalidPost);
+        }
     }
 
     async update(
@@ -257,6 +241,8 @@ export class ApplicationService {
             existingApplication,
             userId
         );
+
+        await this.chirpstackApplicationService.updateApplication(mappedApplication)
 
         mappedApplication.updatedBy = userId;
         return this.applicationRepository.save(mappedApplication, {});
@@ -281,25 +267,30 @@ export class ApplicationService {
             await this.dataTargetService.delete(dataTarget.id);
         }
 
-        // Delete all LoRaWAN devices in ChirpStack
-        const loRaWANDevices = application.iotDevices.filter(
-            device => device.type === IoTDeviceType.LoRaWAN
-        );
-
-        for (const device of loRaWANDevices) {
-            const lwDevice = device as LoRaWANDevice;
-            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
-        }
-
-        //delete all multicats
-        const multicasts = application.multicasts;
-        for (const multicast of multicasts) {
-            const dbMulticast = await this.multicastService.findOne(multicast.id);
-
-            await this.multicastService.deleteMulticastChirpstack(
-                dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
+        if (application.chirpstackId) {
+            await this.chirpstackApplicationService.deleteApplication(application.chirpstackId);
+        } else {
+            // Delete all LoRaWAN devices in ChirpStack
+            const loRaWANDevices = application.iotDevices.filter(
+                device => device.type === IoTDeviceType.LoRaWAN
             );
+
+            for (const device of loRaWANDevices) {
+                const lwDevice = device as LoRaWANDevice;
+                await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
+            }
+
+            //delete all multicats
+            const multicasts = application.multicasts;
+            for (const multicast of multicasts) {
+                const dbMulticast = await this.multicastService.findOne(multicast.id);
+
+                await this.multicastService.deleteMulticastChirpstack(
+                    dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
+                );
+            }
         }
+
         return this.applicationRepository.delete(id);
     }
 
@@ -371,12 +362,7 @@ export class ApplicationService {
     buildControlledPropertyDeviceType<
         T extends Record<string, string>,
         Entity extends ControlledProperty | ApplicationDeviceType
-    >(
-        validKeys: T,
-        clientTypes: string[],
-        userId: number,
-        entity: { new (): Entity }
-    ): Entity[] {
+    >(validKeys: T, clientTypes: string[], userId: number, entity: { new (): Entity }): Entity[] {
         // Filter out invalid client values
         const matchingValues = findValuesInRecord(validKeys, clientTypes);
 
@@ -412,16 +398,10 @@ export class ApplicationService {
         const loraDevices = data.filter(
             device => device.type === IoTDeviceType.LoRaWAN
         ) as LoRaWANDeviceWithChirpstackDataDto[];
-        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(
-            loraDevices
-        );
-        const loraApplications = applications.map(app => app.application);
+        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(loraDevices);
 
         for (const device of loraDevices) {
-            await this.chirpstackDeviceService.enrichLoRaWANDevice(
-                device,
-                loraApplications
-            );
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(device);
         }
 
         return {
@@ -450,15 +430,11 @@ export class ApplicationService {
         return orderBy;
     }
 
-    private getSortingForApplications(
-        query: ListAllEntitiesDto
-    ): Record<string, string | number> {
+    private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
         const sorting: Record<string, string | number> = {};
         if (
             query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "updatedAt")
+            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "updatedAt")
         ) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
         } else {
