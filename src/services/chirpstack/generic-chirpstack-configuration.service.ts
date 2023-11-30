@@ -5,9 +5,6 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { HeaderDto } from "@dto/chirpstack/header.dto";
-import { AuthorizationType } from "@enum/authorization-type.enum";
-import { JwtToken } from "./jwt-token";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { Metadata, ServiceError, credentials } from "@grpc/grpc-js";
 import configuration from "@config/configuration";
@@ -26,9 +23,6 @@ export class GenericChirpstackConfigurationService {
     baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${
         process.env.CHIRPSTACK_PORT || "8084"
     }`;
-    baseUrl = `http://${process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME || "localhost"}:${
-        process.env.CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"
-    }`;
 
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
     protected applicationServiceClient = new ApplicationServiceClient(
@@ -36,24 +30,6 @@ export class GenericChirpstackConfigurationService {
         credentials.createInsecure()
     );
 
-    setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
-        const timeoutMs = 30 * 1000;
-        let url = this.baseUrl + "/api/" + endPoint;
-
-        // If limits are supplied, add these as query params
-        if (limit != null && offset != null) {
-            url += `${endPoint.indexOf("?") >= 0 ? "&" : "?"}limit=${limit}&offset=${offset}`;
-        }
-
-        const headerDto: HeaderDto = {
-            url,
-            timeout: timeoutMs,
-            authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
-            authorizationHeader: "Bearer " + JwtToken.setupToken(),
-        };
-
-        return headerDto;
-    }
     makeMetadataHeader(): Metadata {
         const metadata = new Metadata();
         metadata.set(
