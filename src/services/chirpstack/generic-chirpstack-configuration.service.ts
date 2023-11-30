@@ -5,14 +5,11 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { AxiosRequestConfig } from "axios";
 import { HeaderDto } from "@dto/chirpstack/header.dto";
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { JwtToken } from "./jwt-token";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { Metadata, ServiceError, credentials } from "@grpc/grpc-js";
-import { InternalServiceClient } from "@chirpstack/chirpstack-api/api/internal_grpc_pb";
-import { LoginRequest } from "@chirpstack/chirpstack-api/api/internal_pb";
 import configuration from "@config/configuration";
 import { TenantServiceClient } from "@chirpstack/chirpstack-api/api/tenant_grpc_pb";
 import { ListTenantsRequest, ListTenantsResponse } from "@chirpstack/chirpstack-api/api/tenant_pb";
@@ -57,36 +54,17 @@ export class GenericChirpstackConfigurationService {
 
         return headerDto;
     }
-
-    //TODO::: Should this be called once or in every function? If once, what if token expires?
-    async makeMetadataHeader(): Promise<Metadata> {
-        return new Promise((resolve, reject) => {
-            // Create the client for the 'internal' service
-            const internalServiceClient = new InternalServiceClient(
-                this.baseUrlGRPC,
-                credentials.createInsecure()
-            );
-
-            // Create and build the login request message
-            const loginRequest = new LoginRequest();
-            loginRequest.setEmail("admin");
-            loginRequest.setPassword(configuration()["chirpstack"]["password"]);
-            const metadata = new Metadata();
-
-            // Send the login request
-            internalServiceClient.login(loginRequest, (error: ServiceError, response: any) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    metadata.set("authorization", "Bearer " + response.getJwt());
-                    resolve(metadata);
-                }
-            });
-        });
+    makeMetadataHeader(): Metadata {
+        const metadata = new Metadata();
+        metadata.set(
+            "authorization",
+            "Bearer " + configuration()["chirpstack"]["apikey"],
+        );
+        return metadata;
     }
 
     async post(endpoint: string, client?: any, request?: any): Promise<PostReturnInterface> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
             client.create(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -105,7 +83,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
     async put(endpoint: string, client?: any, request?: any): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const updatePromise = new Promise<void>((resolve, reject) => {
             client.update(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -126,7 +104,7 @@ export class GenericChirpstackConfigurationService {
     }
 
     async getOneById<T>(endpoint: string, id: string, client?: any, request?: any): Promise<T> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         request.setId(id);
         const getPromise = new Promise<T>((resolve, reject) => {
             client.get(request, metaData, (err: ServiceError, resp: any) => {
@@ -149,7 +127,7 @@ export class GenericChirpstackConfigurationService {
     async delete<T>(endpoint: string, client?: any, request?: any): Promise<void> {
         //MAYBE return boolean of result (succes vs failure)
         if (client) {
-            const metaData = await this.makeMetadataHeader();
+            const metaData = this.makeMetadataHeader();
             const deletePromise = new Promise<T>((resolve, reject) => {
                 client.delete(request, metaData, (err: ServiceError, resp: any) => {
                     if (err) {
@@ -171,7 +149,7 @@ export class GenericChirpstackConfigurationService {
     }
 
     async get<T>(endpoint: string, client?: any, request?: any): Promise<T> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<T>((resolve, reject) => {
             client.get(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -226,7 +204,7 @@ export class GenericChirpstackConfigurationService {
         client?: any,
         request?: any
     ): Promise<T> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         request.setLimit(limit), request.setOffset(offset);
 
         const getListPromise = new Promise<T>((resolve, reject) => {

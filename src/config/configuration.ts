@@ -16,14 +16,14 @@ export default (): any => {
         },
         backend: {
             baseurl:
-                process.env.BACKEND_BASEURL || "https://test-os2iot-backend.os2iot.dk",
+                process.env.BACKEND_BASEURL || "https://localhost:3000",
             deviceStatsIntervalInDays:
                 parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
         },
         kombit: {
             entryPoint:
                 process.env.KOMBIT_ENTRYPOINT ||
-                "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",            
+                "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
             certificatePublicKey: process.env.KOMBIT_CERTIFICATEPUBLICKEY || "INSERT_KOMBIT_CERT", // Public certificate from Kombit Test server
             certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
             roleUri:
@@ -32,6 +32,7 @@ export default (): any => {
         },
         chirpstack: {
             jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
+            apikey: process.env.CHIRPSTACK_API_KEY || "apikey"
         },
         logLevels: process.env.LOG_LEVEL
             ? GetLogLevels(process.env.LOG_LEVEL)

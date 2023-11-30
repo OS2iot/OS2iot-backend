@@ -487,7 +487,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         client?: MulticastGroupServiceClient,
         request?: AddDeviceToMulticastGroupRequest
     ): Promise<any> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
             client.addDevice(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -653,7 +653,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         client: MulticastGroupServiceClient,
         request: ListMulticastGroupQueueRequest
     ): Promise<ListMulticastGroupQueueResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<ListMulticastGroupQueueResponse>((resolve, reject) => {
             client.listQueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -675,7 +675,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         client: MulticastGroupServiceClient,
         request: FlushMulticastGroupQueueRequest
     ): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<void>((resolve, reject) => {
             client.flushQueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -697,7 +697,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         client: MulticastGroupServiceClient,
         request: EnqueueMulticastGroupQueueItemRequest
     ): Promise<CreateChirpstackMulticastQueueItemResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<CreateChirpstackMulticastQueueItemResponse>((resolve, reject) => {
             client.enqueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {

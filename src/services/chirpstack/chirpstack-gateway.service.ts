@@ -274,7 +274,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         request.setEnd(to_time);
         request.setAggregation(Aggregation.DAY);
 
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
 
         const getGatewayMetricsPromise = new Promise<GetGatewayMetricsResponse>(
             (resolve, reject) => {

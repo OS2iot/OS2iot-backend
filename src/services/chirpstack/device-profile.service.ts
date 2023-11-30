@@ -337,7 +337,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     }
 
     async getAdrAlgorithms(): Promise<ListDeviceProfileAdrAlgorithmsResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<ListDeviceProfileAdrAlgorithmsResponse>(
             (resolve, reject) => {
                 this.deviceProfileClient.listAdrAlgorithms(

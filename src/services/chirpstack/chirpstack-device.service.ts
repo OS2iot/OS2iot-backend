@@ -549,7 +549,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         req.setStart(from_time_timestamp);
         req.setEnd(to_time);
         req.setAggregation(Aggregation.DAY);
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
 
         const getDeviceMetricsPromise = new Promise<GetDeviceLinkMetricsResponse>(
             (resolve, reject) => {
@@ -680,7 +680,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client: DeviceServiceClient,
         request: GetDeviceKeysRequest
     ): Promise<GetDeviceKeysResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<GetDeviceKeysResponse>((resolve, reject) => {
             client.getKeys(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -698,7 +698,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
     async postKeys(client: DeviceServiceClient, request: CreateDeviceKeysRequest): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<void>((resolve, reject) => {
             client.createKeys(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -717,7 +717,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
     async putKeys(client: DeviceServiceClient, request: UpdateDeviceKeysRequest): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const updatePromise = new Promise<void>((resolve, reject) => {
             client.updateKeys(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -740,7 +740,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client: DeviceServiceClient,
         request: GetDeviceQueueItemsRequest
     ): Promise<GetDeviceQueueItemsResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<GetDeviceQueueItemsResponse>((resolve, reject) => {
             client.getQueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -761,7 +761,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client: DeviceServiceClient,
         request: FlushDeviceQueueRequest
     ): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<void>((resolve, reject) => {
             client.flushQueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -784,7 +784,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client: DeviceServiceClient,
         request: EnqueueDeviceQueueItemRequest
     ): Promise<PostReturnInterface> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
             client.enqueue(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -807,7 +807,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client: DeviceServiceClient,
         request: GetDeviceActivationRequest
     ): Promise<GetDeviceActivationResponse> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<GetDeviceActivationResponse>((resolve, reject) => {
             client.getActivation(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
@@ -829,7 +829,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         client?: DeviceServiceClient,
         request?: ActivateDeviceRequest
     ): Promise<void> {
-        const metaData = await this.makeMetadataHeader();
+        const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<void>((resolve, reject) => {
             client.activate(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
