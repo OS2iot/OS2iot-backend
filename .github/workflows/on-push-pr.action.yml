@@ -34,6 +34,6 @@ jobs:
         with:
           node-version: 16
       - name: Install packages
-        run: "npm ci --legacy-peer-deps"
+        run: "npm ci"
       - name: Build source
         run: "npm run build"
