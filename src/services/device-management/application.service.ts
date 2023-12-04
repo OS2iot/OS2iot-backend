@@ -100,6 +100,16 @@ export class ApplicationService {
             order: sorting,
         });
 
+        this.externalSortResult(query, result);
+
+        return {
+            data: result,
+            count: total,
+        };
+    }
+
+    // Some sorting fields can't be done in the database
+    private externalSortResult(query: ListAllEntitiesDto, result: Application[]) {
         // Since openDataDkEnabled is not a database attribute sorting has to be done manually after reading
         if (query.orderOn === "openDataDkEnabled") {
             result.sort(
@@ -109,11 +119,16 @@ export class ApplicationService {
                         Number(!!b.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)))
             );
         }
-
-        return {
-            data: result,
-            count: total,
-        };
+        if (query.orderOn === "devices") {
+            result.sort(
+                (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.iotDevices.length - b.iotDevices.length)
+            );
+        }
+        if (query.orderOn === "dataTargets") {
+            result.sort(
+                (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.dataTargets.length - b.dataTargets.length)
+            );
+        }
     }
 
     async getApplicationsOnPermissionId(
@@ -202,7 +217,7 @@ export class ApplicationService {
     }
 
     async findManyByIds(ids: number[]): Promise<Application[]> {
-        if (ids === null || ids?.length === 0) {
+        if (ids == null || ids?.length === 0) {
             return [];
         }
         return await this.applicationRepository.findBy({ id: In(ids) });
@@ -372,13 +387,22 @@ export class ApplicationService {
             .where('"iot_device"."applicationId" = :id', { id: appId })
             .leftJoinAndSelect("iot_device.latestReceivedMessage", "metadata")
             .leftJoinAndSelect("iot_device.deviceModel", "deviceModel")
+            .leftJoinAndSelect("iot_device.connections", "connections")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
             .orderBy(orderByColumn, direction)
+            .addOrderBy("name", "ASC")
             .getManyAndCount();
+
+        if (query.orderOn === "dataTargets") {
+            data.sort(
+                (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.connections.length - b.connections.length)
+            );
+        }
 
         // Fetch LoRa details one by one to get battery status. The LoRa API doesn't support query by multiple deveui's to reduce the calls.
         // Reduce calls by pre-fetching service profile ids by application id. The applications is usually the same
+        // TODO: Remove
         const loraDevices = data.filter(
             device => device.type === IoTDeviceType.LoRaWAN
         ) as LoRaWANDeviceWithChirpstackDataDto[];
@@ -402,12 +426,18 @@ export class ApplicationService {
             query.orderOn === "name" ||
             query.orderOn === "active" ||
             query.orderOn === "rssi" ||
-            query.orderOn === "snr"
+            query.orderOn === "snr" ||
+            query.orderOn === "deviceModel" ||
+            query.orderOn === "dataTargets"
         ) {
             if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
             } else if (query.orderOn === "rssi" || query.orderOn === "snr") {
                 orderBy = `metadata.${query.orderOn}`;
+            } else if (query.orderOn === "deviceModel") {
+                orderBy = "deviceModel.body";
+            } else if (query.orderOn === "dataTargets") {
+                orderBy = "connections.id";
             } else {
                 orderBy = `iot_device.${query.orderOn}`;
             }

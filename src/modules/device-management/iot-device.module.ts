@@ -18,6 +18,7 @@ import { ReceiveDataModule } from "@modules/device-integrations/receive-data.mod
 import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
 import { CsvGeneratorService } from "@services/csv-generator.service";
+import { LorawanDeviceDatabaseEnrichJob } from "@services/device-management/lorawan-device-database-enrich-job";
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { CsvGeneratorService } from "@services/csv-generator.service";
         PeriodicSigFoxCleanupService,
         IoTDeviceDownlinkService,
         SigFoxMessagesService,
+        LorawanDeviceDatabaseEnrichJob,
         MqttService,
         IoTDeviceService,
         EncryptionHelperService,

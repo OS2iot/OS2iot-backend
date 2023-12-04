@@ -37,5 +37,8 @@ export class ListAllEntitiesDto {
         | "owner"
         | "contactPerson"
         | "personalData"
-        | "openDataDkEnabled";
+        | "openDataDkEnabled"
+        | "deviceModel"
+        | "devices"
+        | "dataTargets";
 }
