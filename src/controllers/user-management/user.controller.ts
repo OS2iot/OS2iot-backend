@@ -2,8 +2,10 @@ import {
     BadRequestException,
     Body,
     Controller,
+    ForbiddenException,
     Get,
     InternalServerErrorException,
+    Logger,
     NotFoundException,
     Param,
     ParseIntPipe,
@@ -12,10 +14,7 @@ import {
     Query,
     Req,
     UseGuards,
-    ForbiddenException,
-    UnauthorizedException,
 } from "@nestjs/common";
-import { Logger } from "@nestjs/common";
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -34,8 +33,8 @@ import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import {
-    checkIfUserIsGlobalAdmin,
     checkIfUserHasAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
     OrganizationAccessScope,
 } from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
@@ -171,6 +170,12 @@ export class UserController {
             return user;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId, id);
+            if (
+                err instanceof QueryFailedError &&
+                err.message.startsWith("duplicate key value violates unique constraint")
+            ) {
+                throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
+            }
             throw err;
         }
     }

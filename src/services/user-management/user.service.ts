@@ -1,9 +1,9 @@
 import {
     BadRequestException,
+    forwardRef,
     Inject,
     Injectable,
     Logger,
-    forwardRef,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
@@ -22,9 +22,7 @@ import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
-import * as nodemailer from "nodemailer";
 import { Organization } from "@entities/organization.entity";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
 import { isPermissionType } from "@helpers/security-helper";
@@ -200,11 +198,8 @@ export class UserService {
     private async setPasswordHash(mappedUser: User, password: string) {
         this.checkPassword(password);
         // Hash password with bcrpyt
-        // this.logger.verbose("Generating salt");
         const salt = await bcrypt.genSalt(10);
-        // this.logger.verbose("Generating hash");
         mappedUser.passwordHash = await bcrypt.hash(password, salt);
-        // this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
     }
 
     private checkPassword(password: string) {
