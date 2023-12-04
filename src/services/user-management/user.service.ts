@@ -160,7 +160,8 @@ export class UserService {
         await this.setPasswordHash(mappedUser, dto.password);
 
         if (dto.globalAdmin) {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             await this.permissionService.addUsersToPermission(globalAdminPermission, [
                 mappedUser,
             ]);
@@ -250,7 +251,8 @@ export class UserService {
 
     private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
         if (dto.globalAdmin) {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             // Don't do anything if the user already is global admin.
             if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
                 await this.permissionService.addUsersToPermission(globalAdminPermission, [
@@ -258,7 +260,8 @@ export class UserService {
                 ]);
             }
         } else {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             await this.permissionService.removeUserFromPermission(
                 globalAdminPermission,
                 mappedUser
@@ -376,6 +379,7 @@ export class UserService {
         organization: Organization
     ): Promise<void> {
         const emails = await this.getOrgAdminEmails(organization);
+
         await this.oS2IoTMail.sendMail({
             to: emails,
             subject: "Ny ansøgning til din organisation i OS2iot",
@@ -408,20 +412,24 @@ export class UserService {
 
     async getOrgAdminEmails(organization: Organization): Promise<string[]> {
         const emails: string[] = [];
-        const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
+        const globalAdminPermission: Permission =
+            await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
-            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin)) {
-                if (permission.users.length > 0) {
-                    permission.users.forEach(user => {
-                        emails.push(user.email);
-                    });
-                } else {
-                    globalAdminPermission.users.forEach(user => {
-                        emails.push(user.email);
-                    });
-                }
+            if (
+                isPermissionType(permission, PermissionType.OrganizationUserAdmin) &&
+                permission.users.length > 0
+            ) {
+                permission.users.forEach(user => {
+                    emails.push(user.email);
+                });
             }
         });
+        if (emails.length === 0) {
+            globalAdminPermission.users.forEach(user => {
+                emails.push(user.email);
+            });
+        }
+
         return emails;
     }
 
