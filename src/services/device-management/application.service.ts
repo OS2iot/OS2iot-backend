@@ -123,11 +123,11 @@ export class ApplicationService {
         let orderBy = `application.id`;
         if (
             query.orderOn != null &&
-            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "updatedAt")
+            (query.orderOn === "id" || query.orderOn === "name" || query.orderOn === "updatedAt")
         ) {
             orderBy = `application.${query.orderOn}`;
         }
-        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
             .innerJoin("application.permissions", "perm")
@@ -179,7 +179,7 @@ export class ApplicationService {
                 relations: ["createdBy", "updatedBy"],
             },
         });
-        if (app.iotDevices.some(x => x.type == IoTDeviceType.LoRaWAN)) {
+        if (app.iotDevices.some(x => x.type === IoTDeviceType.LoRaWAN)) {
             await this.matchWithChirpstackStatusData(app);
         }
 
@@ -189,9 +189,9 @@ export class ApplicationService {
     private async matchWithChirpstackStatusData(app: Application) {
         const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus();
         app.iotDevices.forEach(x => {
-            if (x.type == IoTDeviceType.LoRaWAN) {
+            if (x.type === IoTDeviceType.LoRaWAN) {
                 const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = allFromChirpstack.result.find(cs => cs.devEUI == loraDevice.deviceEUI);
+                const matchingDevice = allFromChirpstack.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
                 if (matchingDevice) {
                     loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
                     loraDevice.lorawanSettings.deviceStatusBattery = matchingDevice.deviceStatusBattery;
@@ -202,7 +202,7 @@ export class ApplicationService {
     }
 
     async findManyByIds(ids: number[]): Promise<Application[]> {
-        if (ids == null || ids?.length == 0) {
+        if (ids === null || ids?.length === 0) {
             return [];
         }
         return await this.applicationRepository.findBy({ id: In(ids) });
@@ -255,7 +255,7 @@ export class ApplicationService {
         // Don't allow delete if this application contains any sigfox devices.
         if (
             application.iotDevices.some(iotDevice => {
-                return iotDevice.type == IoTDeviceType.SigFox;
+                return iotDevice.type === IoTDeviceType.SigFox;
             })
         ) {
             throw new ConflictException(ErrorCodes.DeleteNotAllowedHasSigfoxDevice);
@@ -294,10 +294,10 @@ export class ApplicationService {
             if (id) {
                 // If id is given then this id is allowed to have the name already (i.e. it's being changed)
                 return applicationsWithName.every(app => {
-                    return app.id == id;
+                    return app.id === id;
                 });
             } else {
-                return applicationsWithName.length == 0;
+                return applicationsWithName.length === 0;
             }
         }
 
@@ -365,7 +365,7 @@ export class ApplicationService {
 
     async findDevicesForApplication(appId: number, query: ListAllEntitiesDto): Promise<ListAllIoTDevicesResponseDto> {
         const orderByColumn = this.getSortingForIoTDevices(query);
-        const direction = query?.sort?.toUpperCase() == "DESC" ? "DESC" : "ASC";
+        const direction = query?.sort?.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
         const [data, count] = await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
