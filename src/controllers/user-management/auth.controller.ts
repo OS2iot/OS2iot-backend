@@ -90,8 +90,7 @@ export class AuthController {
 
         const { nameId, id } = req.user;
         const jwt = await this.authService.issueJwt(nameId, id, true);
-        let baseUrl: string;
-        baseUrl = redirectTarget
+        const baseUrl = redirectTarget
             ? redirectTarget
             : Configuration()["frontend"]["baseurl"];
         return res.redirect(`${baseUrl}?jwt=${jwt.accessToken}`);
@@ -137,6 +136,7 @@ export class AuthController {
         @Res() res: Response
     ): Promise<void> {
         this.logger.debug("Get callback Logging out ...");
+        // This callback openes in a new window for some reason, without sending something to it a timout error happens
         res.send("Logged out ...");
     }
 
