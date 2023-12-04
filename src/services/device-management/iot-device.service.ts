@@ -326,6 +326,7 @@ export class IoTDeviceService {
         await this.loRaWANDeviceRepository.save(devices);
     }
 
+
     async findMQTTDevice(id: number): Promise<MQTTInternalBrokerDevice> {
         return await this.mqttInternalBrokerDeviceRepository.findOne({
             where: { id },
