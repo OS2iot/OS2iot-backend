@@ -319,13 +319,13 @@ export class IoTDeviceService {
         return await this.loRaWANDeviceRepository
             .createQueryBuilder("iot_device")
             .where('"OTAAapplicationKey" is null')
-            .take(25)
             .getMany();
     }
 
     async updateLocalLoRaWANDevices(devices: LoRaWANDevice[]): Promise<void> {
         await this.loRaWANDeviceRepository.save(devices);
     }
+
 
     async findMQTTDevice(id: number): Promise<MQTTInternalBrokerDevice> {
         return await this.mqttInternalBrokerDeviceRepository.findOne({

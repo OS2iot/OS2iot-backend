@@ -38,9 +38,7 @@ export class SearchService {
         const devicePromise = this.findDevicesAndMapType(req, trimmedQuery);
 
         const results = _.filter(
-            _.flatMap(
-                await Promise.all([applicationPromise, devicePromise, gatewayPromise])
-            ),
+            _.flatMap(await Promise.all([applicationPromise, devicePromise, gatewayPromise])),
             x => x != null
         );
 
@@ -80,11 +78,7 @@ export class SearchService {
             });
     }
 
-    private limitAndOrder(
-        data: SearchResultDto[],
-        limit: number,
-        offset: number
-    ): SearchResultDto[] {
+    private limitAndOrder(data: SearchResultDto[], limit: number, offset: number): SearchResultDto[] {
         const r = _.orderBy(data, ["updatedAt"], ["desc"]);
         const sliced = _.slice(r, offset, offset + limit);
         return sliced;
@@ -100,19 +94,13 @@ export class SearchService {
 
         const mapped = await Promise.all(
             gateways.result.map(async x => {
-                const createdAt = new Date(Date.parse(x.createdAt));
-                const updatedAt = new Date(Date.parse(x.updatedAt));
+                const createdAt = new Date(x.createdAt);
+                const updatedAt = new Date(x.updatedAt);
 
-                const resultDto = new SearchResultDto(
-                    x.name,
-                    x.id,
-                    createdAt,
-                    updatedAt,
-                    x.id
-                );
-                const detailedInfo = await this.gatewayService.getOne(x.id);
+                const resultDto = new SearchResultDto(x.name, x.id, createdAt, updatedAt, x.gatewayId);
+                const detailedInfo = await this.gatewayService.getOne(x.gatewayId);
 
-                resultDto.organizationId = detailedInfo.gateway.internalOrganizationId;
+                resultDto.organizationId = detailedInfo.gateway.organizationId;
                 return resultDto;
             })
         );
@@ -127,10 +115,7 @@ export class SearchService {
         return data;
     }
 
-    private async findApplications(
-        req: AuthenticatedRequest,
-        trimmedQuery: string
-    ): Promise<SearchResultDto[]> {
+    private async findApplications(req: AuthenticatedRequest, trimmedQuery: string): Promise<SearchResultDto[]> {
         const qb = this.applicationRepository
             .createQueryBuilder("app")
             .where('"app"."name" ilike :name', { name: `%${trimmedQuery}%` });
@@ -138,10 +123,7 @@ export class SearchService {
         return await this.applySecuityAndSelect(req, qb, "app", "id");
     }
 
-    private async findIoTDevices(
-        req: AuthenticatedRequest,
-        query: string
-    ): Promise<SearchResultDto[]> {
+    private async findIoTDevices(req: AuthenticatedRequest, query: string): Promise<SearchResultDto[]> {
         if (isHexadecimal(query)) {
             if (query.length == 16) {
                 // LoRaWAN
@@ -203,10 +185,7 @@ export class SearchService {
         return this.applySecuityAndSelect(req, qb, "device", "applicationId");
     }
 
-    private async findIoTDevicesByName(
-        req: AuthenticatedRequest,
-        query: string
-    ): Promise<SearchResultDto[]> {
+    private async findIoTDevicesByName(req: AuthenticatedRequest, query: string): Promise<SearchResultDto[]> {
         const qb = this.getIoTDeviceQueryBuilder().where(`device.name ilike :name`, {
             name: `%${query}%`,
         });
@@ -229,20 +208,12 @@ export class SearchService {
             if (req.user.permissions.getAllApplicationsWithAtLeastRead().length == 0) {
                 return [];
             }
-            qb = qb.andWhere(
-                `"${alias}"."${applicationIdColumn}" IN (:...allowedApplications)`,
-                {
-                    allowedApplications: req.user.permissions.getAllApplicationsWithAtLeastRead(),
-                }
-            );
+            qb = qb.andWhere(`"${alias}"."${applicationIdColumn}" IN (:...allowedApplications)`, {
+                allowedApplications: req.user.permissions.getAllApplicationsWithAtLeastRead(),
+            });
         }
 
-        const toSelect = [
-            `"${alias}"."id"`,
-            `"${alias}"."createdAt"`,
-            `"${alias}"."updatedAt"`,
-            `"${alias}"."name"`,
-        ];
+        const toSelect = [`"${alias}"."id"`, `"${alias}"."createdAt"`, `"${alias}"."updatedAt"`, `"${alias}"."name"`];
         const select = qb;
         if (alias == "device") {
             return select
@@ -253,10 +224,7 @@ export class SearchService {
                 .addSelect('"app"."belongsToId"', "organizationId")
                 .getRawMany();
         } else if (alias == "app") {
-            return select
-                .select(toSelect)
-                .addSelect('"app"."belongsToId"', "organizationId")
-                .getRawMany();
+            return select.select(toSelect).addSelect('"app"."belongsToId"', "organizationId").getRawMany();
         }
     }
 }

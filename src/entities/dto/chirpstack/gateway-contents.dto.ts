@@ -11,21 +11,9 @@ import {
     MinLength,
     ValidateNested,
 } from "class-validator";
-
-import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 
 export class GatewayContentsDto {
-    @ApiProperty({
-        required: false,
-        default: [],
-        type: [ChirpstackBoardsDto],
-    })
-    @IsOptional()
-    @ValidateNested({ each: true })
-    @Type(() => ChirpstackBoardsDto)
-    boards?: ChirpstackBoardsDto[];
-
     @ApiProperty({ required: true })
     @IsOptional()
     @IsString()
@@ -36,14 +24,11 @@ export class GatewayContentsDto {
     @IsOptional()
     discoveryEnabled: boolean;
 
-    @ApiHideProperty()
-    gatewayProfileID?: string;
-
     @ApiProperty({ required: true })
     @IsString()
     @IsHexadecimal()
     @Length(16, 16)
-    id: string;
+    gatewayId: string;
 
     @ApiProperty({ required: false })
     @ValidateNested({ each: true })
@@ -74,4 +59,10 @@ export class GatewayContentsDto {
 
     @ApiHideProperty()
     tags?: { [id: string]: string | number };
+
+    @ApiHideProperty()
+    gatewayProfileID?: string;
+
+    @ApiHideProperty()
+    id: string;
 }

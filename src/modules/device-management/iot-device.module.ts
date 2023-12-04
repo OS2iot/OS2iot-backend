@@ -19,6 +19,7 @@ import { InternalMqttListenerModule } from "@modules/device-integrations/interna
 import { EncryptionHelperService } from "@services/encryption-helper.service";
 import { CsvGeneratorService } from "@services/csv-generator.service";
 import { LorawanDeviceDatabaseEnrichJob } from "@services/device-management/lorawan-device-database-enrich-job";
+import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { LorawanDeviceDatabaseEnrichJob } from "@services/device-management/lora
         SigFoxGroupModule,
         SigfoxDeviceTypeModule,
         DeviceModelModule,
+        OrganizationModule,
         ReceiveDataModule,
         forwardRef(() => SigfoxDeviceModule),
         forwardRef(() => IoTLoRaWANDeviceModule),

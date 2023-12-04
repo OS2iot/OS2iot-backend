@@ -32,6 +32,7 @@ import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 import { OpenDataDkDataTarget } from "@entities/open-data-dk-push-data-target.entity";
 import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
 import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
+import { Gateway } from "@entities/gateway.entity";
 
 @Module({
     imports: [
@@ -67,6 +68,7 @@ import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.
             GatewayStatusHistory,
             MQTTInternalBrokerDevice,
             MQTTExternalBrokerDevice,
+            Gateway,
         ]),
     ],
     providers: [AuditLog],

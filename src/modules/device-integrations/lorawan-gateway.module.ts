@@ -6,10 +6,11 @@ import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { GatewayBootstrapperService } from "@services/chirpstack/gateway-boostrapper.service";
 import { HttpModule } from "@nestjs/axios";
+import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
     controllers: [LoRaWANGatewayController],
-    imports: [SharedModule, HttpModule],
+    imports: [SharedModule, HttpModule, OrganizationModule],
     providers: [
         ChirpstackGatewayService,
         ChirpstackSetupNetworkServerService,
