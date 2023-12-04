@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+    IsEnum,
     IsInt,
     IsOptional,
     IsString,
@@ -29,6 +30,7 @@ export class CreateIoTDeviceDto {
     name: string;
 
     @ApiProperty({ required: true })
+    @IsEnum(IoTDeviceType)
     type: IoTDeviceType;
 
     @Min(1)
