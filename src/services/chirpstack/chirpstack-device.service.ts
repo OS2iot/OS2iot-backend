@@ -1,10 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { AxiosResponse } from "axios";
+import { Application as ApplicationDb } from "@entities/application.entity";
 
-import {
-    ChirpstackDeviceActivationContentsDto,
-    ChirpstackDeviceActivationDto,
-} from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import { ChirpstackDeviceKeysContentDto } from "@dto/chirpstack/chirpstack-device-keys-response.dto";
 import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
@@ -20,17 +17,17 @@ import {
     DeviceQueueItem,
 } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { ChirpstackManyDeviceResponseDto } from "@dto/chirpstack/chirpstack-many-device-response";
+import {
+    ChirpstackManyDeviceResponseContents,
+    ChirpstackManyDeviceResponseDto,
+} from "@dto/chirpstack/chirpstack-many-device-response";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
 import { groupBy } from "lodash";
-import {
-    LoRaWANStatsElementDto,
-    LoRaWANStatsResponseDto,
-} from "@dto/chirpstack/device/lorawan-stats.response.dto";
+import { LoRaWANStatsElementDto, LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
 import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
@@ -65,11 +62,12 @@ import {
     GetDeviceRequest,
     GetDeviceResponse,
     ListDevicesRequest,
+    ListDevicesResponse,
     UpdateDeviceKeysRequest,
     UpdateDeviceRequest,
 } from "@chirpstack/chirpstack-api/api/device_pb";
 import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
-import { dateToTimestamp } from "@helpers/date.helper";
+import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
@@ -87,10 +85,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
         this.deviceStatsIntervalInDays = configService.get<number>("backend.deviceStatsIntervalInDays");
     }
-    private deviceServiceClient = new DeviceServiceClient(
-        this.baseUrlGRPC,
-        credentials.createInsecure()
-    );
+    private deviceServiceClient = new DeviceServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(ChirpstackDeviceService.name);
 
@@ -120,27 +115,23 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         // if application exist use it
         let applicationId = applications.result.find(
             element =>
-                element.id === iotDevice.chirpstackApplicationId ||
-                element.id === iotDevice.application.chirpstackId
+                element.id === iotDevice.chirpstackApplicationId || element.id === iotDevice.application.chirpstackId
         )?.id;
 
         // otherwise create new application
         if (!applicationId) {
             applicationId = await this.createNewApplication(
+                applicationId,
                 organizationID,
                 iotDevice.application.name,
                 iotDevice.application.id
+            );
         }
 
         return applicationId;
     }
 
-    private async createNewApplication(
-        applicationId: string,
-        organizationID: string,
-        name: string,
-        id: number
-    ) {
+    private async createNewApplication(applicationId: string, organizationID: string, name: string, id: number) {
         applicationId = await this.createApplication({
             application: {
                 name: `${this.defaultApplicationName}-${name}`,
@@ -152,7 +143,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             where: { id: id },
         });
         existingApplication.chirpstackId = applicationId;
-        await this.applicationRepository.save(existingApplication)
+        await this.applicationRepository.save(existingApplication);
         return applicationId;
     }
 
@@ -254,16 +245,36 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return true;
     }
 
-    async getAllDevicesStatus(): Promise<ChirpstackManyDeviceResponseDto> {
+    async getAllDevicesStatus(app: ApplicationDb): Promise<ChirpstackManyDeviceResponseDto> {
         const req = new ListDevicesRequest();
-        req.setLimit(10000);
-        req.setOffset(0);
-        const test = await this.get<ChirpstackManyDeviceResponseDto>(
+        req.setApplicationId(app.chirpstackId);
+        const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
             `devices`,
+            10000,
+            0,
             this.deviceServiceClient,
             req
+        );
+        const responseDto: ChirpstackManyDeviceResponseContents[] = [];
 
-        return test;
+        devices.resultList.map(e => {
+            const responseItem: ChirpstackManyDeviceResponseContents = {
+                devEUI: e.devEui,
+                name: e.name,
+                description: e.description,
+                lastSeenAt: e.lastSeenAt ? timestampToDate(e.lastSeenAt) : undefined,
+                deviceStatusBattery: e.deviceStatus?.batteryLevel,
+                deviceStatusMargin: e.deviceStatus?.margin,
+                deviceStatusExternalPowerSource: e.deviceStatus?.externalPowerSource,
+                deviceProfileID: e.deviceProfileId,
+                deviceProfileName: e.deviceProfileName
+            };
+            responseDto.push(responseItem);
+        });
+        return {
+            totalCount: devices.totalCount.toString(),
+            result: responseDto,
+        };
     }
 
     private async createOrUpdateABPActivation(
@@ -404,11 +415,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             const req = new GetDeviceRequest();
             req.setDevEui(id);
 
-            const res = await this.get<GetDeviceResponse>(
-                `devices/${id}`,
-                this.deviceServiceClient,
-                req
-            );
+            const res = await this.get<GetDeviceResponse>(`devices/${id}`, this.deviceServiceClient, req);
 
             const deviceDto: ChirpstackDeviceContentsDto = {
                 deviceStatusBattery: res.getDeviceStatus()?.getBatteryLevel(),
@@ -531,7 +538,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     async getStats(deviceEUI: string): Promise<LoRaWANStatsResponseDto> {
         const now = new Date();
         const to_time = dateToTimestamp(now);
-        const from_time = new Date(new Date().setDate(now.getDate() - this.deviceStatsIntervalInDays)).toISOString();
+        const from_time = new Date(new Date().setDate(now.getDate() - this.deviceStatsIntervalInDays));
         const from_time_timestamp: Timestamp = dateToTimestamp(from_time);
 
         const req = new GetDeviceLinkMetricsRequest();
@@ -541,17 +548,15 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         req.setAggregation(Aggregation.DAY);
         const metaData = this.makeMetadataHeader();
 
-        const getDeviceMetricsPromise = new Promise<GetDeviceLinkMetricsResponse>(
-            (resolve, reject) => {
-                this.deviceServiceClient.getLinkMetrics(req, metaData, (err, resp) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(resp);
-                    }
-                });
-            }
-        );
+        const getDeviceMetricsPromise = new Promise<GetDeviceLinkMetricsResponse>((resolve, reject) => {
+            this.deviceServiceClient.getLinkMetrics(req, metaData, (err, resp) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
         try {
             const metrics = await getDeviceMetricsPromise;
             return this.mapMetrics(metrics);
@@ -666,10 +671,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return applicationIdObject.id;
     }
 
-    async getKeys(
-        client: DeviceServiceClient,
-        request: GetDeviceKeysRequest
-    ): Promise<GetDeviceKeysResponse> {
+    async getKeys(client: DeviceServiceClient, request: GetDeviceKeysRequest): Promise<GetDeviceKeysResponse> {
         const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<GetDeviceKeysResponse>((resolve, reject) => {
             client.getKeys(request, metaData, (err: ServiceError, resp: any) => {
@@ -747,10 +749,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             throw new NotFoundException();
         }
     }
-    async deleteQueue(
-        client: DeviceServiceClient,
-        request: FlushDeviceQueueRequest
-    ): Promise<void> {
+    async deleteQueue(client: DeviceServiceClient, request: FlushDeviceQueueRequest): Promise<void> {
         const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<void>((resolve, reject) => {
             client.flushQueue(request, metaData, (err: ServiceError, resp: any) => {
@@ -815,10 +814,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             throw new NotFoundException();
         }
     }
-    async postActivation(
-        client?: DeviceServiceClient,
-        request?: ActivateDeviceRequest
-    ): Promise<void> {
+    async postActivation(client?: DeviceServiceClient, request?: ActivateDeviceRequest): Promise<void> {
         const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<void>((resolve, reject) => {
             client.activate(request, metaData, (err: ServiceError, resp: any) => {

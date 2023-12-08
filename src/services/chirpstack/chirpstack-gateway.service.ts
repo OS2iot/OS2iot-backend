@@ -5,11 +5,11 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { AxiosResponse } from "axios";
+import * as BluebirdPromise from "bluebird";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
+import { GatewayStatsElementDto, GatewayStatsResponseDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { ListAllGatewaysResponseGrpcDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayContentsDto, UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
@@ -17,22 +17,18 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import {
-    checkIfUserHasAccessToOrganization,
-    OrganizationAccessScope,
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Gateway } from "@entities/gateway.entity";
+import { Gateway as GatewayDb } from "@entities/gateway.entity";
 import { Repository } from "typeorm";
 import { OrganizationService } from "@services/user-management/organization.service";
-import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
-} from "@helpers/security-helper";
 import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import {
     CreateGatewayRequest,
     DeleteGatewayRequest,
-    Gateway,
+    Gateway as GatewayCs,
     GetGatewayMetricsRequest,
     GetGatewayMetricsResponse,
     GetGatewayRequest,
@@ -47,11 +43,12 @@ import { Aggregation, Location } from "@chirpstack/chirpstack-api/common/common_
 import { dateToTimestamp } from "@helpers/date.helper";
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
-    constructor() {
-        super();
-        @InjectRepository(Gateway)
-        private gatewayRepository: Repository<Gateway>,
+    constructor(
+        @InjectRepository(GatewayDb)
+        private gatewayRepository: Repository<GatewayDb>,
         private organizationService: OrganizationService
+    ) {
+        super();
     }
     GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
     private readonly logger = new Logger(ChirpstackGatewayService.name, {
@@ -60,14 +57,8 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     private readonly ORG_ID_KEY = "internalOrganizationId";
     private readonly UPDATED_BY_KEY = "os2iot-updated-by";
     private readonly CREATED_BY_KEY = "os2iot-created-by";
-    private gatewayClient = new GatewayServiceClient(
-        this.baseUrlGRPC,
-        credentials.createInsecure()
-    );
-    async createNewGateway(
-        dto: CreateGatewayDto,
-        userId: number
-    ): Promise<ChirpstackResponseStatus> {
+    private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    async createNewGateway(dto: CreateGatewayDto, userId: number): Promise<ChirpstackResponseStatus> {
         dto.gateway = await this.updateDtoContents(dto.gateway);
 
         dto.gateway.tags = this.addOrganizationToTags(dto);
@@ -85,23 +76,18 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const location = new Location();
         this.mapToLocationChirpstack(location, dto);
 
-        const gatewayCs = new Gateway();
+        const gatewayCs = new GatewayCs();
         await this.mapToGatewayChirpstack(gatewayCs, dto, location);
         Object.entries(dto.gateway.tags).forEach(([key, value]) => {
-            gateway.getTagsMap().set(key, value);
+            gatewayCs.getTagsMap().set(key, value);
         });
-        req.setGateway(gateway);
-        await this.gatewayRepository.save(gateway);
+        req.setGateway(gatewayCs);
         try {
             await this.gatewayRepository.save(gateway);
             await this.post("gateways", this.gatewayClient, req);
             return { success: true };
         } catch (e) {
-            this.logger.error(
-                `Error from Chirpstack: '${JSON.stringify(dto)}', got response: ${JSON.stringify(
-                    e
-                )}`
-            );
+            this.logger.error(`Error from Chirpstack: '${JSON.stringify(dto)}', got response: ${JSON.stringify(e)}`);
             throw new BadRequestException({
                 success: false,
                 error: e,
@@ -110,7 +96,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
 
     async mapToGatewayChirpstack(
-        gateway: Gateway,
+        gateway: GatewayCs,
         dto: CreateGatewayDto | UpdateGatewayDto,
         location: Location,
         gatewayId?: string
@@ -120,9 +106,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         gateway.setName(dto.gateway.name);
         gateway.setLocation(location);
         gateway.setStatsInterval(30);
-        gateway.setTenantId(
-            dto.gateway.tenantId ? dto.gateway.tenantId : await this.getDefaultOrganizationId()
-        );
+        gateway.setTenantId(dto.gateway.tenantId ? dto.gateway.tenantId : await this.getDefaultOrganizationId());
     }
     mapToLocationChirpstack(location: Location, dto: CreateGatewayDto | UpdateGatewayDto) {
         location.setAccuracy(dto.gateway.location.accuracy);
@@ -164,7 +148,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const gateways = await query.getMany();
 
         return {
-            result: gateways.map(this.mapGatewayToResponseDto),
+            resultList: gateways.map(this.mapGatewayToResponseDto),
             totalCount: gateways.length,
         };
     }
@@ -177,10 +161,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                         const gw = await this.getOne(x.gatewayId);
                         x.internalOrganizationId = gw.gateway.internalOrganizationId;
                     } catch (err) {
-                        this.logger.error(
-                            `Failed to fetch gateway details for id ${x.gatewayId}`,
-                            err
-                        );
+                        this.logger.error(`Failed to fetch gateway details for id ${x.gatewayId}`, err);
                         x.internalOrganizationId = null;
                     }
                 },
@@ -190,39 +171,24 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             )
         );
     }
-    async mapSingleGatewayResponse(result: GetGatewayResponse, gatewayId: string) {
-        const gatewayReponseObject: SingleGatewayResponseDto = {
-            createdAt: result.getCreatedAt()?.toDate(),
-            lastSeenAt: result.getLastSeenAt()?.toObject(),
-            updatedAt: result.getUpdatedAt()?.toDate(),
-            stats: await this.getGatewayStats(gatewayId),
-            gateway: result.getGateway()?.toObject(),
-        };
-        gatewayReponseObject.gateway.internalOrganizationId = +result
-            .getGateway()
-            .getTagsMap()
-            .get(this.ORG_ID_KEY);
-        gatewayReponseObject.gateway.createdBy = +result
-            .getGateway()
-            .getTagsMap()
-            .get(this.CREATED_BY_KEY);
-        gatewayReponseObject.gateway.updatedBy = +result
-            .getGateway()
-            .getTagsMap()
-            .get(this.UPDATED_BY_KEY);
+    // async mapSingleGatewayResponse(result: GetGatewayResponse, gatewayId: string) {
+    //     const gatewayReponseObject: SingleGatewayResponseDto = {
+    //         createdAt: result.getCreatedAt()?.toDate(),
+    //         lastSeenAt: result.getLastSeenAt()?.toObject(),
+    //         updatedAt: result.getUpdatedAt()?.toDate(),
+    //         stats: await this.getGatewayStats(gatewayId),
+    //         gateway: result.getGateway()?.toObject(),
+    //     };
+    //     gatewayReponseObject.gateway.internalOrganizationId = +result.getGateway().getTagsMap().get(this.ORG_ID_KEY);
+    //     gatewayReponseObject.gateway.createdBy = +result.getGateway().getTagsMap().get(this.CREATED_BY_KEY);
+    //     gatewayReponseObject.gateway.updatedBy = +result.getGateway().getTagsMap().get(this.UPDATED_BY_KEY);
 
-        //Filter out specific tags.
-        gatewayReponseObject.gateway.tagsMap = gatewayReponseObject.gateway.tagsMap.filter(
-            ([key]) => {
-                return (
-                    key !== this.ORG_ID_KEY &&
-                    key !== this.CREATED_BY_KEY &&
-                    key !== this.UPDATED_BY_KEY
-                );
-            }
-        );
-        return gatewayReponseObject;
-    }
+    //     //Filter out specific tags.
+    //     gatewayReponseObject.gateway.tagsMap = gatewayReponseObject.gateway.tagsMap.filter(([key]) => {
+    //         return key !== this.ORG_ID_KEY && key !== this.CREATED_BY_KEY && key !== this.UPDATED_BY_KEY;
+    //     });
+    //     return gatewayReponseObject;
+    // }
     async getOne(gatewayId: string): Promise<SingleGatewayResponseDto> {
         if (gatewayId?.length != 16) {
             throw new BadRequestException("Invalid gateway id");
@@ -239,7 +205,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             const now = new Date();
             const statsFrom = new Date(new Date().setDate(now.getDate() - this.GATEWAY_STATS_INTERVAL_IN_DAYS));
 
-            result.stats = (await this.getGatewayStats(gatewayId, statsFrom, now)).result;
+            result.stats = (await this.getGatewayStats(gatewayId, statsFrom, now));
             result.gateway = this.mapGatewayToResponseDto(gateway);
 
             return result;
@@ -252,9 +218,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         }
     }
 
-    async getGatewayStats(gatewayId: string, from: Date, to: Date): Promise<GatewayStatsResponseDto> {
-         const to_time = dateToTimestamp(to);
-         const from_time_timestamp: Timestamp = dateToTimestamp(from);
+    async getGatewayStats(gatewayId: string, from: Date, to: Date): Promise<GatewayStatsElementDto[]> {
+        const to_time = dateToTimestamp(to);
+        const from_time_timestamp: Timestamp = dateToTimestamp(from);
 
         const request = new GetGatewayMetricsRequest();
         request.setGatewayId(gatewayId);
@@ -264,17 +230,15 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
         const metaData = this.makeMetadataHeader();
 
-        const getGatewayMetricsPromise = new Promise<GetGatewayMetricsResponse>(
-            (resolve, reject) => {
-                this.gatewayClient.getMetrics(request, metaData, (err, resp) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(resp);
-                    }
-                });
-            }
-        );
+        const getGatewayMetricsPromise = new Promise<GetGatewayMetricsResponse>((resolve, reject) => {
+            this.gatewayClient.getMetrics(request, metaData, (err, resp) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
         try {
             const metrics = await getGatewayMetricsPromise;
             return this.mapPackets(metrics);
@@ -342,32 +306,26 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         const gateway = this.mapContentsDtoToGateway(dto.gateway);
         gateway.gatewayId = gatewayId;
         gateway.updatedBy = req.user.userId;
-        
-        
+
         const request = new UpdateGatewayRequest();
         const location = new Location();
         this.mapToLocationChirpstack(location, dto);
 
-        const gateway = new Gateway();
+        const gatewayCs = new GatewayCs();
 
-        await this.mapToGatewayChirpstack(gateway, dto, location, gatewayId);
-  
+        await this.mapToGatewayChirpstack(gatewayCs, dto, location, gatewayId);
 
         Object.entries(dto.gateway.tags).forEach(([key, value]) => {
-            gateway.getTagsMap().set(key, value);
+            gatewayCs.getTagsMap().set(key, value);
         });
 
-        request.setGateway(gateway);
+        request.setGateway(gatewayCs);
         try {
             await this.gatewayRepository.update({ gatewayId }, gateway);
             await this.put("gateways", this.gatewayClient, request);
             return { success: true };
         } catch (e) {
-            this.logger.error(
-                `Error from Chirpstack: '${JSON.stringify(dto)}', got response: ${JSON.stringify(
-                    e
-                )}`
-            );
+            this.logger.error(`Error from Chirpstack: '${JSON.stringify(dto)}', got response: ${JSON.stringify(e)}`);
             throw new BadRequestException({
                 success: false,
                 error: e,
@@ -394,11 +352,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         tags[this.ORG_ID_KEY] = `${existing.gateway.organizationId}`;
         // TODO: Interpolated string will never be null?
         if (tags[this.ORG_ID_KEY] != null) {
-            checkIfUserHasAccessToOrganization(
-                req,
-                +tags[this.ORG_ID_KEY],
-                OrganizationAccessScope.GatewayWrite
-            );
+            checkIfUserHasAccessToOrganization(req, +tags[this.ORG_ID_KEY], OrganizationAccessScope.GatewayWrite);
         }
         return tags;
     }
@@ -438,7 +392,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
 
     public mapContentsDtoToGateway(dto: GatewayContentsDto) {
-        const gateway = new Gateway();
+        const gateway = new GatewayDb();
         gateway.name = dto.name;
         gateway.gatewayId = dto.gatewayId;
         gateway.description = dto.description;
@@ -452,14 +406,14 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return gateway;
     }
 
-    private mapGatewayToResponseDto(gateway: Gateway): GatewayResponseDto {
-        const responseDto = gateway as unknown as GatewayResponseDto;
+    private mapGatewayToResponseDto(gateway: GatewayDb): GatewayResponseGrpcDto {
+        const responseDto = gateway as unknown as GatewayResponseGrpcDto;
         responseDto.organizationId = gateway.organization.id;
         responseDto.organizationName = gateway.organization.name;
-        responseDto.tags = JSON.parse(gateway.tags);
-        responseDto.tags["internalOrganizationId"] = undefined;
-        responseDto.tags["os2iot-updated-by"] = undefined;
-        responseDto.tags["os2iot-created-by"] = undefined;
+        // responseDto.tags = JSON.parse(gateway.tags);
+        // responseDto.tags["internalOrganizationId"] = undefined;
+        // responseDto.tags["os2iot-updated-by"] = undefined;
+        // responseDto.tags["os2iot-created-by"] = undefined;
 
         const commonLocation = new CommonLocationDto();
         commonLocation.latitude = gateway.location.coordinates[1];

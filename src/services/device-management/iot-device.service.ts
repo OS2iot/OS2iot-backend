@@ -326,7 +326,6 @@ export class IoTDeviceService {
         await this.loRaWANDeviceRepository.save(devices);
     }
 
-
     async findMQTTDevice(id: number): Promise<MQTTInternalBrokerDevice> {
         return await this.mqttInternalBrokerDeviceRepository.findOne({
             where: { id },
@@ -923,10 +922,9 @@ export class IoTDeviceService {
         lorawanDevice: LoRaWANDevice,
         isUpdate: boolean,
         lorawanDeviceEuis: ChirpstackDeviceId[] = null,
-        loraApplications: ListAllChirpstackApplicationsResponseDto = null,
+        loraApplications: ListAllChirpstackApplicationsResponseDto = null
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
-
         if (
             !isUpdate &&
             (await this.chirpstackDeviceService.isDeviceAlreadyCreated(dto.lorawanSettings.devEUI, lorawanDeviceEuis))
@@ -945,7 +943,6 @@ export class IoTDeviceService {
             );
             lorawanDevice.chirpstackApplicationId = applicationId;
             chirpstackDeviceDto.device.applicationID = applicationId;
-
             // Create or update the LoRa device against Chirpstack API
             const response = await this.chirpstackDeviceService.createOrUpdateDevice(
                 chirpstackDeviceDto,
@@ -954,16 +951,14 @@ export class IoTDeviceService {
             if (response) {
                 lorawanDeviceEuis.push(chirpstackDeviceDto.device);
                 await this.doActivation(dto, isUpdate);
-       		lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
-            const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
-                dto.lorawanSettings.deviceProfileID
-            );
-            
+                lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
+                const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
+                    dto.lorawanSettings.deviceProfileID
+                );
+                lorawanDevice.deviceProfileName = deviceProfile.deviceProfile.name;
             } else {
                 throw new BadRequestException(ErrorCodes.InvalidPost);
             }
-            );
-            lorawanDevice.deviceProfileName = deviceProfile.deviceProfile.name;
         } catch (err) {
             this.logger.error(err);
 

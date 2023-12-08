@@ -10,7 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { nameof } from "@helpers/type-helper";
-import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
 type GatewayId = { gatewayId: string; name: string };
 
 @Injectable()
@@ -49,10 +49,7 @@ export class GatewayStatusHistoryService {
             latestStatusHistoryPerGatewayBeforePeriod
         );
 
-        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.result, statusHistories);
-            gateways.resultList,
-            statusHistories
-        );
+        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.resultList, statusHistories);
 
         return {
             data,
@@ -60,7 +57,7 @@ export class GatewayStatusHistoryService {
         };
     }
 
-    public async findOne(gateway: GatewayResponseDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
+    public async findOne(gateway: GatewayResponseGrpcDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
         const fromDate = gatewayStatusIntervalToDate(timeInterval);
 
         const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
@@ -129,7 +126,7 @@ export class GatewayStatusHistoryService {
     }
 
     private mapStatusHistoryToGateways(
-        gateways: GatewayResponseDto[],
+        gateways: GatewayResponseGrpcDto[],
         statusHistories: GatewayStatusHistory[]
     ): GatewayStatus[] {
         return gateways.map(gateway => {
@@ -137,7 +134,7 @@ export class GatewayStatusHistoryService {
         });
     }
 
-    private mapStatusHistoryToGateway(gateway: GatewayResponseDto, statusHistories: GatewayStatusHistory[]) {
+    private mapStatusHistoryToGateway(gateway: GatewayResponseGrpcDto, statusHistories: GatewayStatusHistory[]) {
         const statusTimestamps = statusHistories.reduce((res: GatewayStatus["statusTimestamps"], history) => {
             if (history.mac === gateway.gatewayId) {
                 res.push({

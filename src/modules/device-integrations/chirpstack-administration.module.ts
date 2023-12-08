@@ -10,7 +10,6 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({

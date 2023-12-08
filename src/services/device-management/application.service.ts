@@ -31,6 +31,7 @@ import { DataTargetService } from "@services/data-targets/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { MulticastService } from "@services/chirpstack/multicast.service";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -209,7 +210,7 @@ export class ApplicationService {
     }
 
     private async matchWithChirpstackStatusData(app: Application) {
-        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus();
+        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus(app);
         app.iotDevices.forEach(x => {
             if (x.type === IoTDeviceType.LoRaWAN) {
                 const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;

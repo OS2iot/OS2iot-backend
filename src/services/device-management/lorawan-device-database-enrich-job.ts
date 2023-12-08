@@ -4,11 +4,12 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import * as BluebirdPromise from "bluebird";
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseGrpcDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Gateway } from "@entities/gateway.entity";
 import { Repository } from "typeorm";
+import { timestampToDate } from "@helpers/date.helper";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
@@ -27,7 +28,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     async fetchStatusForGateway() {
         // Select all gateways from our database and chirpstack (Cheaper than individual calls)
         const gateways = await this.gatewayService.getAll();
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
+        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseGrpcDto>(
             "gateways",
             1000,
             0
@@ -36,7 +37,7 @@ export class LorawanDeviceDatabaseEnrichJob {
         // Setup batched fetching of status (Only for today)
         await BluebirdPromise.all(
             BluebirdPromise.map(
-                gateways.result,
+                gateways.resultList,
                 async gateway => {
                     try {
                         const fromTime = new Date();
@@ -50,8 +51,8 @@ export class LorawanDeviceDatabaseEnrichJob {
                             new Date()
                         );
                         // Save that to our database
-                        const stats = statsToday.result[0];
-                        const chirpstackGateway = chirpStackGateways.result.find(
+                        const stats = statsToday[0];
+                        const chirpstackGateway = chirpStackGateways.resultList.find(
                             g => g.id.toString() === gateway.gatewayId
                         );
 
@@ -59,7 +60,7 @@ export class LorawanDeviceDatabaseEnrichJob {
                             gateway.gatewayId,
                             stats.rxPacketsReceived,
                             stats.txPacketsEmitted,
-                            chirpstackGateway.lastSeenAt
+                            timestampToDate(chirpstackGateway.lastSeenAt)
                         );
                     } catch (err) {
                         this.logger.error(`Gateway status fetch failed with: ${JSON.stringify(err)}`, err);
@@ -100,7 +101,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     @Timeout(10000)
     async importChirpstackGateways() {
         // Get all chirpstack gateways
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
+        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseGrpcDto>(
             "gateways",
             1000,
             0
@@ -109,8 +110,8 @@ export class LorawanDeviceDatabaseEnrichJob {
         const dbGateways = await this.gatewayService.getAll();
 
         // Filter for gateways not existing in our database
-        const unknownGateways = chirpStackGateways.result.filter(
-            g => dbGateways.result.findIndex(dbGateway => dbGateway.gatewayId === g.id.toString()) === -1
+        const unknownGateways = chirpStackGateways.resultList.filter(
+            g => dbGateways.resultList.findIndex(dbGateway => dbGateway.gatewayId === g.id.toString()) === -1
         );
 
         await BluebirdPromise.all(
@@ -118,7 +119,7 @@ export class LorawanDeviceDatabaseEnrichJob {
                 unknownGateways,
                 async x => {
                     try {
-                        const gw = (await this.gatewayService.get(`gateways/${x.id}`)) as any;
+                        const gw = (await this.gatewayService.get(`gateways/${x.gatewayId}`)) as any;
                         const organizationId = gw.gateway.tags["internalOrganizationId"];
 
                         const gateway = this.gatewayService.mapContentsDtoToGateway(gw.gateway);
