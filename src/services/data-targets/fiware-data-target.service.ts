@@ -14,7 +14,10 @@ import { SendStatus } from "../../entities/enum/send-status.enum";
 
 @Injectable()
 export class FiwareDataTargetService extends BaseDataTargetService {
-    constructor(private httpService: HttpService, private authenticationTokenProvider: AuthenticationTokenProvider) {
+    constructor(
+        private httpService: HttpService,
+        private authenticationTokenProvider: AuthenticationTokenProvider
+    ) {
         super();
     }
 
@@ -25,20 +28,24 @@ export class FiwareDataTargetService extends BaseDataTargetService {
         datatarget: DataTarget,
         dto: TransformedPayloadDto
     ): Promise<DataTargetSendStatus> {
-
-        const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
+        const config: FiwareDataTargetConfiguration = (
+            datatarget as FiwareDataTarget
+        ).toConfiguration();
 
         // NOTE: For context broker secured with OAuth2 we want to have extra retry in case the cached token is expired.
-        const retries = config.tokenEndpoint ? 1 : 0
+        const retries = config.tokenEndpoint ? 1 : 0;
 
-        return this.retry(async () => this.sendInternal(config, dto), retries)
+        return this.retry(
+            async () => this.sendInternal(config, dto, datatarget),
+            retries
+        );
     }
 
     async sendInternal(
         config: FiwareDataTargetConfiguration,
-        dto: TransformedPayloadDto
+        dto: TransformedPayloadDto,
+        dataTarget: DataTarget
     ): Promise<DataTargetSendStatus> {
-
         const endpointUrl = `${config.url}/ngsi-ld/v1/entityOperations/upsert/`;
         const target = `FiwareDataTarget(${endpointUrl})`;
 
@@ -56,7 +63,8 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             );
             if (!result.status.toString().startsWith("2")) {
                 this.logger.warn(
-                    `Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText
+                    `Got a non-2xx status-code: ${result.status.toString()} and message: ${
+                        result.statusText
                     }`
                 );
             }
@@ -64,34 +72,36 @@ export class FiwareDataTargetService extends BaseDataTargetService {
         } catch (err) {
             this.logger.error(`FiwareDataTarget got error: ${err}`);
             await this.authenticationTokenProvider.clearConfig(config);
-            return this.failure(target, err);
+            return this.failure(target, err, dataTarget);
         }
     }
 
-    async retry(action: () => Promise<DataTargetSendStatus>, retries: number): Promise<DataTargetSendStatus> {
+    async retry(
+        action: () => Promise<DataTargetSendStatus>,
+        retries: number
+    ): Promise<DataTargetSendStatus> {
         do {
-            const result = await action()
+            const result = await action();
             if (result.status === SendStatus.ERROR && retries > 0) {
-                this.logger.warn('Sending request to Fiware failed. Retrying...')
+                this.logger.warn("Sending request to Fiware failed. Retrying...");
                 retries--;
-                continue
+                continue;
             } else {
-                return result
+                return result;
             }
-        }
-        while (true)
+        } while (true);
     }
 
     async makeAxiosConfiguration(
         config: FiwareDataTargetConfiguration
     ): Promise<AxiosRequestConfig> {
-
         const axiosConfig: AxiosRequestConfig = {
             timeout: config.timeout,
             headers: this.getHeaders(config),
         };
 
-        if (config.authorizationType !== null &&
+        if (
+            config.authorizationType !== null &&
             config.authorizationType !== AuthorizationType.NO_AUTHORIZATION
         ) {
             if (config.authorizationType === AuthorizationType.HTTP_BASIC_AUTHORIZATION) {
@@ -106,7 +116,7 @@ export class FiwareDataTargetService extends BaseDataTargetService {
             } else if (
                 config.authorizationType === AuthorizationType.OAUTH_AUTHORIZATION
             ) {
-                const token = await this.authenticationTokenProvider.getToken(config)
+                const token = await this.authenticationTokenProvider.getToken(config);
                 axiosConfig.headers["Authorization"] = `Bearer ${token}`;
             }
         }
@@ -114,12 +124,12 @@ export class FiwareDataTargetService extends BaseDataTargetService {
     }
 
     getHeaders(config: FiwareDataTargetConfiguration): any {
-        let headers: any = {}
+        let headers: any = {};
 
         if (config.context) {
             headers = {
                 "Content-Type": "application/json",
-                Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`
+                Link: `<${config.context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`,
             };
         } else {
             headers = {

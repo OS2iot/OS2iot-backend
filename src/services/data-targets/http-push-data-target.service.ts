@@ -27,7 +27,9 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
             rawBody: JSON.stringify(dto.payload),
             mimeType: "application/json",
         };
-        const config: HttpPushDataTargetConfiguration = (datatarget as HttpPushDataTarget).toConfiguration();
+        const config: HttpPushDataTargetConfiguration = (
+            datatarget as HttpPushDataTarget
+        ).toConfiguration();
 
         // Setup HTTP client
         const axiosConfig = HttpPushDataTargetService.makeAxiosConfiguration(
@@ -55,7 +57,7 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
         } catch (err) {
             // TODO: Error handling for common errors
             this.logger.error(`HttpPushDataTarget got error: ${err}`);
-            return this.failure(target, err);
+            return this.failure(target, err, datatarget);
         }
     }
 

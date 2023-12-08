@@ -1,29 +1,19 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+    IsHexadecimal,
     IsJSON,
     IsOptional,
     IsString,
+    Length,
     Matches,
     MaxLength,
     MinLength,
     ValidateNested,
 } from "class-validator";
-
-import { ChirpstackBoardsDto } from "@dto/chirpstack/chirpstack-boards.dto";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 
 export class GatewayContentsDto {
-    @ApiProperty({
-        required: false,
-        default: [],
-        type: [ChirpstackBoardsDto],
-    })
-    @IsOptional()
-    @ValidateNested({ each: true })
-    @Type(() => ChirpstackBoardsDto)
-    boards?: ChirpstackBoardsDto[];
-
     @ApiProperty({ required: true })
     @IsOptional()
     @IsString()
@@ -34,12 +24,10 @@ export class GatewayContentsDto {
     @IsOptional()
     discoveryEnabled: boolean;
 
-    @ApiHideProperty()
-    gatewayProfileID?: string;
-
     @ApiProperty({ required: true })
     @IsString()
-    @Matches(/[0-9A-Fa-f]{16}/)
+    @IsHexadecimal()
+    @Length(16, 16)
     gatewayId: string;
 
     @ApiProperty({ required: false })
@@ -68,4 +56,10 @@ export class GatewayContentsDto {
 
     @ApiHideProperty()
     tags?: { [id: string]: string };
+
+    @ApiHideProperty()
+    gatewayProfileID?: string;
+
+    @ApiHideProperty()
+    id: string;
 }

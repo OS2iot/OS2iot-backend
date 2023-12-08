@@ -16,10 +16,7 @@ import {
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
-import {
-    SigFoxApiDeviceContent,
-    SigFoxApiDeviceResponse,
-} from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { SigFoxApiDeviceContent, SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { Application } from "@entities/application.entity";
@@ -72,6 +69,7 @@ import { EncryptionHelperService } from "@services/encryption-helper.service";
 import { CsvGeneratorService } from "@services/csv-generator.service";
 import * as fs from "fs";
 import { caCertPath } from "@resources/resource-paths";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -106,7 +104,8 @@ export class IoTDeviceService {
         private mqttService: MqttService,
         private internalMqttClientListenerService: InternalMqttClientListenerService,
         private encryptionHelperService: EncryptionHelperService,
-        private csvGeneratorService: CsvGeneratorService
+        private csvGeneratorService: CsvGeneratorService,
+        private deviceProfileService: DeviceProfileService
     ) {}
 
     private readonly logger = new Logger(IoTDeviceService.name);
@@ -132,10 +131,7 @@ export class IoTDeviceService {
         });
     }
 
-    async findOneWithApplicationAndMetadata(
-        id: number,
-        enrich?: boolean
-    ): Promise<IoTDeviceOrSpecialized> {
+    async findOneWithApplicationAndMetadata(id: number, enrich?: boolean): Promise<IoTDeviceOrSpecialized> {
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620
         // Therefore we use the QueryBuilder ...
         const iotDevice = await this.queryDatabaseForIoTDevice(id);
@@ -167,9 +163,7 @@ export class IoTDeviceService {
     async enrichSigFoxDevice(iotDevice: IoTDevice): Promise<SigFoxDeviceWithBackendDataDto> {
         const sigfoxDevice = iotDevice as SigFoxDeviceWithBackendDataDto;
 
-        const application = await this.applicationService.findOneWithOrganisation(
-            iotDevice.application.id
-        );
+        const application = await this.applicationService.findOneWithOrganisation(iotDevice.application.id);
 
         const sigfoxGroup = await this.sigfoxGroupService.findOneByGroupId(
             sigfoxDevice.groupId,
@@ -208,9 +202,7 @@ export class IoTDeviceService {
         limit: number,
         offset: number
     ): Promise<ListAllIoTDevicesMinimalResponseDto> {
-        const data: Promise<IoTDeviceMinimalRaw[]> = this.getQueryForFindAllByPayloadDecoder(
-            payloadDecoderId
-        )
+        const data: Promise<IoTDeviceMinimalRaw[]> = this.getQueryForFindAllByPayloadDecoder(payloadDecoderId)
             .addSelect('"application"."id"', "applicationId")
             .addSelect('"application"."belongsToId"', "organizationId")
             .limit(limit)
@@ -261,9 +253,7 @@ export class IoTDeviceService {
         return false;
     }
 
-    private getQueryForFindAllByPayloadDecoder(
-        payloadDecoderId: number
-    ): SelectQueryBuilder<IoTDevice> {
+    private getQueryForFindAllByPayloadDecoder(payloadDecoderId: number): SelectQueryBuilder<IoTDevice> {
         return this.iotDeviceRepository
             .createQueryBuilder("device")
             .innerJoin("device.application", "application")
@@ -278,13 +268,8 @@ export class IoTDeviceService {
      * Avoid calling the endpoint /devices/:id at SigFox
      * https://support.sigfox.com/docs/api-rate-limiting
      */
-    private async getDataFromSigFoxAboutDevice(
-        sigfoxGroup: SigFoxGroup,
-        sigfoxDevice: SigFoxDeviceWithBackendDataDto
-    ) {
-        const allDevices = await this.sigfoxApiDeviceService.getAllByGroupIds(sigfoxGroup, [
-            sigfoxDevice.groupId,
-        ]);
+    private async getDataFromSigFoxAboutDevice(sigfoxGroup: SigFoxGroup, sigfoxDevice: SigFoxDeviceWithBackendDataDto) {
+        const allDevices = await this.sigfoxApiDeviceService.getAllByGroupIds(sigfoxGroup, [sigfoxDevice.groupId]);
 
         const thisDevice = allDevices.data.find(x => x.id == sigfoxDevice.deviceId);
         return thisDevice;
@@ -294,49 +279,30 @@ export class IoTDeviceService {
         return this.iotDeviceRepository
             .createQueryBuilder("iot_device")
             .loadAllRelationIds({ relations: ["createdBy", "updatedBy"] })
-            .innerJoinAndSelect(
-                "iot_device.application",
-                "application",
-                'application.id = iot_device."applicationId"'
-            )
-            .leftJoinAndSelect(
-                "iot_device.receivedMessagesMetadata",
-                "metadata",
-                'metadata."deviceId" = iot_device.id'
-            )
+            .innerJoinAndSelect("iot_device.application", "application", 'application.id = iot_device."applicationId"')
+            .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata", 'metadata."deviceId" = iot_device.id')
             .leftJoinAndSelect(
                 "iot_device.latestReceivedMessage",
                 "receivedMessage",
                 '"receivedMessage"."deviceId" = iot_device.id'
             )
-            .leftJoinAndSelect(
-                "iot_device.deviceModel",
-                "device_model",
-                'device_model.id = iot_device."deviceModelId"'
-            )
+            .leftJoinAndSelect("iot_device.deviceModel", "device_model", 'device_model.id = iot_device."deviceModelId"')
             .orderBy('metadata."sentTime"', "DESC");
     }
 
     private async queryDatabaseForIoTDevice(id: number) {
-        return await this.buildIoTDeviceWithRelationsQuery()
-            .where("iot_device.id = :id", { id: id })
-            .getOne();
+        return await this.buildIoTDeviceWithRelationsQuery().where("iot_device.id = :id", { id: id }).getOne();
     }
 
     private queryDatabaseForIoTDevices(ids: number[]) {
-        return this.buildIoTDeviceWithRelationsQuery()
-            .where("iot_device.id IN (:...ids)", { ids })
-            .getMany();
+        return this.buildIoTDeviceWithRelationsQuery().where("iot_device.id IN (:...ids)", { ids }).getMany();
     }
 
     async findGenericHttpDeviceByApiKey(key: string): Promise<GenericHTTPDevice> {
         return await this.genericHTTPDeviceRepository.findOneBy({ apiKey: key });
     }
 
-    async findSigFoxDeviceByDeviceIdAndDeviceTypeId(
-        deviceId: string,
-        apiKey: string
-    ): Promise<SigFoxDevice> {
+    async findSigFoxDeviceByDeviceIdAndDeviceTypeId(deviceId: string, apiKey: string): Promise<SigFoxDevice> {
         return await this.sigfoxRepository.findOneBy({
             deviceId,
             deviceTypeId: apiKey,
@@ -348,6 +314,18 @@ export class IoTDeviceService {
             deviceEUI: ILike(deviceEUI),
         });
     }
+
+    async findNonEnrichedLoRaWANDevices(): Promise<LoRaWANDevice[]> {
+        return await this.loRaWANDeviceRepository
+            .createQueryBuilder("iot_device")
+            .where('"OTAAapplicationKey" is null')
+            .getMany();
+    }
+
+    async updateLocalLoRaWANDevices(devices: LoRaWANDevice[]): Promise<void> {
+        await this.loRaWANDeviceRepository.save(devices);
+    }
+
 
     async findMQTTDevice(id: number): Promise<MQTTInternalBrokerDevice> {
         return await this.mqttInternalBrokerDeviceRepository.findOne({
@@ -376,10 +354,7 @@ export class IoTDeviceService {
         return iotDevice[0].data;
     }
 
-    async createMany(
-        createIoTDeviceDtos: CreateIoTDeviceDto[],
-        userId: number
-    ): Promise<IotDeviceBatchResponseDto[]> {
+    async createMany(createIoTDeviceDtos: CreateIoTDeviceDto[], userId: number): Promise<IotDeviceBatchResponseDto[]> {
         const iotDevicesMaps: CreateIoTDeviceMapDto[] = [];
 
         // Translate each generic device to the specific type
@@ -410,9 +385,7 @@ export class IoTDeviceService {
 
         // Store or update valid devices on the database
         const validIotDevices = validProcessedDevices.map(iotDeviceMap => iotDeviceMap.iotDevice);
-        const dbIotDevices = validIotDevices.length
-            ? await this.iotDeviceRepository.save(validIotDevices)
-            : [];
+        const dbIotDevices = validIotDevices.length ? await this.iotDeviceRepository.save(validIotDevices) : [];
 
         // Set deviceId related values on new mqtt devices
         await this.handleNewMQTTDevices(dbIotDevices);
@@ -426,9 +399,7 @@ export class IoTDeviceService {
     }
 
     async removeDownlink(sigfoxDevice: SigFoxDevice): Promise<SigFoxDevice> {
-        this.logger.log(
-            `Removing downlink from device(${sigfoxDevice.id}) sigfoxId(${sigfoxDevice.deviceId})`
-        );
+        this.logger.log(`Removing downlink from device(${sigfoxDevice.id}) sigfoxId(${sigfoxDevice.deviceId})`);
         sigfoxDevice.downlinkPayload = null;
         return await this.iotDeviceRepository.save(sigfoxDevice);
     }
@@ -452,9 +423,7 @@ export class IoTDeviceService {
 
     async update(id: number, updateDto: UpdateIoTDeviceDto, userId: number): Promise<IoTDevice> {
         const existingIoTDevice = await this.iotDeviceRepository.findOneByOrFail({ id });
-        const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = [
-            { iotDevice: existingIoTDevice, iotDeviceDto: updateDto },
-        ];
+        const iotDeviceDtoMap: CreateIoTDeviceMapDto[] = [{ iotDevice: existingIoTDevice, iotDeviceDto: updateDto }];
         await this.validateDtoAndCreateIoTDevice(iotDeviceDtoMap, true);
 
         const mappedIoTDevice = iotDeviceDtoMap[0].iotDevice;
@@ -464,19 +433,14 @@ export class IoTDeviceService {
         return res;
     }
 
-    async updateMany(
-        updateDto: UpdateIoTDeviceBatchDto,
-        userId: number
-    ): Promise<IotDeviceBatchResponseDto[]> {
+    async updateMany(updateDto: UpdateIoTDeviceBatchDto, userId: number): Promise<IotDeviceBatchResponseDto[]> {
         // Fetch existing devices from db and map them
         const existingDevices = await this.iotDeviceRepository.findBy({
             id: In(updateDto.data.map(device => device.id)),
         });
         const iotDeviceMaps: CreateIoTDeviceMapDto[] = updateDto.data.map(updateDevice => ({
             iotDeviceDto: updateDevice,
-            iotDevice: existingDevices.find(
-                existingDevice => existingDevice.id === updateDevice.id
-            ),
+            iotDevice: existingDevices.find(existingDevice => existingDevice.id === updateDevice.id),
         }));
         await this.validateDtoAndCreateIoTDevice(iotDeviceMaps, true);
 
@@ -523,9 +487,7 @@ export class IoTDeviceService {
 
                 await this.chirpstackDeviceService.deleteDevice(lorawanDevice.deviceEUI);
             } else if (device.type === IoTDeviceType.MQTTExternalBroker) {
-                this.internalMqttClientListenerService.removeMQTTClient(
-                    device as MQTTExternalBrokerDevice
-                );
+                this.internalMqttClientListenerService.removeMQTTClient(device as MQTTExternalBrokerDevice);
             }
         });
 
@@ -553,10 +515,7 @@ export class IoTDeviceService {
         // Remove device from the mappings. It's important that each existing mapping has been fetched
         // as the new mappings will replace the existing ones.
         multicastsWithDevice.forEach(
-            multicast =>
-                (multicast.iotDevices = multicast.iotDevices?.filter(
-                    iotDevice => iotDevice.id !== device.id
-                ))
+            multicast => (multicast.iotDevices = multicast.iotDevices?.filter(iotDevice => iotDevice.id !== device.id))
         );
         await multicastRepository.save(multicastsWithDevice);
     }
@@ -571,9 +530,7 @@ export class IoTDeviceService {
 
         switch (device.type) {
             case IoTDeviceType.LoRaWAN:
-                const loraData = await this.chirpstackDeviceService.getStats(
-                    (device as LoRaWANDevice).deviceEUI
-                );
+                const loraData = await this.chirpstackDeviceService.getStats((device as LoRaWANDevice).deviceEUI);
 
                 return loraData.result.map(loraStat => ({
                     timestamp: loraStat.timestamp,
@@ -582,11 +539,7 @@ export class IoTDeviceService {
                     rxPacketsPerDr: loraStat.rxPacketsPerDr,
                 }));
             case IoTDeviceType.SigFox:
-                const sigFoxData = await this.sigfoxMessagesService.getMessageSignals(
-                    device.id,
-                    fromDate,
-                    toDate
-                );
+                const sigFoxData = await this.sigfoxMessagesService.getMessageSignals(device.id, fromDate, toDate);
 
                 // SigFox data might contain data points on the same day. They have to be averaged
                 const sortedStats = sigFoxData
@@ -595,9 +548,7 @@ export class IoTDeviceService {
                         rssi: data.rssi,
                         snr: data.snr,
                     }))
-                    .sort(
-                        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-                    );
+                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                 const averagedStats = this.averageStatsForSameDay(sortedStats);
                 return averagedStats;
             default:
@@ -607,13 +558,7 @@ export class IoTDeviceService {
 
     private averageStatsForSameDay(stats: DeviceStatsResponseDto[]) {
         const statsSummed = stats.reduce(
-            (
-                res: Record<
-                    string,
-                    { timestamp: string; count: number; rssi: number; snr: number }
-                >,
-                item
-            ) => {
+            (res: Record<string, { timestamp: string; count: number; rssi: number; snr: number }>, item) => {
                 // Assume that the date is ISO formatted and extract only the date.
                 const dateWithoutTime = item.timestamp.split("T")[0];
                 res[dateWithoutTime] = res.hasOwnProperty(dateWithoutTime)
@@ -634,13 +579,11 @@ export class IoTDeviceService {
             {}
         );
 
-        const averagedStats: DeviceStatsResponseDto[] = Object.entries(statsSummed).map(
-            ([_key, item]) => ({
-                timestamp: item.timestamp,
-                rssi: item.rssi / item.count,
-                snr: item.snr / item.count,
-            })
-        );
+        const averagedStats: DeviceStatsResponseDto[] = Object.entries(statsSummed).map(([_key, item]) => ({
+            timestamp: item.timestamp,
+            rssi: item.rssi / item.count,
+            snr: item.snr / item.count,
+        }));
 
         return averagedStats;
     }
@@ -728,9 +671,7 @@ export class IoTDeviceService {
         deviceModels: DeviceModel[]
     ) {
         for (const map of iotDevicesDtoMap) {
-            const applicationMatch = applications.find(
-                application => application.id === map.iotDevice.application.id
-            );
+            const applicationMatch = applications.find(application => application.id === map.iotDevice.application.id);
 
             if (!applicationMatch) {
                 map.error = {
@@ -741,9 +682,7 @@ export class IoTDeviceService {
 
             // Validate DeviceModel if set
             if (map.iotDeviceDto.deviceModelId) {
-                const deviceModelMatch = deviceModels.find(
-                    model => model.id === map.iotDeviceDto.deviceModelId
-                );
+                const deviceModelMatch = deviceModels.find(model => model.id === map.iotDeviceDto.deviceModelId);
 
                 if (!deviceModelMatch) {
                     map.error = { message: ErrorCodes.DeviceModelDoesNotExist };
@@ -768,15 +707,10 @@ export class IoTDeviceService {
     }
 
     private async getApplicationsByIds(applicationIds: number[]) {
-        return applicationIds.length
-            ? await this.applicationService.findManyByIds(applicationIds)
-            : [];
+        return applicationIds.length ? await this.applicationService.findManyByIds(applicationIds) : [];
     }
 
-    private async mapChildDtoToIoTDevice(
-        iotDevicesDtoMap: CreateIoTDeviceMapDto[],
-        isUpdate: boolean
-    ): Promise<void> {
+    public async mapChildDtoToIoTDevice(iotDevicesDtoMap: CreateIoTDeviceMapDto[], isUpdate: boolean): Promise<void> {
         // Pre-fetch lorawan settings, if any
         const loraDeviceEuis = await this.getLorawanDeviceEuis(iotDevicesDtoMap);
         const loraOrganizationId = await this.chirpstackDeviceService.getDefaultOrganizationId();
@@ -789,7 +723,7 @@ export class IoTDeviceService {
             try {
                 if (map.iotDevice.constructor.name === LoRaWANDevice.name) {
                     const cast = map.iotDevice as LoRaWANDevice;
-                    map.iotDevice = await this.mapLoRaWANDevice(
+                    map.iotDevice = await this.mapAndCreateLoRaWANDevice(
                         map.iotDeviceDto,
                         cast,
                         isUpdate,
@@ -804,16 +738,11 @@ export class IoTDeviceService {
                     map.iotDevice = await this.mapMQTTInternalBrokerDevice(map.iotDeviceDto, cast);
                 } else if (map.iotDevice.constructor.name === MQTTExternalBrokerDevice.name) {
                     const cast = map.iotDevice as MQTTExternalBrokerDevice;
-                    map.iotDevice = await this.mapMQTTExternalBrokerDevice(
-                        map.iotDeviceDto,
-                        cast,
-                        isUpdate
-                    );
+                    map.iotDevice = await this.mapMQTTExternalBrokerDevice(map.iotDeviceDto, cast, isUpdate);
                 }
             } catch (error) {
                 map.error = {
-                    message:
-                        (error as Error)?.message ?? ErrorCodes.FailedToCreateOrUpdateIotDevice,
+                    message: (error as Error)?.message ?? ErrorCodes.FailedToCreateOrUpdateIotDevice,
                 };
             }
         }
@@ -822,19 +751,13 @@ export class IoTDeviceService {
     private async getLorawanDeviceEuis(
         iotDevicesDtoMap: CreateIoTDeviceMapDto[]
     ): Promise<ChirpstackDeviceId[] | null> {
-        const iotLorawanDevices = iotDevicesDtoMap.reduce(
-            (res: string[], { iotDevice, iotDeviceDto }) => {
-                if (
-                    iotDevice.constructor.name === LoRaWANDevice.name &&
-                    iotDeviceDto.lorawanSettings
-                ) {
-                    res.push(iotDeviceDto.lorawanSettings.devEUI);
-                }
+        const iotLorawanDevices = iotDevicesDtoMap.reduce((res: string[], { iotDevice, iotDeviceDto }) => {
+            if (iotDevice.constructor.name === LoRaWANDevice.name && iotDeviceDto.lorawanSettings) {
+                res.push(iotDeviceDto.lorawanSettings.devEUI);
+            }
 
-                return res;
-            },
-            []
-        );
+            return res;
+        }, []);
 
         const loraDeviceEuis = !iotLorawanDevices.length
             ? []
@@ -844,16 +767,11 @@ export class IoTDeviceService {
         return loraDeviceEuis.map(loraDevice => ({ devEUI: loraDevice.deviceEUI }));
     }
 
-    private async mapSigFoxDevice(
-        dto: CreateIoTDeviceDto,
-        cast: SigFoxDevice
-    ): Promise<SigFoxDevice> {
+    private async mapSigFoxDevice(dto: CreateIoTDeviceDto, cast: SigFoxDevice): Promise<SigFoxDevice> {
         cast.deviceId = dto?.sigfoxSettings?.deviceId;
         cast.deviceTypeId = dto?.sigfoxSettings?.deviceTypeId;
 
-        const sigfoxGroup = await this.sigfoxGroupService.findOneWithPassword(
-            dto.sigfoxSettings.groupId
-        );
+        const sigfoxGroup = await this.sigfoxGroupService.findOneWithPassword(dto.sigfoxSettings.groupId);
         cast.groupId = sigfoxGroup.sigfoxGroupId;
         await this.createOrUpdateSigFoxDevice(dto, sigfoxGroup, cast);
 
@@ -862,11 +780,7 @@ export class IoTDeviceService {
         return cast;
     }
 
-    private async createOrUpdateSigFoxDevice(
-        dto: CreateIoTDeviceDto,
-        sigfoxGroup: SigFoxGroup,
-        cast: SigFoxDevice
-    ) {
+    private async createOrUpdateSigFoxDevice(dto: CreateIoTDeviceDto, sigfoxGroup: SigFoxGroup, cast: SigFoxDevice) {
         if (dto?.sigfoxSettings?.connectToExistingDeviceInBackend == false) {
             // Create device in sigfox backend
             const res = await this.createInSigfoxBackend(dto, sigfoxGroup);
@@ -874,10 +788,7 @@ export class IoTDeviceService {
         } else {
             // Ensure that the device exists
             try {
-                const res = await this.sigfoxApiDeviceService.getByIdSimple(
-                    sigfoxGroup,
-                    cast.deviceId
-                );
+                const res = await this.sigfoxApiDeviceService.getByIdSimple(sigfoxGroup, cast.deviceId);
                 cast.deviceId = res.id;
                 cast.deviceTypeId = res.deviceType.id;
                 await this.doEditInSigFoxBackend(res, dto, sigfoxGroup, cast);
@@ -890,13 +801,8 @@ export class IoTDeviceService {
         }
     }
 
-    async getAllSigfoxDevicesByGroup(
-        group: SigFoxGroup,
-        removeExisting: boolean
-    ): Promise<SigFoxApiDeviceResponse> {
-        const devices = await this.sigfoxApiDeviceService.getAllByGroupIds(group, [
-            group.sigfoxGroupId,
-        ]);
+    async getAllSigfoxDevicesByGroup(group: SigFoxGroup, removeExisting: boolean): Promise<SigFoxApiDeviceResponse> {
+        const devices = await this.sigfoxApiDeviceService.getAllByGroupIds(group, [group.sigfoxGroupId]);
 
         if (removeExisting) {
             const sigfoxDeviceIdsInUse = await this.sigfoxRepository.find({
@@ -1012,7 +918,7 @@ export class IoTDeviceService {
         return sigfoxDto;
     }
 
-    private async mapLoRaWANDevice(
+    private async mapAndCreateLoRaWANDevice(
         dto: CreateIoTDeviceDto,
         lorawanDevice: LoRaWANDevice,
         isUpdate: boolean,
@@ -1023,10 +929,7 @@ export class IoTDeviceService {
 
         if (
             !isUpdate &&
-            (await this.chirpstackDeviceService.isDeviceAlreadyCreated(
-                dto.lorawanSettings.devEUI,
-                lorawanDeviceEuis
-            ))
+            (await this.chirpstackDeviceService.isDeviceAlreadyCreated(dto.lorawanSettings.devEUI, lorawanDeviceEuis))
         ) {
             throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
         }
@@ -1051,9 +954,16 @@ export class IoTDeviceService {
             if (response) {
                 lorawanDeviceEuis.push(chirpstackDeviceDto.device);
                 await this.doActivation(dto, isUpdate);
+       		lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
+            const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
+                dto.lorawanSettings.deviceProfileID
+            );
+            
             } else {
                 throw new BadRequestException(ErrorCodes.InvalidPost);
             }
+            );
+            lorawanDevice.deviceProfileName = deviceProfile.deviceProfile.name;
         } catch (err) {
             this.logger.error(err);
 
@@ -1067,7 +977,7 @@ export class IoTDeviceService {
     }
 
     private async doActivation(dto: CreateIoTDeviceDto, isUpdate: boolean): Promise<void> {
-        if (dto.lorawanSettings.activationType === ActivationType.OTAA) {
+        if (dto.lorawanSettings.activationType == ActivationType.OTAA) {
             // OTAA Activate if key is provided
             await this.doActivationByOTAA(dto, isUpdate);
         } else if (dto.lorawanSettings.activationType === ActivationType.ABP) {
@@ -1118,16 +1028,12 @@ export class IoTDeviceService {
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
                 cast.mqttpasswordhash = this.mqttService.hashPassword(settings.mqttpassword);
-                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(
-                    settings.mqttpassword
-                );
+                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(settings.mqttpassword);
                 cast.mqttusername = settings.mqttusername;
                 break;
             case AuthenticationType.CERTIFICATE:
                 if (!cast.deviceCertificate) {
-                    const certificateDetails = await this.mqttService.generateCertificate(
-                        cast.name
-                    );
+                    const certificateDetails = await this.mqttService.generateCertificate(cast.name);
                     cast.deviceCertificate = certificateDetails.deviceCertificate;
                     cast.deviceCertificateKey = this.encryptionHelperService.basicEncrypt(
                         certificateDetails.deviceCertificateKey
@@ -1159,17 +1065,13 @@ export class IoTDeviceService {
         cast.authenticationType = settings.authenticationType;
         switch (cast.authenticationType) {
             case AuthenticationType.PASSWORD:
-                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(
-                    settings.mqttpassword
-                );
+                cast.mqttpassword = this.encryptionHelperService.basicEncrypt(settings.mqttpassword);
                 cast.mqttusername = settings.mqttusername;
                 break;
             case AuthenticationType.CERTIFICATE:
                 cast.caCertificate = settings.caCertificate;
                 cast.deviceCertificate = settings.deviceCertificate;
-                cast.deviceCertificateKey = this.encryptionHelperService.basicEncrypt(
-                    settings.deviceCertificateKey
-                );
+                cast.deviceCertificateKey = this.encryptionHelperService.basicEncrypt(settings.deviceCertificateKey);
                 break;
         }
 
@@ -1192,9 +1094,7 @@ export class IoTDeviceService {
             authenticationType: device.authenticationType,
             caCertificate: device.caCertificate ?? fs.readFileSync(caCertPath).toString(),
             deviceCertificate: device.deviceCertificate,
-            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(
-                device.deviceCertificateKey
-            ),
+            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(device.deviceCertificateKey),
             mqtttopicname: device.mqtttopicname,
             mqttURL: device.mqttURL,
             mqttPort: device.mqttPort,
@@ -1211,9 +1111,7 @@ export class IoTDeviceService {
             authenticationType: device.authenticationType,
             caCertificate: device.caCertificate,
             deviceCertificate: device.deviceCertificate,
-            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(
-                device.deviceCertificateKey
-            ),
+            deviceCertificateKey: this.encryptionHelperService.basicDecrypt(device.deviceCertificateKey),
             mqtttopicname: device.mqtttopicname,
             mqttURL: device.mqttURL,
             mqttPort: device.mqttPort,

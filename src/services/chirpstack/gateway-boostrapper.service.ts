@@ -33,19 +33,17 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
      * @param gateways All chirpstack gateways
      * @param statusHistories Existing status histories to check against
      */
-    private async seedGatewayStatus(
+    private async seedGatewayStatus(gateways: ListAllGatewaysResponseDto, statusHistories: GatewayStatusHistory[]) {
         gateways: ListAllGatewaysResponseGrpcDto,
-        statusHistories: GatewayStatusHistory[]
-    ) {
         const now = new Date();
         const errorTime = new Date();
         errorTime.setSeconds(errorTime.getSeconds() - 150);
 
         // Don't overwrite ones which already have a status history
         const newHistoriesForMissingGateways = gateways.resultList.reduce(
-            (res: GatewayStatusHistory[], gateway) => {
+            if (!statusHistories.some(history => history.mac === gateway.gatewayId)) {
                 if (!statusHistories.some(history => history.mac === gateway.gatewayId)) {
-                    // Best fit is to imitate the status logic from Chirpstack.
+                // Best fit is to imitate the status logic from Chirpstack.
                     if (gateway.lastSeenAt) {
                         const lastSeenDate = timestampToDate(gateway.lastSeenAt);
 
@@ -59,10 +57,8 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
                     }
                 }
 
-                return res;
-            },
-            []
-        );
+            return res;
+        }, []);
 
         if (newHistoriesForMissingGateways.length) {
             await this.statusHistoryService.createMany(newHistoriesForMissingGateways);

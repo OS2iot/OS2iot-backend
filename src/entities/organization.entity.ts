@@ -8,6 +8,7 @@ import { Permission } from "@entities/permissions/permission.entity";
 import { SigFoxGroup } from "./sigfox-group.entity";
 import { DeviceModel } from "./device-model.entity";
 import { User } from "./user.entity";
+import { Gateway } from "@entities/gateway.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -60,4 +61,7 @@ export class Organization extends DbBaseEntity {
         nullable: true,
     })
     awaitingUsers?: User[];
+
+    @OneToMany(_ => Gateway, gateway => gateway.organization, { nullable: true })
+    gateways?: Gateway[];
 }

@@ -1,9 +1,9 @@
 import {
     BadRequestException,
+    forwardRef,
     Inject,
     Injectable,
     Logger,
-    forwardRef,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
@@ -22,9 +22,7 @@ import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
-import * as nodemailer from "nodemailer";
 import { Organization } from "@entities/organization.entity";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { PermissionType } from "@enum/permission-type.enum";
 import { ConfigService } from "@nestjs/config";
 import { isPermissionType } from "@helpers/security-helper";
@@ -162,7 +160,8 @@ export class UserService {
         await this.setPasswordHash(mappedUser, dto.password);
 
         if (dto.globalAdmin) {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             await this.permissionService.addUsersToPermission(globalAdminPermission, [
                 mappedUser,
             ]);
@@ -200,11 +199,8 @@ export class UserService {
     private async setPasswordHash(mappedUser: User, password: string) {
         this.checkPassword(password);
         // Hash password with bcrpyt
-        // this.logger.verbose("Generating salt");
         const salt = await bcrypt.genSalt(10);
-        // this.logger.verbose("Generating hash");
         mappedUser.passwordHash = await bcrypt.hash(password, salt);
-        // this.logger.verbose(`Generated hash: '${mappedUser.passwordHash}'`);
     }
 
     private checkPassword(password: string) {
@@ -255,7 +251,8 @@ export class UserService {
 
     private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
         if (dto.globalAdmin) {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             // Don't do anything if the user already is global admin.
             if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
                 await this.permissionService.addUsersToPermission(globalAdminPermission, [
@@ -263,7 +260,8 @@ export class UserService {
                 ]);
             }
         } else {
-            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission =
+                await this.permissionService.findOrCreateGlobalAdminPermission();
             await this.permissionService.removeUserFromPermission(
                 globalAdminPermission,
                 mappedUser
@@ -381,6 +379,7 @@ export class UserService {
         organization: Organization
     ): Promise<void> {
         const emails = await this.getOrgAdminEmails(organization);
+
         await this.oS2IoTMail.sendMail({
             to: emails,
             subject: "Ny ansøgning til din organisation i OS2iot",
@@ -413,20 +412,24 @@ export class UserService {
 
     async getOrgAdminEmails(organization: Organization): Promise<string[]> {
         const emails: string[] = [];
-        const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
+        const globalAdminPermission: Permission =
+            await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
-            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin)) {
-                if (permission.users.length > 0) {
-                    permission.users.forEach(user => {
-                        emails.push(user.email);
-                    });
-                } else {
-                    globalAdminPermission.users.forEach(user => {
-                        emails.push(user.email);
-                    });
-                }
+            if (
+                isPermissionType(permission, PermissionType.OrganizationUserAdmin) &&
+                permission.users.length > 0
+            ) {
+                permission.users.forEach(user => {
+                    emails.push(user.email);
+                });
             }
         });
+        if (emails.length === 0) {
+            globalAdminPermission.users.forEach(user => {
+                emails.push(user.email);
+            });
+        }
+
         return emails;
     }
 

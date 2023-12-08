@@ -12,13 +12,7 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import {
-    ApiBadRequestResponse,
-    ApiBearerAuth,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 
 import { Read, GatewayAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
@@ -51,20 +45,14 @@ export class ChirpstackGatewayController {
     @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
     @ApiBadRequestResponse()
     @GatewayAdmin()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreateGatewayDto
-    ): Promise<ChirpstackResponseStatus> {
+    async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
         checkIfUserHasAccessToOrganization(
             req,
             dto.organizationId,
             OrganizationAccessScope.GatewayWrite
         );
         try {
-            const gateway = await this.chirpstackGatewayService.createNewGateway(
-                dto,
-                req.user.userId
-            );
+            const gateway = await this.chirpstackGatewayService.createNewGateway(dto, req.user.userId);
             AuditLog.success(
                 ActionType.CREATE,
                 "ChirpstackGateway",
@@ -103,9 +91,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
-    async getOne(
-        @Param("gatewayId") gatewayId: string
-    ): Promise<SingleGatewayResponseDto> {
+    async getOne(@Param("gatewayId") gatewayId: string): Promise<SingleGatewayResponseDto> {
         if (gatewayId?.length != 16) {
             throw new BadRequestException(ErrorCodes.WrongLength);
         }
@@ -131,27 +117,11 @@ export class ChirpstackGatewayController {
             if (dto.gateway.gatewayId) {
                 throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
             }
-            const gateway = await this.chirpstackGatewayService.modifyGateway(
-                gatewayId,
-                dto,
-                req
-            );
-            AuditLog.success(
-                ActionType.UPDATE,
-                "ChirpstackGateway",
-                req.user.userId,
-                gatewayId,
-                dto.gateway.name
-            );
+            const gateway = await this.chirpstackGatewayService.modifyGateway(gatewayId, dto, req);
+            AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, gatewayId, dto.gateway.name);
             return gateway;
         } catch (err) {
-            AuditLog.fail(
-                ActionType.UPDATE,
-                "ChirpstackGateway",
-                req.user.userId,
-                gatewayId,
-                dto.gateway.name
-            );
+            AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, gatewayId, dto.gateway.name);
             throw err;
         }
     }
@@ -164,30 +134,18 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         try {
             const gw = await this.chirpstackGatewayService.getOne(gatewayId);
-            if (gw.gateway.internalOrganizationId != null) {
+            if (gw.gateway.organizationId != null) {
                 checkIfUserHasAccessToOrganization(
                     req,
-                    +gw.gateway.internalOrganizationId,
+                    +gw.gateway.organizationId,
                     OrganizationAccessScope.GatewayWrite
                 );
             }
-            const deleteResult = await this.chirpstackGatewayService.deleteGateway(
-                gatewayId
-            );
-            AuditLog.success(
-                ActionType.DELETE,
-                "ChirpstackGateway",
-                req.user.userId,
-                gatewayId
-            );
+            const deleteResult = await this.chirpstackGatewayService.deleteGateway(gatewayId);
+            AuditLog.success(ActionType.DELETE, "ChirpstackGateway", req.user.userId, gatewayId);
             return deleteResult;
         } catch (err) {
-            AuditLog.fail(
-                ActionType.DELETE,
-                "ChirpstackGateway",
-                req.user.userId,
-                gatewayId
-            );
+            AuditLog.fail(ActionType.DELETE, "ChirpstackGateway", req.user.userId, gatewayId);
             throw err;
         }
     }

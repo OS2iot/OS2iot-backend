@@ -1,6 +1,6 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
-import { VM, VMScript } from "vm2";
+import { ExternalCopy, Isolate } from "isolated-vm";
 
 @Injectable()
 export class PayloadDecoderExecutorService {
@@ -23,33 +23,21 @@ export class PayloadDecoderExecutorService {
         iotDevice: IoTDevice | any,
         rawPayload: JSON
     ): string {
-        const vm2Logger = new Logger(`${PayloadDecoderExecutorService.name}-VM2`);
+        const isolate = new Isolate();
+        const context = isolate.createContextSync();
+        const jail = context.global;
 
-        // Make copies of inputs to untrusted code to avoid unintended side effects if the code chooses to modify these
-        const iotDeviceCopy = JSON.parse(JSON.stringify(iotDevice));
-        const payloadCopy = JSON.parse(JSON.stringify(rawPayload));
-
-        const vm = new VM({
-            timeout: 5000,
-            sandbox: {
-                innerIotDevice: iotDeviceCopy,
-                innerPayload: payloadCopy,
-                log(data: any): void {
-                    vm2Logger.debug(data);
-                },
-                btoa(str: string): string {
-                    return Buffer.from(str).toString("base64");
-                },
-                atob(str: string): string {
-                    return Buffer.from(str, "base64").toString("binary");
-                },
-            },
+        jail.setSync("global", jail.derefInto());
+        jail.setSync("innerIotDevice", new ExternalCopy(iotDevice).copyInto());
+        jail.setSync("innerPayload", new ExternalCopy(rawPayload).copyInto());
+        jail.setSync("reply", function (result: object) {
+            return new ExternalCopy(result);
         });
-        const callingCode = `\n\ndecode(innerPayload, innerIotDevice);`;
-        const combinedCode = code + callingCode;
-        const res = vm.run(new VMScript(combinedCode));
-        this.logger.debug(`Returned: '${JSON.stringify(res)}'`);
 
-        return JSON.stringify(res);
+        const callingCode = `\n\nconst res = decode(innerPayload, innerIotDevice); \n reply(res);`;
+        const combinedCode = code + callingCode;
+
+        const result: ExternalCopy = context.evalSync(combinedCode);
+        return JSON.stringify(result.copy());
     }
 }

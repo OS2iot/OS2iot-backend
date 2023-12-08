@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 
-import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
+import {
+    ChirpstackDeviceActivationContentsDto,
+    ChirpstackDeviceActivationDto,
+} from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import { ChirpstackDeviceKeysContentDto } from "@dto/chirpstack/chirpstack-device-keys-response.dto";
 import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
@@ -30,6 +33,7 @@ import {
 } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
 import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
+import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 import { ServiceError, credentials } from "@grpc/grpc-js";
 import {
@@ -78,12 +82,10 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     @InjectRepository(DbApplication)
     private applicationRepository: Repository<DbApplication>;
 
-    constructor(private configService: ConfigService) {
+    constructor(private configService: ConfigService, private deviceProfileService: DeviceProfileService) {
         super();
 
-        this.deviceStatsIntervalInDays = configService.get<number>(
-            "backend.deviceStatsIntervalInDays"
-        );
+        this.deviceStatsIntervalInDays = configService.get<number>("backend.deviceStatsIntervalInDays");
     }
     private deviceServiceClient = new DeviceServiceClient(
         this.baseUrlGRPC,
@@ -125,11 +127,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         // otherwise create new application
         if (!applicationId) {
             applicationId = await this.createNewApplication(
-                applicationId,
                 organizationID,
                 iotDevice.application.name,
                 iotDevice.application.id
-            );
         }
 
         return applicationId;
@@ -156,10 +156,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return applicationId;
     }
 
-    makeCreateChirpstackDeviceDto(
-        dto: CreateLoRaWANSettingsDto,
-        name: string
-    ): CreateChirpstackDeviceDto {
+    makeCreateChirpstackDeviceDto(dto: CreateLoRaWANSettingsDto, name: string): CreateChirpstackDeviceDto {
         const csDto = new ChirpstackDeviceContentsDto();
         csDto.name = `${this.DEVICE_NAME_PREFIX}${name}`.toLowerCase();
         csDto.description = this.DEFAULT_DESCRIPTION;
@@ -186,8 +183,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             const res = await this.postDownlink(this.deviceServiceClient, req);
             return res;
         } catch (err) {
-            const fcntError =
-                "enqueue downlink payload error: get next downlink fcnt for deveui error";
+            const fcntError = "enqueue downlink payload error: get next downlink fcnt for deveui error";
             if (err?.response?.data?.error?.startsWith(fcntError)) {
                 throw new BadRequestException(ErrorCodes.DeviceIsNotActivatedInChirpstack);
             }
@@ -266,7 +262,6 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             `devices`,
             this.deviceServiceClient,
             req
-        );
 
         return test;
     }
@@ -317,11 +312,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return deviceActivation;
     }
 
-    async activateDeviceWithOTAA(
-        deviceEUI: string,
-        nwkKey: string,
-        isUpdate: boolean
-    ): Promise<boolean> {
+    async activateDeviceWithOTAA(deviceEUI: string, nwkKey: string, isUpdate: boolean): Promise<boolean> {
         try {
             if (isUpdate) {
                 const req = new UpdateDeviceKeysRequest();
@@ -502,6 +493,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
         loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
 
+        const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(csData.deviceProfileID);
+        loraDevice.deviceProfileName = deviceProfile.deviceProfile.name;
+
         return loraDevice;
     }
 
@@ -511,6 +505,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             // OTAA
             loraDevice.lorawanSettings.activationType = ActivationType.OTAA;
             loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+            loraDevice.OTAAapplicationKey = keys.nwkKey;
         } else {
             const activation = await this.getDeviceActivation(loraDevice.deviceEUI);
             if (activation.devAddr != null) {
@@ -527,10 +522,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async isDeviceAlreadyCreated(
-        deviceEUI: string,
-        chirpstackIds: ChirpstackDeviceId[] = null
-    ): Promise<boolean> {
+    async isDeviceAlreadyCreated(deviceEUI: string, chirpstackIds: ChirpstackDeviceId[] = null): Promise<boolean> {
         const devices = !chirpstackIds ? await this.getAllChirpstackDevices() : chirpstackIds;
         const alreadyExists = devices.some(x => x.devEUI.toLowerCase() === deviceEUI.toLowerCase());
         return alreadyExists;
@@ -539,9 +531,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     async getStats(deviceEUI: string): Promise<LoRaWANStatsResponseDto> {
         const now = new Date();
         const to_time = dateToTimestamp(now);
-        const from_time = new Date(
-            new Date().setDate(now.getDate() - this.deviceStatsIntervalInDays)
-        );
+        const from_time = new Date(new Date().setDate(now.getDate() - this.deviceStatsIntervalInDays)).toISOString();
         const from_time_timestamp: Timestamp = dateToTimestamp(from_time);
 
         const req = new GetDeviceLinkMetricsRequest();
