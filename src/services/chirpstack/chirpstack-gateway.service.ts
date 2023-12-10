@@ -366,7 +366,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             type: "Point",
             coordinates: [dto.location.longitude, dto.location.latitude],
         };
-        const tempTags = dto.tags;
+        const tempTags = { ...dto.tags };
         tempTags[this.ORG_ID_KEY] = undefined;
         tempTags[this.CREATED_BY_KEY] = undefined;
         tempTags[this.UPDATED_BY_KEY] = undefined;

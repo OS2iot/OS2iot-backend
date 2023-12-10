@@ -15,13 +15,7 @@ import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } fro
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
-import {
-    BadRequestException,
-    ConflictException,
-    forwardRef,
-    Inject,
-    Injectable,
-} from "@nestjs/common";
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { OrganizationService } from "@services/user-management/organization.service";
@@ -242,9 +236,7 @@ export class ApplicationService {
         mappedApplication.updatedBy = userId;
 
         try {
-            const chirpId = await this.chirpstackApplicationService.createApplication(
-                createApplicationDto
-            );
+            const chirpId = await this.chirpstackApplicationService.createApplication(createApplicationDto);
             mappedApplication.chirpstackId = chirpId.id;
             const app = await this.applicationRepository.save(mappedApplication);
 
@@ -273,7 +265,7 @@ export class ApplicationService {
             userId
         );
 
-        await this.chirpstackApplicationService.updateApplication(mappedApplication)
+        await this.chirpstackApplicationService.updateApplication(mappedApplication);
 
         mappedApplication.updatedBy = userId;
         return this.applicationRepository.save(mappedApplication, {});
@@ -298,26 +290,25 @@ export class ApplicationService {
             await this.dataTargetService.delete(dataTarget.id);
         }
 
-        if (application.chirpstackId) {
-            await this.chirpstackApplicationService.deleteApplication(application.chirpstackId);
-        } else {
-            // Delete all LoRaWAN devices in ChirpStack
+        // Delete all LoRaWAN devices in ChirpStack
         const loRaWANDevices = application.iotDevices.filter(device => device.type === IoTDeviceType.LoRaWAN);
 
-            for (const device of loRaWANDevices) {
-                const lwDevice = device as LoRaWANDevice;
-                await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
-            }
+        for (const device of loRaWANDevices) {
+            const lwDevice = device as LoRaWANDevice;
+            await this.chirpstackDeviceService.deleteDevice(lwDevice.deviceEUI);
+        }
 
-            //delete all multicats
-            const multicasts = application.multicasts;
-            for (const multicast of multicasts) {
-                const dbMulticast = await this.multicastService.findOne(multicast.id);
+        //delete all multicats
+        const multicasts = application.multicasts;
+        for (const multicast of multicasts) {
+            const dbMulticast = await this.multicastService.findOne(multicast.id);
 
-                await this.multicastService.deleteMulticastChirpstack(
-                    dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
-                );
-            }
+            await this.multicastService.deleteMulticastChirpstack(
+                dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
+            );
+        }
+        if (application.chirpstackId) {
+            await this.chirpstackApplicationService.deleteApplication(application.chirpstackId);
         }
 
         return this.applicationRepository.delete(id);
