@@ -114,7 +114,7 @@ export class SearchService {
                 const detailedInfo = await this.gatewayService.getOne(x.gatewayId);
 
 
-                resultDto.organizationId = detailedInfo.gateway.organizationId;
+                resultDto.organizationId = detailedInfo.gateway.internalOrganizationId;
                 return resultDto;
             })
         );

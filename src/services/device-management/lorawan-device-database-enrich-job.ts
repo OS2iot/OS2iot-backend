@@ -10,6 +10,15 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Gateway } from "@entities/gateway.entity";
 import { Repository } from "typeorm";
 import { timestampToDate } from "@helpers/date.helper";
+import {
+    ListGatewaysResponse,
+    ListGatewaysRequest,
+    GetGatewayRequest,
+    GetGatewayResponse,
+} from "@chirpstack/chirpstack-api/api/gateway_pb";
+import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
+import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
+import { credentials } from "@grpc/grpc-js";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
@@ -21,6 +30,8 @@ export class LorawanDeviceDatabaseEnrichJob {
         @InjectRepository(Gateway)
         private gatewayRepository: Repository<Gateway>
     ) {}
+    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8084"}`;
+    private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });
 
@@ -28,11 +39,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     async fetchStatusForGateway() {
         // Select all gateways from our database and chirpstack (Cheaper than individual calls)
         const gateways = await this.gatewayService.getAll();
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseGrpcDto>(
-            "gateways",
-            1000,
-            0
-        );
+        const responseList = await this.getAllGateways();
 
         // Setup batched fetching of status (Only for today)
         await BluebirdPromise.all(
@@ -52,15 +59,13 @@ export class LorawanDeviceDatabaseEnrichJob {
                         );
                         // Save that to our database
                         const stats = statsToday[0];
-                        const chirpstackGateway = chirpStackGateways.resultList.find(
-                            g => g.id.toString() === gateway.gatewayId
-                        );
+                        const chirpstackGateway = responseList.resultList.find(g => g.gatewayId === gateway.gatewayId);
 
                         await this.gatewayService.updateGatewayStats(
                             gateway.gatewayId,
                             stats.rxPacketsReceived,
                             stats.txPacketsEmitted,
-                            timestampToDate(chirpstackGateway.lastSeenAt)
+                            chirpstackGateway.lastSeenAt ? timestampToDate(chirpstackGateway.lastSeenAt) : undefined
                         );
                     } catch (err) {
                         this.logger.error(`Gateway status fetch failed with: ${JSON.stringify(err)}`, err);
@@ -100,36 +105,28 @@ export class LorawanDeviceDatabaseEnrichJob {
     // This is run once on startup and will create any gateways that exist in chirpstack but not our database
     @Timeout(10000)
     async importChirpstackGateways() {
-        // Get all chirpstack gateways
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseGrpcDto>(
-            "gateways",
-            1000,
-            0
-        );
-
+        const responseList = await this.getAllGateways();
         const dbGateways = await this.gatewayService.getAll();
-
         // Filter for gateways not existing in our database
-        const unknownGateways = chirpStackGateways.resultList.filter(
-            g => dbGateways.resultList.findIndex(dbGateway => dbGateway.gatewayId === g.id.toString()) === -1
+        const unknownGateways = responseList.resultList.filter(
+            g => dbGateways.resultList.findIndex(dbGateway => dbGateway.gatewayId === g.gatewayId) === -1
         );
-
         await BluebirdPromise.all(
             BluebirdPromise.map(
                 unknownGateways,
                 async x => {
                     try {
-                        const gw = (await this.gatewayService.get(`gateways/${x.gatewayId}`)) as any;
-                        const organizationId = gw.gateway.tags["internalOrganizationId"];
+                        const req = new GetGatewayRequest();
+                        req.setGatewayId(x.gatewayId);
 
-                        const gateway = this.gatewayService.mapContentsDtoToGateway(gw.gateway);
-                        gateway.id = 0;
-                        gateway.gatewayId = gw.gateway.id;
-                        gateway.lastSeenAt = gw.lastSeenAt;
-                        gateway.createdAt = new Date(Date.parse(gw.createdAt));
-                        gateway.rxPacketsReceived = 0;
-                        gateway.txPacketsEmitted = 0;
-                        gateway.createdBy = gw.gateway.tags["os2iot-created-by"];
+                        const gwResponse = await this.gatewayService.get<GetGatewayResponse>(
+                            `gateways/${x.gatewayId}`,
+                            this.gatewayClient,
+                            req
+                        );
+                        const csGw = gwResponse.getGateway();
+                        const organizationId = +csGw.getTagsMap().get("internalOrganizationId");
+                        const gateway = this.gatewayService.mapCsGwToGateway(csGw, gwResponse);
                         gateway.organization = await this.organizationService.findById(organizationId);
                         await this.gatewayRepository.save(gateway);
                     } catch (err) {
@@ -141,5 +138,36 @@ export class LorawanDeviceDatabaseEnrichJob {
                 }
             )
         );
+    }
+    async getAllGateways(): Promise<ListAllGatewaysResponseGrpcDto> {
+        const limit = 1000;
+        const listReq = new ListGatewaysRequest();
+        // Get all chirpstack gateways
+        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListGatewaysResponse.AsObject>(
+            "gateways",
+            limit,
+            0,
+            this.gatewayClient,
+            listReq
+        );
+
+        const responseItem: GatewayResponseGrpcDto[] = [];
+        chirpStackGateways.resultList.map(e => {
+            const resultItem: GatewayResponseGrpcDto = {
+                gatewayId: e.gatewayId,
+                name: e.name,
+                location: e.location,
+                description: e.description,
+                createdAt: e.createdAt ?? undefined,
+                updatedAt: e.updatedAt ?? undefined,
+                lastSeenAt: e.lastSeenAt ?? undefined,
+            };
+            responseItem.push(resultItem);
+        });
+        const responseList: ListAllGatewaysResponseGrpcDto = {
+            totalCount: chirpStackGateways.totalCount,
+            resultList: responseItem,
+        };
+        return responseList;
     }
 }

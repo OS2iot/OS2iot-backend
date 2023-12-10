@@ -134,10 +134,10 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         try {
             const gw = await this.chirpstackGatewayService.getOne(gatewayId);
-            if (gw.gateway.organizationId != null) {
+            if (gw.gateway.internalOrganizationId != null) {
                 checkIfUserHasAccessToOrganization(
                     req,
-                    +gw.gateway.organizationId,
+                    +gw.gateway.internalOrganizationId,
                     OrganizationAccessScope.GatewayWrite
                 );
             }
