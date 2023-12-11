@@ -21,7 +21,7 @@ import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interfac
 @Injectable()
 export class GenericChirpstackConfigurationService {
     baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${
-        process.env.CHIRPSTACK_PORT || "8084"
+        process.env.CHIRPSTACK_PORT || "8080"
     }`;
 
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);

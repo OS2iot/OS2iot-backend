@@ -30,7 +30,7 @@ export class LorawanDeviceDatabaseEnrichJob {
         @InjectRepository(Gateway)
         private gatewayRepository: Repository<Gateway>
     ) {}
-    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8084"}`;
+    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
     private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });
