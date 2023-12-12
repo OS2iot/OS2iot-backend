@@ -33,10 +33,7 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import {
-    checkIfUserHasAccessToOrganization,
-    OrganizationAccessScope,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
@@ -70,10 +67,7 @@ export class DeviceProfileController {
         );
 
         try {
-            const result = await this.deviceProfileService.createDeviceProfile(
-                createDto,
-                req.user.userId
-            );
+            const result = await this.deviceProfileService.createDeviceProfile(createDto, req.user.userId);
 
             AuditLog.success(
                 ActionType.CREATE,
@@ -176,14 +170,9 @@ export class DeviceProfileController {
         let result = undefined;
         try {
             this.logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
-            result = await this.deviceProfileService.findAllDeviceProfiles(
-                limit || 50,
-                offset || 0
-            );
+            result = await this.deviceProfileService.findAllDeviceProfiles(limit || 50, offset || 0);
         } catch (err) {
-            this.logger.error(
-                `Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`
-            );
+            this.logger.error(`Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`);
         }
         return result;
     }
@@ -192,10 +181,7 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
     @ApplicationAdmin()
-    async deleteOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id") id: string
-    ): Promise<DeleteResponseDto> {
+    async deleteOne(@Req() req: AuthenticatedRequest, @Param("id") id: string): Promise<DeleteResponseDto> {
         try {
             await this.deviceProfileService.deleteDeviceProfile(id, req);
             AuditLog.success(ActionType.DELETE, "ChirpstackDeviceProfile", req.user.userId, id);

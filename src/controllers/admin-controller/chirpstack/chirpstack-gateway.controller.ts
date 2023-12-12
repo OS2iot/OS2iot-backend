@@ -23,10 +23,7 @@ import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-respons
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
-import {
-    checkIfUserHasAccessToOrganization,
-    OrganizationAccessScope,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -46,11 +43,7 @@ export class ChirpstackGatewayController {
     @ApiBadRequestResponse()
     @GatewayAdmin()
     async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
-        checkIfUserHasAccessToOrganization(
-            req,
-            dto.organizationId,
-            OrganizationAccessScope.GatewayWrite
-        );
+        checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
         try {
             const gateway = await this.chirpstackGatewayService.createNewGateway(dto, req.user.userId);
             AuditLog.success(
@@ -81,9 +74,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
-    async getAll(
-        @Query() query?: ChirpstackGetAll
-    ): Promise<ListAllGatewaysResponseGrpcDto> {
+    async getAll(@Query() query?: ChirpstackGetAll): Promise<ListAllGatewaysResponseGrpcDto> {
         return await this.chirpstackGatewayService.getAll(query.organizationId);
     }
 

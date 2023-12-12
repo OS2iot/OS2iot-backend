@@ -27,13 +27,10 @@ import {
 } from "@nestjs/swagger";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { Multicast } from "@entities/multicast.entity";
-import {
-    checkIfUserHasAccessToApplication,
-    ApplicationAccessScope,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
 import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
@@ -59,27 +56,11 @@ export class MulticastController {
     @Post()
     @ApiOperation({ summary: "Create a new multicast" })
     @ApiBadRequestResponse()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() createMulticastDto: CreateMulticastDto
-    ): Promise<Multicast> {
+    async create(@Req() req: AuthenticatedRequest, @Body() createMulticastDto: CreateMulticastDto): Promise<Multicast> {
         try {
-            checkIfUserHasAccessToApplication(
-                req,
-                createMulticastDto.applicationID,
-                ApplicationAccessScope.Write
-            );
-            const multicast = await this.multicastService.create(
-                createMulticastDto,
-                req.user.userId
-            );
-            AuditLog.success(
-                ActionType.CREATE,
-                Multicast.name,
-                req.user.userId,
-                multicast.id,
-                multicast.groupName
-            );
+            checkIfUserHasAccessToApplication(req, createMulticastDto.applicationID, ApplicationAccessScope.Write);
+            const multicast = await this.multicastService.create(createMulticastDto, req.user.userId);
+            AuditLog.success(ActionType.CREATE, Multicast.name, req.user.userId, multicast.id, multicast.groupName);
             return multicast;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, Multicast.name, req.user.userId);
@@ -106,26 +87,16 @@ export class MulticastController {
                 throw new UnauthorizedException();
             }
 
-            return await this.multicastService.findAndCountAllWithPagination(
-                query,
-                allowed
-            );
+            return await this.multicastService.findAndCountAllWithPagination(query, allowed);
         }
     }
 
     @Get(":id")
     @ApiOperation({ summary: "Find Multicast by id" })
-    async findOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<Multicast> {
+    async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<Multicast> {
         try {
             const multicast = await this.multicastService.findOne(id);
-            checkIfUserHasAccessToApplication(
-                req,
-                multicast.application.id,
-                ApplicationAccessScope.Read
-            );
+            checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Read);
             return multicast;
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -148,15 +119,9 @@ export class MulticastController {
         if (!multicast) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
-        checkIfUserHasAccessToApplication(
-            req,
-            multicast.application.id,
-            ApplicationAccessScope.Read
-        );
+        checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Read);
 
-        return this.multicastService.getDownlinkQueue(
-            multicast.lorawanMulticastDefinition.chirpstackGroupId
-        );
+        return this.multicastService.getDownlinkQueue(multicast.lorawanMulticastDefinition.chirpstackGroupId);
     }
 
     @Post(":id/downlink-multicast")
@@ -173,11 +138,7 @@ export class MulticastController {
             if (!multicast) {
                 throw new NotFoundException();
             }
-            checkIfUserHasAccessToApplication(
-                req,
-                multicast.application.id,
-                ApplicationAccessScope.Write
-            );
+            checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Write);
             const result = await this.multicastService.createDownlink(dto, multicast);
             AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
             return result;
@@ -198,17 +159,9 @@ export class MulticastController {
     ): Promise<Multicast> {
         const oldMulticast = await this.multicastService.findOne(id);
         try {
-            checkIfUserHasAccessToApplication(
-                req,
-                oldMulticast.application.id,
-                ApplicationAccessScope.Write
-            );
+            checkIfUserHasAccessToApplication(req, oldMulticast.application.id, ApplicationAccessScope.Write);
             if (oldMulticast.application.id !== updateDto.applicationID) {
-                checkIfUserHasAccessToApplication(
-                    req,
-                    updateDto.applicationID,
-                    ApplicationAccessScope.Write
-                );
+                checkIfUserHasAccessToApplication(req, updateDto.applicationID, ApplicationAccessScope.Write);
             }
         } catch (err) {
             AuditLog.fail(
@@ -221,11 +174,7 @@ export class MulticastController {
             throw err;
         }
 
-        const multicast = await this.multicastService.update(
-            oldMulticast,
-            updateDto,
-            req.user.userId
-        );
+        const multicast = await this.multicastService.update(oldMulticast, updateDto, req.user.userId);
         AuditLog.success(
             ActionType.UPDATE,
             Multicast.name,
@@ -246,11 +195,7 @@ export class MulticastController {
     ): Promise<DeleteResponseDto> {
         try {
             const multicast = await this.multicastService.findOne(id);
-            checkIfUserHasAccessToApplication(
-                req,
-                multicast.application.id,
-                ApplicationAccessScope.Write
-            );
+            checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Write);
             const result = await this.multicastService.multicastDelete(id, multicast);
 
             if (result.affected === 0) {

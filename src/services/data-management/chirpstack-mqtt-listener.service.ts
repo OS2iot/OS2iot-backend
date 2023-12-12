@@ -16,10 +16,7 @@ import * as Protobuf from "protobufjs";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
-    constructor(
-        private receiveDataService: ReceiveDataService,
-        private iotDeviceService: IoTDeviceService
-    ) {
+    constructor(private receiveDataService: ReceiveDataService, private iotDeviceService: IoTDeviceService) {
         const connStateFullTemplate = Protobuf.loadSync(ChirpstackStateTemplatePath);
         this.connStateType = connStateFullTemplate.lookupType("ConnState");
     }
@@ -27,17 +24,14 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
     private readonly connStateType: Protobuf.Type;
 
-    MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${
-        process.env.CS_MQTT_PORT || "1883"
-    }`;
+    MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${process.env.CS_MQTT_PORT || "1883"}`;
     client: Client;
 
     private readonly CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX = "application/";
     private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC =
         this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/up";
     private readonly CHIRPSTACK_MQTT_GATEWAY_PREFIX = "gateway/";
-    private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC =
-        this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
+    private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC = this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
 
     public async onApplicationBootstrap(): Promise<void> {
         this.logger.debug("Pre-init");
@@ -60,9 +54,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
                         const decoded = this.connStateType.decode(message);
                         await this.receiveMqttGatewayStatusMessage(decoded.toJSON());
                     } catch (error) {
-                        this.logger.error(
-                            `Gateway status data could not be processed. Error: ${error}`
-                        );
+                        this.logger.error(`Gateway status data could not be processed. Error: ${error}`);
                     }
                 } else {
                     this.logger.warn("Unrecognized MQTT topic " + topic);
@@ -74,9 +66,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
     async receiveMqttMessage(message: string): Promise<void> {
         const dto: ChirpstackMQTTMessageDto = JSON.parse(message);
-        const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(
-            dto.deviceInfo.devEui
-        );
+        const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
 
         if (!iotDevice) {
             this.logger.warn(

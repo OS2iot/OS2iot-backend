@@ -30,7 +30,7 @@
     },
     "dependencies": {
         "@nestjs/axios": "^3.0.0",
-        "@chirpstack/chirpstack-api": "4.5.1",
+        "@chirpstack/chirpstack-api": "4.6.0",
         "@grpc/grpc-js": "1.9.12",
         "@nestjs/common": "^9.1.2",
         "@nestjs/config": "^2.2.0",
@@ -125,6 +125,7 @@
         "xml2js": "^0.6.2",
         "jsonwebtoken": "^9.0.0",
         "debug": "^4.3.4",
-        "y18n": "6.0.0-alpha.0"
+        "y18n": "6.0.0-alpha.0",
+        "@grpc/grpc-js": "1.9.12"
     }
 }

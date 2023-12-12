@@ -35,6 +35,7 @@ import { AdrAlgorithmDto } from "@dto/chirpstack/adr-algorithm.dto";
 import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
 import { DeviceListItem, ListDevicesRequest, ListDevicesResponse } from "@chirpstack/chirpstack-api/api/device_pb";
 import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
+import * as google_protobuf_empty_pb from "google-protobuf/google/protobuf/empty_pb";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
@@ -351,8 +352,9 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
 
     async getAdrAlgorithms(): Promise<ListDeviceProfileAdrAlgorithmsResponse> {
         const metaData = this.makeMetadataHeader();
+        const test: google_protobuf_empty_pb.Empty = new Empty()
         const getPromise = new Promise<ListDeviceProfileAdrAlgorithmsResponse>((resolve, reject) => {
-            this.deviceProfileClient.listAdrAlgorithms(new Empty(), metaData, (err: ServiceError, resp: any) => {
+            this.deviceProfileClient.listAdrAlgorithms(test, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
