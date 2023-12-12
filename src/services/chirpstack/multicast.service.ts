@@ -67,11 +67,6 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     private readonly logger = new Logger(MulticastService.name);
     multicastGroupUrl = "multicast-groups";
 
-    private multicastServiceClient = new MulticastGroupServiceClient(
-        this.baseUrlGRPC,
-        credentials.createInsecure()
-    );
-
     async findAndCountAllWithPagination(
         // inspired by datatarget and other places in this project.
         // Repository syntax doesn't yet support ordering by relation: https://github.com/typeorm/typeorm/issues/2620

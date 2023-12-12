@@ -11,7 +11,6 @@ import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { nameof } from "@helpers/type-helper";
 import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
-type GatewayId = { gatewayId: string; name: string };
 
 @Injectable()
 export class GatewayStatusHistoryService {

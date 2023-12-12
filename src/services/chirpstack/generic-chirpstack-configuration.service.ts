@@ -11,31 +11,28 @@ import configuration from "@config/configuration";
 import { TenantServiceClient } from "@chirpstack/chirpstack-api/api/tenant_grpc_pb";
 import { ListTenantsRequest, ListTenantsResponse } from "@chirpstack/chirpstack-api/api/tenant_pb";
 import { ApplicationServiceClient } from "@chirpstack/chirpstack-api/api/application_grpc_pb";
-import {
-    ListApplicationsRequest,
-    ListApplicationsResponse,
-} from "@chirpstack/chirpstack-api/api/application_pb";
+import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
 import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
+import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
+import { DeviceProfileServiceClient } from "@chirpstack/chirpstack-api/api/device_profile_grpc_pb";
+import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/multicast_group_grpc_pb";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${
-        process.env.CHIRPSTACK_PORT || "8080"
-    }`;
+    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
 
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
-    protected applicationServiceClient = new ApplicationServiceClient(
-        this.baseUrlGRPC,
-        credentials.createInsecure()
-    );
+    protected applicationServiceClient = new ApplicationServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected deviceServiceClient = new DeviceServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected deviceProfileClient = new DeviceProfileServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected multicastServiceClient = new MulticastGroupServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     makeMetadataHeader(): Metadata {
         const metadata = new Metadata();
-        metadata.set(
-            "authorization",
-            "Bearer " + configuration()["chirpstack"]["apikey"],
-        );
+        metadata.set("authorization", "Bearer " + configuration()["chirpstack"]["apikey"]);
         return metadata;
     }
 
@@ -144,9 +141,7 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    async getAllApplicationsWithPagination(
-        tenantID: string
-    ): Promise<ListAllChirpstackApplicationsResponseDto> {
+    async getAllApplicationsWithPagination(tenantID: string): Promise<ListAllChirpstackApplicationsResponseDto> {
         const req = new ListApplicationsRequest();
         req.setTenantId(await this.getDefaultOrganizationId());
 
@@ -202,14 +197,8 @@ export class GenericChirpstackConfigurationService {
         }
     }
 
-    public async getTenants(
-        limit?: number,
-        offset?: number
-    ): Promise<ListTenantsResponse.AsObject> {
-        const tenantClient = new TenantServiceClient(
-            this.baseUrlGRPC,
-            credentials.createInsecure()
-        );
+    public async getTenants(limit?: number, offset?: number): Promise<ListTenantsResponse.AsObject> {
+        const tenantClient = new TenantServiceClient(this.baseUrlGRPC, credentials.createInsecure());
         const req = new ListTenantsRequest();
 
         const res = await this.getAllWithPagination<ListTenantsResponse.AsObject>(
@@ -226,10 +215,7 @@ export class GenericChirpstackConfigurationService {
         let id = null;
         await this.getTenants(1000, 0).then(response => {
             response.resultList.forEach(element => {
-                if (
-                    element.name.toLowerCase() == "os2iot" ||
-                    element.name.toLowerCase() == "chirpstack"
-                ) {
+                if (element.name.toLowerCase() == "os2iot" || element.name.toLowerCase() == "chirpstack") {
                     id = element.id;
                 }
             });

@@ -75,6 +75,7 @@ import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Application as DbApplication } from "@entities/application.entity";
+import { IoTDeviceType } from "@enum/device-type.enum";
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
     @InjectRepository(DbApplication)
@@ -85,7 +86,6 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
         this.deviceStatsIntervalInDays = configService.get<number>("backend.deviceStatsIntervalInDays");
     }
-    private deviceServiceClient = new DeviceServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(ChirpstackDeviceService.name);
 
@@ -247,6 +247,17 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     async getAllDevicesStatus(app: ApplicationDb): Promise<ChirpstackManyDeviceResponseDto> {
         const req = new ListDevicesRequest();
+        if (!app.chirpstackId) {
+            const loraDev = app.iotDevices.find(d => d.type === IoTDeviceType.LoRaWAN);
+            const cast = loraDev as LoRaWANDevice;
+            const getChirpstackDevice = await this.get<GetDeviceResponse>(
+                "device",
+                this.deviceServiceClient,
+                new GetDeviceRequest().setDevEui(cast.deviceEUI)
+            );
+            app.chirpstackId = getChirpstackDevice.getDevice().getApplicationId();
+            await this.applicationRepository.save(app, {});
+        }
         req.setApplicationId(app.chirpstackId);
         const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
             `devices`,
@@ -267,7 +278,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
                 deviceStatusMargin: e.deviceStatus?.margin,
                 deviceStatusExternalPowerSource: e.deviceStatus?.externalPowerSource,
                 deviceProfileID: e.deviceProfileId,
-                deviceProfileName: e.deviceProfileName
+                deviceProfileName: e.deviceProfileName,
             };
             responseDto.push(responseItem);
         });

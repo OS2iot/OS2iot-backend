@@ -35,9 +35,7 @@ import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 import { AdrAlgorithmDto } from "@dto/chirpstack/adr-algorithm.dto";
 import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
 import { DeviceListItem, ListDevicesRequest, ListDevicesResponse } from "@chirpstack/chirpstack-api/api/device_pb";
-import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
 import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
-import { ApplicationServiceClient } from "@chirpstack/chirpstack-api/api/application_grpc_pb";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
@@ -45,9 +43,6 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     private readonly UPDATED_BY_KEY = "os2iot-updated-by";
     private readonly CREATED_BY_KEY = "os2iot-created-by";
 
-    private deviceProfileClient = new DeviceProfileServiceClient(this.baseUrlGRPC, credentials.createInsecure());
-    private deviceClient = new DeviceServiceClient(this.baseUrlGRPC, credentials.createInsecure());
-    private applicationClient = new ApplicationServiceClient(this.baseUrlGRPC, credentials.createInsecure());
     public async createDeviceProfile(dto: CreateDeviceProfileDto, userId: number): Promise<PostReturnInterface> {
         if (await this.isNameInUse(dto.deviceProfile.name)) {
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
@@ -153,7 +148,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             "devices",
             1000,
             0,
-            this.applicationClient,
+            this.applicationServiceClient,
             listAppReq
         );
 
@@ -164,7 +159,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
                 "devices",
                 10000,
                 0,
-                this.deviceClient,
+                this.deviceServiceClient,
                 listReq
             );
             devices = devices.concat(devicesForApp.resultList);

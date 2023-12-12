@@ -419,7 +419,6 @@ export class ApplicationService {
         const loraDevices = data.filter(
             device => device.type === IoTDeviceType.LoRaWAN
         ) as LoRaWANDeviceWithChirpstackDataDto[];
-        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(loraDevices);
 
         for (const device of loraDevices) {
             await this.chirpstackDeviceService.enrichLoRaWANDevice(device);

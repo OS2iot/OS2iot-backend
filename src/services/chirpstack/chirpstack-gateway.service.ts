@@ -5,7 +5,6 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import * as BluebirdPromise from "bluebird";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
@@ -31,10 +30,7 @@ import {
     Gateway as GatewayCs,
     GetGatewayMetricsRequest,
     GetGatewayMetricsResponse,
-    GetGatewayRequest,
     GetGatewayResponse,
-    ListGatewaysRequest,
-    ListGatewaysResponse,
     UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { credentials } from "@grpc/grpc-js";
@@ -57,7 +53,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     private readonly ORG_ID_KEY = "internalOrganizationId";
     private readonly UPDATED_BY_KEY = "os2iot-updated-by";
     private readonly CREATED_BY_KEY = "os2iot-created-by";
-    private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
     async createNewGateway(dto: CreateGatewayDto, userId: number): Promise<ChirpstackResponseStatus> {
         dto.gateway = await this.updateDtoContents(dto.gateway);
 
