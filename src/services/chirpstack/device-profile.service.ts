@@ -16,8 +16,7 @@ import { DeviceProfileDto } from "@dto/chirpstack/device-profile.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
-import { DeviceProfileServiceClient } from "@chirpstack/chirpstack-api/api/device_profile_grpc_pb";
-import { credentials, ServiceError } from "@grpc/grpc-js";
+import { ServiceError } from "@grpc/grpc-js";
 import {
     CreateDeviceProfileRequest,
     DeleteDeviceProfileRequest,

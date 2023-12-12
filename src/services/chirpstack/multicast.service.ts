@@ -50,7 +50,7 @@ import {
     UpdateMulticastGroupRequest,
 } from "@chirpstack/chirpstack-api/api/multicast_group_pb";
 import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/multicast_group_grpc_pb";
-import { credentials, ServiceError } from "@grpc/grpc-js";
+import { ServiceError } from "@grpc/grpc-js";
 import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
 import { multicastGroup } from "@enum/multicast-type.enum";
 @Injectable()

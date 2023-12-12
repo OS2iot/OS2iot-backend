@@ -33,7 +33,6 @@ import {
     GetGatewayResponse,
     UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
-import { credentials } from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation, Location } from "@chirpstack/chirpstack-api/common/common_pb";
 import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";

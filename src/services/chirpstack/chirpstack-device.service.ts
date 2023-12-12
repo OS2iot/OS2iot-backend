@@ -32,7 +32,7 @@ import { ConfigService } from "@nestjs/config";
 import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
-import { ServiceError, credentials } from "@grpc/grpc-js";
+import { ServiceError } from "@grpc/grpc-js";
 import {
     Application,
     CreateApplicationRequest,
