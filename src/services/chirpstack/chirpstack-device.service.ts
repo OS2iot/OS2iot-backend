@@ -330,31 +330,6 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         device.setSkipFcntCheck(dto.device.skipFCntCheck);
         return device;
     }
-    private async getChirpstackApplication(id: string): Promise<ChirpstackSingleApplicationResponseDto> {
-        const req = new GetApplicationRequest();
-        req.setId(id);
-        try {
-            const chirpstackApplicationResponse = await this.get<GetApplicationResponse>(
-                `applications/${id}`,
-                this.applicationServiceClient,
-                req
-            );
-            const chirpstackApplication = chirpstackApplicationResponse.getApplication();
-            const applicationDto = new ChirpstackApplicationResponseDto();
-
-            applicationDto.name = chirpstackApplication.getName();
-            applicationDto.description = chirpstackApplication.getDescription();
-            applicationDto.id = chirpstackApplication.getId();
-            applicationDto.tenantId = chirpstackApplication.getTenantId();
-
-            const returnDto = new ChirpstackSingleApplicationResponseDto();
-            returnDto.application = applicationDto;
-
-            return returnDto;
-        } catch (err) {
-            throw new BadRequestException(ErrorCodes.CouldntGetApplications);
-        }
-    }
 
     public async getChirpstackDevice(id: string): Promise<ChirpstackDeviceContentsDto> {
         try {

@@ -40,7 +40,8 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
                 `applications?limit=100&organizationID=${organizationID}`,
                 100,
                 undefined,
-                this.applicationServiceClient
+                this.applicationServiceClient,
+                req
             ));
 
         // if application exist use it
@@ -79,7 +80,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
     public async createChirpstackApplication(dto: CreateChirpstackApplicationDto): Promise<string> {
         const req = new CreateApplicationRequest();
         const application = new Application();
-        application.setDescription(dto.application.description);
+        application.setDescription(dto.application.description ? dto.application.description: this.DEFAULT_DESCRIPTION);
         application.setName(dto.application.name);
         application.setTenantId(await this.getDefaultOrganizationId());
 

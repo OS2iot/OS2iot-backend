@@ -366,7 +366,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return gateway;
     }
 
-    //TODO:: Check  that it works
     public mapChirpstackGatewayToDatabaseGateway(chirpstackGateway: ChirpstackGateway, gwResponse: GetGatewayResponse) {
         const gateway = new DbGateway();
         gateway.name = chirpstackGateway.getName();
