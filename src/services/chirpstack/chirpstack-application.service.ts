@@ -38,10 +38,10 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
             applications ??
             (await this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
                 `applications?limit=100&organizationID=${organizationID}`,
+                this.applicationServiceClient,
+                req,
                 100,
                 undefined,
-                this.applicationServiceClient,
-                req
             ));
 
         // if application exist use it

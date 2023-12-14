@@ -85,8 +85,18 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         const deviceProfile = this.mapToChirpstackDto(data);
         const request = new UpdateDeviceProfileRequest();
 
-        data.deviceProfile.tags = await this.updateTags(id, req);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
+
+        //Have to set these everytime, otherwise they will be erased.
+        deviceProfile.getTagsMap().set(this.ORG_ID_KEY, data.deviceProfile.internalOrganizationId.toString());
+        deviceProfile.getTagsMap().set(this.UPDATED_BY_KEY, data.deviceProfile.updatedBy.toString());
+        deviceProfile.getTagsMap().set(this.CREATED_BY_KEY, data.deviceProfile.createdBy.toString());
+
+        checkIfUserHasAccessToOrganization(
+            req,
+            data.deviceProfile.internalOrganizationId,
+            OrganizationAccessScope.ApplicationWrite
+        );
 
         request.setDeviceProfile(deviceProfile);
         return await this.put("device-profiles", this.deviceProfileClient, request);
@@ -97,31 +107,6 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return deviceProfiles.result
             .filter(x => (id ? x.id != id : true))
             .some(x => x.name.toLocaleLowerCase() == name.toLocaleLowerCase());
-    }
-
-    private async updateTags(deviceProfileId: string, req: AuthenticatedRequest): Promise<{ [id: string]: string }> {
-        const request = new GetDeviceProfileRequest();
-        const result = await this.getOneById<GetDeviceProfileResponse>(
-            "device-profiles",
-            deviceProfileId,
-            this.deviceProfileClient,
-            request
-        );
-        const tags = result.getDeviceProfile().getTagsMap();
-        tags.set(this.UPDATED_BY_KEY, req.user.userId.toString());
-        if (result.getDeviceProfile().getTagsMap().get(this.ORG_ID_KEY) != null) {
-            checkIfUserHasAccessToOrganization(
-                req,
-                +result.getDeviceProfile().getTagsMap().get(this.ORG_ID_KEY),
-                OrganizationAccessScope.ApplicationWrite
-            );
-        }
-        const tagsObject: { [id: string]: string } = {};
-        tags.forEach((value, key) => {
-            tagsObject[key] = value;
-        });
-
-        return tagsObject;
     }
 
     public async deleteDeviceProfile(id: string, req: AuthenticatedRequest): Promise<void> {
@@ -139,10 +124,10 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
 
         const applications = await this.getAllWithPagination<ListApplicationsResponse.AsObject>(
             "devices",
-            1000,
-            0,
             this.applicationServiceClient,
-            listAppReq
+            listAppReq,
+            1000,
+            0
         );
 
         let devices: DeviceListItem.AsObject[] = [];
@@ -150,10 +135,10 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             listReq.setApplicationId(applications.resultList[index].id);
             const devicesForApp = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
                 "devices",
-                10000,
-                0,
                 this.deviceServiceClient,
-                listReq
+                listReq,
+                10000,
+                0
             );
             devices = devices.concat(devicesForApp.resultList);
         }
@@ -181,10 +166,10 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
 
         const result = await this.getAllWithPagination<ListDeviceProfilesResponse.AsObject>(
             "device-profiles",
-            limit,
-            offset,
             this.deviceProfileClient,
-            req
+            req,
+            limit,
+            offset
         );
 
         const deviceResultListDto: DeviceProfileListDto[] = result.resultList.map(e => {

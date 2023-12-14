@@ -39,14 +39,14 @@ export class GenericChirpstackConfigurationService {
         return metadata;
     }
 
-    async post(endpoint: string, client?: any, request?: any): Promise<IdResponse> {
+    async post(logName: string, client: any, request: any): Promise<IdResponse> {
         const metaData = this.makeMetadataHeader();
         const createPromise = new Promise<IdResponse>((resolve, reject) => {
             client.create(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
-                    this.innerLogger.debug(`post:${endpoint} success`);
+                    this.innerLogger.debug(`post:${logName} success`);
                     resolve(resp.toObject());
                 }
             });
@@ -54,18 +54,18 @@ export class GenericChirpstackConfigurationService {
         try {
             return await createPromise;
         } catch (err) {
-            this.innerLogger.error(`POST ${endpoint} got error: ${err}`);
+            this.innerLogger.error(`POST ${logName} got error: ${err}`);
             throw new BadRequestException();
         }
     }
-    async put(endpoint: string, client?: any, request?: any): Promise<void> {
+    async put(logName: string, client: any, request: any): Promise<void> {
         const metaData = this.makeMetadataHeader();
         const updatePromise = new Promise<void>((resolve, reject) => {
             client.update(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
-                    this.innerLogger.debug(`update :${endpoint} success`);
+                    this.innerLogger.debug(`update :${logName} success`);
                     resolve(resp);
                 }
             });
@@ -74,12 +74,12 @@ export class GenericChirpstackConfigurationService {
             await updatePromise;
             return;
         } catch (err) {
-            this.innerLogger.error(`UPDATE ${endpoint} got error: ${err}`);
+            this.innerLogger.error(`UPDATE ${logName} got error: ${err}`);
             throw new BadRequestException();
         }
     }
 
-    async getOneById<T>(endpoint: string, id: string, client?: any, request?: any): Promise<T> {
+    async getOneById<T>(logName: string, id: string, client: any, request: any): Promise<T> {
         const metaData = this.makeMetadataHeader();
         request.setId(id);
         const getPromise = new Promise<T>((resolve, reject) => {
@@ -87,7 +87,7 @@ export class GenericChirpstackConfigurationService {
                 if (err) {
                     reject(err);
                 } else {
-                    this.innerLogger.debug(`get from:${endpoint} success`);
+                    this.innerLogger.debug(`get from:${logName} success`);
                     resolve(resp);
                 }
             });
@@ -95,12 +95,12 @@ export class GenericChirpstackConfigurationService {
         try {
             return await getPromise;
         } catch (err) {
-            this.innerLogger.error(`GET ${endpoint} got error: ${err}`);
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
             throw new NotFoundException();
         }
     }
 
-    async delete<T>(endpoint: string, client?: any, request?: any): Promise<void> {
+    async delete<T>(logName: string, client: any, request: any): Promise<void> {
         //MAYBE return boolean of result (succes vs failure)
         if (client) {
             const metaData = this.makeMetadataHeader();
@@ -109,7 +109,7 @@ export class GenericChirpstackConfigurationService {
                     if (err) {
                         reject(err);
                     } else {
-                        this.innerLogger.debug(`delete :${endpoint} success`);
+                        this.innerLogger.debug(`delete :${logName} success`);
                         resolve(resp);
                     }
                 });
@@ -118,20 +118,20 @@ export class GenericChirpstackConfigurationService {
                 await deletePromise;
                 return;
             } catch (err) {
-                this.innerLogger.error(`DELETE ${endpoint} got error: ${err}`);
+                this.innerLogger.error(`DELETE ${logName} got error: ${err}`);
                 throw new BadRequestException();
             }
         }
     }
 
-    async get<T>(endpoint: string, client?: any, request?: any): Promise<T> {
+    async get<T>(logName: string, client: any, request: any): Promise<T> {
         const metaData = this.makeMetadataHeader();
         const getPromise = new Promise<T>((resolve, reject) => {
             client.get(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
-                    this.innerLogger.debug(`get from:${endpoint} success`);
+                    this.innerLogger.debug(`get from:${logName} success`);
                     resolve(resp);
                 }
             });
@@ -139,7 +139,7 @@ export class GenericChirpstackConfigurationService {
         try {
             return await getPromise;
         } catch (err) {
-            this.innerLogger.error(`GET ${endpoint} got error: ${err}`);
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
             throw new NotFoundException();
         }
     }
@@ -150,10 +150,10 @@ export class GenericChirpstackConfigurationService {
 
         const result = await this.getAllWithPagination<ListApplicationsResponse.AsObject>(
             `applications?limit=100&organizationID=${tenantID}`,
-            100,
-            undefined,
             this.applicationServiceClient,
-            req
+            req,
+            100,
+            undefined
         );
         const chirpstackApplicationResponseDto: ChirpstackApplicationResponseDto[] = [];
         result.resultList.map(e => {
@@ -172,11 +172,11 @@ export class GenericChirpstackConfigurationService {
     }
 
     async getAllWithPagination<T>(
-        endpoint: string,
+        logName: string,
+        client: any,
+        request: any,
         limit?: number,
-        offset?: number,
-        client?: any,
-        request?: any
+        offset?: number
     ): Promise<T> {
         const metaData = this.makeMetadataHeader();
         request.setLimit(limit), request.setOffset(offset);
@@ -188,14 +188,14 @@ export class GenericChirpstackConfigurationService {
                 } else {
                     const result = resp.toObject();
                     resolve(result);
-                    this.innerLogger.debug(`get all from:${endpoint} success`);
+                    this.innerLogger.debug(`get all from:${logName} success`);
                 }
             });
         });
         try {
             return await getListPromise;
         } catch (err) {
-            this.innerLogger.error(`GET ${endpoint} got error: ${err}`);
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
             throw new NotFoundException();
         }
     }
@@ -206,10 +206,10 @@ export class GenericChirpstackConfigurationService {
 
         const res = await this.getAllWithPagination<ListTenantsResponse.AsObject>(
             "organizations",
+            tenantClient,
+            req,
             limit,
             offset,
-            tenantClient,
-            req
         );
         return res;
     }

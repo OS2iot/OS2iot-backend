@@ -196,7 +196,7 @@ export class MulticastController {
         try {
             const multicast = await this.multicastService.findOne(id);
             checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Write);
-            const result = await this.multicastService.multicastDelete(id, multicast);
+            const result = await this.multicastService.deleteMulticast(id, multicast);
 
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);

@@ -1,6 +1,5 @@
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
-import { ListGatewaysRequest } from "@chirpstack/chirpstack-api/api/gateway_pb";
-import { ListAllGatewaysResponseChirpstackDto, ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListGatewaysRequest, ListGatewaysResponse } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-response.dto";
 import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
@@ -89,21 +88,18 @@ export class SearchService {
     }
 
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
-        const gatewayClient = new GatewayServiceClient(
-            this.gatewayService.baseUrlGRPC,
-            credentials.createInsecure()
-        );
+        const gatewayClient = new GatewayServiceClient(this.gatewayService.baseUrlGRPC, credentials.createInsecure());
         const escapedQuery = encodeURI(trimmedQuery);
         const req = new ListGatewaysRequest();
 
         req.setSearch(escapedQuery);
-        //TODO:: The return type might be changed.
-        const gateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseChirpstackDto>(
-            `gateways?search=${escapedQuery}`,
-            1000,
-            0,
+
+        const gateways = await this.gatewayService.getAllWithPagination<ListGatewaysResponse.AsObject>(
+            `gateways`,
             gatewayClient,
-            req
+            req,
+            1000,
+            0
         );
 
         const mapped = await Promise.all(
@@ -111,9 +107,8 @@ export class SearchService {
                 const createdAt = timestampToDate(x.createdAt);
                 const updatedAt = timestampToDate(x.updatedAt);
 
-                const resultDto = new SearchResultDto(x.name, x.id, createdAt, updatedAt, x.gatewayId);
+                const resultDto = new SearchResultDto(x.name, x.gatewayId, createdAt, updatedAt, x.gatewayId);
                 const detailedInfo = await this.gatewayService.getOne(x.gatewayId);
-
 
                 resultDto.organizationId = detailedInfo.gateway.organizationId;
                 return resultDto;
@@ -212,7 +207,6 @@ export class SearchService {
         return this.iotDeviceRepository.createQueryBuilder("device");
     }
 
-    // eslint-disable-next-line max-lines-per-function
     private async applySecuityAndSelect<T>(
         req: AuthenticatedRequest,
         qb: SelectQueryBuilder<T>,

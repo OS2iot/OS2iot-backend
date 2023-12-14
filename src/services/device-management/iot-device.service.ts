@@ -749,9 +749,7 @@ export class IoTDeviceService {
         }
     }
 
-    private async getLorawanDeviceEuis(
-        iotDevicesDtoMap: CreateIoTDeviceMapDto[]
-    ): Promise<ChirpstackDeviceId[] | null> {
+    private async getLorawanDeviceEuis(iotDevicesDtoMap: CreateIoTDeviceMapDto[]): Promise<ChirpstackDeviceId[]> {
         const iotLorawanDevices = iotDevicesDtoMap.reduce((res: string[], { iotDevice, iotDeviceDto }) => {
             if (iotDevice.constructor.name === LoRaWANDevice.name && iotDeviceDto.lorawanSettings) {
                 res.push(iotDeviceDto.lorawanSettings.devEUI);

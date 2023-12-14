@@ -207,6 +207,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         }
     }
 
+    //TODO: This could be moved to a helper function in the future, since it has a lot of similarities with metrics from chirpstack devices.
     private mapPackets(metrics: GetGatewayMetricsResponse) {
         const gatewayResponseDto: GatewayStatsElementDto[] = [];
         const packetCounts: { [timestamp: string]: { rx: number; tx: number } } = {};
@@ -432,10 +433,10 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         // Get all chirpstack gateways
         const chirpStackGateways = await this.getAllWithPagination<ListGatewaysResponse.AsObject>(
             "gateways",
-            limit,
-            0,
             this.gatewayClient,
-            listReq
+            listReq,
+            limit,
+            0
         );
 
         const responseItem: GatewayResponseChirpstackDto[] = [];
