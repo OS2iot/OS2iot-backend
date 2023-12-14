@@ -10,7 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThanOrEqual, Repository } from "typeorm";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { nameof } from "@helpers/type-helper";
-import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
 export class GatewayStatusHistoryService {
@@ -56,7 +56,7 @@ export class GatewayStatusHistoryService {
         };
     }
 
-    public async findOne(gateway: GatewayResponseGrpcDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
+    public async findOne(gateway: GatewayResponseDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
         const fromDate = gatewayStatusIntervalToDate(timeInterval);
 
         const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
@@ -125,7 +125,7 @@ export class GatewayStatusHistoryService {
     }
 
     private mapStatusHistoryToGateways(
-        gateways: GatewayResponseGrpcDto[],
+        gateways: GatewayResponseDto[],
         statusHistories: GatewayStatusHistory[]
     ): GatewayStatus[] {
         return gateways.map(gateway => {
@@ -133,7 +133,7 @@ export class GatewayStatusHistoryService {
         });
     }
 
-    private mapStatusHistoryToGateway(gateway: GatewayResponseGrpcDto, statusHistories: GatewayStatusHistory[]) {
+    private mapStatusHistoryToGateway(gateway: GatewayResponseDto, statusHistories: GatewayStatusHistory[]) {
         const statusTimestamps = statusHistories.reduce((res: GatewayStatus["statusTimestamps"], history) => {
             if (history.mac === gateway.gatewayId) {
                 res.push({

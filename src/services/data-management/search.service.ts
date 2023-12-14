@@ -1,6 +1,6 @@
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import { ListGatewaysRequest } from "@chirpstack/chirpstack-api/api/gateway_pb";
-import { ListAllGatewaysResponseGrpcDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseChirpstackDto, ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-response.dto";
 import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
@@ -97,7 +97,8 @@ export class SearchService {
         const req = new ListGatewaysRequest();
 
         req.setSearch(escapedQuery);
-        const gateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseGrpcDto>(
+        //TODO:: The return type might be changed.
+        const gateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseChirpstackDto>(
             `gateways?search=${escapedQuery}`,
             1000,
             0,
@@ -114,7 +115,7 @@ export class SearchService {
                 const detailedInfo = await this.gatewayService.getOne(x.gatewayId);
 
 
-                resultDto.organizationId = detailedInfo.gateway.internalOrganizationId;
+                resultDto.organizationId = detailedInfo.gateway.organizationId;
                 return resultDto;
             })
         );

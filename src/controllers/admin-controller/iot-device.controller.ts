@@ -58,7 +58,7 @@ import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.resp
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -170,7 +170,7 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: CreateIoTDeviceDownlinkDto
-    ): Promise<void | PostReturnInterface> {
+    ): Promise<void | IdResponse> {
         try {
             const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
             if (!device) {

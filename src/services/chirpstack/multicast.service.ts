@@ -44,7 +44,7 @@ import {
 } from "@chirpstack/chirpstack-api/api/multicast_group_pb";
 import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/multicast_group_grpc_pb";
 import { ServiceError } from "@grpc/grpc-js";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { multicastGroup } from "@enum/multicast-type.enum";
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
@@ -158,7 +158,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         );
         const req = new CreateMulticastGroupRequest();
         req.setMulticastGroup(mappedChirpStackMulticast);
-        const result: PostReturnInterface = await this.post(this.multicastGroupUrl, this.multicastServiceClient, req); // This creates the multicast in chirpstack. Chirpstack returns an id as a string
+        const result: IdResponse = await this.post(this.multicastGroupUrl, this.multicastServiceClient, req); // This creates the multicast in chirpstack. Chirpstack returns an id as a string
 
         await this.addDevices(createMulticastDto, result); // iotDevices are added to multicast in a seperate endpoint.
 
@@ -370,7 +370,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     }
 
     private handlePossibleError(
-        result: PostReturnInterface,
+        result: IdResponse,
         dto: CreateMulticastDto | UpdateMulticastDto | CreateChirpstackMulticastQueueItemDto
     ): void {
         if (!result.id) {
@@ -409,7 +409,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
 
     private async addDevices(
         multicastDto: CreateMulticastDto | UpdateMulticastDto,
-        chirpstackMulticastID: PostReturnInterface // the id returned from chirpstack when the multicast is created in chirpstack.
+        chirpstackMulticastID: IdResponse // the id returned from chirpstack when the multicast is created in chirpstack.
     ) {
         multicastDto.iotDevices.forEach(async device => {
             if (device.type === IoTDeviceType.LoRaWAN) {
@@ -434,7 +434,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         request?: AddDeviceToMulticastGroupRequest
     ): Promise<any> {
         const metaData = this.makeMetadataHeader();
-        const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
+        const createPromise = new Promise<IdResponse>((resolve, reject) => {
             client.addDevice(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);

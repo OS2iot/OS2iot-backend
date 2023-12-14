@@ -37,6 +37,7 @@ export class ChirpstackDeviceContentsDto {
 
     @ApiHideProperty()
     deviceStatusBattery?: number;
+
     @ApiHideProperty()
     deviceStatusMargin?: number;
 }

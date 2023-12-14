@@ -1,4 +1,4 @@
-export interface ChirpstackManyDeviceResponseContents {
+export interface ChirpstackDeviceResponseContents {
     devEUI: string;
     name: string;
     description: string;
@@ -12,5 +12,5 @@ export interface ChirpstackManyDeviceResponseContents {
 
 export interface ChirpstackManyDeviceResponseDto {
     totalCount: string;
-    result: ChirpstackManyDeviceResponseContents[];
+    result: ChirpstackDeviceResponseContents[];
 }

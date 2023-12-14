@@ -1,7 +1,4 @@
-import {
-    MacVersionMap,
-    RegParamsRevisionMap,
-} from "@chirpstack/chirpstack-api/common/common_pb";
+import { MacVersionMap, RegParamsRevisionMap } from "@chirpstack/chirpstack-api/common/common_pb";
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { IsInt, IsNotEmpty, IsOptional, IsString, Length, Min, ValidateIf } from "class-validator";
 
@@ -17,7 +14,6 @@ export class DeviceProfileDto {
 
     @ApiProperty({ required: true })
     @IsNotEmpty()
-
     regParamsRevision: RegParamsRevisionMap[keyof RegParamsRevisionMap];
 
     @ApiProperty({ required: false })
@@ -38,9 +34,6 @@ export class DeviceProfileDto {
     @ApiProperty({ required: false })
     id?: string;
 
-    @ApiHideProperty()
-    organizationID?: string;
-
     @ApiProperty({ required: false })
     @ValidateIf((o: DeviceProfileDto) => o.supportsClassB)
     @Min(0)
@@ -58,7 +51,7 @@ export class DeviceProfileDto {
     pingSlotPeriod?: number;
 
     @ApiProperty({ required: false })
-    rfRegion?: string
+    rfRegion?: string;
 
     @ApiProperty({ required: false })
     @ValidateIf((o: DeviceProfileDto) => o.supportsJoin == false)
@@ -93,8 +86,12 @@ export class DeviceProfileDto {
     @ApiProperty({ required: false })
     supportsJoin?: boolean;
 
+    @ApiProperty({ required: false })
+    devStatusReqFreq?: number;
+
     @ApiHideProperty()
     tags?: { [id: string]: string };
+
     @ApiHideProperty()
     tagsMap?: Array<[string, string]>;
 
@@ -106,6 +103,7 @@ export class DeviceProfileDto {
 
     @ApiHideProperty()
     createdBy?: number;
-    @ApiProperty({ required: false })
-    devStatusReqFreq?: number;
+
+    @ApiHideProperty()
+    organizationID?: string;
 }

@@ -13,7 +13,7 @@ import {
     CreateChirpstackDeviceQueueItemResponse,
 } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 
 @Injectable()
 export class IoTDeviceDownlinkService {
@@ -26,7 +26,7 @@ export class IoTDeviceDownlinkService {
     private readonly logger = new Logger(IoTDeviceDownlinkService.name);
     private readonly SIGFOX_DOWNLINK_LENGTH_EXACT = 16;
 
-    async createDownlink(dto: CreateIoTDeviceDownlinkDto, device: IoTDevice): Promise<void | PostReturnInterface> {
+    async createDownlink(dto: CreateIoTDeviceDownlinkDto, device: IoTDevice): Promise<void | IdResponse> {
         if (device.type === IoTDeviceType.LoRaWAN) {
             const cast = <LoRaWANDevice>device;
             return await this.createLoraDownlink(dto, cast);
@@ -57,10 +57,7 @@ export class IoTDeviceDownlinkService {
         }
     }
 
-    private async createLoraDownlink(
-        dto: CreateIoTDeviceDownlinkDto,
-        cast: LoRaWANDevice
-    ): Promise<PostReturnInterface> {
+    private async createLoraDownlink(dto: CreateIoTDeviceDownlinkDto, cast: LoRaWANDevice): Promise<IdResponse> {
         const csDto: CreateChirpstackDeviceQueueItemDto = {
             deviceQueueItem: {
                 fPort: dto.port,

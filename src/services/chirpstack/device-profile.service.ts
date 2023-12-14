@@ -32,18 +32,14 @@ import { timestampToDate } from "@helpers/date.helper";
 import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
 import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 import { AdrAlgorithmDto } from "@dto/chirpstack/adr-algorithm.dto";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { DeviceListItem, ListDevicesRequest, ListDevicesResponse } from "@chirpstack/chirpstack-api/api/device_pb";
 import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
 import * as google_protobuf_empty_pb from "google-protobuf/google/protobuf/empty_pb";
 
 @Injectable()
 export class DeviceProfileService extends GenericChirpstackConfigurationService {
-    private readonly ORG_ID_KEY = "internalOrganizationId";
-    private readonly UPDATED_BY_KEY = "os2iot-updated-by";
-    private readonly CREATED_BY_KEY = "os2iot-created-by";
-
-    public async createDeviceProfile(dto: CreateDeviceProfileDto, userId: number): Promise<PostReturnInterface> {
+    public async createDeviceProfile(dto: CreateDeviceProfileDto, userId: number): Promise<IdResponse> {
         if (await this.isNameInUse(dto.deviceProfile.name)) {
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
@@ -51,17 +47,16 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         dto.deviceProfile.tags = this.addOrganizationToTags(dto);
         dto.deviceProfile.tags = this.addUserIdToTags(dto, userId);
 
-        const deviceProfile = new DeviceProfile();
         const req = new CreateDeviceProfileRequest();
+
+        const deviceProfile = this.mapToChirpstackDto(dto, true);
 
         Object.entries(dto.deviceProfile.tags).forEach(([key, value]) => {
             deviceProfile.getTagsMap().set(key, value);
         });
 
-        this.mapToChirpstackDto(deviceProfile, dto, true);
-
         req.setDeviceProfile(deviceProfile);
-        const result: PostReturnInterface = await this.post("device-profiles", this.deviceProfileClient, req);
+        const result: IdResponse = await this.post("device-profiles", this.deviceProfileClient, req);
         return result;
     }
 
@@ -86,15 +81,12 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         if (await this.isNameInUse(data.deviceProfile.name, id)) {
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
-        const deviceProfile = new DeviceProfile();
+        const deviceProfile = this.mapToChirpstackDto(data);
         const request = new UpdateDeviceProfileRequest();
-        this.mapToChirpstackDto(deviceProfile, data);
 
         data.deviceProfile.tags = await this.updateTags(id, req);
         data.deviceProfile = await this.updateDto(data.deviceProfile);
-        Object.entries(data.deviceProfile.tags).forEach(([key, value]) => {
-            deviceProfile.getTagsMap().set(key, value);
-        });
+
         request.setDeviceProfile(deviceProfile);
         return await this.put("device-profiles", this.deviceProfileClient, request);
     }
@@ -171,7 +163,6 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         }
 
         if (result.getDeviceProfile().getTagsMap().get(this.ORG_ID_KEY) != null) {
-            [] = [];
             checkIfUserHasAccessToOrganization(
                 req,
                 +result.getDeviceProfile().getTagsMap().get(this.ORG_ID_KEY),
@@ -194,15 +185,14 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
             this.deviceProfileClient,
             req
         );
-        const deviceResultListDto: DeviceProfileListDto[] = [];
-        result.resultList.map(e => {
-            const resultItem: DeviceProfileListDto = {
+
+        const deviceResultListDto: DeviceProfileListDto[] = result.resultList.map(e => {
+            return {
                 name: e.name,
                 createdAt: timestampToDate(e.createdAt),
                 updatedAt: timestampToDate(e.updatedAt),
                 id: e.id,
             };
-            deviceResultListDto.push(resultItem);
         });
         const deviceProfileList: ListAllDeviceProfilesResponseDto = {
             totalCount: result.totalCount.toString(),
@@ -302,11 +292,8 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         return deviceProfileMapped;
     }
 
-    mapToChirpstackDto(
-        deviceProfile: DeviceProfile,
-        data: CreateDeviceProfileDto | UpdateDeviceProfileDto,
-        isCreate?: boolean
-    ) {
+    mapToChirpstackDto(data: CreateDeviceProfileDto | UpdateDeviceProfileDto, isCreate?: boolean) {
+        const deviceProfile = new DeviceProfile();
         deviceProfile.setName(data.deviceProfile.name);
         deviceProfile.setMacVersion(data.deviceProfile.macVersion);
         deviceProfile.setRegParamsRevision(data.deviceProfile.regParamsRevision);
@@ -331,18 +318,18 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
         );
 
         isCreate ? deviceProfile.setTenantId(data.deviceProfile.organizationID) : {};
+
+        return deviceProfile;
     }
 
     public async getAdrAlgorithmsForChirpstack(): Promise<ListAllAdrAlgorithmsResponseDto> {
         const result = await this.getAdrAlgorithms();
 
-        const adrAlgoritmList: AdrAlgorithmDto[] = [];
-        result.getResultList().map(e => {
-            const resultItem: AdrAlgorithmDto = {
+        const adrAlgoritmList: AdrAlgorithmDto[] = result.getResultList().map(e => {
+            return {
                 id: e.getId(),
                 name: e.getName(),
             };
-            adrAlgoritmList.push(resultItem);
         });
 
         return {
@@ -352,7 +339,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
 
     async getAdrAlgorithms(): Promise<ListDeviceProfileAdrAlgorithmsResponse> {
         const metaData = this.makeMetadataHeader();
-        const test: google_protobuf_empty_pb.Empty = new Empty()
+        const test: google_protobuf_empty_pb.Empty = new Empty();
         const getPromise = new Promise<ListDeviceProfileAdrAlgorithmsResponse>((resolve, reject) => {
             this.deviceProfileClient.listAdrAlgorithms(test, metaData, (err: ServiceError, resp: any) => {
                 if (err) {

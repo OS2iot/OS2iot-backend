@@ -13,7 +13,7 @@ import { ListTenantsRequest, ListTenantsResponse } from "@chirpstack/chirpstack-
 import { ApplicationServiceClient } from "@chirpstack/chirpstack-api/api/application_grpc_pb";
 import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import { DeviceProfileServiceClient } from "@chirpstack/chirpstack-api/api/device_profile_grpc_pb";
@@ -29,6 +29,9 @@ export class GenericChirpstackConfigurationService {
     protected gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
     protected deviceProfileClient = new DeviceProfileServiceClient(this.baseUrlGRPC, credentials.createInsecure());
     protected multicastServiceClient = new MulticastGroupServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected readonly ORG_ID_KEY = "internalOrganizationId";
+    protected readonly UPDATED_BY_KEY = "os2iot-updated-by";
+    protected readonly CREATED_BY_KEY = "os2iot-created-by";
 
     makeMetadataHeader(): Metadata {
         const metadata = new Metadata();
@@ -36,9 +39,9 @@ export class GenericChirpstackConfigurationService {
         return metadata;
     }
 
-    async post(endpoint: string, client?: any, request?: any): Promise<PostReturnInterface> {
+    async post(endpoint: string, client?: any, request?: any): Promise<IdResponse> {
         const metaData = this.makeMetadataHeader();
-        const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
+        const createPromise = new Promise<IdResponse>((resolve, reject) => {
             client.create(request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
@@ -164,7 +167,7 @@ export class GenericChirpstackConfigurationService {
         });
         return {
             totalCount: result.totalCount,
-            result: chirpstackApplicationResponseDto,
+            resultList: chirpstackApplicationResponseDto,
         };
     }
 

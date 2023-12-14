@@ -58,8 +58,5 @@ export class GatewayContentsDto {
     tags?: { [id: string]: string };
 
     @ApiHideProperty()
-    gatewayProfileID?: string;
-
-    @ApiHideProperty()
     id: string;
 }

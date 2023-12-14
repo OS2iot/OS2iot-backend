@@ -48,5 +48,5 @@ export enum ErrorCodes {
     SendMailError = "MESSAGE.SEND-MAIL-ERROR",
     UserDoesNotExistInArray = "MESSAGE.USER-DOES-NOT-EXIST",
     UserAlreadyInPermission = "MESSAGE.USER-ALREADY-IN-PERMISSION",
-    CouldntGetApplications= "MESSAGE.COULDN'T-GET-CS-APPLICATIONS"
+    CouldntGetApplications= "MESSAGE.COULD-NOT-GET-CS-APPLICATIONS"
 }

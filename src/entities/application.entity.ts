@@ -113,6 +113,7 @@ export class Application extends DbBaseEntity {
         cascade: true,
     })
     deviceTypes?: ApplicationDeviceType[];
+
     @Column({ nullable: true })
     chirpstackId?: string;
 }

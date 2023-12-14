@@ -70,6 +70,7 @@ import { CsvGeneratorService } from "@services/csv-generator.service";
 import * as fs from "fs";
 import { caCertPath } from "@resources/resource-paths";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -95,6 +96,7 @@ export class IoTDeviceService {
         private entityManager: EntityManager,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
+        private applicationChirpstackService: ApplicationChirpstackService,
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
         private sigfoxGroupService: SigFoxGroupService,
@@ -937,18 +939,18 @@ export class IoTDeviceService {
                 dto.name
             );
 
-            const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
+            const applicationId = await this.applicationChirpstackService.findOrCreateDefaultApplication(
                 loraApplications,
                 lorawanDevice
             );
             lorawanDevice.chirpstackApplicationId = applicationId;
             chirpstackDeviceDto.device.applicationID = applicationId;
             // Create or update the LoRa device against Chirpstack API
-            const response = await this.chirpstackDeviceService.createOrUpdateDevice(
+            const success = await this.chirpstackDeviceService.createOrUpdateDevice(
                 chirpstackDeviceDto,
                 lorawanDeviceEuis
             );
-            if (response) {
+            if (success) {
                 lorawanDeviceEuis.push(chirpstackDeviceDto.device);
                 await this.doActivation(dto, isUpdate);
                 lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
@@ -976,7 +978,7 @@ export class IoTDeviceService {
             // OTAA Activate if key is provided
             await this.doActivationByOTAA(dto, isUpdate);
         } else if (dto.lorawanSettings.activationType === ActivationType.ABP) {
-            await this.doActivationByABP(dto, isUpdate);
+            await this.doActivationByABP(dto);
         }
     }
 
@@ -992,7 +994,7 @@ export class IoTDeviceService {
         }
     }
 
-    private async doActivationByABP(dto: CreateIoTDeviceDto, isUpdate: boolean) {
+    private async doActivationByABP(dto: CreateIoTDeviceDto) {
         if (
             dto.lorawanSettings.devAddr &&
             dto.lorawanSettings.fCntUp != null &&

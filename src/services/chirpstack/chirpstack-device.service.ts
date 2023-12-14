@@ -1,13 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { Application as ApplicationDb } from "@entities/application.entity";
-
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { ChirpstackDeviceActivationContentsDto } from "@dto/chirpstack/chirpstack-device-activation-response.dto";
 import { ChirpstackDeviceContentsDto } from "@dto/chirpstack/chirpstack-device-contents.dto";
 import { ChirpstackDeviceKeysContentDto } from "@dto/chirpstack/chirpstack-device-keys-response.dto";
 import { ChirpstackSingleApplicationResponseDto } from "@dto/chirpstack/chirpstack-single-application-response.dto";
-import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
 import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-device.dto";
-import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { ListAllDevicesResponseDto } from "@dto/chirpstack/list-all-devices-response.dto";
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
@@ -18,7 +14,7 @@ import {
 } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-    ChirpstackManyDeviceResponseContents,
+    ChirpstackDeviceResponseContents,
     ChirpstackManyDeviceResponseDto,
 } from "@dto/chirpstack/chirpstack-many-device-response";
 import { IoTDevice } from "@entities/iot-device.entity";
@@ -26,20 +22,12 @@ import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chi
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
 import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
-import { groupBy } from "lodash";
 import { LoRaWANStatsElementDto, LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
-import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 
 import { ServiceError } from "@grpc/grpc-js";
-import {
-    Application,
-    CreateApplicationRequest,
-    GetApplicationRequest,
-    GetApplicationResponse,
-    ListApplicationsRequest,
-} from "@chirpstack/chirpstack-api/api/application_pb";
+import { GetApplicationRequest, GetApplicationResponse } from "@chirpstack/chirpstack-api/api/application_pb";
 import {
     ActivateDeviceRequest,
     CreateDeviceKeysRequest,
@@ -66,7 +54,7 @@ import {
     UpdateDeviceKeysRequest,
     UpdateDeviceRequest,
 } from "@chirpstack/chirpstack-api/api/device_pb";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
@@ -89,65 +77,11 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
 
     private readonly logger = new Logger(ChirpstackDeviceService.name);
 
-    defaultApplicationName = "os2iot";
-
     DEVICE_NAME_PREFIX = "OS2IOT-";
     DEFAULT_DESCRIPTION = "Created by OS2IoT";
     private readonly deviceStatsIntervalInDays: number;
 
-    async findOrCreateDefaultApplication(
-        applications: ListAllChirpstackApplicationsResponseDto = null,
-        iotDevice: LoRaWANDevice
-    ): Promise<string> {
-        const organizationID = await this.getDefaultOrganizationId();
-        const req = new ListApplicationsRequest();
-        req.setTenantId(organizationID);
-        // Fetch applications
-        applications =
-            applications ??
-            (await this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
-                `applications?limit=100&organizationID=${organizationID}`,
-                100,
-                undefined,
-                this.applicationServiceClient
-            ));
-
-        // if application exist use it
-        let applicationId = applications.result.find(
-            element =>
-                element.id === iotDevice.chirpstackApplicationId || element.id === iotDevice.application.chirpstackId
-        )?.id;
-
-        // otherwise create new application
-        if (!applicationId) {
-            applicationId = await this.createNewApplication(
-                applicationId,
-                organizationID,
-                iotDevice.application.name,
-                iotDevice.application.id
-            );
-        }
-
-        return applicationId;
-    }
-
-    private async createNewApplication(applicationId: string, organizationID: string, name: string, id: number) {
-        applicationId = await this.createApplication({
-            application: {
-                name: `${this.defaultApplicationName}-${name}`,
-                description: this.DEFAULT_DESCRIPTION,
-                tenantId: organizationID,
-            },
-        });
-        const existingApplication = await this.applicationRepository.findOneOrFail({
-            where: { id: id },
-        });
-        existingApplication.chirpstackId = applicationId;
-        await this.applicationRepository.save(existingApplication);
-        return applicationId;
-    }
-
-    makeCreateChirpstackDeviceDto(dto: CreateLoRaWANSettingsDto, name: string): CreateChirpstackDeviceDto {
+    public makeCreateChirpstackDeviceDto(dto: CreateLoRaWANSettingsDto, name: string): CreateChirpstackDeviceDto {
         const csDto = new ChirpstackDeviceContentsDto();
         csDto.name = `${this.DEVICE_NAME_PREFIX}${name}`.toLowerCase();
         csDto.description = this.DEFAULT_DESCRIPTION;
@@ -160,7 +94,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return { device: csDto };
     }
 
-    async overwriteDownlink(dto: CreateChirpstackDeviceQueueItemDto): Promise<PostReturnInterface> {
+    public async overwriteDownlink(dto: CreateChirpstackDeviceQueueItemDto): Promise<IdResponse> {
         await this.deleteDownlinkQueue(dto.deviceQueueItem.devEUI);
         try {
             const req = new EnqueueDeviceQueueItemRequest();
@@ -171,7 +105,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             queueItem.setFPort(dto.deviceQueueItem.fPort);
             req.setQueueItem(queueItem);
 
-            const res = await this.postDownlink(this.deviceServiceClient, req);
+            const res = await this.postDownlink(req);
             return res;
         } catch (err) {
             const fcntError = "enqueue downlink payload error: get next downlink fcnt for deveui error";
@@ -183,7 +117,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async deleteDevice(deviceEUI: string): Promise<void> {
+    public async deleteDevice(deviceEUI: string): Promise<void> {
         try {
             const req = new DeleteDeviceRequest();
             req.setDevEui(deviceEUI);
@@ -193,43 +127,42 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async getDownlinkQueue(deviceEUI: string): Promise<DeviceDownlinkQueueResponseDto> {
+    public async getDownlinkQueue(deviceEUI: string): Promise<DeviceDownlinkQueueResponseDto> {
         const req = new GetDeviceQueueItemsRequest();
         req.setDevEui(deviceEUI);
-        const res = await this.getQueue(this.deviceServiceClient, req);
+        const res = await this.getQueue(req);
 
-        const queueDto: DeviceQueueItem[] = [];
-        res.getResultList().forEach(queueItem => {
-            queueDto.push({
+        const queueItems: DeviceQueueItem[] = res.getResultList().map(queueItem => {
+            return {
                 confirmed: queueItem.getConfirmed(),
                 devEUI: queueItem.getDevEui(),
                 fCnt: queueItem.getFCntDown(),
                 fPort: queueItem.getFPort(),
                 data: queueItem.getData_asB64(),
-            });
+            };
         });
 
         const responseDto: DeviceDownlinkQueueResponseDto = {
             totalCount: res.getTotalCount(),
-            deviceQueueItems: queueDto,
+            deviceQueueItems: queueItems,
         };
         return responseDto;
     }
 
-    async deleteDownlinkQueue(deviceEUI: string): Promise<void> {
+    private async deleteDownlinkQueue(deviceEUI: string): Promise<void> {
         const req = new FlushDeviceQueueRequest();
         req.setDevEui(deviceEUI);
-        await this.deleteQueue(this.deviceServiceClient, req);
+        await this.deleteQueue(req);
     }
 
-    async activateDeviceWithABP(
+    public async activateDeviceWithABP(
         devEUI: string,
         devAddr: string,
         fCntUp: number,
         nFCntDown: number,
         networkSessionKey: string,
         applicationSessionKey: string
-    ): Promise<boolean> {
+    ): Promise<void> {
         const res = await this.createOrUpdateABPActivation(
             devAddr,
             networkSessionKey,
@@ -240,25 +173,29 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         );
         if (!res) {
             this.logger.warn(`Could not ABP activate Chirpstack Device using DEVEUI: ${devEUI}}`);
-            return false;
         }
-        return true;
     }
 
-    async getAllDevicesStatus(app: ApplicationDb): Promise<ChirpstackManyDeviceResponseDto> {
+    public async getAllDevicesStatus(application: DbApplication): Promise<ChirpstackManyDeviceResponseDto> {
         const req = new ListDevicesRequest();
-        if (!app.chirpstackId) {
-            const loraDev = app.iotDevices.find(d => d.type === IoTDeviceType.LoRaWAN);
+        if (!application.chirpstackId) {
+            const loraDev = application.iotDevices.find(d => d.type === IoTDeviceType.LoRaWAN);
             const cast = loraDev as LoRaWANDevice;
+
+            const deviceRequest = new GetDeviceRequest();
+            deviceRequest.setDevEui(cast.deviceEUI);
+
             const getChirpstackDevice = await this.get<GetDeviceResponse>(
                 "device",
                 this.deviceServiceClient,
-                new GetDeviceRequest().setDevEui(cast.deviceEUI)
+                deviceRequest
             );
-            app.chirpstackId = getChirpstackDevice.getDevice().getApplicationId();
-            await this.applicationRepository.save(app, {});
+
+            application.chirpstackId = getChirpstackDevice.getDevice().getApplicationId();
+            await this.applicationRepository.save(application, {});
         }
-        req.setApplicationId(app.chirpstackId);
+
+        req.setApplicationId(application.chirpstackId);
         const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
             `devices`,
             10000,
@@ -266,10 +203,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             this.deviceServiceClient,
             req
         );
-        const responseDto: ChirpstackManyDeviceResponseContents[] = [];
 
-        devices.resultList.map(e => {
-            const responseItem: ChirpstackManyDeviceResponseContents = {
+        const responseDevvice: ChirpstackDeviceResponseContents[] = devices.resultList.map(e => {
+            return {
                 devEUI: e.devEui,
                 name: e.name,
                 description: e.description,
@@ -280,11 +216,10 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
                 deviceProfileID: e.deviceProfileId,
                 deviceProfileName: e.deviceProfileName,
             };
-            responseDto.push(responseItem);
         });
         return {
             totalCount: devices.totalCount.toString(),
-            result: responseDto,
+            result: responseDevvice,
         };
     }
 
@@ -307,14 +242,14 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         );
         req.setDeviceActivation(deviceActivation);
         try {
-            await this.postActivation(this.deviceServiceClient, req);
+            await this.postActivation(req);
         } catch (e) {
             return false;
         }
 
         return true;
     }
-    mapActivationToChirpstack(
+    private mapActivationToChirpstack(
         devAddr: string,
         networkSessionKey: string,
         applicationSessionKey: string,
@@ -334,19 +269,18 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return deviceActivation;
     }
 
-    async activateDeviceWithOTAA(deviceEUI: string, nwkKey: string, isUpdate: boolean): Promise<boolean> {
+    public async activateDeviceWithOTAA(deviceEUI: string, nwkKey: string, isUpdate: boolean): Promise<boolean> {
         try {
             if (isUpdate) {
                 const req = new UpdateDeviceKeysRequest();
                 const deviceKeys = this.mapDeviceKeysToChirpstack(deviceEUI, nwkKey);
                 req.setDeviceKeys(deviceKeys);
-                await this.putKeys(this.deviceServiceClient, req);
+                await this.putKeys(req);
             } else {
                 const req = new CreateDeviceKeysRequest();
                 const deviceKeys = this.mapDeviceKeysToChirpstack(deviceEUI, nwkKey);
                 req.setDeviceKeys(deviceKeys);
-
-                await this.postKeys(this.deviceServiceClient, req);
+                await this.postKeys(req);
             }
         } catch (e) {
             return false;
@@ -355,14 +289,14 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         return true;
     }
 
-    mapDeviceKeysToChirpstack(deviceEUI: string, nwkKey: string) {
+    private mapDeviceKeysToChirpstack(deviceEUI: string, nwkKey: string) {
         const deviceKeys = new DeviceKeys();
         deviceKeys.setDevEui(deviceEUI);
         deviceKeys.setNwkKey(nwkKey);
         return deviceKeys;
     }
 
-    async createOrUpdateDevice(
+    public async createOrUpdateDevice(
         dto: CreateChirpstackDeviceDto,
         lorawanDevices: ChirpstackDeviceId[] = null
     ): Promise<boolean> {
@@ -379,12 +313,13 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
                 await this.post(`devices`, this.deviceServiceClient, req);
             }
         } catch (e) {
+            this.logger.error(`Update or Post device got error: ${e}`);
             return false;
         }
         return true;
     }
 
-    mapDeviceToChirpstack(dto: CreateChirpstackDeviceDto): Device {
+    private mapDeviceToChirpstack(dto: CreateChirpstackDeviceDto): Device {
         const device = new Device();
         device.setApplicationId(dto.device.applicationID);
         device.setDescription(dto.device.description);
@@ -395,22 +330,22 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         device.setSkipFcntCheck(dto.device.skipFCntCheck);
         return device;
     }
-    async getChirpstackApplication(id: string): Promise<ChirpstackSingleApplicationResponseDto> {
+    private async getChirpstackApplication(id: string): Promise<ChirpstackSingleApplicationResponseDto> {
         const req = new GetApplicationRequest();
         req.setId(id);
         try {
-            const csApplication = await this.get<GetApplicationResponse>(
+            const chirpstackApplicationResponse = await this.get<GetApplicationResponse>(
                 `applications/${id}`,
                 this.applicationServiceClient,
                 req
             );
-
+            const chirpstackApplication = chirpstackApplicationResponse.getApplication();
             const applicationDto = new ChirpstackApplicationResponseDto();
 
-            applicationDto.name = csApplication.getApplication().getName();
-            applicationDto.description = csApplication.getApplication().getDescription();
-            applicationDto.id = csApplication.getApplication().getId();
-            applicationDto.tenantId = csApplication.getApplication().getTenantId();
+            applicationDto.name = chirpstackApplication.getName();
+            applicationDto.description = chirpstackApplication.getDescription();
+            applicationDto.id = chirpstackApplication.getId();
+            applicationDto.tenantId = chirpstackApplication.getTenantId();
 
             const returnDto = new ChirpstackSingleApplicationResponseDto();
             returnDto.application = applicationDto;
@@ -421,25 +356,26 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async getChirpstackDevice(id: string): Promise<ChirpstackDeviceContentsDto> {
+    public async getChirpstackDevice(id: string): Promise<ChirpstackDeviceContentsDto> {
         try {
             const req = new GetDeviceRequest();
             req.setDevEui(id);
 
             const res = await this.get<GetDeviceResponse>(`devices/${id}`, this.deviceServiceClient, req);
+            const device = res.getDevice();
 
             const deviceDto: ChirpstackDeviceContentsDto = {
                 deviceStatusBattery: res.getDeviceStatus()?.getBatteryLevel(),
                 deviceStatusMargin: res.getDeviceStatus()?.getMargin(),
-                devEUI: res.getDevice().getDevEui(),
-                deviceProfileID: res.getDevice().getDeviceProfileId(),
-                applicationID: res.getDevice().getApplicationId(),
-                description: res.getDevice().getDescription(),
-                isDisabled: res.getDevice().getIsDisabled(),
-                name: res.getDevice().getName(),
-                skipFCntCheck: res.getDevice().getSkipFcntCheck(),
-                tags: res.getDevice().getTagsMap().toObject(),
-                variables: res.getDevice().getVariablesMap().toObject(),
+                devEUI: device.getDevEui(),
+                deviceProfileID: device.getDeviceProfileId(),
+                applicationID: device.getApplicationId(),
+                description: device.getDescription(),
+                isDisabled: device.getIsDisabled(),
+                name: device.getName(),
+                skipFCntCheck: device.getSkipFcntCheck(),
+                tags: device.getTagsMap().toObject(),
+                variables: device.getVariablesMap().toObject(),
             };
 
             return deviceDto;
@@ -448,17 +384,17 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async getDeviceKeys(deviceId: string): Promise<ChirpstackDeviceKeysContentDto> {
+    private async getDeviceKeys(deviceId: string): Promise<ChirpstackDeviceKeysContentDto> {
         try {
             const req = new GetDeviceKeysRequest();
             req.setDevEui(deviceId);
 
-            const res = await this.getKeys(this.deviceServiceClient, req);
+            const res = (await this.getKeys(req)).getDeviceKeys();
 
             const keysDto: ChirpstackDeviceKeysContentDto = {
-                appKey: res.getDeviceKeys().getAppKey(),
-                devEUI: res.getDeviceKeys().getDevEui(),
-                nwkKey: res.getDeviceKeys().getNwkKey(),
+                appKey: res.getAppKey(),
+                devEUI: res.getDevEui(),
+                nwkKey: res.getNwkKey(),
             };
 
             return keysDto;
@@ -469,23 +405,23 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async getDeviceActivation(deviceId: string): Promise<ChirpstackDeviceActivationContentsDto> {
+    private async getDeviceActivation(deviceId: string): Promise<ChirpstackDeviceActivationContentsDto> {
         try {
             const req = new GetDeviceActivationRequest();
             req.setDevEui(deviceId);
 
-            const res = await this.getActivation(this.deviceServiceClient, req);
+            const res = (await this.getActivation(req)).getDeviceActivation();
 
             const activationDto: ChirpstackDeviceActivationContentsDto = {
-                aFCntDown: res.getDeviceActivation().getAFCntDown(),
-                devEUI: res.getDeviceActivation().getDevEui(),
-                appSKey: res.getDeviceActivation().getAppSKey(),
-                devAddr: res.getDeviceActivation().getDevAddr(),
-                fCntUp: res.getDeviceActivation().getFCntUp(),
-                fNwkSIntKey: res.getDeviceActivation().getFNwkSIntKey(),
-                nFCntDown: res.getDeviceActivation().getAFCntDown(),
-                nwkSEncKey: res.getDeviceActivation().getNwkSEncKey(),
-                sNwkSIntKey: res.getDeviceActivation().getSNwkSIntKey(),
+                aFCntDown: res.getAFCntDown(),
+                devEUI: res.getDevEui(),
+                appSKey: res.getAppSKey(),
+                devAddr: res.getDevAddr(),
+                fCntUp: res.getFCntUp(),
+                fNwkSIntKey: res.getFNwkSIntKey(),
+                nFCntDown: res.getAFCntDown(),
+                nwkSEncKey: res.getNwkSEncKey(),
+                sNwkSIntKey: res.getSNwkSIntKey(),
             };
             return activationDto;
         } catch (err) {
@@ -499,7 +435,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
      * @param applications
      * @returns The mutated device
      */
-    async enrichLoRaWANDevice(iotDevice: IoTDevice): Promise<LoRaWANDeviceWithChirpstackDataDto> {
+    public async enrichLoRaWANDevice(iotDevice: IoTDevice): Promise<LoRaWANDeviceWithChirpstackDataDto> {
         const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
         loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
         await this.mapActivationAndKeys(loraDevice);
@@ -540,13 +476,16 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    async isDeviceAlreadyCreated(deviceEUI: string, chirpstackIds: ChirpstackDeviceId[] = null): Promise<boolean> {
+    public async isDeviceAlreadyCreated(
+        deviceEUI: string,
+        chirpstackIds: ChirpstackDeviceId[] = null
+    ): Promise<boolean> {
         const devices = !chirpstackIds ? await this.getAllChirpstackDevices() : chirpstackIds;
         const alreadyExists = devices.some(x => x.devEUI.toLowerCase() === deviceEUI.toLowerCase());
         return alreadyExists;
     }
 
-    async getStats(deviceEUI: string): Promise<LoRaWANStatsResponseDto> {
+    public async getStats(deviceEUI: string): Promise<LoRaWANStatsResponseDto> {
         const now = new Date();
         const to_time = dateToTimestamp(now);
         const from_time = new Date(new Date().setDate(now.getDate() - this.deviceStatsIntervalInDays));
@@ -577,7 +516,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     }
     private mapMetrics(metrics: GetDeviceLinkMetricsResponse): LoRaWANStatsResponseDto {
         const statsElementDto: LoRaWANStatsElementDto[] = [];
-        const packetCounts: DeviceMetricsDto = {};
+        const deviceMetrics: DeviceMetricsDto = {};
 
         const rssiTimestamp = metrics.getGwRssi().getTimestampsList();
         const rssis = metrics
@@ -586,7 +525,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             .find(e => e.getLabel() === "rssi")
             .getDataList();
 
-        this.processPackets(rssiTimestamp, rssis, MetricProperties.rssi, packetCounts);
+        this.processPackets(rssiTimestamp, rssis, MetricProperties.rssi, deviceMetrics);
 
         const snrTimestamp = metrics.getGwSnr().getTimestampsList();
         const snr = metrics
@@ -595,7 +534,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
             .find(e => e.getLabel() === "snr")
             .getDataList();
 
-        this.processPackets(snrTimestamp, snr, MetricProperties.snr, packetCounts);
+        this.processPackets(snrTimestamp, snr, MetricProperties.snr, deviceMetrics);
 
         const drTimestamp = metrics.getRxPacketsPerDr().getTimestampsList();
         const drDatasets = metrics.getRxPacketsPerDr().getDatasetsList();
@@ -603,11 +542,11 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         drDatasets.forEach(drDataset => {
             const drLabel = drDataset.getLabel();
             const drData = drDataset.getDataList();
-            this.processPackets(drTimestamp, drData, MetricProperties.dr, packetCounts, drLabel);
+            this.processPackets(drTimestamp, drData, MetricProperties.dr, deviceMetrics, drLabel);
         });
 
-        Object.keys(packetCounts).forEach(timestamp => {
-            const packetCount = packetCounts[timestamp];
+        Object.keys(deviceMetrics).forEach(timestamp => {
+            const packetCount = deviceMetrics[timestamp];
             const dto: LoRaWANStatsElementDto = {
                 timestamp,
                 gwRssi: packetCount.rssi,
@@ -641,207 +580,128 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         });
     };
 
-    /**
-     * Fetch LoRaWAN applications by the device application id. This **assumes** that
-     * the device chirpstack application id always reflects what's on Chirpstack.
-     * @param devices
-     * @returns
-     */
-    public async getLoRaWANApplications(
-        devices: LoRaWANDeviceWithChirpstackDataDto[]
-    ): Promise<ChirpstackSingleApplicationResponseDto[]> {
-        const loraDevicesByAppId = groupBy(devices, device => device.chirpstackApplicationId);
+    //TODO:: FIX THIS!
+    private async getAllChirpstackDevices(): Promise<ChirpstackDeviceContentsDto[]> {
+        const req = new ListDevicesRequest();
 
-        const res: ChirpstackSingleApplicationResponseDto[] = [];
-
-        // Avoid async .forEach and .map when querying the API. They execute whatever's inside in "parallel" which can result in timeouts.
-        for (const appId of Object.keys(loraDevicesByAppId)) {
-            res.push(await this.getChirpstackApplication(appId));
-        }
-
-        return res;
-    }
-
-    private async getAllChirpstackDevices(limit = 1000): Promise<ChirpstackDeviceContentsDto[]> {
-        return (await this.get<ListAllDevicesResponseDto>(`devices?limit=${limit}`)).result;
-    }
-
-    private async createApplication(dto: CreateChirpstackApplicationDto): Promise<string> {
-        const req = new CreateApplicationRequest();
-        const application = new Application();
-        application.setDescription(dto.application.description);
-        application.setName(dto.application.name);
-        application.setTenantId(dto.application.tenantId);
-
-        req.setApplication(application);
-        const applicationIdObject: PostReturnInterface = await this.post(
-            "applications",
-            this.applicationServiceClient,
+        const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
+            `devices`,
+            1000,
+            0,
+            this.deviceServiceClient,
             req
         );
-        return applicationIdObject.id;
+
+        const responseDevice: ChirpstackDeviceResponseContents[] = devices.resultList.map(e => {
+            return {
+                devEUI: e.devEui,
+                name: e.name,
+                description: e.description,
+                lastSeenAt: e.lastSeenAt ? timestampToDate(e.lastSeenAt) : undefined,
+                deviceStatusBattery: e.deviceStatus?.batteryLevel,
+                deviceStatusMargin: e.deviceStatus?.margin,
+                deviceStatusExternalPowerSource: e.deviceStatus?.externalPowerSource,
+                deviceProfileID: e.deviceProfileId,
+                deviceProfileName: e.deviceProfileName,
+            };
+        });
+
+        return responseDevice;
     }
 
-    async getKeys(client: DeviceServiceClient, request: GetDeviceKeysRequest): Promise<GetDeviceKeysResponse> {
-        const metaData = this.makeMetadataHeader();
-        const getPromise = new Promise<GetDeviceKeysResponse>((resolve, reject) => {
-            client.getKeys(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`get from Keys success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await getPromise;
-        } catch (err) {
-            throw new NotFoundException();
-        }
-    }
-    async postKeys(client: DeviceServiceClient, request: CreateDeviceKeysRequest): Promise<void> {
-        const metaData = this.makeMetadataHeader();
-        const createPromise = new Promise<void>((resolve, reject) => {
-            client.createKeys(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`post KEYS success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await createPromise;
-        } catch (err) {
-            this.logger.error(`POST KEYS got error: ${err}`);
-            throw new BadRequestException();
-        }
-    }
-    async putKeys(client: DeviceServiceClient, request: UpdateDeviceKeysRequest): Promise<void> {
-        const metaData = this.makeMetadataHeader();
-        const updatePromise = new Promise<void>((resolve, reject) => {
-            client.updateKeys(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`update KEYS success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await updatePromise;
-        } catch (err) {
-            this.logger.error(`UPDATE KEYS got error: ${err}`);
-            throw new BadRequestException();
-        }
+    private async getKeys(request: GetDeviceKeysRequest): Promise<GetDeviceKeysResponse> {
+        return await this.makeRequest<GetDeviceKeysResponse>(
+            request,
+            this.deviceServiceClient.getKeys,
+            "GET KEYS success",
+            "GET KEYS failed and got error: "
+        );
     }
 
-    async getQueue(
-        client: DeviceServiceClient,
-        request: GetDeviceQueueItemsRequest
-    ): Promise<GetDeviceQueueItemsResponse> {
-        const metaData = this.makeMetadataHeader();
-        const getPromise = new Promise<GetDeviceQueueItemsResponse>((resolve, reject) => {
-            client.getQueue(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`get from Queue success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await getPromise;
-        } catch (err) {
-            throw new NotFoundException();
-        }
-    }
-    async deleteQueue(client: DeviceServiceClient, request: FlushDeviceQueueRequest): Promise<void> {
-        const metaData = this.makeMetadataHeader();
-        const getPromise = new Promise<void>((resolve, reject) => {
-            client.flushQueue(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`Delete queue success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await getPromise;
-        } catch (err) {
-            this.logger.error(`DELETE queue got error: ${err}`);
-            throw new BadRequestException();
-        }
+    private async postKeys(request: CreateDeviceKeysRequest): Promise<void> {
+        await this.makeRequest<void>(
+            request,
+            this.deviceServiceClient.createKeys,
+            "POST KEYS success",
+            "POST KEYS failed and got error: "
+        );
     }
 
-    async postDownlink(
-        client: DeviceServiceClient,
-        request: EnqueueDeviceQueueItemRequest
-    ): Promise<PostReturnInterface> {
-        const metaData = this.makeMetadataHeader();
-        const createPromise = new Promise<PostReturnInterface>((resolve, reject) => {
-            client.enqueue(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`post downlink success`);
-                    resolve(resp.toObject());
-                }
-            });
-        });
-        try {
-            return await createPromise;
-        } catch (err) {
-            this.logger.error(`POST downlink got error: ${err}`);
-            throw new BadRequestException();
-        }
+    private async putKeys(request: UpdateDeviceKeysRequest): Promise<void> {
+        await this.makeRequest<void>(
+            request,
+            this.deviceServiceClient.updateKeys,
+            "UPDATE KEYS success",
+            "UPDATE KEYS failed and got error: "
+        );
     }
 
-    async getActivation(
-        client: DeviceServiceClient,
-        request: GetDeviceActivationRequest
-    ): Promise<GetDeviceActivationResponse> {
-        const metaData = this.makeMetadataHeader();
-        const getPromise = new Promise<GetDeviceActivationResponse>((resolve, reject) => {
-            client.getActivation(request, metaData, (err: ServiceError, resp: any) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.logger.debug(`get from Activation success`);
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            return await getPromise;
-        } catch (err) {
-            this.logger.error(`GET Activation got error: ${err}`);
-            throw new NotFoundException();
-        }
+    private async getQueue(request: GetDeviceQueueItemsRequest): Promise<GetDeviceQueueItemsResponse> {
+        return await this.makeRequest<GetDeviceQueueItemsResponse>(
+            request,
+            this.deviceServiceClient.getQueue,
+            "GET QUEUE success",
+            "GET QUEUE failed and got error: "
+        );
     }
-    async postActivation(client?: DeviceServiceClient, request?: ActivateDeviceRequest): Promise<void> {
+
+    private async deleteQueue(request: FlushDeviceQueueRequest): Promise<void> {
+        await this.makeRequest<void>(
+            request,
+            this.deviceServiceClient.flushQueue,
+            "DELETE QUEUE success",
+            "DELETE QUEUE failed and got error: "
+        );
+    }
+
+    private async postDownlink(request: EnqueueDeviceQueueItemRequest): Promise<IdResponse> {
+        return await this.makeRequest<IdResponse>(
+            request,
+            this.deviceServiceClient.enqueue,
+            "POST DOWNLINK success",
+            "POST DOWNLINK failed and got error :"
+        );
+    }
+
+    private async getActivation(request: GetDeviceActivationRequest): Promise<GetDeviceActivationResponse> {
+        return await this.makeRequest<GetDeviceActivationResponse>(
+            request,
+            this.deviceServiceClient.getActivation,
+            "GET ACTIVATION success",
+            "GET ACTIVATION failed and got error: "
+        );
+    }
+
+    private async postActivation(request?: ActivateDeviceRequest): Promise<void> {
+        await this.makeRequest<void>(
+            request,
+            this.deviceServiceClient.activate,
+            "post ACTIVATION success",
+            "GET activation failed and got error: "
+        );
+    }
+    private async makeRequest<T>(
+        request: any,
+        method: (request: any, metaData: any, callback: (err: ServiceError, resp: any) => void) => void,
+        successMessage: string,
+        errorMessage: string
+    ): Promise<T> {
         const metaData = this.makeMetadataHeader();
-        const createPromise = new Promise<void>((resolve, reject) => {
-            client.activate(request, metaData, (err: ServiceError, resp: any) => {
+        const promise = new Promise<T>((resolve, reject) => {
+            method.call(this.deviceServiceClient, request, metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
-                    this.logger.debug(`post ACTIVATION success`);
+                    this.logger.debug(successMessage);
                     resolve(resp);
                 }
             });
         });
         try {
-            return await createPromise;
+            return await promise;
         } catch (err) {
-            this.logger.error(`POST ACTIVATION got error: ${err}`);
-            throw new BadRequestException();
+            this.logger.error(errorMessage, +err);
+            throw new InternalServerErrorException();
         }
     }
 }

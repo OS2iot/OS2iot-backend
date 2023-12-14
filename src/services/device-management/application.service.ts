@@ -204,11 +204,11 @@ export class ApplicationService {
     }
 
     private async matchWithChirpstackStatusData(app: Application) {
-        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus(app);
+        const chirpstackDevices = await this.chirpstackDeviceService.getAllDevicesStatus(app);
         app.iotDevices.forEach(x => {
             if (x.type === IoTDeviceType.LoRaWAN) {
                 const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = allFromChirpstack.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
+                const matchingDevice = chirpstackDevices.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
                 if (matchingDevice) {
                     loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
                     loraDevice.lorawanSettings.deviceStatusBattery = matchingDevice.deviceStatusBattery;
@@ -236,8 +236,9 @@ export class ApplicationService {
         mappedApplication.updatedBy = userId;
 
         try {
-            const chirpId = await this.chirpstackApplicationService.createApplication(createApplicationDto);
-            mappedApplication.chirpstackId = chirpId.id;
+            mappedApplication.chirpstackId = await this.chirpstackApplicationService.createChirpstackApplication(
+                { application: { description: createApplicationDto.description, name: createApplicationDto.name } }
+            );
             const app = await this.applicationRepository.save(mappedApplication);
 
             await this.permissionService.autoAddPermissionsToApplication(app);

@@ -18,7 +18,7 @@ import { Read, GatewayAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { ListAllGatewaysResponseGrpcDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -74,7 +74,7 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
-    async getAll(@Query() query?: ChirpstackGetAll): Promise<ListAllGatewaysResponseGrpcDto> {
+    async getAll(@Query() query?: ChirpstackGetAll): Promise<ListAllGatewaysResponseDto> {
         return await this.chirpstackGatewayService.getAll(query.organizationId);
     }
 
@@ -125,10 +125,10 @@ export class ChirpstackGatewayController {
     ): Promise<ChirpstackResponseStatus> {
         try {
             const gw = await this.chirpstackGatewayService.getOne(gatewayId);
-            if (gw.gateway.internalOrganizationId != null) {
+            if (gw.gateway.organizationId != null) {
                 checkIfUserHasAccessToOrganization(
                     req,
-                    +gw.gateway.internalOrganizationId,
+                    +gw.gateway.organizationId,
                     OrganizationAccessScope.GatewayWrite
                 );
             }

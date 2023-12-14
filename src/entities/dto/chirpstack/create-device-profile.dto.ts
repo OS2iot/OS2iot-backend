@@ -13,9 +13,9 @@ export class CreateDeviceProfileDto {
     @ApiProperty({ required: true })
     internalOrganizationId: number;
 
-    @ApiHideProperty()
+    @ApiProperty({ required: false })
     createdAt: Date;
 
-    @ApiHideProperty()
+    @ApiProperty({ required: false })
     updatedAt: Date;
 }

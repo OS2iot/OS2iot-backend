@@ -1,9 +1,8 @@
-import { ListAllGatewaysResponseGrpcDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
-import { Inject, OnApplicationBootstrap } from "@nestjs/common";
+import { Inject, InternalServerErrorException, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "./gateway-status-history.service";
-import { timestampToDate } from "@helpers/date.helper";
 
 /**
  * Verify if any gateways exist on chirpstack and haven't been loaded into the database.
@@ -16,6 +15,7 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
         @Inject(ChirpstackGatewayService)
         private chirpstackGatewayService: ChirpstackGatewayService
     ) {}
+    private readonly logger = new Logger(GatewayBootstrapperService.name);
 
     async onApplicationBootstrap(): Promise<void> {
         try {
@@ -24,7 +24,8 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
             const gateways = await chirpstackGatewaysPromise;
             await this.seedGatewayStatus(gateways, latestStatusHistories);
         } catch (e) {
-            throw e;
+            this.logger.error("Error in applicationBootstrap");
+            throw new InternalServerErrorException(e);
         }
     }
 
@@ -33,7 +34,7 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
      * @param gateways All chirpstack gateways
      * @param statusHistories Existing status histories to check against
      */
-    private async seedGatewayStatus(gateways: ListAllGatewaysResponseGrpcDto, statusHistories: GatewayStatusHistory[]) {
+    private async seedGatewayStatus(gateways: ListAllGatewaysResponseDto, statusHistories: GatewayStatusHistory[]) {
         const now = new Date();
         const errorTime = new Date();
         errorTime.setSeconds(errorTime.getSeconds() - 150);
@@ -43,7 +44,7 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
             if (!statusHistories.some(history => history.mac === gateway.gatewayId)) {
                 // Best fit is to imitate the status logic from Chirpstack.
                 if (gateway.lastSeenAt) {
-                    const lastSeenDate = timestampToDate(gateway.lastSeenAt);
+                    const lastSeenDate = gateway.lastSeenAt;
 
                     const wasOnline = errorTime.getTime() < lastSeenDate.getTime();
 

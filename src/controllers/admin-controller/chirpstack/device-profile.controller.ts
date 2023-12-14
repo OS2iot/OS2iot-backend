@@ -38,7 +38,7 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
-import { PostReturnInterface } from "@interfaces/chirpstack-post-return.interface";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
@@ -56,10 +56,7 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
     @ApplicationAdmin()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() createDto: CreateDeviceProfileDto
-    ): Promise<PostReturnInterface> {
+    async create(@Req() req: AuthenticatedRequest, @Body() createDto: CreateDeviceProfileDto): Promise<IdResponse> {
         checkIfUserHasAccessToOrganization(
             req,
             createDto.internalOrganizationId,

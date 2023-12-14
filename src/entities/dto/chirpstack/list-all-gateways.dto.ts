@@ -1,6 +1,11 @@
-import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
+import { GatewayResponseChirpstackDto, GatewayResponseDto } from "./gateway-response.dto";
 
-export class ListAllGatewaysResponseGrpcDto {
+export class ListAllGatewaysResponseDto {
     totalCount: number;
-    resultList: GatewayResponseGrpcDto[];
+    resultList: GatewayResponseDto[];
+}
+
+export class ListAllGatewaysResponseChirpstackDto {
+    totalCount: number;
+    resultList: GatewayResponseChirpstackDto[];
 }

@@ -1,8 +1,7 @@
 import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
-import { GatewayResponseGrpcDto } from "@dto/chirpstack/gateway-response.dto";
-import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 export class SingleGatewayResponseDto {
-    gateway: GatewayResponseGrpcDto;
+    gateway: GatewayResponseDto;
     stats?: GatewayStatsElementDto[];
 }
