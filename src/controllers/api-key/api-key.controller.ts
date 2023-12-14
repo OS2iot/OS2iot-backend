@@ -1,5 +1,5 @@
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { Read, UserAdmin } from "@auth/roles.decorator";
+import { UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ApiKeyResponseDto } from "@dto/api-key/api-key-response.dto";
 import { CreateApiKeyDto } from "@dto/api-key/create-api-key.dto";
@@ -20,60 +20,45 @@ import {
     Param,
     ParseIntPipe,
     Post,
+    Put,
     Query,
     Req,
     UseGuards,
-    Put,
 } from "@nestjs/common";
 import {
-    ApiBearerAuth,
+    ApiBadRequestResponse,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
-    ApiBadRequestResponse,
 } from "@nestjs/swagger";
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
-import {
-    checkIfUserHasAccessToOrganization,
-    OrganizationAccessScope,
-} from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("API Key Management")
 @Controller("api-key")
 export class ApiKeyController {
-    constructor(
-        private apiKeyService: ApiKeyService,
-        private organizationService: OrganizationService
-    ) {}
+    constructor(private apiKeyService: ApiKeyService, private organizationService: OrganizationService) {}
 
     @Post()
     @ApiOperation({ summary: "Create new API key" })
-    async createApiKey(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreateApiKeyDto
-    ): Promise<ApiKeyResponseDto> {
+    async createApiKey(@Req() req: AuthenticatedRequest, @Body() dto: CreateApiKeyDto): Promise<ApiKeyResponseDto> {
         await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
         try {
             const result = await this.apiKeyService.create(dto, req.user.userId);
 
-            AuditLog.success(
-                ActionType.CREATE,
-                ApiKey.name,
-                req.user.userId,
-                result.id,
-                result.name
-            );
+            AuditLog.success(ActionType.CREATE, ApiKey.name, req.user.userId, result.id, result.name);
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, ApiKey.name, req.user.userId);
@@ -94,13 +79,7 @@ export class ApiKeyController {
         try {
             const result = await this.apiKeyService.update(id, dto, req.user.userId);
 
-            AuditLog.success(
-                ActionType.UPDATE,
-                ApiKey.name,
-                req.user.userId,
-                result.id,
-                result.name
-            );
+            AuditLog.success(ActionType.UPDATE, ApiKey.name, req.user.userId, result.id, result.name);
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, ApiKey.name, req.user.userId, id);
@@ -133,11 +112,7 @@ export class ApiKeyController {
         @Req() req: AuthenticatedRequest,
         @Query() query: ListAllApiKeysDto
     ): Promise<ListAllApiKeysResponseDto> {
-        checkIfUserHasAccessToOrganization(
-            req,
-            query.organizationId,
-            OrganizationAccessScope.UserAdministrationWrite
-        );
+        checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.UserAdministrationWrite);
 
         try {
             return this.apiKeyService.findAllByOrganizationId(query);
@@ -170,22 +145,13 @@ export class ApiKeyController {
         );
     }
 
-    private async checkIfUserHasAccessToPermissions(
-        req: AuthenticatedRequest,
-        permissionIds: number[]
-    ) {
+    private async checkIfUserHasAccessToPermissions(req: AuthenticatedRequest, permissionIds: number[]) {
         if (!permissionIds?.length) throw new ForbiddenException();
 
-        const apiKeyOrganizations = await this.organizationService.findByPermissionIds(
-            permissionIds
-        );
+        const apiKeyOrganizations = await this.organizationService.findByPermissionIds(permissionIds);
 
         for (const id of apiKeyOrganizations.map(org => org.id)) {
-            checkIfUserHasAccessToOrganization(
-                req,
-                id,
-                OrganizationAccessScope.UserAdministrationWrite
-            );
+            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
         }
     }
 }

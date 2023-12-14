@@ -1,4 +1,4 @@
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import {
     BadRequestException,
     Body,
@@ -16,16 +16,8 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import {
-    ApiBadRequestResponse,
-    ApiBearerAuth,
-    ApiNotFoundResponse,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
-
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateServiceProfileDto } from "@dto/chirpstack/create-service-profile.dto";
@@ -37,11 +29,12 @@ import { ServiceProfileService } from "@services/chirpstack/service-profile.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/service-profiles")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApplicationAdmin()
 export class ServiceProfileController {
     constructor(private serviceProfileService: ServiceProfileService) {}
@@ -78,10 +71,7 @@ export class ServiceProfileController {
         @Param("id") id: string,
         @Body() updateDto: UpdateServiceProfileDto
     ): Promise<void> {
-        const result = await this.serviceProfileService.updateServiceProfile(
-            updateDto,
-            id
-        );
+        const result = await this.serviceProfileService.updateServiceProfile(updateDto, id);
 
         if (result.status != 200) {
             AuditLog.fail(
@@ -121,10 +111,7 @@ export class ServiceProfileController {
         @Query("offset") offset: number
     ): Promise<ListAllServiceProfilesResponseDto> {
         this.logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
-        const res = await this.serviceProfileService.findAllServiceProfiles(
-            limit || 50,
-            offset || 0
-        );
+        const res = await this.serviceProfileService.findAllServiceProfiles(limit || 50, offset || 0);
 
         return res;
     }
@@ -133,38 +120,21 @@ export class ServiceProfileController {
     @ApiOperation({ summary: "Delete one ServiceProfile by id" })
     @ApiNotFoundResponse()
     @ApplicationAdmin()
-    async deleteOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id") id: string
-    ): Promise<DeleteResponseDto> {
+    async deleteOne(@Req() req: AuthenticatedRequest, @Param("id") id: string): Promise<DeleteResponseDto> {
         try {
             const result = await this.serviceProfileService.deleteServiceProfile(id);
             if (!result) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);
             }
-            AuditLog.success(
-                ActionType.DELETE,
-                "ChirpstackServiceProfile",
-                req.user.userId,
-                id
-            );
+            AuditLog.success(ActionType.DELETE, "ChirpstackServiceProfile", req.user.userId, id);
 
             return new DeleteResponseDto(1);
         } catch (err) {
-            this.logger.error(
-                `Error occured during delete: '${JSON.stringify(err?.response?.data)}'`
-            );
-            if (
-                err?.message == "this object is used by other objects, remove them first"
-            ) {
+            this.logger.error(`Error occured during delete: '${JSON.stringify(err?.response?.data)}'`);
+            if (err?.message == "this object is used by other objects, remove them first") {
                 throw new BadRequestException(ErrorCodes.IsUsed);
             }
-            AuditLog.fail(
-                ActionType.DELETE,
-                "ChirpstackServiceProfile",
-                req.user.userId,
-                id
-            );
+            AuditLog.fail(ActionType.DELETE, "ChirpstackServiceProfile", req.user.userId, id);
             throw err;
         }
     }

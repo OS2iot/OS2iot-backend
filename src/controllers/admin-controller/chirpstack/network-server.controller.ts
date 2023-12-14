@@ -1,26 +1,17 @@
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import {
-    Controller,
-    Get,
-    Logger,
-    UseGuards,
-} from "@nestjs/common";
-import {
-    ApiBearerAuth,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { Controller, Get, Logger, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackSetupNetworkServerService } from "@services/chirpstack/network-server.service";
 import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/network-server")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApplicationAdmin()
 export class NetworkServerController {
     constructor(private networkServerService: ChirpstackSetupNetworkServerService) {}

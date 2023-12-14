@@ -14,7 +14,6 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiOkResponse,
@@ -23,8 +22,8 @@ import {
     ApiTags,
 } from "@nestjs/swagger";
 
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
@@ -39,11 +38,12 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("SigFox")
 @Controller("sigfox-group")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 export class SigfoxGroupController {
@@ -70,15 +70,12 @@ export class SigfoxGroupController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Get one group by ID" })
     @Read()
-    async getOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<SigFoxGroup> {
+    async getOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<SigFoxGroup> {
         let group: SigFoxGroup;
         try {
             group = await this.service.findOne(id);
         } catch (err) {
-			return null;            
+            return null;
         }
         checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
         return group;
@@ -89,27 +86,17 @@ export class SigfoxGroupController {
     @ApiOperation({ summary: "Create a SigFox Group connection" })
     @ApiCreatedResponse()
     @ApplicationAdmin()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() query: CreateSigFoxGroupRequestDto
-    ): Promise<SigFoxGroup> {
+    async create(@Req() req: AuthenticatedRequest, @Body() query: CreateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
         try {
             checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationWrite);
             const group = await this.service.create(query, req.user.userId);
 
-            AuditLog.success(
-                ActionType.CREATE,
-                SigFoxGroup.name,
-                req.user.userId,
-                group.id
-            );
+            AuditLog.success(ActionType.CREATE, SigFoxGroup.name, req.user.userId, group.id);
             return group;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId);
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
-                throw new BadRequestException(
-                    ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
-                );
+                throw new BadRequestException(ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization);
             }
             throw err;
         }
@@ -134,19 +121,12 @@ export class SigfoxGroupController {
         checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
         try {
             const changeGroup = await this.service.update(group, dto, req.user.userId);
-            AuditLog.success(
-                ActionType.UPDATE,
-                SigFoxGroup.name,
-                req.user.userId,
-                group.id
-            );
+            AuditLog.success(ActionType.UPDATE, SigFoxGroup.name, req.user.userId, group.id);
             return changeGroup;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, SigFoxGroup.name, req.user.userId, id);
             if (err.message.startsWith(this.DUPLICATE_KEY_ERROR)) {
-                throw new BadRequestException(
-                    ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization
-                );
+                throw new BadRequestException(ErrorCodes.GroupCanOnlyBeCreatedOncePrOrganization);
             }
             throw err;
         }
