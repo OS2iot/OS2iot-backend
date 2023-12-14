@@ -27,7 +27,6 @@ export default (): any => {
             roleUri: process.env.KOMBIT_ROLE_NAME || "http://os2iot.dk/roles/usersystemrole/adgang/",
         },
         chirpstack: {
-            jwtsecret: process.env.CHIRPSTACK_JWTSECRET || "verysecret",
             apikey: process.env.CHIRPSTACK_API_KEY || "apikey",
         },
         logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels("debug"),
