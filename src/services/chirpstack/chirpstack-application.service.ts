@@ -7,7 +7,6 @@ import {
     ListApplicationsRequest,
     UpdateApplicationRequest,
 } from "@chirpstack/chirpstack-api/api/application_pb";
-import { CreateApplicationDto } from "@dto/create-application.dto";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { Application as DbApplication } from "@entities/application.entity";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
@@ -41,7 +40,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
                 this.applicationServiceClient,
                 req,
                 100,
-                undefined,
+                undefined
             ));
 
         // if application exist use it
@@ -80,8 +79,10 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
     public async createChirpstackApplication(dto: CreateChirpstackApplicationDto): Promise<string> {
         const req = new CreateApplicationRequest();
         const application = new Application();
-        application.setDescription(dto.application.description ? dto.application.description: this.DEFAULT_DESCRIPTION);
-        application.setName(dto.application.name);
+        application.setDescription(
+            dto.application.description ? dto.application.description : this.DEFAULT_DESCRIPTION
+        );
+        application.setName(this.applicationNamePrefix + dto.application.name);
         application.setTenantId(await this.getDefaultOrganizationId());
 
         req.setApplication(application);
@@ -102,8 +103,8 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
         const req = new UpdateApplicationRequest();
         const application = new Application();
         application.setId(dto.chirpstackId);
-        application.setDescription(this.DEFAULT_DESCRIPTION);
-        application.setName(this.applicationNamePrefix + "-" + dto.name);
+        application.setDescription(dto.description ? dto.description : this.DEFAULT_DESCRIPTION);
+        application.setName(this.applicationNamePrefix + dto.name);
         application.setTenantId(await this.getDefaultOrganizationId());
         req.setApplication(application);
         try {
