@@ -179,7 +179,8 @@ export class GenericChirpstackConfigurationService {
         offset?: number
     ): Promise<T> {
         const metaData = this.makeMetadataHeader();
-        request.setLimit(limit), request.setOffset(offset);
+        request.setLimit(limit);
+        request.setOffset(offset);
 
         const getListPromise = new Promise<T>((resolve, reject) => {
             client.list(request, metaData, (err: ServiceError, resp: any) => {
@@ -209,7 +210,7 @@ export class GenericChirpstackConfigurationService {
             tenantClient,
             req,
             limit,
-            offset,
+            offset
         );
         return res;
     }
