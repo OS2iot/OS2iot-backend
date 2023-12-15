@@ -1,5 +1,4 @@
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
@@ -16,15 +15,17 @@ import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } fro
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
-import { ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { DeleteResult, In, Repository } from "typeorm";
-import { MulticastService } from "./multicast.service";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
+import { MulticastService } from "@services/chirpstack/multicast.service";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
+import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -40,7 +41,8 @@ export class ApplicationService {
         @Inject(forwardRef(() => PermissionService))
         private permissionService: PermissionService,
         @Inject(forwardRef(() => DataTargetService))
-        private dataTargetService: DataTargetService
+        private dataTargetService: DataTargetService,
+        private chirpstackApplicationService: ApplicationChirpstackService
     ) {}
 
     async findAndCountInList(
@@ -202,11 +204,11 @@ export class ApplicationService {
     }
 
     private async matchWithChirpstackStatusData(app: Application) {
-        const allFromChirpstack = await this.chirpstackDeviceService.getAllDevicesStatus();
+        const chirpstackDevices = await this.chirpstackDeviceService.getAllDevicesStatus(app);
         app.iotDevices.forEach(x => {
             if (x.type === IoTDeviceType.LoRaWAN) {
                 const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = allFromChirpstack.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
+                const matchingDevice = chirpstackDevices.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
                 if (matchingDevice) {
                     loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
                     loraDevice.lorawanSettings.deviceStatusBattery = matchingDevice.deviceStatusBattery;
@@ -233,11 +235,18 @@ export class ApplicationService {
         mappedApplication.createdBy = userId;
         mappedApplication.updatedBy = userId;
 
-        const app = await this.applicationRepository.save(mappedApplication);
+        try {
+            mappedApplication.chirpstackId = await this.chirpstackApplicationService.createChirpstackApplication(
+                { application: { description: createApplicationDto.description, name: createApplicationDto.name } }
+            );
+            const app = await this.applicationRepository.save(mappedApplication);
 
-        await this.permissionService.autoAddPermissionsToApplication(app);
+            await this.permissionService.autoAddPermissionsToApplication(app);
 
-        return app;
+            return app;
+        } catch (e) {
+            throw new BadRequestException(ErrorCodes.InvalidPost);
+        }
     }
 
     async update(id: number, updateApplicationDto: UpdateApplicationDto, userId: number): Promise<Application> {
@@ -256,6 +265,8 @@ export class ApplicationService {
             existingApplication,
             userId
         );
+
+        await this.chirpstackApplicationService.updateApplication(mappedApplication);
 
         mappedApplication.updatedBy = userId;
         return this.applicationRepository.save(mappedApplication, {});
@@ -297,6 +308,10 @@ export class ApplicationService {
                 dbMulticast.lorawanMulticastDefinition.chirpstackGroupId
             );
         }
+        if (application.chirpstackId) {
+            await this.chirpstackApplicationService.deleteApplication(application.chirpstackId);
+        }
+
         return this.applicationRepository.delete(id);
     }
 
@@ -405,11 +420,9 @@ export class ApplicationService {
         const loraDevices = data.filter(
             device => device.type === IoTDeviceType.LoRaWAN
         ) as LoRaWANDeviceWithChirpstackDataDto[];
-        const applications = await this.chirpstackDeviceService.getLoRaWANApplications(loraDevices);
-        const loraApplications = applications.map(app => app.application);
 
         for (const device of loraDevices) {
-            await this.chirpstackDeviceService.enrichLoRaWANDevice(device, loraApplications);
+            await this.chirpstackDeviceService.enrichLoRaWANDevice(device);
         }
 
         return {

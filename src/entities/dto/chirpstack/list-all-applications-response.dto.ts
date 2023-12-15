@@ -1,6 +1,6 @@
 import { ChirpstackApplicationResponseDto } from "./chirpstack-application-response.dto";
 
 export class ListAllChirpstackApplicationsResponseDto {
-    result: ChirpstackApplicationResponseDto[];
+    resultList: ChirpstackApplicationResponseDto[];
     totalCount: number;
 }

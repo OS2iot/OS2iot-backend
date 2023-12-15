@@ -18,7 +18,7 @@ export class LoRaWANDevice extends IoTDevice {
     deviceProfileName: string;
 
     @Column({ nullable: true })
-    chirpstackApplicationId: number;
+    chirpstackApplicationId: string;
 
     @BeforeInsert()
     private beforeInsert() {

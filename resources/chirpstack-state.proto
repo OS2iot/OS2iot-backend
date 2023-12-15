@@ -4,13 +4,17 @@ package gw;
 
 // ConnState contains the connection state of a gateway.
 message ConnState {
-    // Gateway ID.
-    bytes gateway_id = 1 [json_name = "gatewayID"];
+  // Gateway ID.
+  // Deprecated: use gateway_id.
+  bytes gateway_id_legacy = 1;
 
-    enum State {
-        OFFLINE = 0;
-        ONLINE = 1;
-    }
+  // Gateway ID.
+  string gateway_id = 3;
 
-    State state = 2;
+  enum State {
+    OFFLINE = 0;
+    ONLINE = 1;
+  }
+
+  State state = 2;
 }

@@ -3,7 +3,7 @@ import { SharedModule } from "@modules/shared.module";
 import { HttpModule } from "@nestjs/axios";
 import { forwardRef, Module } from "@nestjs/common";
 import { MulticastController } from "../../controllers/admin-controller/multicast.controller";
-import { MulticastService } from "../../services/device-management/multicast.service";
+import { MulticastService } from "../../services/chirpstack/multicast.service";
 import { ApplicationModule } from "./application.module";
 import { IoTDeviceModule } from "./iot-device.module";
 

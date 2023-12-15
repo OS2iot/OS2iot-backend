@@ -1,3 +1,5 @@
+import { Metric } from "@chirpstack/chirpstack-api/common/common_pb";
+
 export class GatewayStatsResponseDto {
     result: GatewayStatsElementDto[];
 }
@@ -5,7 +7,5 @@ export class GatewayStatsResponseDto {
 export class GatewayStatsElementDto {
     timestamp: string;
     rxPacketsReceived: number;
-    rxPacketsReceivedOK: number;
-    txPacketsReceived: number;
     txPacketsEmitted: number;
 }

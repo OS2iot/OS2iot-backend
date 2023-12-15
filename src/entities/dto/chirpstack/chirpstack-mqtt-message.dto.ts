@@ -1,15 +1,13 @@
 export class ChirpstackMQTTMessageDto {
     adr: boolean;
-    applicationID: string;
-    applicationName: string;
     data: string;
-    devEUI: string;
-    deviceName: string;
     fCnt: number;
     fPort: number;
+    deviceInfo: ChirpstackMQTTMessageDeviceInfo;
     txInfo: ChirpstackMQTTMessageTxInfoDto;
     dr: number;
     frequency: number;
+    confirmed: boolean
 }
 
 export class ChirpstackMQTTMessageTxInfoDto {
@@ -20,4 +18,11 @@ export class ChirpstackMQTTMessageTxInfoDto {
 export class ChirpstackMQTTConnectionStateMessageDto {
     gatewayId: string;
     isOnline: boolean;
+}
+
+export class ChirpstackMQTTMessageDeviceInfo {
+    applicationID: string;
+    applicationName: string;
+    devEui: string;
+    deviceName: string;
 }

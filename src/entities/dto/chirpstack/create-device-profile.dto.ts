@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { ValidateNested } from "class-validator";
 
@@ -12,4 +12,10 @@ export class CreateDeviceProfileDto {
 
     @ApiProperty({ required: true })
     internalOrganizationId: number;
+
+    @ApiProperty({ required: false })
+    createdAt: Date;
+
+    @ApiProperty({ required: false })
+    updatedAt: Date;
 }

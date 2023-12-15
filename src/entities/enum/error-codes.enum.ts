@@ -38,8 +38,6 @@ export enum ErrorCodes {
     DeleteNotAllowedHasLoRaWANDevices = "MESSAGE.DELETE-NOT-ALLOWED-HAS-LORAWAN-DEVICE",
     KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
     ApiKeyAuthFailed = "MESSAGE.API-KEY-AUTH-FAILED",
-    DifferentServiceprofile = "MESSAGE.DIFFERENT-SERVICE-PROFILE",
-    NewDevicesWrongServiceProfile = "MESSAGE.WRONG-SERVICE-PROFILE",
     TooMuchData = "MESSAGE.TOO-MUCH-DATA",
     ApplicationDoesNotExist = "MESSAGE.APPLICATION-DOES-NOT-EXIST",
     FailedToCreateOrUpdateIotDevice = "MESSAGE.FAILED-TO-CREATE-OR-UPDATE-IOT-DEVICE",
@@ -50,4 +48,6 @@ export enum ErrorCodes {
     SendMailError = "MESSAGE.SEND-MAIL-ERROR",
     UserDoesNotExistInArray = "MESSAGE.USER-DOES-NOT-EXIST",
     UserAlreadyInPermission = "MESSAGE.USER-ALREADY-IN-PERMISSION",
+    CouldntGetApplications = "MESSAGE.COULD-NOT-GET-CS-APPLICATIONS",
+    DifferentServiceProfile = "MESSAGE.DIFFERENT-CREATION-SERVICE-PROFILE",
 }
