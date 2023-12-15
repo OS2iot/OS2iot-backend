@@ -49,5 +49,5 @@ export enum ErrorCodes {
     UserDoesNotExistInArray = "MESSAGE.USER-DOES-NOT-EXIST",
     UserAlreadyInPermission = "MESSAGE.USER-ALREADY-IN-PERMISSION",
     CouldntGetApplications = "MESSAGE.COULD-NOT-GET-CS-APPLICATIONS",
-    DifferentServiceProfile = "MESSAGE.DIFFERENT-SERVICE-PROFILE",
+    DifferentServiceProfile = "MESSAGE.DIFFERENT-CREATION-SERVICE-PROFILE",
 }
