@@ -1,8 +1,8 @@
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 import { Inject, InternalServerErrorException, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ChirpstackGatewayService } from "./chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "./gateway-status-history.service";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways-response.dto";
 
 /**
  * Verify if any gateways exist on chirpstack and haven't been loaded into the database.

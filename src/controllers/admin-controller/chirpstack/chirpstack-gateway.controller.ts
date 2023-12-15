@@ -18,7 +18,6 @@ import { GatewayAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -27,9 +26,10 @@ import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@he
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
-import { ChirpstackGetAll } from "@dto/chirpstack/chirpstack-get-all.dto";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { ListAllGatewaysDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways-response.dto";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -75,8 +75,8 @@ export class ChirpstackGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "List all Chirpstack gateways" })
     @Read()
-    async getAll(@Query() query?: ChirpstackGetAll): Promise<ListAllGatewaysResponseDto> {
-        return await this.chirpstackGatewayService.getAll(query.organizationId);
+    async getAll(@Query() query?: ListAllGatewaysDto): Promise<ListAllGatewaysResponseDto> {
+        return await this.chirpstackGatewayService.getWithPaginationAndSorting(query, query.organizationId);
     }
 
     @Get(":gatewayId")
