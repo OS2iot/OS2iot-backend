@@ -1,4 +1,4 @@
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
@@ -29,7 +29,6 @@ import {
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiOperation,
     ApiTags,
@@ -37,11 +36,12 @@ import {
 } from "@nestjs/swagger";
 import { AuditLog } from "@services/audit-log.service";
 import { DeviceModelService } from "@services/device-management/device-model.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Device Model")
 @Controller("device-model")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -54,12 +54,9 @@ export class DeviceModelController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllDeviceModelsDto
     ): Promise<ListAllDeviceModelResponseDto> {
-        if (query?.organizationId != null) {			
+        if (query?.organizationId != null) {
             checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.ApplicationRead);
-            return this.service.getAllDeviceModelsByOrgIds(
-                [query?.organizationId],
-                query
-            );
+            return this.service.getAllDeviceModelsByOrgIds([query?.organizationId], query);
         }
 
         const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
@@ -68,10 +65,7 @@ export class DeviceModelController {
 
     @Get(":id")
     @ApiOperation({ summary: "Get one device model" })
-    async findOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<DeviceModel> {
+    async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DeviceModel> {
         const deviceModel = await this.service.getById(id);
         if (!deviceModel) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -85,20 +79,12 @@ export class DeviceModelController {
     @Header("Cache-Control", "none")
     @ApiOperation({ summary: "Create a new device model" })
     @ApiBadRequestResponse()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreateDeviceModelDto
-    ): Promise<DeviceModel> {
+    async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateDeviceModelDto): Promise<DeviceModel> {
         try {
             checkIfUserHasAccessToOrganization(req, dto.belongsToId, OrganizationAccessScope.ApplicationWrite);
 
             const res = await this.service.create(dto, req.user.userId);
-            AuditLog.success(
-                ActionType.CREATE,
-                DeviceModel.name,
-                req.user.userId,
-                res.id
-            );
+            AuditLog.success(ActionType.CREATE, DeviceModel.name, req.user.userId, res.id);
             return res;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, DeviceModel.name, req.user.userId);

@@ -7,6 +7,7 @@ export function setupSwagger(app: INestApplication, SWAGGER_PREFIX: string): voi
         .setDescription("The back-end for OS2IoT")
         .setVersion("1.0")
         .addTag("os2iot")
+        .addApiKey({ type: "apiKey", name: "X-API-KEY", in: "header" }, "X-API-KEY")
         .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })
         .build();
     const document = SwaggerModule.createDocument(app, options);

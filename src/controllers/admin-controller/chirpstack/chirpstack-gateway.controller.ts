@@ -12,9 +12,9 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 
-import { Read, GatewayAdmin } from "@auth/roles.decorator";
+import { GatewayAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
@@ -29,11 +29,12 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ChirpstackGetAll } from "@dto/chirpstack/chirpstack-get-all.dto";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 export class ChirpstackGatewayController {
     constructor(private chirpstackGatewayService: ChirpstackGatewayService) {}
 

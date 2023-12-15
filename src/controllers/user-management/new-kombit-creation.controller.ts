@@ -24,7 +24,6 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -35,9 +34,10 @@ import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { UserService } from "@services/user-management/user.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("KombitEmailCreation")
@@ -47,19 +47,14 @@ export class NewKombitCreationController {
         private organizationService: OrganizationService,
         private userService: UserService,
         private permissionService: PermissionService
-    ) { }
+    ) {}
 
     @Put("createNewKombitUser")
     @ApiOperation({ summary: "Create kombit-user Email" })
-    async newKombitUser(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreateNewKombitUserDto
-    ): Promise<User> {
+    async newKombitUser(@Req() req: AuthenticatedRequest, @Body() dto: CreateNewKombitUserDto): Promise<User> {
         try {
             const dbUser: User = await this.userService.findOne(req.user.userId);
-            const permissions = await this.permissionService.findManyWithRelations(
-                dto.requestedOrganizationIds
-            );
+            const permissions = await this.permissionService.findManyWithRelations(dto.requestedOrganizationIds);
 
             const requestedOrganizations: Organization[] = await this.organizationService.mapPermissionsToOrganizations(
                 permissions
@@ -71,25 +66,12 @@ export class NewKombitCreationController {
                     throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
                 }
 
-                const updatedUser: User = await this.userService.newKombitUser(
-                    dto,
-                    requestedOrganizations,
-                    dbUser
-                );
+                const updatedUser: User = await this.userService.newKombitUser(dto, requestedOrganizations, dbUser);
 
-                for (
-                    let index = 0;
-                    index < dto.requestedOrganizationIds.length;
-                    index++
-                ) {
-                    const dbOrg = await this.organizationService.findByIdWithUsers(
-                        requestedOrganizations[index].id
-                    );
+                for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
+                    const dbOrg = await this.organizationService.findByIdWithUsers(requestedOrganizations[index].id);
 
-                    await this.organizationService.updateAwaitingUsers(
-                        dbOrg,
-                        updatedUser
-                    );
+                    await this.organizationService.updateAwaitingUsers(dbOrg, updatedUser);
                 }
 
                 AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
@@ -105,8 +87,7 @@ export class NewKombitCreationController {
 
     @Get("minimal")
     @ApiOperation({
-        summary:
-            "Get list of the minimal representation of organizations, i.e. id and name.",
+        summary: "Get list of the minimal representation of organizations, i.e. id and name.",
     })
     async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
         return await this.organizationService.findAllMinimal();
@@ -131,15 +112,10 @@ export class NewKombitCreationController {
                 updateUserOrgsDto.requestedOrganizationIds
             );
 
-            const requestedOrganizations = this.organizationService.mapPermissionsToOrganizations(
-                permissions
-            );
+            const requestedOrganizations = this.organizationService.mapPermissionsToOrganizations(permissions);
 
             for (let index = 0; index < requestedOrganizations.length; index++) {
-                await this.userService.sendOrganizationRequestMail(
-                    user,
-                    requestedOrganizations[index]
-                );
+                await this.userService.sendOrganizationRequestMail(user, requestedOrganizations[index]);
             }
 
             for (const org of requestedOrganizations) {

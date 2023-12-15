@@ -11,12 +11,7 @@ import {
     UseFilters,
     UseGuards,
 } from "@nestjs/common";
-import {
-    ApiBearerAuth,
-    ApiOperation,
-    ApiTags,
-    ApiUnauthorizedResponse,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import * as _ from "lodash";
 import * as fs from "fs";
 
@@ -43,6 +38,7 @@ import { CustomExceptionFilter } from "@auth/custom-exception-filter";
 import { isOrganizationPermission } from "@helpers/security-helper";
 import { RequestWithUser } from "passport-saml/lib/passport-saml/types";
 import Configuration from "@config/configuration";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
@@ -67,10 +63,7 @@ export class AuthController {
     @Post("kombit/login/callback")
     @ApiOperation({ summary: "Login callback from Kombit adgangsstyring" })
     @UseGuards(KombitAuthGuard)
-    async kombitLoginCallback(
-        @Req() req: AuthenticatedRequestKombitStrategy,
-        @Res() res: Response
-    ): Promise<any> {
+    async kombitLoginCallback(@Req() req: AuthenticatedRequestKombitStrategy, @Res() res: Response): Promise<any> {
         const redirectTarget = req.cookies["redirect"];
 
         // Login without proper roles
@@ -78,9 +71,7 @@ export class AuthController {
             if (req.user == ErrorCodes.MissingRole) {
                 // Send back to frontend with an error
                 if (redirectTarget) {
-                    return res.redirect(
-                        `${redirectTarget}?error=${ErrorCodes.MissingRole}`
-                    );
+                    return res.redirect(`${redirectTarget}?error=${ErrorCodes.MissingRole}`);
                 } else {
                     throw new UnauthorizedException(ErrorCodes.MissingRole);
                 }
@@ -90,9 +81,7 @@ export class AuthController {
 
         const { nameId, id } = req.user;
         const jwt = await this.authService.issueJwt(nameId, id, true);
-        const baseUrl = redirectTarget
-            ? redirectTarget
-            : Configuration()["frontend"]["baseurl"];
+        const baseUrl = redirectTarget ? redirectTarget : Configuration()["frontend"]["baseurl"];
         return res.redirect(`${baseUrl}?jwt=${jwt.accessToken}`);
     }
 
@@ -108,8 +97,7 @@ export class AuthController {
         // - nameID is used. Corresponds to user.nameId in DB
         // - nameIDFormat is used. Correspond to <NameIDFormat> in the public certificate
         reqConverted.samlLogoutRequest = null; // Property must be set, but it is unused in the source code
-        reqConverted.user.nameIDFormat =
-            "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+        reqConverted.user.nameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
 
         this.strategy.logout(reqConverted, (err: Error, url: string): void => {
             req.logout(err1 => {
@@ -119,9 +107,7 @@ export class AuthController {
                     res.redirect(url);
                 } else {
                     this.logger.error(
-                        `Logout failed with error: ${JSON.stringify(
-                            err
-                        )} and inner Err: ${JSON.stringify(err1)}`
+                        `Logout failed with error: ${JSON.stringify(err)} and inner Err: ${JSON.stringify(err1)}`
                     );
                 }
             });
@@ -131,10 +117,7 @@ export class AuthController {
     @Get("kombit/logout/callback")
     // @UseGuards(KombitAuthGuard)
     @ApiOperation({ summary: "Handles the SAML logout" })
-    public async logoutCallback(
-        @Req() req: expressRequest,
-        @Res() res: Response
-    ): Promise<void> {
+    public async logoutCallback(@Req() req: expressRequest, @Res() res: Response): Promise<void> {
         this.logger.debug("Get callback Logging out ...");
         // This callback openes in a new window for some reason, without sending something to it a timout error happens
         res.send("Logged out ...");
@@ -155,10 +138,7 @@ export class AuthController {
     @ApiOperation({ summary: "Login using username and password" })
     @ApiUnauthorizedResponse()
     @UseGuards(LocalAuthGuard)
-    async login(
-        @Request() req: AuthenticatedRequestLocalStrategy,
-        @Body() _: LoginDto
-    ): Promise<any> {
+    async login(@Request() req: AuthenticatedRequestLocalStrategy, @Body() _: LoginDto): Promise<any> {
         const { email, id } = req.user;
         return this.authService.issueJwt(email, id, false);
     }
@@ -167,7 +147,7 @@ export class AuthController {
     @ApiOperation({
         summary: "Return id and username (email) of the user logged in",
     })
-    @ApiBearerAuth()
+    @ApiAuth()
     @UseGuards(JwtAuthGuard)
     async getProfile(@Request() req: AuthenticatedRequest): Promise<JwtPayloadDto> {
         return {
@@ -178,14 +158,11 @@ export class AuthController {
 
     @Get("me")
     @ApiOperation({
-        summary:
-            "Get basic info on the current user and the organizations it has some permissions to.",
+        summary: "Get basic info on the current user and the organizations it has some permissions to.",
     })
-    @ApiBearerAuth()
+    @ApiAuth()
     @UseGuards(JwtAuthGuard)
-    async getInfoAboutCurrentUser(
-        @Request() req: AuthenticatedRequest
-    ): Promise<CurrentUserInfoDto> {
+    async getInfoAboutCurrentUser(@Request() req: AuthenticatedRequest): Promise<CurrentUserInfoDto> {
         const user = await this.userService.findOneWithOrganizations(req.user.userId);
         const orgs = await this.getAllowedOrganisations(req, user);
         return {
@@ -194,10 +171,7 @@ export class AuthController {
         };
     }
 
-    private async getAllowedOrganisations(
-        req: AuthenticatedRequest,
-        user: User
-    ): Promise<Organization[]> {
+    private async getAllowedOrganisations(req: AuthenticatedRequest, user: User): Promise<Organization[]> {
         if (req.user.permissions.isGlobalAdmin) {
             return (await this.organisationService.findAll()).data;
         }
