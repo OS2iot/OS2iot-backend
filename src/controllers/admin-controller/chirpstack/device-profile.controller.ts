@@ -15,16 +15,9 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import {
-    ApiBadRequestResponse,
-    ApiBearerAuth,
-    ApiNotFoundResponse,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
@@ -39,11 +32,12 @@ import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApplicationAdmin()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}

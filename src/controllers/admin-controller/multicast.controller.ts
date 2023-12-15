@@ -1,25 +1,24 @@
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    Put,
-    Param,
+    Controller,
     Delete,
-    Req,
-    UseGuards,
-    Query,
-    UnauthorizedException,
-    NotFoundException,
+    Get,
     Header,
-    ParseIntPipe,
     Logger,
+    NotFoundException,
+    Param,
+    ParseIntPipe,
+    Post,
+    Put,
+    Query,
+    Req,
+    UnauthorizedException,
+    UseGuards,
 } from "@nestjs/common";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
 import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import {
     ApiBadRequestResponse,
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiOperation,
     ApiTags,
@@ -27,12 +26,12 @@ import {
 } from "@nestjs/swagger";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { Multicast } from "@entities/multicast.entity";
-import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
+import { ApplicationAccessScope, checkIfUserHasAccessToApplication } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
 import { ListAllMulticastsResponseDto } from "@dto/list-all-multicasts-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -41,10 +40,11 @@ import { MulticastDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-mu
 import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
 import { CreateChirpstackMulticastQueueItemResponse } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
 import { MulticastService } from "@services/chirpstack/multicast.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Multicast")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()

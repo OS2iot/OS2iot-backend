@@ -17,7 +17,6 @@ import {
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -59,11 +58,12 @@ import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
