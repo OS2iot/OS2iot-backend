@@ -25,7 +25,7 @@ export class GatewayStatusHistoryService {
         // Very expensive operation. Since no gateway data is stored on the backend database, we need
         // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
         const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
-        const gatewayIds = gateways.result.map(gateway => gateway.gatewayId);
+        const gatewayIds = gateways.resultList.map(gateway => gateway.gatewayId);
         const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 
         if (!gatewayIds.length) {
@@ -38,7 +38,6 @@ export class GatewayStatusHistoryService {
                 timestamp: MoreThanOrEqual(fromDate),
             },
         });
-
         // To know the status of each gateway up till the first status since the start date,
         // we must fetch the previous status
         const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(gatewayIds, fromDate);
@@ -49,7 +48,7 @@ export class GatewayStatusHistoryService {
             latestStatusHistoryPerGatewayBeforePeriod
         );
 
-        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.result, statusHistories);
+        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.resultList, statusHistories);
 
         return {
             data,

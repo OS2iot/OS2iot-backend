@@ -1,4 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { LocationSourceMap } from "@chirpstack/chirpstack-api/common/common_pb";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString, Max, Min } from "class-validator";
 
 export class CommonLocationDto {
@@ -16,17 +17,8 @@ export class CommonLocationDto {
     @IsOptional()
     altitude?: number;
 
-    @ApiProperty({ required: false })
-    @IsString()
-    @IsOptional()
-    source?:
-        | "UNKNOWN"
-        | "GPS"
-        | "CONFIG"
-        | "GEO_RESOLVER_TDOA"
-        | "GEO_RESOLVER_RSSI"
-        | "GEO_RESOLVER_GNSS"
-        | "GEO_RESOLVER_WIFI";
+    @ApiHideProperty()
+    source?: LocationSourceMap[keyof LocationSourceMap]
 
     @ApiProperty({ required: false })
     @IsOptional()

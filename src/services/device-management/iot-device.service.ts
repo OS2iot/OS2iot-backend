@@ -70,6 +70,7 @@ import { CsvGeneratorService } from "@services/csv-generator.service";
 import * as fs from "fs";
 import { caCertPath } from "@resources/resource-paths";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 
 type IoTDeviceOrSpecialized =
     | IoTDevice
@@ -95,6 +96,7 @@ export class IoTDeviceService {
         private entityManager: EntityManager,
         private applicationService: ApplicationService,
         private chirpstackDeviceService: ChirpstackDeviceService,
+        private applicationChirpstackService: ApplicationChirpstackService,
         private sigfoxApiDeviceService: SigFoxApiDeviceService,
         private sigfoxApiDeviceTypeService: SigFoxApiDeviceTypeService,
         private sigfoxGroupService: SigFoxGroupService,
@@ -326,7 +328,6 @@ export class IoTDeviceService {
         await this.loRaWANDeviceRepository.save(devices);
     }
 
-
     async findMQTTDevice(id: number): Promise<MQTTInternalBrokerDevice> {
         return await this.mqttInternalBrokerDeviceRepository.findOne({
             where: { id },
@@ -479,7 +480,7 @@ export class IoTDeviceService {
             deleteResult = await transactionManager.delete(IoTDevice, device.id);
 
             // Now we can safely perform any actions against Chirpstack
-            if (device.type == IoTDeviceType.LoRaWAN) {
+            if (device.type === IoTDeviceType.LoRaWAN) {
                 const lorawanDevice = device as LoRaWANDevice;
                 this.logger.debug(
                     `Deleting LoRaWANDevice ${lorawanDevice.id} / ${lorawanDevice.deviceEUI} in Chirpstack ...`
@@ -748,9 +749,7 @@ export class IoTDeviceService {
         }
     }
 
-    private async getLorawanDeviceEuis(
-        iotDevicesDtoMap: CreateIoTDeviceMapDto[]
-    ): Promise<ChirpstackDeviceId[] | null> {
+    private async getLorawanDeviceEuis(iotDevicesDtoMap: CreateIoTDeviceMapDto[]): Promise<ChirpstackDeviceId[]> {
         const iotLorawanDevices = iotDevicesDtoMap.reduce((res: string[], { iotDevice, iotDeviceDto }) => {
             if (iotDevice.constructor.name === LoRaWANDevice.name && iotDeviceDto.lorawanSettings) {
                 res.push(iotDeviceDto.lorawanSettings.devEUI);
@@ -926,36 +925,40 @@ export class IoTDeviceService {
         loraApplications: ListAllChirpstackApplicationsResponseDto = null
     ): Promise<LoRaWANDevice> {
         lorawanDevice.deviceEUI = dto.lorawanSettings.devEUI;
-
         if (
             !isUpdate &&
             (await this.chirpstackDeviceService.isDeviceAlreadyCreated(dto.lorawanSettings.devEUI, lorawanDeviceEuis))
         ) {
             throw new BadRequestException(ErrorCodes.IdInvalidOrAlreadyInUse);
         }
-
         try {
             const chirpstackDeviceDto = this.chirpstackDeviceService.makeCreateChirpstackDeviceDto(
                 dto.lorawanSettings,
                 dto.name
             );
 
-            const applicationId = await this.chirpstackDeviceService.findOrCreateDefaultApplication(
-                chirpstackDeviceDto,
-                loraApplications
+            const applicationId = await this.applicationChirpstackService.findOrCreateDefaultApplication(
+                loraApplications,
+                lorawanDevice
             );
             lorawanDevice.chirpstackApplicationId = applicationId;
-            chirpstackDeviceDto.device.applicationID = applicationId.toString();
-
+            chirpstackDeviceDto.device.applicationID = applicationId;
             // Create or update the LoRa device against Chirpstack API
-            await this.chirpstackDeviceService.createOrUpdateDevice(chirpstackDeviceDto, lorawanDeviceEuis);
-            lorawanDeviceEuis.push(chirpstackDeviceDto.device);
-            await this.doActivation(dto, isUpdate);
-            lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
-            const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
-                dto.lorawanSettings.deviceProfileID
+            const success = await this.chirpstackDeviceService.createOrUpdateDevice(
+                chirpstackDeviceDto,
+                lorawanDeviceEuis
             );
-            lorawanDevice.deviceProfileName = deviceProfile.deviceProfile.name;
+            if (success) {
+                lorawanDeviceEuis.push(chirpstackDeviceDto.device);
+                await this.doActivation(dto, isUpdate);
+                lorawanDevice.OTAAapplicationKey = dto.lorawanSettings.OTAAapplicationKey;
+                const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(
+                    dto.lorawanSettings.deviceProfileID
+                );
+                lorawanDevice.deviceProfileName = deviceProfile.deviceProfile.name;
+            } else {
+                throw new BadRequestException(ErrorCodes.InvalidPost);
+            }
         } catch (err) {
             this.logger.error(err);
 
@@ -963,7 +966,6 @@ export class IoTDeviceService {
             if (err?.response?.data?.error == "object already exists") {
                 throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
             }
-
             throw err;
         }
         return lorawanDevice;
@@ -973,8 +975,8 @@ export class IoTDeviceService {
         if (dto.lorawanSettings.activationType == ActivationType.OTAA) {
             // OTAA Activate if key is provided
             await this.doActivationByOTAA(dto, isUpdate);
-        } else if (dto.lorawanSettings.activationType == ActivationType.ABP) {
-            await this.doActivationByABP(dto, isUpdate);
+        } else if (dto.lorawanSettings.activationType === ActivationType.ABP) {
+            await this.doActivationByABP(dto);
         }
     }
 
@@ -990,7 +992,7 @@ export class IoTDeviceService {
         }
     }
 
-    private async doActivationByABP(dto: CreateIoTDeviceDto, isUpdate: boolean) {
+    private async doActivationByABP(dto: CreateIoTDeviceDto) {
         if (
             dto.lorawanSettings.devAddr &&
             dto.lorawanSettings.fCntUp != null &&
@@ -1004,8 +1006,7 @@ export class IoTDeviceService {
                 dto.lorawanSettings.fCntUp,
                 dto.lorawanSettings.nFCntDown,
                 dto.lorawanSettings.networkSessionKey,
-                dto.lorawanSettings.applicationSessionKey,
-                isUpdate
+                dto.lorawanSettings.applicationSessionKey
             );
         } else {
             throw new BadRequestException(ErrorCodes.MissingABPInfo);
@@ -1052,7 +1053,7 @@ export class IoTDeviceService {
     private async mapMQTTExternalBrokerDevice(
         iotDeviceDto: CreateIoTDeviceDto,
         cast: MQTTExternalBrokerDevice,
-        isUpdate: boolean = false
+        isUpdate = false
     ): Promise<MQTTExternalBrokerDevice> {
         const settings = iotDeviceDto.mqttExternalBrokerSettings;
         validateMQTTExternalBroker(settings);

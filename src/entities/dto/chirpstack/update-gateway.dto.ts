@@ -6,6 +6,12 @@ import { Type } from "class-transformer";
 export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["gatewayId"]) {
     @ApiHideProperty()
     gatewayId: string;
+
+    @ApiHideProperty()
+    createdBy?: number;
+
+    @ApiHideProperty()
+    updatedBy?: number;
 }
 
 export class UpdateGatewayDto {

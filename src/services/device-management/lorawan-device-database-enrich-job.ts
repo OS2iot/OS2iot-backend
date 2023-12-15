@@ -4,11 +4,14 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import * as BluebirdPromise from "bluebird";
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Gateway } from "@entities/gateway.entity";
 import { Repository } from "typeorm";
+import { timestampToDate } from "@helpers/date.helper";
+import { GetGatewayRequest, GetGatewayResponse } from "@chirpstack/chirpstack-api/api/gateway_pb";
+import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
+import { credentials } from "@grpc/grpc-js";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
@@ -20,6 +23,8 @@ export class LorawanDeviceDatabaseEnrichJob {
         @InjectRepository(Gateway)
         private gatewayRepository: Repository<Gateway>
     ) {}
+    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
+    private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });
 
@@ -27,16 +32,12 @@ export class LorawanDeviceDatabaseEnrichJob {
     async fetchStatusForGateway() {
         // Select all gateways from our database and chirpstack (Cheaper than individual calls)
         const gateways = await this.gatewayService.getAll();
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
-            "gateways",
-            1000,
-            0
-        );
+        const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
 
         // Setup batched fetching of status (Only for today)
         await BluebirdPromise.all(
             BluebirdPromise.map(
-                gateways.result,
+                gateways.resultList,
                 async gateway => {
                     try {
                         const fromTime = new Date();
@@ -50,16 +51,16 @@ export class LorawanDeviceDatabaseEnrichJob {
                             new Date()
                         );
                         // Save that to our database
-                        const stats = statsToday.result[0];
-                        const chirpstackGateway = chirpStackGateways.result.find(
-                            g => g.id.toString() === gateway.gatewayId
+                        const stats = statsToday[0];
+                        const chirpstackGateway = chirpstackGateways.resultList.find(
+                            g => g.gatewayId === gateway.gatewayId
                         );
 
                         await this.gatewayService.updateGatewayStats(
                             gateway.gatewayId,
                             stats.rxPacketsReceived,
                             stats.txPacketsEmitted,
-                            chirpstackGateway.lastSeenAt
+                            chirpstackGateway.lastSeenAt ? timestampToDate(chirpstackGateway.lastSeenAt) : undefined
                         );
                     } catch (err) {
                         this.logger.error(`Gateway status fetch failed with: ${JSON.stringify(err)}`, err);
@@ -99,36 +100,31 @@ export class LorawanDeviceDatabaseEnrichJob {
     // This is run once on startup and will create any gateways that exist in chirpstack but not our database
     @Timeout(10000)
     async importChirpstackGateways() {
-        // Get all chirpstack gateways
-        const chirpStackGateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
-            "gateways",
-            1000,
-            0
-        );
-
+        const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
         const dbGateways = await this.gatewayService.getAll();
-
         // Filter for gateways not existing in our database
-        const unknownGateways = chirpStackGateways.result.filter(
-            g => dbGateways.result.findIndex(dbGateway => dbGateway.gatewayId === g.id.toString()) === -1
+        const unknownGateways = chirpstackGateways.resultList.filter(
+            g => dbGateways.resultList.findIndex(dbGateway => dbGateway.gatewayId === g.gatewayId) === -1
         );
-
         await BluebirdPromise.all(
             BluebirdPromise.map(
                 unknownGateways,
                 async x => {
                     try {
-                        const gw = (await this.gatewayService.get(`gateways/${x.id}`)) as any;
-                        const organizationId = gw.gateway.tags["internalOrganizationId"];
+                        const req = new GetGatewayRequest();
+                        req.setGatewayId(x.gatewayId);
 
-                        const gateway = this.gatewayService.mapContentsDtoToGateway(gw.gateway);
-                        gateway.id = 0;
-                        gateway.gatewayId = gw.gateway.id;
-                        gateway.lastSeenAt = gw.lastSeenAt;
-                        gateway.createdAt = new Date(Date.parse(gw.createdAt));
-                        gateway.rxPacketsReceived = 0;
-                        gateway.txPacketsEmitted = 0;
-                        gateway.createdBy = gw.gateway.tags["os2iot-created-by"];
+                        const gwResponse = await this.gatewayService.get<GetGatewayResponse>(
+                            `gateways/${x.gatewayId}`,
+                            this.gatewayClient,
+                            req
+                        );
+                        const chirpstackGateway = gwResponse.getGateway();
+                        const organizationId = +chirpstackGateway.getTagsMap().get("internalOrganizationId");
+                        const gateway = this.gatewayService.mapChirpstackGatewayToDatabaseGateway(
+                            chirpstackGateway,
+                            gwResponse
+                        );
                         gateway.organization = await this.organizationService.findById(organizationId);
                         await this.gatewayRepository.save(gateway);
                     } catch (err) {

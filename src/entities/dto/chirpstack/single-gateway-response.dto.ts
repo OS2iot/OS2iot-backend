@@ -3,5 +3,5 @@ import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 export class SingleGatewayResponseDto {
     gateway: GatewayResponseDto;
-    stats: GatewayStatsElementDto[];
+    stats?: GatewayStatsElementDto[];
 }

@@ -1,25 +1,25 @@
 import {
-    Body,
     Controller,
-    Delete,
     Get,
-    Header,
-    Logger,
-    NotFoundException,
-    Param,
-    ParseIntPipe,
     Post,
+    Body,
     Put,
-    Query,
+    Param,
+    Delete,
     Req,
-    UnauthorizedException,
     UseGuards,
+    Query,
+    UnauthorizedException,
+    NotFoundException,
+    Header,
+    ParseIntPipe,
+    Logger,
 } from "@nestjs/common";
-import { MulticastService } from "../../services/device-management/multicast.service";
 import { CreateMulticastDto } from "../../entities/dto/create-multicast.dto";
 import { UpdateMulticastDto } from "../../entities/dto/update-multicast.dto";
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiOperation,
     ApiTags,
@@ -27,12 +27,12 @@ import {
 } from "@nestjs/swagger";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { Multicast } from "@entities/multicast.entity";
-import { ApplicationAccessScope, checkIfUserHasAccessToApplication } from "@helpers/security-helper";
+import { checkIfUserHasAccessToApplication, ApplicationAccessScope } from "@helpers/security-helper";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { RolesGuard } from "@auth/roles.guard";
-import { ApplicationAdmin, Read } from "@auth/roles.decorator";
+import { Read, ApplicationAdmin } from "@auth/roles.decorator";
 import { ListAllMulticastsDto } from "@dto/list-all-multicasts.dto";
 import { ListAllMulticastsResponseDto } from "@dto/list-all-multicasts-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -40,11 +40,11 @@ import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { MulticastDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-multicast-downlink-queue-response.dto";
 import { CreateMulticastDownlinkDto } from "@dto/create-multicast-downlink.dto";
 import { CreateChirpstackMulticastQueueItemResponse } from "@dto/chirpstack/create-chirpstack-multicast-queue-item.dto";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { MulticastService } from "@services/chirpstack/multicast.service";
 
 @ApiTags("Multicast")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiAuth()
+@ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -196,7 +196,7 @@ export class MulticastController {
         try {
             const multicast = await this.multicastService.findOne(id);
             checkIfUserHasAccessToApplication(req, multicast.application.id, ApplicationAccessScope.Write);
-            const result = await this.multicastService.multicastDelete(id, multicast);
+            const result = await this.multicastService.deleteMulticast(id, multicast);
 
             if (result.affected === 0) {
                 throw new NotFoundException(ErrorCodes.IdDoesNotExists);

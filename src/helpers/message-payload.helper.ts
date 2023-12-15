@@ -8,7 +8,7 @@ export interface LoRaWANSignalData {
     name: string;
     rssi: number;
     time: string;
-    loRaSNR: number;
+    snr: number;
     location: {
         altitude: number;
         latitude: number;
@@ -47,8 +47,8 @@ export const isValidLoRaWANSignalData = (rxInfo: unknown): rxInfo is LoRaWANSign
             typeof unknownInfo[0] === "object" &&
             hasProps(unknownInfo[0], nameof<LoRaWANSignalData>("rssi")) &&
             typeof unknownInfo[0].rssi === "number" &&
-            hasProps(unknownInfo[0], nameof<LoRaWANSignalData>("loRaSNR")) &&
-            typeof unknownInfo[0].loRaSNR === "number"
+            hasProps(unknownInfo[0], nameof<LoRaWANSignalData>("snr")) &&
+            typeof unknownInfo[0].snr === "number"
         );
     }
 

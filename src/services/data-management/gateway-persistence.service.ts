@@ -36,28 +36,20 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
     async rawRequestListener(payload: KafkaPayload): Promise<void> {
         this.logger.debug(`RAW_GATEWAY_STATE: '${JSON.stringify(payload)}'`);
         const dto = payload.body as RawGatewayStateDto;
-        const messageState = (dto.rawPayload as unknown) as ChirpstackMQTTConnectionStateMessageDto;
+        const messageState = dto.rawPayload as unknown as ChirpstackMQTTConnectionStateMessageDto;
 
         const statusHistory = this.mapDtoToEntity(dto, messageState);
         await this.gatewayStatusHistoryRepository.save(statusHistory);
 
-		// Clean up old statuses
-        await this.deleteStatusHistoriesSinceLastHour(
-            statusHistory.timestamp,
-            dto.gatewayId
-        );
+        // Clean up old statuses
+        await this.deleteStatusHistoriesSinceLastHour(statusHistory.timestamp, dto.gatewayId);
         await this.deleteOldStatusHistories(dto.gatewayId);
     }
 
-    private mapDtoToEntity(
-        dto: RawGatewayStateDto,
-        messageState: ChirpstackMQTTConnectionStateMessageDto
-    ) {
+    private mapDtoToEntity(dto: RawGatewayStateDto, messageState: ChirpstackMQTTConnectionStateMessageDto) {
         const statusHistory = new GatewayStatusHistory();
         statusHistory.mac = dto.gatewayId;
-        statusHistory.timestamp = dto.unixTimestamp
-            ? new Date(dto.unixTimestamp)
-            : new Date();
+        statusHistory.timestamp = dto.unixTimestamp ? new Date(dto.unixTimestamp) : new Date();
         statusHistory.wasOnline = !!messageState?.isOnline;
         return statusHistory;
     }
@@ -68,10 +60,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
      * @param latestMessageTime
      * @param gatewayId
      */
-    private async deleteStatusHistoriesSinceLastHour(
-        latestMessageTime: Date,
-        gatewayId: string
-    ): Promise<void> {
+    private async deleteStatusHistoriesSinceLastHour(latestMessageTime: Date, gatewayId: string): Promise<void> {
         const lastHour = subtractHours(latestMessageTime);
         // Find the oldest items since the last hour
         const oldestToDelete = await this.gatewayStatusHistoryRepository.find({
@@ -89,9 +78,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
             return;
         }
 
-        const result = await this.gatewayStatusHistoryRepository.delete(
-            oldestToDelete.map(old => old.id)
-        );
+        const result = await this.gatewayStatusHistoryRepository.delete(oldestToDelete.map(old => old.id));
 
         this.logger.debug(`Deleted: ${result.affected} rows from gateway_status_history`);
     }
@@ -115,9 +102,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
             return;
         }
 
-        const result = await this.gatewayStatusHistoryRepository.delete(
-            oldestToDelete.map(old => old.id)
-        );
+        const result = await this.gatewayStatusHistoryRepository.delete(oldestToDelete.map(old => old.id));
 
         this.logger.debug(`Deleted: ${result.affected} rows from gateway_status_history`);
     }

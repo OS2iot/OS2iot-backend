@@ -1,9 +1,6 @@
 ﻿import { Injectable } from "@nestjs/common";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { IoTDeviceType } from "@enum/device-type.enum";
-import { AuthenticationType } from "@enum/authentication-type.enum";
 import { EncryptionHelperService } from "@services/encryption-helper.service";
-import { ActivationType } from "@enum/lorawan-activation-type.enum";
 
 @Injectable()
 export class CsvGeneratorService {
@@ -65,7 +62,6 @@ export class CsvGeneratorService {
             `${this.base64Encode(deviceCertificate) ?? ""},` +
             `${this.base64Encode(deviceCertificateKey) ?? ""},` +
             `${lorawanSettings?.devEUI ?? ""},` +
-            `${lorawanSettings?.serviceProfileID ?? ""},` +
             `${lorawanSettings?.deviceProfileID ?? ""},` +
             `${lorawanSettings?.skipFCntCheck ?? ""},` +
             `${lorawanSettings?.activationType ?? ""},` +
@@ -102,7 +98,6 @@ const csvFields = [
     "deviceCertificate",
     "deviceCertificateKey",
     "devEUI",
-    "serviceProfileID",
     "deviceProfileID",
     "skipFCntCheck",
     "activationType",

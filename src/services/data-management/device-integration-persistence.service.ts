@@ -174,7 +174,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         if (isValidLoRaWANPayload(payload)) {
             // There's signal info for each nearby gateway. Retrieve the strongest signal strength
             const rssi = Math.max(...payload.rxInfo.map(info => info.rssi));
-            const snr = Math.max(...payload.rxInfo.map(info => info.loRaSNR));
+            const snr = Math.max(...payload.rxInfo.map(info => info.snr));
             message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
             message.snr = Number.isInteger(snr) ? snr : message.snr;
         } else {

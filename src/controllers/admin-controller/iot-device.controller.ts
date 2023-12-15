@@ -17,6 +17,7 @@ import {
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -39,7 +40,6 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-data.dto";
 import { CreateIoTDeviceDownlinkDto } from "@dto/create-iot-device-downlink.dto";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
-import { CreateChirpstackDeviceQueueItemResponse } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -58,12 +58,12 @@ import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.resp
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiAuth()
+@ApiBearerAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -122,9 +122,9 @@ export class IoTDeviceController {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
         checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
-        if (device.type == IoTDeviceType.LoRaWAN) {
+        if (device.type === IoTDeviceType.LoRaWAN) {
             return this.chirpstackDeviceService.getDownlinkQueue((device as LoRaWANDevice).deviceEUI);
-        } else if (device.type == IoTDeviceType.SigFox) {
+        } else if (device.type === IoTDeviceType.SigFox) {
             return this.iotDeviceService.getDownlinkForSigfox(device as SigFoxDevice);
         } else {
             throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
@@ -170,7 +170,7 @@ export class IoTDeviceController {
         @Req() req: AuthenticatedRequest,
         @Param("id", new ParseIntPipe()) id: number,
         @Body() dto: CreateIoTDeviceDownlinkDto
-    ): Promise<void | CreateChirpstackDeviceQueueItemResponse> {
+    ): Promise<void | IdResponse> {
         try {
             const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
             if (!device) {

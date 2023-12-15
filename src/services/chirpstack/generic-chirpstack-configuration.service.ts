@@ -5,277 +5,222 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-
-import { HeaderDto } from "@dto/chirpstack/header.dto";
-import { ListAllNetworkServerResponseDto } from "@dto/chirpstack/list-all-network-server-response.dto";
-import { ListAllOrganizationsResponseDto } from "@dto/chirpstack/list-all-organizations-response.dto";
-import { AuthorizationType } from "@enum/authorization-type.enum";
-import { ErrorCodes } from "@enum/error-codes.enum";
-
-import { JwtToken } from "./jwt-token";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
-import { HttpService } from "@nestjs/axios";
+import { Metadata, ServiceError, credentials } from "@grpc/grpc-js";
+import configuration from "@config/configuration";
+import { TenantServiceClient } from "@chirpstack/chirpstack-api/api/tenant_grpc_pb";
+import { ListTenantsRequest, ListTenantsResponse } from "@chirpstack/chirpstack-api/api/tenant_pb";
+import { ApplicationServiceClient } from "@chirpstack/chirpstack-api/api/application_grpc_pb";
+import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
+import { ChirpstackApplicationResponseDto } from "@dto/chirpstack/chirpstack-application-response.dto";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
+import { DeviceServiceClient } from "@chirpstack/chirpstack-api/api/device_grpc_pb";
+import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
+import { DeviceProfileServiceClient } from "@chirpstack/chirpstack-api/api/device_profile_grpc_pb";
+import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/multicast_group_grpc_pb";
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    baseUrl = `http://${
-        process.env.CHIRPSTACK_APPLICATION_SERVER_HOSTNAME || "localhost"
-    }:${process.env.CHIRPSTACK_APPLICATION_SERVER_PORT || "8080"}`;
-
-    networkServer = `${
-        process.env.CHIRPSTACK_NETWORK_SERVER || "chirpstack-network-server"
-    }:${process.env.CHIRPSTACK_NETWORK_SERVER_PORT || "8000"}`;
-    constructor(private httpService: HttpService) {}
+    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
 
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
+    protected applicationServiceClient = new ApplicationServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected deviceServiceClient = new DeviceServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected deviceProfileClient = new DeviceProfileServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected multicastServiceClient = new MulticastGroupServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+    protected readonly ORG_ID_KEY = "internalOrganizationId";
+    protected readonly UPDATED_BY_KEY = "os2iot-updated-by";
+    protected readonly CREATED_BY_KEY = "os2iot-created-by";
 
-    setupHeader(endPoint: string, limit?: number, offset?: number): HeaderDto {
-        const timeoutMs = 30 * 1000;
-        let url = this.baseUrl + "/api/" + endPoint;
-
-        // If limits are supplied, add these as query params
-        if (limit != null && offset != null) {
-            url += `${
-                endPoint.indexOf("?") >= 0 ? "&" : "?"
-            }limit=${limit}&offset=${offset}`;
-        }
-
-        const headerDto: HeaderDto = {
-            url,
-            timeout: timeoutMs,
-            authorizationType: AuthorizationType.HEADER_BASED_AUTHORIZATION,
-            authorizationHeader: "Bearer " + JwtToken.setupToken(),
-        };
-
-        return headerDto;
+    makeMetadataHeader(): Metadata {
+        const metadata = new Metadata();
+        metadata.set("authorization", "Bearer " + configuration()["chirpstack"]["apikey"]);
+        return metadata;
     }
 
-    makeAxiosConfiguration(config: {
-        timeout: number;
-        authorizationHeader: string;
-    }): AxiosRequestConfig {
-        const axiosConfig: AxiosRequestConfig = {
-            timeout: config.timeout,
-            headers: { "Content-Type": "application/json" },
-        };
-
-        axiosConfig.headers["Authorization"] = config.authorizationHeader;
-
-        return axiosConfig;
-    }
-
-    async post<T>(endpoint: string, data: T): Promise<AxiosResponse> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-
-        try {
-            const result = await this.httpService
-                .post(header.url, data, axiosConfig)
-                .toPromise();
-
-            this.innerLogger.debug(
-                `post: ${JSON.stringify(
-                    data
-                )} to  ${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-
-            return result;
-        } catch (err) {
-            this.innerLogger.error(
-                `post got error: ${JSON.stringify(err?.response?.data)}`
-            );
-
-            this.throwBadRequestIf400(err);
-
-            throw err;
-        }
-    }
-
-    private throwBadRequestIf400(err: any) {
-        if (err?.response?.status == 400) {
-            throw new BadRequestException({
-                success: false,
-                chirpstackError: err?.response?.data,
+    async post(logName: string, client: any, request: any): Promise<IdResponse> {
+        const metaData = this.makeMetadataHeader();
+        const createPromise = new Promise<IdResponse>((resolve, reject) => {
+            client.create(request, metaData, (err: ServiceError, resp: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    this.innerLogger.debug(`post:${logName} success`);
+                    resolve(resp.toObject());
+                }
             });
+        });
+        try {
+            return await createPromise;
+        } catch (err) {
+            this.innerLogger.error(`POST ${logName} got error: ${err}`);
+            throw new BadRequestException();
         }
     }
 
-    async put<T>(endpoint: string, data: T, id: string): Promise<AxiosResponse> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-        const url = header.url + "/" + id;
+    async put(logName: string, client: any, request: any): Promise<void> {
+        const metaData = this.makeMetadataHeader();
+        const updatePromise = new Promise<void>((resolve, reject) => {
+            client.update(request, metaData, (err: ServiceError, resp: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    this.innerLogger.debug(`update :${logName} success`);
+                    resolve(resp);
+                }
+            });
+        });
         try {
-            const result = await this.httpService.put(url, data, axiosConfig).toPromise();
-
-            this.innerLogger.debug(
-                `put: ${JSON.stringify(
-                    data
-                )} to ${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-
-            return result;
+            await updatePromise;
+            return;
         } catch (err) {
-            this.throwBadRequestIf400(err);
-            this.innerLogger.error(`Put got error: `);
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+            this.innerLogger.error(`UPDATE ${logName} got error: ${err}`);
+            throw new BadRequestException();
         }
     }
 
-    async getOneById<T>(endpoint: string, id: string): Promise<T> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
+    async getOneById<T>(logName: string, id: string, client: any, request: any): Promise<T> {
+        const metaData = this.makeMetadataHeader();
+        request.setId(id);
+        const getPromise = new Promise<T>((resolve, reject) => {
+            client.get(request, metaData, (err: ServiceError, resp: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    this.innerLogger.debug(`get from:${logName} success`);
+                    resolve(resp);
+                }
+            });
+        });
         try {
-            const url = header.url + "/" + id;
-            const result = await this.httpService.get(url, axiosConfig).toPromise();
-
-            this.innerLogger.debug(
-                `get by ID from:${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-
-            return result.data;
+            return await getPromise;
         } catch (err) {
-            this.innerLogger.error(
-                `GET: ${err?.config?.url} Status: ${
-                    err?.response?.status
-                }. Error response: '${JSON.stringify(err?.response?.data)}'`
-            );
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
-    }
-
-    async delete<T>(endpoint: string, id?: string): Promise<AxiosResponse> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-        const url = header.url + (id != undefined ? "/" + id : "");
-        try {
-            const result = await this.httpService.delete(url, axiosConfig).toPromise();
-
-            this.innerLogger.debug(
-                `DELETE ${url} - Status: ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-            return result;
-        } catch (err) {
-            this.innerLogger.error(
-                `DELETE ${url} - Got error: ${JSON.stringify(err?.response?.data)}`
-            );
-            throw new InternalServerErrorException(err?.response?.data);
-        }
-    }
-
-    async get<T>(endpoint: string): Promise<T> {
-        const header = this.setupHeader(endpoint);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-
-        try {
-            const result = await this.httpService
-                .get(header.url, axiosConfig)
-                .toPromise();
-
-            return result.data;
-        } catch (err) {
-            this.innerLogger.error(
-                `GET '${header.url}' failed with error (${
-                    err?.response?.status
-                }): '${JSON.stringify(err?.response?.data)}'`
-            );
-            if (err?.response?.status == 404) {
-                throw new NotFoundException(err?.response?.data);
-            }
-
-            throw new InternalServerErrorException(err?.response?.data);
-        }
-    }
-
-    async getAllApplicationsWithPagination(
-        organizationID: string
-    ): Promise<ListAllChirpstackApplicationsResponseDto> {
-        return this.getAllWithPagination<ListAllChirpstackApplicationsResponseDto>(
-            `applications?limit=100&organizationID=${organizationID}`
-        );
-    }
-
-    async getAllWithPagination<T>(
-        endpoint: string,
-        limit?: number,
-        offset?: number
-    ): Promise<T> {
-        const header = this.setupHeader(endpoint, limit, offset);
-        const axiosConfig = this.makeAxiosConfiguration(header);
-
-        try {
-            const result = await this.httpService
-                .get(header.url, axiosConfig)
-                .toPromise();
-            this.innerLogger.debug(
-                `get all from:${endpoint} resulting in ${result.status.toString()} and message: ${
-                    result.statusText
-                }`
-            );
-            return result.data;
-        } catch (err) {
-            this.innerLogger.error(`GET ${header.url} got error: ${err}`);
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
             throw new NotFoundException();
         }
     }
 
-    public async getNetworkServers(
-        limit?: number,
-        offset?: number
-    ): Promise<ListAllNetworkServerResponseDto> {
-        const res = await this.getAllWithPagination<ListAllNetworkServerResponseDto>(
-            "network-servers",
-            limit,
-            offset
-        );
-        return res;
+    async delete<T>(logName: string, client: any, request: any): Promise<void> {
+        //MAYBE return boolean of result (succes vs failure)
+        if (client) {
+            const metaData = this.makeMetadataHeader();
+            const deletePromise = new Promise<T>((resolve, reject) => {
+                client.delete(request, metaData, (err: ServiceError, resp: any) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        this.innerLogger.debug(`delete :${logName} success`);
+                        resolve(resp);
+                    }
+                });
+            });
+            try {
+                await deletePromise;
+                return;
+            } catch (err) {
+                this.innerLogger.error(`DELETE ${logName} got error: ${err}`);
+                throw new BadRequestException();
+            }
+        }
     }
 
-    public async getOrganizations(
-        limit?: number,
-        offset?: number
-    ): Promise<ListAllOrganizationsResponseDto> {
-        const res = await this.getAllWithPagination<ListAllOrganizationsResponseDto>(
-            "organizations",
-            limit,
-            offset
-        );
-        return res;
-    }
-
-    public async getDefaultNetworkServerId(): Promise<string> {
-        let id = null;
-        await this.getNetworkServers(1000, 0).then(response => {
-            response.result.forEach(element => {
-                if (element.name.toLowerCase() === "os2iot") {
-                    id = element.id.toString();
+    async get<T>(logName: string, client: any, request: any): Promise<T> {
+        const metaData = this.makeMetadataHeader();
+        const getPromise = new Promise<T>((resolve, reject) => {
+            client.get(request, metaData, (err: ServiceError, resp: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    this.innerLogger.debug(`get from:${logName} success`);
+                    resolve(resp);
                 }
             });
         });
-        if (id) {
-            return id;
+        try {
+            return await getPromise;
+        } catch (err) {
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
+            throw new NotFoundException();
         }
-        throw new InternalServerErrorException(
-            "Could not find any NetworkServer in Chirpstack named: 'OS2iot'"
+    }
+
+    async getAllApplicationsWithPagination(tenantID: string): Promise<ListAllChirpstackApplicationsResponseDto> {
+        const req = new ListApplicationsRequest();
+        req.setTenantId(await this.getDefaultOrganizationId());
+
+        const result = await this.getAllWithPagination<ListApplicationsResponse.AsObject>(
+            `applications?limit=100&organizationID=${tenantID}`,
+            this.applicationServiceClient,
+            req,
+            100,
+            undefined
         );
+        const chirpstackApplicationResponseDto: ChirpstackApplicationResponseDto[] = [];
+        result.resultList.map(e => {
+            const resultItem: ChirpstackApplicationResponseDto = {
+                name: e.name,
+                description: e.description,
+                id: e.id,
+                tenantId: tenantID,
+            };
+            chirpstackApplicationResponseDto.push(resultItem);
+        });
+        return {
+            totalCount: result.totalCount,
+            resultList: chirpstackApplicationResponseDto,
+        };
+    }
+
+    async getAllWithPagination<T>(
+        logName: string,
+        client: any,
+        request: any,
+        limit?: number,
+        offset?: number
+    ): Promise<T> {
+        const metaData = this.makeMetadataHeader();
+        request.setLimit(limit);
+        request.setOffset(offset);
+
+        const getListPromise = new Promise<T>((resolve, reject) => {
+            client.list(request, metaData, (err: ServiceError, resp: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const result = resp.toObject();
+                    resolve(result);
+                    this.innerLogger.debug(`get all from:${logName} success`);
+                }
+            });
+        });
+        try {
+            return await getListPromise;
+        } catch (err) {
+            this.innerLogger.error(`GET ${logName} got error: ${err}`);
+            throw new NotFoundException();
+        }
+    }
+
+    public async getTenants(limit?: number, offset?: number): Promise<ListTenantsResponse.AsObject> {
+        const tenantClient = new TenantServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+        const req = new ListTenantsRequest();
+
+        const res = await this.getAllWithPagination<ListTenantsResponse.AsObject>(
+            "organizations",
+            tenantClient,
+            req,
+            limit,
+            offset
+        );
+        return res;
     }
 
     public async getDefaultOrganizationId(): Promise<string> {
         let id = null;
-        await this.getOrganizations(1000, 0).then(response => {
-            response.result.forEach(element => {
-                if (
-                    element.name.toLowerCase() == "os2iot" ||
-                    element.name.toLowerCase() == "chirpstack"
-                ) {
+        await this.getTenants(1000, 0).then(response => {
+            response.resultList.forEach(element => {
+                if (element.name.toLowerCase() == "os2iot" || element.name.toLowerCase() == "chirpstack") {
                     id = element.id;
                 }
             });
