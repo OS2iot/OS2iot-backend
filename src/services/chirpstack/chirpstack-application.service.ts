@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import {
-    Application,
+    Application as ChirpstackApplication,
     CreateApplicationRequest,
     DeleteApplicationRequest,
     ListApplicationsRequest,
     UpdateApplicationRequest,
 } from "@chirpstack/chirpstack-api/api/application_pb";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
-import { Application as DbApplication } from "@entities/application.entity";
+import { Application } from "@entities/application.entity";
 import { ListAllChirpstackApplicationsResponseDto } from "@dto/chirpstack/list-all-applications-response.dto";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { CreateChirpstackApplicationDto } from "@dto/chirpstack/create-chirpstack-application.dto";
@@ -17,8 +17,8 @@ import { Repository } from "typeorm";
 
 @Injectable()
 export class ApplicationChirpstackService extends GenericChirpstackConfigurationService {
-    @InjectRepository(DbApplication)
-    private applicationRepository: Repository<DbApplication>;
+    @InjectRepository(Application)
+    private applicationRepository: Repository<Application>;
     constructor() {
         super();
     }
@@ -51,18 +51,14 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
 
         // otherwise create new application
         if (!applicationId) {
-            applicationId = await this.createNewApplication(
-                applicationId,
-                iotDevice.application.name,
-                iotDevice.application.id
-            );
+            applicationId = await this.createNewApplication(iotDevice.application.name, iotDevice.application.id);
         }
 
         return applicationId;
     }
 
-    public async createNewApplication(applicationId: string, name: string, id: number) {
-        applicationId = await this.createChirpstackApplication({
+    public async createNewApplication(name: string, id: number) {
+        const applicationId = await this.createChirpstackApplication({
             application: {
                 name: `${this.applicationNamePrefix}${name}`,
                 description: this.DEFAULT_DESCRIPTION,
@@ -78,7 +74,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
 
     public async createChirpstackApplication(dto: CreateChirpstackApplicationDto): Promise<string> {
         const req = new CreateApplicationRequest();
-        const application = new Application();
+        const application = new ChirpstackApplication();
         application.setDescription(
             dto.application.description ? dto.application.description : this.DEFAULT_DESCRIPTION
         );
@@ -99,9 +95,9 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
             throw e;
         }
     }
-    public async updateApplication(dto: DbApplication): Promise<void> {
+    public async updateApplication(dto: Application): Promise<void> {
         const req = new UpdateApplicationRequest();
-        const application = new Application();
+        const application = new ChirpstackApplication();
         application.setId(dto.chirpstackId);
         application.setDescription(dto.description ? dto.description : this.DEFAULT_DESCRIPTION);
         application.setName(this.applicationNamePrefix + dto.name);

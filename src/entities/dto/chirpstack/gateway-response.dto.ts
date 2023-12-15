@@ -1,7 +1,7 @@
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { CommonLocationDto } from "./common-location.dto";
 
-export class GatewayResponseChirpstackDto {
+export class ChirpstackGatewayResponseDto {
     id?: number;
     gatewayId: string;
     name: string;

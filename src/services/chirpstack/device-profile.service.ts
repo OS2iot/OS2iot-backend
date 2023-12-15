@@ -329,9 +329,8 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
 
     async getAdrAlgorithms(): Promise<ListDeviceProfileAdrAlgorithmsResponse> {
         const metaData = this.makeMetadataHeader();
-        const test: google_protobuf_empty_pb.Empty = new Empty();
         const getPromise = new Promise<ListDeviceProfileAdrAlgorithmsResponse>((resolve, reject) => {
-            this.deviceProfileClient.listAdrAlgorithms(test, metaData, (err: ServiceError, resp: any) => {
+            this.deviceProfileClient.listAdrAlgorithms(new Empty(), metaData, (err: ServiceError, resp: any) => {
                 if (err) {
                     reject(err);
                 } else {
