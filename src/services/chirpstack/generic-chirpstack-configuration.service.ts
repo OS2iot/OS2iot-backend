@@ -58,6 +58,7 @@ export class GenericChirpstackConfigurationService {
             throw new BadRequestException();
         }
     }
+
     async put(logName: string, client: any, request: any): Promise<void> {
         const metaData = this.makeMetadataHeader();
         const updatePromise = new Promise<void>((resolve, reject) => {

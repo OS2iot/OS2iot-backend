@@ -13,9 +13,7 @@ import { ApplicationService } from "../device-management/application.service";
 import { ChirpstackMulticastContentsDto } from "@dto/chirpstack/chirpstack-multicast-contents.dto";
 import { LorawanMulticastDefinition } from "@entities/lorawan-multicast.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { AddDeviceToMulticastDto } from "@dto/chirpstack-add-device-multicast.dto";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { IoTDevice } from "@entities/iot-device.entity";
 import {
     MulticastDownlinkQueueResponseDto,
     MulticastQueueItem,
@@ -46,6 +44,7 @@ import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/mult
 import { ServiceError } from "@grpc/grpc-js";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { multicastGroup } from "@enum/multicast-type.enum";
+
 @Injectable()
 export class MulticastService extends GenericChirpstackConfigurationService {
     constructor(
@@ -133,7 +132,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         mappedDbMulticast.lorawanMulticastDefinition.updatedBy = userId;
 
         if (!!createMulticastDto.iotDevices) {
-            const lorawanDevices = this.checkForLorawan(createMulticastDto);
+            const lorawanDevices = this.filterForLoRaWAN(createMulticastDto);
             if (lorawanDevices.length > 0) {
                 if (await this.checkForDifferentAppID(lorawanDevices)) {
                     // If they all have same serviceID / appID then proceed.
@@ -175,8 +174,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     ): Promise<Multicast> {
         const oldMulticast: Multicast = { ...existingMulticast };
         const mappedMulticast = await this.mapMulticastDtoToDbMulticast(updateMulticastDto, existingMulticast);
-        const lorawanDevices = this.checkForLorawan(updateMulticastDto);
-        const oldLorawanDevices = this.checkForLorawan(oldMulticast);
+        const lorawanDevices = this.filterForLoRaWAN(updateMulticastDto);
+        const oldLorawanDevices = this.filterForLoRaWAN(oldMulticast);
         if (lorawanDevices.length > 0 || oldLorawanDevices.length > 0) {
             // check if new lorawan devices is included. If so, either create or update in chirpstack. Otherwise, just update db
             if (!existingMulticast.lorawanMulticastDefinition.chirpstackGroupId) {
@@ -208,9 +207,8 @@ export class MulticastService extends GenericChirpstackConfigurationService {
         }
     }
 
-    checkForLorawan(multicastDto: CreateMulticastDto | Multicast | UpdateMulticastDto): LoRaWANDevice[] {
-        const lorawanDevices = multicastDto.iotDevices.filter(x => x.type === IoTDeviceType.LoRaWAN) as LoRaWANDevice[];
-        return lorawanDevices;
+    filterForLoRaWAN(multicastDto: CreateMulticastDto | Multicast | UpdateMulticastDto): LoRaWANDevice[] {
+        return multicastDto.iotDevices.filter(x => x.type === IoTDeviceType.LoRaWAN) as LoRaWANDevice[];
     }
 
     async validateNewDevicesAppID(
@@ -284,7 +282,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     }
 
     async deleteMulticast(id: number, existingMulticast: Multicast): Promise<DeleteResult> {
-        const loraDevices = this.checkForLorawan(existingMulticast);
+        const loraDevices = this.filterForLoRaWAN(existingMulticast);
         if (loraDevices.length > 0) {
             await this.deleteMulticastChirpstack(existingMulticast.lorawanMulticastDefinition.chirpstackGroupId);
         }
@@ -501,7 +499,7 @@ export class MulticastService extends GenericChirpstackConfigurationService {
     private async updateLogic(
         existingMulticast: Multicast,
         lorawanDevices: LoRaWANDevice[],
-        updateMulticastDto: UpdateMulticastDto,
+        updateMulticastDto: UpdateMulticastDto
     ): Promise<void> {
         const existingChirpStackMulticast = await this.getChirpstackMulticast(
             existingMulticast.lorawanMulticastDefinition.chirpstackGroupId

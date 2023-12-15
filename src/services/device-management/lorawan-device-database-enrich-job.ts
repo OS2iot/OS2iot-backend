@@ -9,10 +9,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Gateway } from "@entities/gateway.entity";
 import { Repository } from "typeorm";
 import { timestampToDate } from "@helpers/date.helper";
-import {
-    GetGatewayRequest,
-    GetGatewayResponse,
-} from "@chirpstack/chirpstack-api/api/gateway_pb";
+import { GetGatewayRequest, GetGatewayResponse } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import { credentials } from "@grpc/grpc-js";
 
@@ -35,7 +32,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     async fetchStatusForGateway() {
         // Select all gateways from our database and chirpstack (Cheaper than individual calls)
         const gateways = await this.gatewayService.getAll();
-        const chirpstackDevices = await this.gatewayService.getAllGatewaysFromChirpstack();
+        const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
 
         // Setup batched fetching of status (Only for today)
         await BluebirdPromise.all(
@@ -55,7 +52,9 @@ export class LorawanDeviceDatabaseEnrichJob {
                         );
                         // Save that to our database
                         const stats = statsToday[0];
-                        const chirpstackGateway = chirpstackDevices.resultList.find(g => g.gatewayId === gateway.gatewayId);
+                        const chirpstackGateway = chirpstackGateways.resultList.find(
+                            g => g.gatewayId === gateway.gatewayId
+                        );
 
                         await this.gatewayService.updateGatewayStats(
                             gateway.gatewayId,
@@ -101,10 +100,10 @@ export class LorawanDeviceDatabaseEnrichJob {
     // This is run once on startup and will create any gateways that exist in chirpstack but not our database
     @Timeout(10000)
     async importChirpstackGateways() {
-        const chirpstackDevices = await this.gatewayService.getAllGatewaysFromChirpstack();
+        const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
         const dbGateways = await this.gatewayService.getAll();
         // Filter for gateways not existing in our database
-        const unknownGateways = chirpstackDevices.resultList.filter(
+        const unknownGateways = chirpstackGateways.resultList.filter(
             g => dbGateways.resultList.findIndex(dbGateway => dbGateway.gatewayId === g.gatewayId) === -1
         );
         await BluebirdPromise.all(
@@ -122,7 +121,10 @@ export class LorawanDeviceDatabaseEnrichJob {
                         );
                         const chirpstackGateway = gwResponse.getGateway();
                         const organizationId = +chirpstackGateway.getTagsMap().get("internalOrganizationId");
-                        const gateway = this.gatewayService.mapChirpstackGatewayToDatabaseGateway(chirpstackGateway, gwResponse);
+                        const gateway = this.gatewayService.mapChirpstackGatewayToDatabaseGateway(
+                            chirpstackGateway,
+                            gwResponse
+                        );
                         gateway.organization = await this.organizationService.findById(organizationId);
                         await this.gatewayRepository.save(gateway);
                     } catch (err) {

@@ -41,19 +41,16 @@ export class GatewayBootstrapperService implements OnApplicationBootstrap {
 
         // Don't overwrite ones which already have a status history
         const newHistoriesForMissingGateways = gateways.resultList.reduce((res: GatewayStatusHistory[], gateway) => {
-            if (!statusHistories.some(history => history.mac === gateway.gatewayId)) {
-                // Best fit is to imitate the status logic from Chirpstack.
-                if (gateway.lastSeenAt) {
-                    const lastSeenDate = gateway.lastSeenAt;
+            if (!statusHistories.some(history => history.mac === gateway.gatewayId) && gateway.lastSeenAt) {
+                const lastSeenDate = gateway.lastSeenAt;
 
-                    const wasOnline = errorTime.getTime() < lastSeenDate.getTime();
+                const wasOnline = errorTime.getTime() < lastSeenDate.getTime();
 
-                    res.push({
-                        mac: gateway.gatewayId,
-                        timestamp: now,
-                        wasOnline,
-                    } as GatewayStatusHistory);
-                }
+                res.push({
+                    mac: gateway.gatewayId,
+                    timestamp: now,
+                    wasOnline,
+                } as GatewayStatusHistory);
             }
 
             return res;
