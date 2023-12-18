@@ -9,10 +9,6 @@ import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-res
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
-import {
-    ListAllChirpstackGatewaysResponseDto,
-    ListAllGatewaysResponseDto,
-} from "@dto/chirpstack/list-all-gateways.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
 import { UpdateGatewayContentsDto, UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -33,13 +29,19 @@ import {
     GetGatewayMetricsResponse,
     GetGatewayResponse,
     ListGatewaysRequest,
-    UpdateGatewayRequest,
     ListGatewaysResponse,
+    UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation, Location } from "@chirpstack/chirpstack-api/common/common_pb";
 import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
 import { ChirpstackGatewayResponseDto, GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import {
+    ListAllChirpstackGatewaysResponseDto,
+    ListAllGatewaysResponseDto,
+} from "@dto/chirpstack/list-all-gateways-response.dto";
+
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
     constructor(
@@ -145,6 +147,32 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         return {
             resultList: gateways.map(this.mapGatewayToResponseDto),
             totalCount: gateways.length,
+        };
+    }
+
+    public async getWithPaginationAndSorting(
+        queryParams?: ListAllEntitiesDto,
+        organizationId?: number
+    ): Promise<ListAllGatewaysResponseDto> {
+        const orderByColumn = this.getSortingForGateways(queryParams);
+        const direction = queryParams?.sort?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+        let query = this.gatewayRepository
+            .createQueryBuilder("gateway")
+            .innerJoinAndSelect("gateway.organization", "organization")
+            .skip(queryParams?.offset ? +queryParams.offset : 0)
+            .take(queryParams.limit ? +queryParams.limit : 100)
+            .orderBy(orderByColumn, direction);
+
+        if (organizationId) {
+            query = query.where('"organizationId" = :organizationId', { organizationId });
+        }
+
+        const [gateways, count] = await query.getManyAndCount();
+
+        return {
+            resultList: gateways.map(this.mapGatewayToResponseDto),
+            totalCount: count,
         };
     }
 
@@ -294,9 +322,13 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         gatewayId: string,
         rxPacketsReceived: number,
         txPacketsEmitted: number,
+        updatedAt: Date,
         lastSeenAt: Date | undefined
     ) {
-        await this.gatewayRepository.update({ gatewayId }, { rxPacketsReceived, txPacketsEmitted, lastSeenAt });
+        await this.gatewayRepository.update(
+            { gatewayId },
+            { rxPacketsReceived, txPacketsEmitted, lastSeenAt, updatedAt }
+        );
     }
 
     async ensureOrganizationIdIsSet(
@@ -453,5 +485,23 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             resultList: responseItem,
         };
         return responseList;
+    }
+
+    private getSortingForGateways(query: ListAllEntitiesDto) {
+        let orderBy = "gateway.id";
+
+        if (query.orderOn == null) {
+            return orderBy;
+        }
+
+        if (query.orderOn === "organizationName") {
+            orderBy = "organization.name";
+        } else if (query.orderOn === "status") {
+            orderBy = "gateway.lastSeenAt";
+        } else {
+            orderBy = `gateway.${query.orderOn}`;
+        }
+
+        return orderBy;
     }
 }

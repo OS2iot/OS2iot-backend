@@ -60,6 +60,7 @@ export class LorawanDeviceDatabaseEnrichJob {
                             gateway.gatewayId,
                             stats.rxPacketsReceived,
                             stats.txPacketsEmitted,
+                            gateway.updatedAt,
                             chirpstackGateway.lastSeenAt ? timestampToDate(chirpstackGateway.lastSeenAt) : undefined
                         );
                     } catch (err) {

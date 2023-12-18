@@ -40,5 +40,6 @@ export class ListAllEntitiesDto {
         | "openDataDkEnabled"
         | "deviceModel"
         | "devices"
-        | "dataTargets";
+        | "dataTargets"
+        | "organizationName";
 }

@@ -85,33 +85,6 @@ export class ApplicationController {
         return await this.getApplicationsForNonGlobalAdmin(req, query);
     }
 
-    private async getApplicationsForNonGlobalAdmin(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
-        if (query?.organizationId) {
-            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
-            return await this.getApplicationsInOrganization(req, query);
-        }
-
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
-        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
-            query,
-            allowedApplications,
-            query.organizationId ? [query.organizationId] : allFromOrg
-        );
-        return applications;
-    }
-
-    private async getApplicationsInOrganization(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
-        // User admins have access to all applications in the organization
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
-        if (allFromOrg.some(x => x === query?.organizationId)) {
-            return await this.applicationService.findAndCountWithPagination(query, [query.organizationId]);
-        }
-
-        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
-    }
-
     @Read()
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })
@@ -220,5 +193,32 @@ export class ApplicationController {
             }
             throw new NotFoundException(err);
         }
+    }
+
+    private async getApplicationsForNonGlobalAdmin(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
+        if (query?.organizationId) {
+            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
+            return await this.getApplicationsInOrganization(req, query);
+        }
+
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
+            query,
+            allowedApplications,
+            query.organizationId ? [query.organizationId] : allFromOrg
+        );
+        return applications;
+    }
+
+    private async getApplicationsInOrganization(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
+        // User admins have access to all applications in the organization
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
+        if (allFromOrg.some(x => x === query?.organizationId)) {
+            return await this.applicationService.findAndCountWithPagination(query, [query.organizationId]);
+        }
+
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
     }
 }
