@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import {
     Application as ChirpstackApplication,
@@ -45,8 +45,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
 
         // if application exist use it
         let applicationId = applications.resultList.find(
-            element =>
-                element.id === iotDevice.chirpstackApplicationId || element.id === iotDevice.application.chirpstackId
+            element => element.id === iotDevice.chirpstackApplicationId
         )?.id;
 
         // otherwise create new application
@@ -96,6 +95,10 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
         }
     }
     public async updateApplication(dto: Application): Promise<void> {
+        if (!dto.chirpstackId) {
+            return;
+        }
+
         const req = new UpdateApplicationRequest();
         const application = new ChirpstackApplication();
         application.setId(dto.chirpstackId);
@@ -104,7 +107,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
         application.setTenantId(await this.getDefaultOrganizationId());
         req.setApplication(application);
         try {
-            return await this.put("applications", this.applicationServiceClient, req);
+            await this.put("applications", this.applicationServiceClient, req);
         } catch (e) {
             throw e;
         }

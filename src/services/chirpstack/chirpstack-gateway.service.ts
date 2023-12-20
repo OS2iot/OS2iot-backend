@@ -156,13 +156,14 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     ): Promise<ListAllGatewaysResponseDto> {
         const orderByColumn = this.getSortingForGateways(queryParams);
         const direction = queryParams?.sort?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        const nullsOrder = queryParams?.sort?.toUpperCase() === "DESC" ? "NULLS LAST" : "NULLS FIRST";
 
         let query = this.gatewayRepository
             .createQueryBuilder("gateway")
             .innerJoinAndSelect("gateway.organization", "organization")
             .skip(queryParams?.offset ? +queryParams.offset : 0)
             .take(queryParams.limit ? +queryParams.limit : 100)
-            .orderBy(orderByColumn, direction);
+            .orderBy(orderByColumn, direction, nullsOrder);
 
         if (organizationId) {
             query = query.where('"organizationId" = :organizationId', { organizationId });

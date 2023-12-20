@@ -172,53 +172,6 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         }
     }
 
-    public async getAllDevicesStatus(application: DbApplication): Promise<ChirpstackManyDeviceResponseDto> {
-        const req = new ListDevicesRequest();
-        if (!application.chirpstackId) {
-            const loraDev = application.iotDevices.find(d => d.type === IoTDeviceType.LoRaWAN);
-            const cast = loraDev as LoRaWANDevice;
-
-            const deviceRequest = new GetDeviceRequest();
-            deviceRequest.setDevEui(cast.deviceEUI);
-
-            const getChirpstackDevice = await this.get<GetDeviceResponse>(
-                "device",
-                this.deviceServiceClient,
-                deviceRequest
-            );
-
-            application.chirpstackId = getChirpstackDevice.getDevice().getApplicationId();
-            await this.applicationRepository.save(application, {});
-        }
-
-        req.setApplicationId(application.chirpstackId);
-        const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
-            `devices`,
-            this.deviceServiceClient,
-            req,
-            10000,
-            0
-        );
-
-        const responseDevice: ChirpstackDeviceResponseContents[] = devices.resultList.map(e => {
-            return {
-                devEUI: e.devEui,
-                name: e.name,
-                description: e.description,
-                lastSeenAt: e.lastSeenAt ? timestampToDate(e.lastSeenAt) : undefined,
-                deviceStatusBattery: e.deviceStatus?.batteryLevel,
-                deviceStatusMargin: e.deviceStatus?.margin,
-                deviceStatusExternalPowerSource: e.deviceStatus?.externalPowerSource,
-                deviceProfileID: e.deviceProfileId,
-                deviceProfileName: e.deviceProfileName,
-            };
-        });
-        return {
-            totalCount: devices.totalCount.toString(),
-            result: responseDevice,
-        };
-    }
-
     private async createOrUpdateABPActivation(
         devAddr: string,
         networkSessionKey: string,
@@ -641,7 +594,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         try {
             return await promise;
         } catch (err) {
-            this.logger.error(errorMessage, +err);
+            this.logger.error(JSON.stringify(errorMessage));
             throw new InternalServerErrorException();
         }
     }

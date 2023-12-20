@@ -102,7 +102,6 @@ export class GenericChirpstackConfigurationService {
     }
 
     async delete<T>(logName: string, client: any, request: any): Promise<void> {
-        //MAYBE return boolean of result (succes vs failure)
         if (client) {
             const metaData = this.makeMetadataHeader();
             const deletePromise = new Promise<T>((resolve, reject) => {
@@ -197,7 +196,7 @@ export class GenericChirpstackConfigurationService {
         try {
             return await getListPromise;
         } catch (err) {
-            this.innerLogger.error(`GET ${logName} got error: ${err}`);
+            this.innerLogger.error(`GET ALL ${logName} got error: ${JSON.stringify(err)}`);
             throw new NotFoundException();
         }
     }
