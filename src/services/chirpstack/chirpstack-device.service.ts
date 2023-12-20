@@ -11,10 +11,6 @@ import {
     DeviceQueueItem,
 } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    ChirpstackDeviceResponseContents,
-    ChirpstackManyDeviceResponseDto,
-} from "@dto/chirpstack/chirpstack-many-device-response";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
@@ -22,7 +18,6 @@ import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
 import { LoRaWANStatsElementDto, LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
-
 import { ServiceError } from "@grpc/grpc-js";
 import {
     ActivateDeviceRequest,
@@ -45,25 +40,16 @@ import {
     GetDeviceQueueItemsResponse,
     GetDeviceRequest,
     GetDeviceResponse,
-    ListDevicesRequest,
-    ListDevicesResponse,
     UpdateDeviceKeysRequest,
     UpdateDeviceRequest,
 } from "@chirpstack/chirpstack-api/api/device_pb";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
-import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
+import { dateToTimestamp } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Application as DbApplication } from "@entities/application.entity";
-import { IoTDeviceType } from "@enum/device-type.enum";
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
-    @InjectRepository(DbApplication)
-    private applicationRepository: Repository<DbApplication>;
 
     constructor(private configService: ConfigService, private deviceProfileService: DeviceProfileService) {
         super();

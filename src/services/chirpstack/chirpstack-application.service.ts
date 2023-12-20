@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { GenericChirpstackConfigurationService } from "./generic-chirpstack-configuration.service";
 import {
     Application as ChirpstackApplication,
@@ -45,7 +45,8 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
 
         // if application exist use it
         let applicationId = applications.resultList.find(
-            element => element.id === iotDevice.chirpstackApplicationId
+            element =>
+                element.id === iotDevice.chirpstackApplicationId || element.id === iotDevice.application.chirpstackId
         )?.id;
 
         // otherwise create new application
@@ -59,7 +60,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
     public async createNewApplication(name: string, id: number) {
         const applicationId = await this.createChirpstackApplication({
             application: {
-                name: `${this.applicationNamePrefix}${name}`,
+                name: `${name}`,
                 description: this.DEFAULT_DESCRIPTION,
             },
         });
