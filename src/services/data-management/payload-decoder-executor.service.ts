@@ -1,5 +1,6 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
 import { Copy, ExternalCopy, Isolate } from "isolated-vm";
 
 @Injectable()
@@ -20,9 +21,10 @@ export class PayloadDecoderExecutorService {
         const jail = context.global;
 
         jail.setSync("global", jail.derefInto());
+
         //Isolated can not read atob. Therefore change to Buffer.From()
         jail.setSync("atob", function (str: string): Copy<string> {
-            return new ExternalCopy(Buffer.from(str, "base64").toString()).copyInto();
+            return new ExternalCopy(Buffer.from(str, "base64").toString("binary")).copyInto();
         });
         jail.setSync("innerIotDevice", new ExternalCopy(iotDevice).copyInto());
         jail.setSync("innerPayload", new ExternalCopy(rawPayload).copyInto());
