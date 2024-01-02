@@ -1,6 +1,5 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
 import { Copy, ExternalCopy, Isolate } from "isolated-vm";
 
 @Injectable()
