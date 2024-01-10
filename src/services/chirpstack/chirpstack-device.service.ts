@@ -11,10 +11,6 @@ import {
     DeviceQueueItem,
 } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    ChirpstackDeviceResponseContents,
-    ChirpstackManyDeviceResponseDto,
-} from "@dto/chirpstack/chirpstack-many-device-response";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
@@ -22,7 +18,6 @@ import { ChirpstackDeviceId } from "@dto/chirpstack/chirpstack-device-id.dto";
 import { LoRaWANStatsElementDto, LoRaWANStatsResponseDto } from "@dto/chirpstack/device/lorawan-stats.response.dto";
 import { ConfigService } from "@nestjs/config";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
-
 import { ServiceError } from "@grpc/grpc-js";
 import {
     ActivateDeviceRequest,
@@ -45,25 +40,16 @@ import {
     GetDeviceQueueItemsResponse,
     GetDeviceRequest,
     GetDeviceResponse,
-    ListDevicesRequest,
-    ListDevicesResponse,
     UpdateDeviceKeysRequest,
     UpdateDeviceRequest,
 } from "@chirpstack/chirpstack-api/api/device_pb";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
-import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
+import { dateToTimestamp } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Application as DbApplication } from "@entities/application.entity";
-import { IoTDeviceType } from "@enum/device-type.enum";
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
-    @InjectRepository(DbApplication)
-    private applicationRepository: Repository<DbApplication>;
 
     constructor(private configService: ConfigService, private deviceProfileService: DeviceProfileService) {
         super();
@@ -170,53 +156,6 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         if (!res) {
             this.logger.warn(`Could not ABP activate Chirpstack Device using DEVEUI: ${devEUI}}`);
         }
-    }
-
-    public async getAllDevicesStatus(application: DbApplication): Promise<ChirpstackManyDeviceResponseDto> {
-        const req = new ListDevicesRequest();
-        if (!application.chirpstackId) {
-            const loraDev = application.iotDevices.find(d => d.type === IoTDeviceType.LoRaWAN);
-            const cast = loraDev as LoRaWANDevice;
-
-            const deviceRequest = new GetDeviceRequest();
-            deviceRequest.setDevEui(cast.deviceEUI);
-
-            const getChirpstackDevice = await this.get<GetDeviceResponse>(
-                "device",
-                this.deviceServiceClient,
-                deviceRequest
-            );
-
-            application.chirpstackId = getChirpstackDevice.getDevice().getApplicationId();
-            await this.applicationRepository.save(application, {});
-        }
-
-        req.setApplicationId(application.chirpstackId);
-        const devices = await this.getAllWithPagination<ListDevicesResponse.AsObject>(
-            `devices`,
-            this.deviceServiceClient,
-            req,
-            10000,
-            0
-        );
-
-        const responseDevice: ChirpstackDeviceResponseContents[] = devices.resultList.map(e => {
-            return {
-                devEUI: e.devEui,
-                name: e.name,
-                description: e.description,
-                lastSeenAt: e.lastSeenAt ? timestampToDate(e.lastSeenAt) : undefined,
-                deviceStatusBattery: e.deviceStatus?.batteryLevel,
-                deviceStatusMargin: e.deviceStatus?.margin,
-                deviceStatusExternalPowerSource: e.deviceStatus?.externalPowerSource,
-                deviceProfileID: e.deviceProfileId,
-                deviceProfileName: e.deviceProfileName,
-            };
-        });
-        return {
-            totalCount: devices.totalCount.toString(),
-            result: responseDevice,
-        };
     }
 
     private async createOrUpdateABPActivation(
@@ -641,7 +580,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
         try {
             return await promise;
         } catch (err) {
-            this.logger.error(errorMessage, +err);
+            this.logger.error(JSON.stringify(errorMessage));
             throw new InternalServerErrorException();
         }
     }

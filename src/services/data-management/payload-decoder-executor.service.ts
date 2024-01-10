@@ -1,16 +1,12 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
-import { ExternalCopy, Isolate } from "isolated-vm";
+import { Copy, ExternalCopy, Isolate } from "isolated-vm";
 
 @Injectable()
 export class PayloadDecoderExecutorService {
     private readonly logger = new Logger(PayloadDecoderExecutorService.name);
 
-    allUntrustedCodeWithJsonStrings(
-        code: string,
-        iotDeviceString: string,
-        rawPayloadString: string
-    ): string {
+    allUntrustedCodeWithJsonStrings(code: string, iotDeviceString: string, rawPayloadString: string): string {
         const iotDevice = JSON.parse(iotDeviceString);
         const rawPayload = JSON.parse(rawPayloadString);
         const parsedCode = JSON.parse(code);
@@ -18,16 +14,17 @@ export class PayloadDecoderExecutorService {
         return this.callUntrustedCode(parsedCode, iotDevice, rawPayload);
     }
 
-    callUntrustedCode(
-        code: string,
-        iotDevice: IoTDevice | any,
-        rawPayload: JSON
-    ): string {
+    callUntrustedCode(code: string, iotDevice: IoTDevice | any, rawPayload: JSON): string {
         const isolate = new Isolate();
         const context = isolate.createContextSync();
         const jail = context.global;
 
         jail.setSync("global", jail.derefInto());
+
+        //Isolated can not read atob. Therefore change to Buffer.From()
+        jail.setSync("atob", function (str: string): Copy<string> {
+            return new ExternalCopy(Buffer.from(str, "base64").toString("binary")).copyInto();
+        });
         jail.setSync("innerIotDevice", new ExternalCopy(iotDevice).copyInto());
         jail.setSync("innerPayload", new ExternalCopy(rawPayload).copyInto());
         jail.setSync("reply", function (result: object) {

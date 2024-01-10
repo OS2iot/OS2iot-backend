@@ -60,7 +60,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
     public async createNewApplication(name: string, id: number) {
         const applicationId = await this.createChirpstackApplication({
             application: {
-                name: `${this.applicationNamePrefix}${name}`,
+                name: `${name}`,
                 description: this.DEFAULT_DESCRIPTION,
             },
         });
@@ -96,6 +96,10 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
         }
     }
     public async updateApplication(dto: Application): Promise<void> {
+        if (!dto.chirpstackId) {
+            return;
+        }
+
         const req = new UpdateApplicationRequest();
         const application = new ChirpstackApplication();
         application.setId(dto.chirpstackId);
@@ -104,7 +108,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
         application.setTenantId(await this.getDefaultOrganizationId());
         req.setApplication(application);
         try {
-            return await this.put("applications", this.applicationServiceClient, req);
+            await this.put("applications", this.applicationServiceClient, req);
         } catch (e) {
             throw e;
         }

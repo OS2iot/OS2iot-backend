@@ -184,9 +184,6 @@ export class ApplicationService {
             where: { id },
             relations: [
                 "iotDevices",
-                "dataTargets",
-                "multicasts",
-                "iotDevices.receivedMessagesMetadata",
                 "belongsTo",
                 nameof<Application>("controlledProperties"),
                 nameof<Application>("deviceTypes"),
@@ -196,26 +193,8 @@ export class ApplicationService {
                 relations: ["createdBy", "updatedBy"],
             },
         });
-        if (app.iotDevices.some(x => x.type === IoTDeviceType.LoRaWAN)) {
-            await this.matchWithChirpstackStatusData(app);
-        }
 
         return app;
-    }
-
-    private async matchWithChirpstackStatusData(app: Application) {
-        const chirpstackDevices = await this.chirpstackDeviceService.getAllDevicesStatus(app);
-        app.iotDevices.forEach(x => {
-            if (x.type === IoTDeviceType.LoRaWAN) {
-                const loraDevice = x as LoRaWANDeviceWithChirpstackDataDto;
-                const matchingDevice = chirpstackDevices.result.find(cs => cs.devEUI === loraDevice.deviceEUI);
-                if (matchingDevice) {
-                    loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
-                    loraDevice.lorawanSettings.deviceStatusBattery = matchingDevice.deviceStatusBattery;
-                    loraDevice.lorawanSettings.deviceStatusMargin = matchingDevice.deviceStatusMargin;
-                }
-            }
-        });
     }
 
     async findManyByIds(ids: number[]): Promise<Application[]> {
@@ -396,6 +375,7 @@ export class ApplicationService {
     async findDevicesForApplication(appId: number, query: ListAllEntitiesDto): Promise<ListAllIoTDevicesResponseDto> {
         const orderByColumn = this.getSortingForIoTDevices(query);
         const direction = query?.sort?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        const nullsOrder = query?.sort?.toUpperCase() === "DESC" ? "NULLS LAST" : "NULLS FIRST";
 
         const [data, count] = await this.iotDeviceRepository
             .createQueryBuilder("iot_device")
@@ -405,7 +385,7 @@ export class ApplicationService {
             .leftJoinAndSelect("iot_device.connections", "connections")
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
-            .orderBy(orderByColumn, direction)
+            .orderBy(orderByColumn, direction, nullsOrder)
             .getManyAndCount();
 
         if (query.orderOn === "dataTargets") {

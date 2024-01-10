@@ -84,20 +84,40 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
     async receiveMqttGatewayStatusMessage(message: Record<string, unknown>): Promise<void> {
         if (
-            message &&
-            hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")) &&
-            typeof message.gatewayId === "string"
+            (hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")) ||
+                hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayIdLegacy"))) &&
+            (typeof message.gatewayId === "string" || typeof message.gatewayIdLegacy === "string")
         ) {
             const dto: ChirpstackMQTTConnectionStateMessageDto = {
-                gatewayId: message.gatewayId,
+                gatewayId: message.gatewayId
+                    ? message.gatewayId.toString()
+                    : message.gatewayIdLegacy
+                    ? Buffer.from(message.gatewayIdLegacy.toString(), "base64").toString("hex")
+                    : undefined,
                 isOnline: message.state === "ONLINE",
             };
+
+            if (!dto.gatewayId) {
+                this.logger.error(
+                    `Gateway status message is not properly formatted. Gateway id, if any, is ${
+                        message?.gatewayId
+                            ? message?.gatewayId
+                            : Buffer.from(message.gatewayIdLegacy as any, "base64").toString("hex")
+                    }`
+                );
+                return;
+            }
+
             const jsonDto = JSON.stringify(dto);
 
             await this.receiveDataService.sendRawGatewayStateToKafka(dto.gatewayId, jsonDto);
         } else {
             this.logger.error(
-                `Gateway status message is not properly formatted. Gateway id, if any, is ${message?.id}`
+                `Gateway status message is not properly formatted. Gateway id, if any, is ${
+                    message?.gatewayId
+                        ? message?.gatewayId
+                        : Buffer.from(message.gatewayIdLegacy as any, "base64").toString("hex")
+                }`
             );
         }
     }
