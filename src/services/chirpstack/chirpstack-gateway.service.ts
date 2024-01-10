@@ -491,7 +491,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     private getSortingForGateways(query: ListAllEntitiesDto) {
         let orderBy = "gateway.id";
 
-        if (query.orderOn == null) {
+        if (query.orderOn === 'null') {
             return orderBy;
         }
 

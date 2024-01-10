@@ -386,6 +386,7 @@ export class ApplicationService {
             .skip(query?.offset ? +query.offset : 0)
             .take(query?.limit ? +query.limit : 100)
             .orderBy(orderByColumn, direction, nullsOrder)
+            .addOrderBy(orderByColumn, direction, nullsOrder)
             .getManyAndCount();
 
         if (query.orderOn === "dataTargets") {
@@ -420,7 +421,8 @@ export class ApplicationService {
             query.orderOn === "rssi" ||
             query.orderOn === "snr" ||
             query.orderOn === "deviceModel" ||
-            query.orderOn === "dataTargets"
+            query.orderOn === "dataTargets" ||
+            query.orderOn === "type"
         ) {
             if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
