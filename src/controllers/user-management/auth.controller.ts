@@ -68,7 +68,7 @@ export class AuthController {
 
         // Login without proper roles
         if (!(req.user instanceof User)) {
-            if (req.user == ErrorCodes.MissingRole) {
+            if (req.user === ErrorCodes.MissingRole) {
                 // Send back to frontend with an error
                 if (redirectTarget) {
                     return res.redirect(`${redirectTarget}?error=${ErrorCodes.MissingRole}`);
@@ -82,6 +82,9 @@ export class AuthController {
         const { nameId, id } = req.user;
         const jwt = await this.authService.issueJwt(nameId, id, true);
         const baseUrl = redirectTarget ? redirectTarget : Configuration()["frontend"]["baseurl"];
+        if (!baseUrl.includes("applications")) {
+            return res.redirect(`${baseUrl}/applications?jwt=${jwt.accessToken}`);
+        }
         return res.redirect(`${baseUrl}?jwt=${jwt.accessToken}`);
     }
 

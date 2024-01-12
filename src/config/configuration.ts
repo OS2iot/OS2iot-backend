@@ -28,6 +28,8 @@ export default (): any => {
         },
         chirpstack: {
             apikey: process.env.CHIRPSTACK_API_KEY || "apikey",
+            hostname: process.env.CHIRPSTACK_HOSTNAME || "localhost",
+            port: process.env.CHIRPSTACK_PORT || 8080,
         },
         logLevels: process.env.LOG_LEVEL ? GetLogLevels(process.env.LOG_LEVEL) : GetLogLevels("debug"),
         email: {
