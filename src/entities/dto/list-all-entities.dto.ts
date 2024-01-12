@@ -42,5 +42,4 @@ export class ListAllEntitiesDto {
         | "devices"
         | "dataTargets"
         | "organizationName"
-        | "null"
 }

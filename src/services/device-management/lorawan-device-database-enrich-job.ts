@@ -12,6 +12,7 @@ import { timestampToDate } from "@helpers/date.helper";
 import { GetGatewayRequest, GetGatewayResponse } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import { credentials } from "@grpc/grpc-js";
+import configuration from "@config/configuration";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
@@ -23,7 +24,7 @@ export class LorawanDeviceDatabaseEnrichJob {
         @InjectRepository(Gateway)
         private gatewayRepository: Repository<Gateway>
     ) {}
-    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
+    baseUrlGRPC = `${configuration()["chirpstack"]["hostname"]}:${configuration()["chirpstack"]["port"]}`;
     private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
 
     private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });

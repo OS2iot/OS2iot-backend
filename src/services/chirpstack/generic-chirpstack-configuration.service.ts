@@ -21,7 +21,7 @@ import { MulticastGroupServiceClient } from "@chirpstack/chirpstack-api/api/mult
 
 @Injectable()
 export class GenericChirpstackConfigurationService {
-    baseUrlGRPC = `${process.env.CHIRPSTACK_HOSTNAME || "localhost"}:${process.env.CHIRPSTACK_PORT || "8080"}`;
+    baseUrlGRPC = `${configuration()["chirpstack"]["hostname"]}:${configuration()["chirpstack"]["port"]}`;
 
     private readonly innerLogger = new Logger(GenericChirpstackConfigurationService.name);
     protected applicationServiceClient = new ApplicationServiceClient(this.baseUrlGRPC, credentials.createInsecure());
