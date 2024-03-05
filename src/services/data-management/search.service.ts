@@ -1,9 +1,12 @@
-import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways.dto";
+import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
+import { ListGatewaysRequest, ListGatewaysResponse } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-response.dto";
 import { SearchResultDto, SearchResultType } from "@dto/search-result.dto";
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { credentials } from "@grpc/grpc-js";
+import { timestampToDate } from "@helpers/date.helper";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
@@ -38,9 +41,7 @@ export class SearchService {
         const devicePromise = this.findDevicesAndMapType(req, trimmedQuery);
 
         const results = _.filter(
-            _.flatMap(
-                await Promise.all([applicationPromise, devicePromise, gatewayPromise])
-            ),
+            _.flatMap(await Promise.all([applicationPromise, devicePromise, gatewayPromise])),
             x => x != null
         );
 
@@ -80,39 +81,36 @@ export class SearchService {
             });
     }
 
-    private limitAndOrder(
-        data: SearchResultDto[],
-        limit: number,
-        offset: number
-    ): SearchResultDto[] {
+    private limitAndOrder(data: SearchResultDto[], limit: number, offset: number): SearchResultDto[] {
         const r = _.orderBy(data, ["updatedAt"], ["desc"]);
         const sliced = _.slice(r, offset, offset + limit);
         return sliced;
     }
 
     private async findGateways(trimmedQuery: string): Promise<SearchResultDto[]> {
+        const gatewayClient = new GatewayServiceClient(this.gatewayService.baseUrlGRPC, credentials.createInsecure());
         const escapedQuery = encodeURI(trimmedQuery);
-        const gateways = await this.gatewayService.getAllWithPagination<ListAllGatewaysResponseDto>(
-            `gateways?search=${escapedQuery}`,
+        const req = new ListGatewaysRequest();
+
+        req.setSearch(escapedQuery);
+
+        const gateways = await this.gatewayService.getAllWithPagination<ListGatewaysResponse.AsObject>(
+            `gateways`,
+            gatewayClient,
+            req,
             1000,
             0
         );
 
         const mapped = await Promise.all(
-            gateways.result.map(async x => {
-                const createdAt = new Date(Date.parse(x.createdAt));
-                const updatedAt = new Date(Date.parse(x.updatedAt));
+            gateways.resultList.map(async x => {
+                const createdAt = timestampToDate(x.createdAt);
+                const updatedAt = timestampToDate(x.updatedAt);
 
-                const resultDto = new SearchResultDto(
-                    x.name,
-                    x.id,
-                    createdAt,
-                    updatedAt,
-                    x.id
-                );
-                const detailedInfo = await this.gatewayService.getOne(x.id);
+                const resultDto = new SearchResultDto(x.name, x.gatewayId, createdAt, updatedAt, x.gatewayId);
+                const detailedInfo = await this.gatewayService.getOne(x.gatewayId);
 
-                resultDto.organizationId = detailedInfo.gateway.internalOrganizationId;
+                resultDto.organizationId = detailedInfo.gateway.organizationId;
                 return resultDto;
             })
         );
@@ -127,10 +125,7 @@ export class SearchService {
         return data;
     }
 
-    private async findApplications(
-        req: AuthenticatedRequest,
-        trimmedQuery: string
-    ): Promise<SearchResultDto[]> {
+    private async findApplications(req: AuthenticatedRequest, trimmedQuery: string): Promise<SearchResultDto[]> {
         const qb = this.applicationRepository
             .createQueryBuilder("app")
             .where('"app"."name" ilike :name', { name: `%${trimmedQuery}%` });
@@ -138,10 +133,7 @@ export class SearchService {
         return await this.applySecuityAndSelect(req, qb, "app", "id");
     }
 
-    private async findIoTDevices(
-        req: AuthenticatedRequest,
-        query: string
-    ): Promise<SearchResultDto[]> {
+    private async findIoTDevices(req: AuthenticatedRequest, query: string): Promise<SearchResultDto[]> {
         if (isHexadecimal(query)) {
             if (query.length == 16) {
                 // LoRaWAN
@@ -203,10 +195,7 @@ export class SearchService {
         return this.applySecuityAndSelect(req, qb, "device", "applicationId");
     }
 
-    private async findIoTDevicesByName(
-        req: AuthenticatedRequest,
-        query: string
-    ): Promise<SearchResultDto[]> {
+    private async findIoTDevicesByName(req: AuthenticatedRequest, query: string): Promise<SearchResultDto[]> {
         const qb = this.getIoTDeviceQueryBuilder().where(`device.name ilike :name`, {
             name: `%${query}%`,
         });
@@ -218,7 +207,6 @@ export class SearchService {
         return this.iotDeviceRepository.createQueryBuilder("device");
     }
 
-    // eslint-disable-next-line max-lines-per-function
     private async applySecuityAndSelect<T>(
         req: AuthenticatedRequest,
         qb: SelectQueryBuilder<T>,
@@ -229,20 +217,12 @@ export class SearchService {
             if (req.user.permissions.getAllApplicationsWithAtLeastRead().length == 0) {
                 return [];
             }
-            qb = qb.andWhere(
-                `"${alias}"."${applicationIdColumn}" IN (:...allowedApplications)`,
-                {
-                    allowedApplications: req.user.permissions.getAllApplicationsWithAtLeastRead(),
-                }
-            );
+            qb = qb.andWhere(`"${alias}"."${applicationIdColumn}" IN (:...allowedApplications)`, {
+                allowedApplications: req.user.permissions.getAllApplicationsWithAtLeastRead(),
+            });
         }
 
-        const toSelect = [
-            `"${alias}"."id"`,
-            `"${alias}"."createdAt"`,
-            `"${alias}"."updatedAt"`,
-            `"${alias}"."name"`,
-        ];
+        const toSelect = [`"${alias}"."id"`, `"${alias}"."createdAt"`, `"${alias}"."updatedAt"`, `"${alias}"."name"`];
         const select = qb;
         if (alias == "device") {
             return select
@@ -253,10 +233,7 @@ export class SearchService {
                 .addSelect('"app"."belongsToId"', "organizationId")
                 .getRawMany();
         } else if (alias == "app") {
-            return select
-                .select(toSelect)
-                .addSelect('"app"."belongsToId"', "organizationId")
-                .getRawMany();
+            return select.select(toSelect).addSelect('"app"."belongsToId"', "organizationId").getRawMany();
         }
     }
 }

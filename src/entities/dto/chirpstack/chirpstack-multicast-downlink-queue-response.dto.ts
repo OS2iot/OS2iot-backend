@@ -1,13 +1,10 @@
 export interface MulticastQueueItem {
-    devEUI?: string;
-    confirmed?: boolean;
+    multicastGroupId?: string;
     fCnt?: number;
     fPort?: number;
     data: string;
-    jsonObject?: string;
 }
 
 export interface MulticastDownlinkQueueResponseDto {
     deviceQueueItems: MulticastQueueItem[];
-    totalCount: number;
 }

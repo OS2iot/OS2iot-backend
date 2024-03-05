@@ -17,7 +17,6 @@ import {
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -25,8 +24,8 @@ import {
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -36,15 +35,16 @@ import { ListAllPayloadDecoderResponseDto } from "@dto/list-all-payload-decoders
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { OrganizationAccessScope, checkIfUserHasAccessToOrganization } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Payload Decoder")
 @Controller("payload-decoder")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -80,10 +80,7 @@ export class PayloadDecoderController {
         @Req() req: AuthenticatedRequest,
         @Query() query?: ListAllPayloadDecoderDto
     ): Promise<ListAllPayloadDecoderResponseDto> {
-        return await this.payloadDecoderService.findAndCountWithPagination(
-            query,
-            query.organizationId
-        );
+        return await this.payloadDecoderService.findAndCountWithPagination(query, query.organizationId);
     }
 
     @Post()
@@ -99,10 +96,7 @@ export class PayloadDecoderController {
             checkIfUserHasAccessToOrganization(req, createDto.organizationId, OrganizationAccessScope.ApplicationWrite);
 
             // TODO: Valider at funktionen er gyldig
-            const payloadDecoder = await this.payloadDecoderService.create(
-                createDto,
-                req.user.userId
-            );
+            const payloadDecoder = await this.payloadDecoderService.create(createDto, req.user.userId);
             AuditLog.success(
                 ActionType.CREATE,
                 PayloadDecoder.name,
@@ -131,14 +125,14 @@ export class PayloadDecoderController {
             checkIfUserHasAccessToOrganization(req, updateDto.organizationId, OrganizationAccessScope.ApplicationWrite);
             const oldDecoder = await this.payloadDecoderService.findOne(id);
             if (oldDecoder?.organization?.id) {
-                checkIfUserHasAccessToOrganization(req, oldDecoder.organization.id, OrganizationAccessScope.ApplicationWrite);
+                checkIfUserHasAccessToOrganization(
+                    req,
+                    oldDecoder.organization.id,
+                    OrganizationAccessScope.ApplicationWrite
+                );
             }
             // TODO: Valider at funktionen er gyldig
-            const payloadDecoder = await this.payloadDecoderService.update(
-                id,
-                updateDto,
-                req.user.userId
-            );
+            const payloadDecoder = await this.payloadDecoderService.update(id, updateDto, req.user.userId);
             AuditLog.success(
                 ActionType.UPDATE,
                 PayloadDecoder.name,
@@ -165,7 +159,11 @@ export class PayloadDecoderController {
         try {
             const oldDecoder = await this.payloadDecoderService.findOne(id);
             if (oldDecoder?.organization?.id) {
-                checkIfUserHasAccessToOrganization(req, oldDecoder.organization.id, OrganizationAccessScope.ApplicationWrite);
+                checkIfUserHasAccessToOrganization(
+                    req,
+                    oldDecoder.organization.id,
+                    OrganizationAccessScope.ApplicationWrite
+                );
             }
 
             const result = await this.payloadDecoderService.delete(id);

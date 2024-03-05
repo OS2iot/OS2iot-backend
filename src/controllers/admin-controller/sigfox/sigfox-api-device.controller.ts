@@ -6,41 +6,30 @@ import { SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { Controller, Get, ParseIntPipe, Query, Req, UseGuards } from "@nestjs/common";
-import {
-    ApiBearerAuth,
-    ApiForbiddenResponse,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
+import { ApiForbiddenResponse, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { SigFoxGroupService } from "@services/sigfox/sigfox-group.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("SigFox")
 @Controller("sigfox-api-device")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 export class SigFoxApiDeviceController {
-    constructor(
-        private sigfoxGroupService: SigFoxGroupService,
-        private iotDeviceService: IoTDeviceService
-    ) {}
+    constructor(private sigfoxGroupService: SigFoxGroupService, private iotDeviceService: IoTDeviceService) {}
 
     @Get()
     @ApiProduces("application/json")
     @ApiOperation({
-        summary:
-            "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT",
+        summary: "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT",
     })
     async getAll(
         @Req() req: AuthenticatedRequest,
         @Query("groupId", new ParseIntPipe()) groupId: number
     ): Promise<SigFoxApiDeviceResponse> {
-        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(
-            groupId
-        );
+        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(groupId);
         checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
 
         return await this.iotDeviceService.getAllSigfoxDevicesByGroup(group, true);

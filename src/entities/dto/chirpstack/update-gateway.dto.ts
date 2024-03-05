@@ -3,9 +3,15 @@ import { ValidateNested } from "class-validator";
 import { GatewayContentsDto } from "./gateway-contents.dto";
 import { Type } from "class-transformer";
 
-export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["id"]) {
+export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["gatewayId"]) {
     @ApiHideProperty()
-    id: string;
+    gatewayId: string;
+
+    @ApiHideProperty()
+    createdBy?: number;
+
+    @ApiHideProperty()
+    updatedBy?: number;
 }
 
 export class UpdateGatewayDto {

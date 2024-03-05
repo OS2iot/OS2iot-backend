@@ -1,5 +1,5 @@
-import { BadRequestException } from "@nestjs/common";
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -17,17 +17,16 @@ import {
 } from "@nestjs/common";
 import {
     ApiBadRequestResponse,
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
     ApiProduces,
+    ApiResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { ApiResponse } from "@nestjs/swagger";
 
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -49,11 +48,12 @@ import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Application")
 @Controller("application")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
@@ -85,53 +85,11 @@ export class ApplicationController {
         return await this.getApplicationsForNonGlobalAdmin(req, query);
     }
 
-    private async getApplicationsForNonGlobalAdmin(
-        req: AuthenticatedRequest,
-        query: ListAllApplicationsDto
-    ) {
-        if (query?.organizationId) {
-            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
-            return await this.getApplicationsInOrganization(req, query);
-        }
-
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
-        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
-            query,
-            allowedApplications,
-            query.organizationId ? [query.organizationId] : allFromOrg
-        );
-        return applications;
-    }
-
-    private async getApplicationsInOrganization(
-        req: AuthenticatedRequest,
-        query: ListAllApplicationsDto
-    ) {
-        // User admins have access to all applications in the organization
-        const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
-        if (allFromOrg.some(x => x === query?.organizationId)) {
-            return await this.applicationService.findAndCountWithPagination(query, [
-                query.organizationId,
-            ]);
-        }
-
-        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-        return await this.applicationService.findAndCountInList(
-            query,
-            allowedApplications,
-            [query.organizationId]
-        );
-    }
-
     @Read()
     @Get(":id")
     @ApiOperation({ summary: "Find one Application by id" })
     @ApiNotFoundResponse()
-    async findOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<Application> {
+    async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<Application> {
         checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Read);
 
         try {
@@ -153,10 +111,7 @@ export class ApplicationController {
         checkIfUserHasAccessToApplication(req, applicationId, ApplicationAccessScope.Read);
 
         try {
-            return await this.applicationService.findDevicesForApplication(
-                applicationId,
-                query
-            );
+            return await this.applicationService.findDevicesForApplication(applicationId, query);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
@@ -177,29 +132,16 @@ export class ApplicationController {
             OrganizationAccessScope.ApplicationWrite
         );
 
-        const isValid = await this.applicationService.isNameValidAndNotUsed(
-            createApplicationDto?.name
-        );
+        const isValid = await this.applicationService.isNameValidAndNotUsed(createApplicationDto?.name);
 
         if (!isValid) {
-            this.logger.error(
-                `Tried to create an application with name: '${createApplicationDto.name}'`
-            );
+            this.logger.error(`Tried to create an application with name: '${createApplicationDto.name}'`);
             AuditLog.fail(ActionType.CREATE, Application.name, req.user.userId);
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
-        const application = await this.applicationService.create(
-            createApplicationDto,
-            req.user.userId
-        );
-        AuditLog.success(
-            ActionType.CREATE,
-            Application.name,
-            req.user.userId,
-            application.id,
-            application.name
-        );
+        const application = await this.applicationService.create(createApplicationDto, req.user.userId);
+        AuditLog.success(ActionType.CREATE, Application.name, req.user.userId, application.id, application.name);
         return application;
     }
 
@@ -214,32 +156,15 @@ export class ApplicationController {
         @Body() updateApplicationDto: UpdateApplicationDto
     ): Promise<Application> {
         checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Write);
-        if (
-            !(await this.applicationService.isNameValidAndNotUsed(
-                updateApplicationDto?.name,
-                id
-            ))
-        ) {
-            this.logger.error(
-                `Tried to change an application with name: '${updateApplicationDto.name}'`
-            );
+        if (!(await this.applicationService.isNameValidAndNotUsed(updateApplicationDto?.name, id))) {
+            this.logger.error(`Tried to change an application with name: '${updateApplicationDto.name}'`);
             AuditLog.fail(ActionType.UPDATE, Application.name, req.user.userId);
             throw new BadRequestException(ErrorCodes.NameInvalidOrAlreadyInUse);
         }
 
-        const application = await this.applicationService.update(
-            id,
-            updateApplicationDto,
-            req.user.userId
-        );
+        const application = await this.applicationService.update(id, updateApplicationDto, req.user.userId);
 
-        AuditLog.success(
-            ActionType.UPDATE,
-            Application.name,
-            req.user.userId,
-            application.id,
-            application.name
-        );
+        AuditLog.success(ActionType.UPDATE, Application.name, req.user.userId, application.id, application.name);
         return application;
     }
 
@@ -268,5 +193,32 @@ export class ApplicationController {
             }
             throw new NotFoundException(err);
         }
+    }
+
+    private async getApplicationsForNonGlobalAdmin(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
+        if (query?.organizationId) {
+            checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
+            return await this.getApplicationsInOrganization(req, query);
+        }
+
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        const applications = await this.applicationService.findAndCountApplicationInWhitelistOrOrganization(
+            query,
+            allowedApplications,
+            query.organizationId ? [query.organizationId] : allFromOrg
+        );
+        return applications;
+    }
+
+    private async getApplicationsInOrganization(req: AuthenticatedRequest, query: ListAllApplicationsDto) {
+        // User admins have access to all applications in the organization
+        const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
+        if (allFromOrg.some(x => x === query?.organizationId)) {
+            return await this.applicationService.findAndCountWithPagination(query, [query.organizationId]);
+        }
+
+        const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+        return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
     }
 }

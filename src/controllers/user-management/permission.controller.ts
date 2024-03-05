@@ -1,5 +1,5 @@
-import { BadRequestException, Query } from "@nestjs/common";
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -9,11 +9,11 @@ import {
     ParseIntPipe,
     Post,
     Put,
+    Query,
     Req,
     UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -31,8 +31,8 @@ import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-reque
 import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import {
-    checkIfUserIsGlobalAdmin,
     checkIfUserHasAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
     OrganizationAccessScope,
 } from "@helpers/security-helper";
 import { PermissionService } from "@services/user-management/permission.service";
@@ -49,9 +49,10 @@ import { PermissionRequestAcceptUser } from "@dto/user-management/add-user-to-pe
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
@@ -67,10 +68,7 @@ export class PermissionController {
     @Post()
     @ApiOperation({ summary: "Create new permission entity" })
     @UserAdmin()
-    async createPermission(
-        @Req() req: AuthenticatedRequest,
-        @Body() dto: CreatePermissionDto
-    ): Promise<Permission> {
+    async createPermission(@Req() req: AuthenticatedRequest, @Body() dto: CreatePermissionDto): Promise<Permission> {
         try {
             checkIfUserHasAccessToOrganization(
                 req,
@@ -78,18 +76,9 @@ export class PermissionController {
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
-            const result = await this.permissionService.createNewPermission(
-                dto,
-                req.user.userId
-            );
+            const result = await this.permissionService.createNewPermission(dto, req.user.userId);
 
-            AuditLog.success(
-                ActionType.CREATE,
-                Permission.name,
-                req.user.userId,
-                result.id,
-                result.name
-            );
+            AuditLog.success(ActionType.CREATE, Permission.name, req.user.userId, result.id, result.name);
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, Permission.name, req.user.userId);
@@ -110,13 +99,9 @@ export class PermissionController {
                 OrganizationAccessScope.UserAdministrationWrite
             );
 
-            const permissions = await this.permissionService.findOneWithRelations(
-                dto.organizationId
-            );
+            const permissions = await this.permissionService.findOneWithRelations(dto.organizationId);
 
-            const org: Organization = this.organizationService.mapPermissionsToOneOrganization(
-                permissions
-            );
+            const org: Organization = this.organizationService.mapPermissionsToOneOrganization(permissions);
 
             const user: User = await this.userService.findOne(dto.userId);
             const newUserPermissions: Permission[] = [];
@@ -127,19 +112,9 @@ export class PermissionController {
                 }
             }
 
-            const resultUser = await this.userService.acceptUser(
-                user,
-                org,
-                newUserPermissions
-            );
+            const resultUser = await this.userService.acceptUser(user, org, newUserPermissions);
 
-            AuditLog.success(
-                ActionType.UPDATE,
-                Permission.name,
-                req.user.userId,
-                resultUser.id,
-                resultUser.name
-            );
+            AuditLog.success(ActionType.UPDATE, Permission.name, req.user.userId, resultUser.id, resultUser.name);
             return resultUser;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId);
@@ -167,19 +142,9 @@ export class PermissionController {
                 );
             }
 
-            const result = await this.permissionService.updatePermission(
-                id,
-                dto,
-                req.user.userId
-            );
+            const result = await this.permissionService.updatePermission(id, dto, req.user.userId);
 
-            AuditLog.success(
-                ActionType.UPDATE,
-                Permission.name,
-                req.user.userId,
-                result.id,
-                result.name
-            );
+            AuditLog.success(ActionType.UPDATE, Permission.name, req.user.userId, result.id, result.name);
             return result;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Permission.name, req.user.userId, id);
@@ -224,10 +189,7 @@ export class PermissionController {
     ): Promise<ListAllPermissionsResponseDto> {
         if (!req.user.permissions.isGlobalAdmin && query.organisationId === undefined) {
             const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
-            return this.permissionService.getAllPermissionsInOrganizations(
-                allowedOrganizations,
-                query
-            );
+            return this.permissionService.getAllPermissionsInOrganizations(allowedOrganizations, query);
         }
         return this.permissionService.getAllPermissions(query);
     }
@@ -273,10 +235,7 @@ export class PermissionController {
         let applicationsPromise;
         let permission;
         try {
-            applicationsPromise = this.applicationService.getApplicationsOnPermissionId(
-                id,
-                query
-            );
+            applicationsPromise = this.applicationService.getApplicationsOnPermissionId(id, query);
             permission = await this.permissionService.getPermission(id);
         } catch (err) {
             throw new NotFoundException();

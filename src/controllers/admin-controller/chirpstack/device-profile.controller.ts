@@ -15,18 +15,10 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import {
-    ApiBadRequestResponse,
-    ApiBearerAuth,
-    ApiNotFoundResponse,
-    ApiOperation,
-    ApiProduces,
-    ApiTags,
-} from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 
-import { Read, ApplicationAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
-import { CreateChirpstackProfileResponseDto } from "@dto/chirpstack/create-chirpstack-profile-response.dto";
 import { CreateDeviceProfileDto } from "@dto/chirpstack/create-device-profile.dto";
 import { ListAllDeviceProfilesResponseDto } from "@dto/chirpstack/list-all-device-profiles-response.dto";
 import { UpdateDeviceProfileDto } from "@dto/chirpstack/update-device-profile.dto";
@@ -38,11 +30,14 @@ import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@he
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
+import { ListAllAdrAlgorithmsResponseDto } from "@dto/chirpstack/list-all-adr-algorithms-response.dto";
+import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/device-profiles")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApplicationAdmin()
 export class DeviceProfileController {
     constructor(private deviceProfileService: DeviceProfileService) {}
@@ -55,27 +50,25 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Create a new DeviceProfile" })
     @ApiBadRequestResponse()
     @ApplicationAdmin()
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() createDto: CreateDeviceProfileDto
-    ): Promise<CreateChirpstackProfileResponseDto> {
-        checkIfUserHasAccessToOrganization(req, createDto.internalOrganizationId, OrganizationAccessScope.ApplicationWrite);
+    async create(@Req() req: AuthenticatedRequest, @Body() createDto: CreateDeviceProfileDto): Promise<IdResponse> {
+        checkIfUserHasAccessToOrganization(
+            req,
+            createDto.internalOrganizationId,
+            OrganizationAccessScope.ApplicationWrite
+        );
 
         try {
-            const result = await this.deviceProfileService.createDeviceProfile(
-                createDto,
-                req.user.userId
-            );
+            const result = await this.deviceProfileService.createDeviceProfile(createDto, req.user.userId);
 
             AuditLog.success(
                 ActionType.CREATE,
                 "ChirpstackDeviceProfile",
                 req.user.userId,
-                result.data.id,
+                result.id,
                 createDto.deviceProfile.name
             );
 
-            return result.data;
+            return result;
         } catch (err) {
             AuditLog.fail(
                 ActionType.CREATE,
@@ -130,6 +123,14 @@ export class DeviceProfileController {
         }
     }
 
+    @Get("adr-algorithms")
+    @ApiProduces("application/json")
+    @ApiOperation({ summary: "Find all ADR algorithms for the default network server" })
+    @Read()
+    async getAllAdrAlgorithms(): Promise<ListAllAdrAlgorithmsResponseDto> {
+        return await this.deviceProfileService.getAdrAlgorithmsForChirpstack();
+    }
+
     @Get(":id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Find one DeviceProfile by id" })
@@ -160,14 +161,9 @@ export class DeviceProfileController {
         let result = undefined;
         try {
             this.logger.debug(`Limit: '${limit}' Offset:'${offset}'`);
-            result = await this.deviceProfileService.findAllDeviceProfiles(
-                limit || 50,
-                offset || 0
-            );
+            result = await this.deviceProfileService.findAllDeviceProfiles(limit || 50, offset || 0);
         } catch (err) {
-            this.logger.error(
-                `Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`
-            );
+            this.logger.error(`Error occured during Find all: '${JSON.stringify(err?.response?.data)}'`);
         }
         return result;
     }
@@ -176,30 +172,13 @@ export class DeviceProfileController {
     @ApiOperation({ summary: "Delete one DeviceProfile by id" })
     @ApiNotFoundResponse()
     @ApplicationAdmin()
-    async deleteOne(
-        @Req() req: AuthenticatedRequest,
-        @Param("id") id: string
-    ): Promise<DeleteResponseDto> {
+    async deleteOne(@Req() req: AuthenticatedRequest, @Param("id") id: string): Promise<DeleteResponseDto> {
         try {
-            const result = await this.deviceProfileService.deleteDeviceProfile(id, req);
-
-            if (!result) {
-                throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-            }
-            AuditLog.success(
-                ActionType.DELETE,
-                "ChirpstackDeviceProfile",
-                req.user.userId,
-                id
-            );
+            await this.deviceProfileService.deleteDeviceProfile(id, req);
+            AuditLog.success(ActionType.DELETE, "ChirpstackDeviceProfile", req.user.userId, id);
             return new DeleteResponseDto(1);
         } catch (err) {
-            AuditLog.fail(
-                ActionType.DELETE,
-                "ChirpstackDeviceProfile",
-                req.user.userId,
-                id
-            );
+            AuditLog.fail(ActionType.DELETE, "ChirpstackDeviceProfile", req.user.userId, id);
             if (err?.message == this.CHIRPSTACK_IN_USE_ERROR) {
                 throw new BadRequestException(ErrorCodes.IsUsed);
             }

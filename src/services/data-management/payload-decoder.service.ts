@@ -46,7 +46,7 @@ export class PayloadDecoderService {
         organizationId: number | null | undefined
     ): Promise<ListAllPayloadDecoderResponseDto> {
         const [result, total] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationId ? { id: organizationId } : {},
+            where: organizationId ? { organization: {id: organizationId} } : {},
             take: query.limit,
             skip: query.offset,
             order: this.getSorting(query),

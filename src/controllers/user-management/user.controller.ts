@@ -2,8 +2,10 @@ import {
     BadRequestException,
     Body,
     Controller,
+    ForbiddenException,
     Get,
     InternalServerErrorException,
+    Logger,
     NotFoundException,
     Param,
     ParseIntPipe,
@@ -12,17 +14,8 @@ import {
     Query,
     Req,
     UseGuards,
-    ForbiddenException,
-    UnauthorizedException,
 } from "@nestjs/common";
-import { Logger } from "@nestjs/common";
-import {
-    ApiBearerAuth,
-    ApiForbiddenResponse,
-    ApiOperation,
-    ApiTags,
-    ApiUnauthorizedResponse,
-} from "@nestjs/swagger";
+import { ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { QueryFailedError } from "typeorm";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
@@ -33,7 +26,11 @@ import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
 import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
-import { checkIfUserIsGlobalAdmin, checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import {
+    checkIfUserHasAccessToOrganization,
+    checkIfUserIsGlobalAdmin,
+    OrganizationAccessScope,
+} from "@helpers/security-helper";
 import { UserService } from "@services/user-management/user.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
@@ -44,19 +41,17 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
 import { RejectUserDto } from "@dto/user-management/reject-user.dto";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UserAdmin()
-@ApiBearerAuth()
+@ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
 @Controller("user")
 export class UserController {
-    constructor(
-        private userService: UserService,
-        private organizationService: OrganizationService
-    ) { }
+    constructor(private userService: UserService, private organizationService: OrganizationService) {}
 
     private readonly logger = new Logger(UserController.name);
 
@@ -68,27 +63,15 @@ export class UserController {
 
     @Post()
     @ApiOperation({ summary: "Create a new User" })
-    async create(
-        @Req() req: AuthenticatedRequest,
-        @Body() createUserDto: CreateUserDto
-    ): Promise<UserResponseDto> {
+    async create(@Req() req: AuthenticatedRequest, @Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
         if (createUserDto.globalAdmin) {
             checkIfUserIsGlobalAdmin(req);
         }
         try {
             // Don't leak the passwordHash
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.createUser(
-                createUserDto,
-                req.user.userId
-            );
-            AuditLog.success(
-                ActionType.CREATE,
-                User.name,
-                req.user.userId,
-                user.id,
-                user.name
-            );
+            const { passwordHash, ...user } = await this.userService.createUser(createUserDto, req.user.userId);
+            AuditLog.success(ActionType.CREATE, User.name, req.user.userId, user.id, user.name);
 
             return user;
         } catch (err) {
@@ -107,10 +90,7 @@ export class UserController {
 
     @Put("/rejectUser")
     @ApiOperation({ summary: "Rejects user and removes from awaiting users" })
-    async rejectUser(
-        @Req() req: AuthenticatedRequest,
-        @Body() body: RejectUserDto
-    ): Promise<Organization> {
+    async rejectUser(@Req() req: AuthenticatedRequest, @Body() body: RejectUserDto): Promise<Organization> {
         checkIfUserHasAccessToOrganization(req, body.orgId, OrganizationAccessScope.UserAdministrationWrite);
 
         const user = await this.userService.findOne(body.userIdToReject);
@@ -130,34 +110,33 @@ export class UserController {
             // Verify that we have admin access to the user and that the user is on an organization
             const dbUser = await this.userService.findOneWithOrganizations(id);
 
-            // Requesting user has to be admin for at least one organization containing the user 
+            // Requesting user has to be admin for at least one organization containing the user
             // _OR_ be global admin
-            if (!req.user.permissions.isGlobalAdmin && !dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))) {
+            if (
+                !req.user.permissions.isGlobalAdmin &&
+                !dbUser.permissions.some(perm => req.user.permissions.hasUserAdminOnOrganization(perm.organization.id))
+            ) {
                 throw new ForbiddenException();
-            }                      
-            
+            }
+
             // Only a global admin can modify a global admin user
             if (dto.globalAdmin) {
                 checkIfUserIsGlobalAdmin(req);
             }
-            
+
             // Don't leak the passwordHash
-            const { passwordHash: _, ...user } = await this.userService.updateUser(
-                id,
-                dto,
-                req.user.userId
-            );
-            AuditLog.success(
-                ActionType.UPDATE,
-                User.name,
-                req.user.userId,
-                user.id,
-                user.name
-            );
+            const { passwordHash: _, ...user } = await this.userService.updateUser(id, dto, req.user.userId);
+            AuditLog.success(ActionType.UPDATE, User.name, req.user.userId, user.id, user.name);
 
             return user;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId, id);
+            if (
+                err instanceof QueryFailedError &&
+                err.message.startsWith("duplicate key value violates unique constraint")
+            ) {
+                throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
+            }
             throw err;
         }
     }
@@ -168,15 +147,9 @@ export class UserController {
     async hideWelcome(@Req() req: AuthenticatedRequest): Promise<boolean> {
         const wasOk = await this.userService.hideWelcome(req.user.userId);
 
-        AuditLog.success(
-            ActionType.UPDATE,
-            User.name,
-            req.user.userId,
-            req.user.userId,
-            req.user.username
-        );
+        AuditLog.success(ActionType.UPDATE, User.name, req.user.userId, req.user.userId, req.user.username);
 
-        return wasOk
+        return wasOk;
     }
 
     @Get("/awaitingUsers")
@@ -230,11 +203,7 @@ export class UserController {
         const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
         try {
             // Don't leak the passwordHash
-            const { passwordHash: _, ...user } = await this.userService.findOne(
-                id,
-                getExtendedInfo,
-                getExtendedInfo
-            );
+            const { passwordHash: _, ...user } = await this.userService.findOne(id, getExtendedInfo);
 
             return user;
         } catch (err) {
@@ -243,7 +212,9 @@ export class UserController {
     }
 
     @Get("organizationUsers/:organizationId")
-    @ApiOperation({ summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization" })
+    @ApiOperation({
+        summary: "Get all users for an organization. Requires UserAdmin priviledges for the specified organization",
+    })
     async findByOrganizationId(
         @Req() req: AuthenticatedRequest,
         @Param("organizationId", new ParseIntPipe()) organizationId: number,

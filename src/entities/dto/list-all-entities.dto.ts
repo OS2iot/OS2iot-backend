@@ -30,5 +30,16 @@ export class ListAllEntitiesDto {
         | "active"
         | "groupName"
         | "rssi"
-        | "snr";
+        | "snr"
+        | "status"
+        | "startDate"
+        | "endDate"
+        | "owner"
+        | "contactPerson"
+        | "personalData"
+        | "openDataDkEnabled"
+        | "deviceModel"
+        | "devices"
+        | "dataTargets"
+        | "organizationName"
 }

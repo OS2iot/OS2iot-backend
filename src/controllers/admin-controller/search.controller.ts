@@ -1,34 +1,20 @@
-import { ComposeAuthGuard } from '@auth/compose-auth.guard';
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllSearchResultsResponseDto } from "@dto/list-all-search-results-response.dto";
 import { SearchResultType } from "@dto/search-result.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    BadRequestException,
-    Controller,
-    Get,
-    Logger,
-    ParseIntPipe,
-    Query,
-    Req,
-    UseGuards,
-} from "@nestjs/common";
-import {
-    ApiTags,
-    ApiBearerAuth,
-    ApiForbiddenResponse,
-    ApiUnauthorizedResponse,
-    ApiOperation,
-} from "@nestjs/swagger";
+import { BadRequestException, Controller, Get, Logger, ParseIntPipe, Query, Req, UseGuards } from "@nestjs/common";
+import { ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { SearchService } from "@services/data-management/search.service";
 import { isNumber } from "lodash";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @Controller("search")
 @ApiTags("Search")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @Read()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()

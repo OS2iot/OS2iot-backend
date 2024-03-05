@@ -6,16 +6,16 @@ import {
     ListAllGatewayStatusDto,
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { GatewayStatus, GetGatewayStatusQuery } from "@dto/chirpstack/backend/gateway-status.dto";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { Controller, Get, Param, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
+import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiProduces, ApiTags } from "@nestjs/swagger";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { GatewayStatusHistoryService } from "@services/chirpstack/gateway-status-history.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @ApiTags("LoRaWAN gateway")
 @Controller("lorawan/gateway")
 @UseGuards(ComposeAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 export class LoRaWANGatewayController {
     constructor(
         private statusHistoryService: GatewayStatusHistoryService,
@@ -26,9 +26,7 @@ export class LoRaWANGatewayController {
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Get the status for all LoRaWAN gateways" })
     @Read()
-    async getAllStatus(
-        @Query() query: ListAllGatewayStatusDto
-    ): Promise<GatewayGetAllStatusResponseDto> {
+    async getAllStatus(@Query() query: ListAllGatewayStatusDto): Promise<GatewayGetAllStatusResponseDto> {
         // Currently, everyone is allowed to get the status
         return this.statusHistoryService.findAllWithChirpstack(query);
     }
@@ -36,10 +34,7 @@ export class LoRaWANGatewayController {
     @Get("/status/:id")
     @ApiProduces("application/json")
     @ApiOperation({ summary: "Get the status for a LoRaWAN gateway" })
-    async getStatus(
-        @Param("id") id: string,
-        @Query() query: GetGatewayStatusQuery
-    ): Promise<GatewayStatus> {
+    async getStatus(@Param("id") id: string, @Query() query: GetGatewayStatusQuery): Promise<GatewayStatus> {
         // Currently, everyone is allowed to get the status
         const gatewayDto = await this.chirpstackGatewayService.getOne(id);
         return this.statusHistoryService.findOne(gatewayDto.gateway, query.timeInterval);

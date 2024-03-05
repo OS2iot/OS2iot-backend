@@ -14,7 +14,6 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOperation,
@@ -39,19 +38,17 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { UserService } from "@services/user-management/user.service";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
 @Controller("organization")
 @GlobalAdmin()
 export class OrganizationController {
-    constructor(
-        private organizationService: OrganizationService,
-    ) {}
+    constructor(private organizationService: OrganizationService) {}
     private readonly logger = new Logger(OrganizationController.name);
 
     @Post()
@@ -61,17 +58,8 @@ export class OrganizationController {
         @Body() createOrganizationDto: CreateOrganizationDto
     ): Promise<Organization> {
         try {
-            const organization = await this.organizationService.create(
-                createOrganizationDto,
-                req.user.userId
-            );
-            AuditLog.success(
-                ActionType.CREATE,
-                Organization.name,
-                req.user.userId,
-                organization.id,
-                organization.name
-            );
+            const organization = await this.organizationService.create(createOrganizationDto, req.user.userId);
+            AuditLog.success(ActionType.CREATE, Organization.name, req.user.userId, organization.id, organization.name);
             return organization;
         } catch (err) {
             AuditLog.fail(ActionType.CREATE, Organization.name, req.user.userId);
@@ -88,18 +76,8 @@ export class OrganizationController {
         @Body() updateOrganizationDto: UpdateOrganizationDto
     ): Promise<Organization> {
         try {
-            const organization = await this.organizationService.update(
-                id,
-                updateOrganizationDto,
-                req.user.userId
-            );
-            AuditLog.success(
-                ActionType.UPDATE,
-                Organization.name,
-                req.user.userId,
-                organization.id,
-                organization.name
-            );
+            const organization = await this.organizationService.update(id, updateOrganizationDto, req.user.userId);
+            AuditLog.success(ActionType.UPDATE, Organization.name, req.user.userId, organization.id, organization.name);
             return organization;
         } catch (err) {
             AuditLog.fail(ActionType.UPDATE, Organization.name, req.user.userId, id);
@@ -112,8 +90,7 @@ export class OrganizationController {
 
     @Get("minimal")
     @ApiOperation({
-        summary:
-            "Get list of the minimal representation of organizations, i.e. id and name.",
+        summary: "Get list of the minimal representation of organizations, i.e. id and name.",
     })
     @Read()
     async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
@@ -131,10 +108,7 @@ export class OrganizationController {
             return this.organizationService.findAllPaginated(query);
         } else {
             const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
-            return this.organizationService.findAllInOrganizationList(
-                allowedOrganizations,
-                query
-            );
+            return this.organizationService.findAllInOrganizationList(allowedOrganizations, query);
         }
     }
 

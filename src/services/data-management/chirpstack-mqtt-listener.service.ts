@@ -16,10 +16,7 @@ import * as Protobuf from "protobufjs";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
-    constructor(
-        private receiveDataService: ReceiveDataService,
-        private iotDeviceService: IoTDeviceService
-    ) {
+    constructor(private receiveDataService: ReceiveDataService, private iotDeviceService: IoTDeviceService) {
         const connStateFullTemplate = Protobuf.loadSync(ChirpstackStateTemplatePath);
         this.connStateType = connStateFullTemplate.lookupType("ConnState");
     }
@@ -27,17 +24,14 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
     private readonly connStateType: Protobuf.Type;
 
-    MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${
-        process.env.CS_MQTT_PORT || "1883"
-    }`;
+    MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${process.env.CS_MQTT_PORT || "1883"}`;
     client: Client;
 
     private readonly CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX = "application/";
     private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC =
         this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/up";
     private readonly CHIRPSTACK_MQTT_GATEWAY_PREFIX = "gateway/";
-    private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC =
-        this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
+    private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC = this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
 
     public async onApplicationBootstrap(): Promise<void> {
         this.logger.debug("Pre-init");
@@ -51,9 +45,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
             this.client.subscribe(this.CHIRPSTACK_MQTT_GATEWAY_TOPIC);
 
             this.client.on("message", async (topic, message) => {
-                this.logger.debug(
-                    `Received MQTT - Topic: '${topic}' - message: '${message}'`
-                );
+                this.logger.debug(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
 
                 if (topic.startsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX)) {
                     await this.receiveMqttMessage(message.toString());
@@ -62,9 +54,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
                         const decoded = this.connStateType.decode(message);
                         await this.receiveMqttGatewayStatusMessage(decoded.toJSON());
                     } catch (error) {
-                        this.logger.error(
-                            `Gateway status data could not be processed. Error: ${error}`
-                        );
+                        this.logger.error(`Gateway status data could not be processed. Error: ${error}`);
                     }
                 } else {
                     this.logger.warn("Unrecognized MQTT topic " + topic);
@@ -76,13 +66,11 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
     async receiveMqttMessage(message: string): Promise<void> {
         const dto: ChirpstackMQTTMessageDto = JSON.parse(message);
-        const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(
-            dto.devEUI
-        );
+        const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
 
         if (!iotDevice) {
             this.logger.warn(
-                `Chirpstack sent MQTT message for devEUI ${dto.devEUI}, but that's not registered in OS2IoT`
+                `Chirpstack sent MQTT message for devEUI ${dto.deviceInfo.devEui}, but that's not registered in OS2IoT`
             );
             return;
         }
@@ -94,30 +82,42 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
         );
     }
 
-    async receiveMqttGatewayStatusMessage(
-        message: Record<string, unknown>
-    ): Promise<void> {
+    async receiveMqttGatewayStatusMessage(message: Record<string, unknown>): Promise<void> {
         if (
-            message &&
-            hasProps(
-                message,
-                nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")
-            ) &&
-            typeof message.gatewayId === "string"
+            (hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayId")) ||
+                hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayIdLegacy"))) &&
+            (typeof message.gatewayId === "string" || typeof message.gatewayIdLegacy === "string")
         ) {
             const dto: ChirpstackMQTTConnectionStateMessageDto = {
-                gatewayId: Buffer.from(message.gatewayId, "base64").toString("hex"),
+                gatewayId: message.gatewayId
+                    ? message.gatewayId.toString()
+                    : message.gatewayIdLegacy
+                    ? Buffer.from(message.gatewayIdLegacy.toString(), "base64").toString("hex")
+                    : undefined,
                 isOnline: message.state === "ONLINE",
             };
+
+            if (!dto.gatewayId) {
+                this.logger.error(
+                    `Gateway status message is not properly formatted. Gateway id, if any, is ${
+                        message?.gatewayId
+                            ? message?.gatewayId
+                            : Buffer.from(message.gatewayIdLegacy as any, "base64").toString("hex")
+                    }`
+                );
+                return;
+            }
+
             const jsonDto = JSON.stringify(dto);
 
-            await this.receiveDataService.sendRawGatewayStateToKafka(
-                dto.gatewayId,
-                jsonDto
-            );
+            await this.receiveDataService.sendRawGatewayStateToKafka(dto.gatewayId, jsonDto);
         } else {
             this.logger.error(
-                `Gateway status message is not properly formatted. Gateway id, if any, is ${message?.id}`
+                `Gateway status message is not properly formatted. Gateway id, if any, is ${
+                    message?.gatewayId
+                        ? message?.gatewayId
+                        : Buffer.from(message.gatewayIdLegacy as any, "base64").toString("hex")
+                }`
             );
         }
     }
