@@ -623,7 +623,7 @@ export class IoTDeviceService {
                         coordinates: [iotDeviceDto.longitude, iotDeviceDto.latitude],
                     };
                 } else {
-                    iotDevice.location = null;
+                    iotDevice.location = { type: "Point", coordinates: [55.959443, 11.764445] };
                 }
 
                 iotDevice.comment = iotDeviceDto.comment;
