@@ -81,7 +81,7 @@ export class ChirpstackGatewayController {
 
     @Get(":gatewayId")
     @ApiProduces("application/json")
-    @ApiOperation({ summary: "List all Chirpstack gateways" })
+    @ApiOperation({ summary: "Single Chirpstack gateway" })
     @Read()
     async getOne(@Param("gatewayId") gatewayId: string): Promise<SingleGatewayResponseDto> {
         if (gatewayId?.length != 16) {

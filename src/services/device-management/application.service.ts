@@ -25,7 +25,7 @@ import { DataTargetService } from "@services/data-targets/data-target.service";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { MulticastService } from "@services/chirpstack/multicast.service";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
-import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
+import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -215,9 +215,9 @@ export class ApplicationService {
         mappedApplication.updatedBy = userId;
 
         try {
-            mappedApplication.chirpstackId = await this.chirpstackApplicationService.createChirpstackApplication(
-                { application: { description: createApplicationDto.description, name: createApplicationDto.name } }
-            );
+            mappedApplication.chirpstackId = await this.chirpstackApplicationService.createChirpstackApplication({
+                application: { description: createApplicationDto.description, name: createApplicationDto.name },
+            });
             const app = await this.applicationRepository.save(mappedApplication);
 
             await this.permissionService.autoAddPermissionsToApplication(app);
@@ -409,6 +409,26 @@ export class ApplicationService {
             data,
             count,
         };
+    }
+
+    async findDevicesForApplicationMap(appId: number): Promise<IoTDevicesListToMapResponseDto[]> {
+        const [data] = await this.iotDeviceRepository
+            .createQueryBuilder("iot_device")
+            .where('"iot_device"."applicationId" = :id', { id: appId })
+            .leftJoinAndSelect("iot_device.latestReceivedMessage", "metadata")
+            .getManyAndCount();
+
+        const deviceList: IoTDevicesListToMapResponseDto[] = data.map(device => {
+            return {
+                id: device.id,
+                name: device.name,
+                type: device.type,
+                latestSentMessage: device.latestReceivedMessage?.sentTime,
+                location: device.location
+            };
+        });
+
+        return deviceList;
     }
 
     private getSortingForIoTDevices(query: ListAllEntitiesDto) {
