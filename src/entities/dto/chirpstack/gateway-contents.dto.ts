@@ -12,10 +12,12 @@ import {
     Matches,
     MaxLength,
     MinLength,
+    ValidateIf,
     ValidateNested,
 } from "class-validator";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 import { GatewayPlacement, GatewayStatus } from "@enum/gateway.enum";
+import { isNullOrWhitespace } from "@helpers/string.helper";
 
 export class GatewayContentsDto {
     @ApiProperty({ required: true })
@@ -79,12 +81,14 @@ export class GatewayContentsDto {
     @ApiProperty({ required: false })
     @IsString()
     @IsOptional()
+    @ValidateIf(value => !isNullOrWhitespace(value.gatewayResponsibleEmail))
     @IsEmail()
     gatewayResponsibleEmail?: string;
 
     @ApiProperty({ required: false })
     @IsString()
     @IsOptional()
+    @ValidateIf(value => !isNullOrWhitespace(value.gatewayResponsiblePhoneNumber))
     @IsPhoneNumber("DK")
     gatewayResponsiblePhoneNumber?: string;
 
@@ -96,6 +100,7 @@ export class GatewayContentsDto {
     @ApiProperty({ required: false })
     @IsString()
     @IsOptional()
+    @ValidateIf(value => !isNullOrWhitespace(value.operationalResponsibleEmail))
     @IsEmail()
     operationalResponsibleEmail?: string;
 

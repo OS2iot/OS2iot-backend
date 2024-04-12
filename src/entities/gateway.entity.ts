@@ -59,17 +59,14 @@ export class Gateway extends DbBaseEntity {
     gatewayResponsibleName?: string;
 
     @Column({ nullable: true })
-    @IsEmail() // TODO: Validate that this is proper
     gatewayResponsibleEmail?: string;
 
     @Column({ nullable: true })
-    @IsPhoneNumber("DK")
     gatewayResponsiblePhoneNumber?: string;
 
     @Column({ nullable: true })
     operationalResponsibleName?: string;
 
     @Column({ nullable: true })
-    @IsEmail()
     operationalResponsibleEmail?: string;
 }

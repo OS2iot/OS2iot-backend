@@ -1,12 +1,14 @@
 ﻿export enum GatewayPlacement {
+    "NONE" = "NONE",
     Indoors = "INDOORS",
     Outdoors = "OUTDOORS",
     Other = "OTHER",
 }
 
 export enum GatewayStatus {
-    InUse = "IN-USE",
-    Project = "PROJECT",
-    Prototype = "PROTOTYPE",
-    Other = "OTHER",
+    "NONE" = "NONE",
+    "IN-OPERATION" = "IN-OPERATION",
+    "PROJECT" = "PROJECT",
+    "PROTOTYPE" = "PROTOTYPE",
+    "OTHER" = "OTHER",
 }
