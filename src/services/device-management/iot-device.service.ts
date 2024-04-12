@@ -821,6 +821,7 @@ export class IoTDeviceService {
     async getDevicesMetadataCsv(applicationId: number) {
         const iotDevices = await this.iotDeviceRepository
             .createQueryBuilder("device")
+            .leftJoinAndSelect("device.deviceModel", "deviceModel")
             .where("device.applicationId = :applicationId", { applicationId })
             .getMany();
 
