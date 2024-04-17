@@ -429,7 +429,7 @@ export class IoTDeviceService {
 
         const mappedIoTDevice = iotDeviceDtoMap[0].iotDevice;
         mappedIoTDevice.updatedBy = userId;
-        const res = this.iotDeviceRepository.save(mappedIoTDevice);
+        const res = await this.iotDeviceRepository.save(mappedIoTDevice);
 
         return res;
     }
