@@ -49,6 +49,7 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
 
 @ApiTags("Application")
 @Controller("application")
@@ -112,6 +113,23 @@ export class ApplicationController {
 
         try {
             return await this.applicationService.findDevicesForApplication(applicationId, query);
+        } catch (err) {
+            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+        }
+    }
+
+    @Read()
+    @Get(":id/iot-devices-map")
+    @ApiOperation({ summary: "Find the IoTDevices of an Application" })
+    @ApiNotFoundResponse()
+    async findIoTDevicesForApplicationMap(
+        @Req() req: AuthenticatedRequest,
+        @Param("id", new ParseIntPipe()) applicationId: number,
+    ): Promise<IoTDevicesListToMapResponseDto[]> {
+        checkIfUserHasAccessToApplication(req, applicationId, ApplicationAccessScope.Read);
+
+        try {
+            return await this.applicationService.findDevicesForApplicationMap(applicationId);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);
         }
