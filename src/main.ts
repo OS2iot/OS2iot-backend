@@ -18,7 +18,7 @@ async function bootstrap() {
         API_PREFIX: "/api",
         CURRENT_VERSION_PREFIX: "/api" + "/v1",
         SWAGGER_PREFIX: "/api" + "/v1" + "/docs",
-        LOG_LEVELS: configuration()["logLevels"]
+        LOG_LEVELS: configuration()["logLevels"],
     };
     const server = express();
 
@@ -26,10 +26,7 @@ async function bootstrap() {
     setupSwagger(app, config.SWAGGER_PREFIX);
 
     BuiltInLogger.debug(`BaseUrl: '${configuration()["backend"]["baseurl"]}'`, "Kombit");
-    BuiltInLogger.debug(
-        `EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`,
-        "Kombit"
-    );
+    BuiltInLogger.debug(`EntryPoint: '${configuration()["kombit"]["entryPoint"]}'`, "Kombit");
 
     // The .listen call must happen after swagger is setup.
     // await app.listen(config.NEST_PORT);

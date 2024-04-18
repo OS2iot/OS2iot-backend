@@ -387,6 +387,17 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
             type: "Point",
             coordinates: [dto.location.longitude, dto.location.latitude],
         };
+
+        gateway.placement = dto.placement;
+        gateway.modelName = dto.modelName;
+        gateway.antennaType = dto.antennaType;
+        gateway.status = dto.status;
+        gateway.gatewayResponsibleName = dto.gatewayResponsibleName;
+        gateway.gatewayResponsibleEmail = dto.gatewayResponsibleEmail;
+        gateway.gatewayResponsiblePhoneNumber = dto.gatewayResponsiblePhoneNumber;
+        gateway.operationalResponsibleName = dto.operationalResponsibleName;
+        gateway.operationalResponsibleEmail = dto.operationalResponsibleEmail;
+
         const tempTags = { ...dto.tags };
         tempTags[this.ORG_ID_KEY] = undefined;
         tempTags[this.CREATED_BY_KEY] = undefined;
