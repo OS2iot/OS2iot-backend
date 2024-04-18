@@ -23,7 +23,6 @@ export class CsvGeneratorService {
             location,
             commentOnLocation,
             comment,
-            deviceModelId,
             apiKey,
             mqttURL,
             mqttPort,
@@ -35,12 +34,8 @@ export class CsvGeneratorService {
             lorawanSettings,
         } = device;
 
-        const mqttpassword = this.encryptionHelperService.basicDecrypt(
-            device.mqttpassword
-        );
-        const deviceCertificateKey = this.encryptionHelperService.basicDecrypt(
-            device.deviceCertificateKey
-        );
+        const mqttpassword = this.encryptionHelperService.basicDecrypt(device.mqttpassword);
+        const deviceCertificateKey = this.encryptionHelperService.basicDecrypt(device.deviceCertificateKey);
 
         let csvRow =
             `${name},` +
@@ -50,7 +45,7 @@ export class CsvGeneratorService {
             `${location.coordinates[0] ?? ""},` +
             `${commentOnLocation ?? ""},` +
             `${comment ?? ""},` +
-            `${deviceModelId ?? ""},` +
+            `${device.deviceModel?.id ?? ""},` +
             `${apiKey ?? ""},` +
             `${mqttURL ?? ""},` +
             `${mqttPort ?? ""},` +
