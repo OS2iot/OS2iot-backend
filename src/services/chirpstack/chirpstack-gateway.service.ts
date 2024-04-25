@@ -370,6 +370,8 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     ): Promise<GatewayContentsDto | UpdateGatewayContentsDto> {
         if (contentsDto?.tagsString) {
             contentsDto.tags = JSON.parse(contentsDto.tagsString);
+        } else {
+            contentsDto.tags = {};
         }
 
         contentsDto.id = contentsDto.gatewayId;

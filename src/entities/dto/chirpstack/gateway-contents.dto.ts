@@ -18,6 +18,8 @@ import {
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
 import { GatewayPlacement, GatewayStatus } from "@enum/gateway.enum";
 import { isNullOrWhitespace } from "@helpers/string.helper";
+import { IsJSONOrNull } from "@helpers/is-json-or-null.validator";
+import { nameof } from "@helpers/type-helper";
 
 export class GatewayContentsDto {
     @ApiProperty({ required: true })
@@ -108,7 +110,7 @@ export class GatewayContentsDto {
     tenantId: string;
 
     @ApiProperty({ required: false })
-    @IsJSON()
+    @IsJSONOrNull(nameof<GatewayContentsDto>("tagsString"))
     tagsString?: string;
 
     @ApiHideProperty()
