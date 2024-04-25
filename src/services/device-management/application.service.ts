@@ -57,7 +57,7 @@ export class ApplicationService {
             where: orgCondition,
             take: query.limit,
             skip: query.offset,
-            relations: ["iotDevices"],
+            relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
             order: sorting,
         });
 
