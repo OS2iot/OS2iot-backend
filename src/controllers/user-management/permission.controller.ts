@@ -55,7 +55,7 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
-@ApiTags("User Management")
+@ApiTags("Permission")
 @Controller("permission")
 export class PermissionController {
     constructor(

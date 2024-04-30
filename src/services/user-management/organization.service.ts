@@ -1,11 +1,4 @@
-import {
-    BadRequestException,
-    Inject,
-    Injectable,
-    Logger,
-    forwardRef,
-    NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, forwardRef, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 
@@ -24,6 +17,7 @@ import { PermissionService } from "./permission.service";
 import { User } from "@entities/user.entity";
 import { UserService } from "./user.service";
 import { Permission } from "@entities/permissions/permission.entity";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class OrganizationService {
@@ -55,11 +49,7 @@ export class OrganizationService {
         }
     }
 
-    async update(
-        id: number,
-        dto: UpdateOrganizationDto,
-        userId: number
-    ): Promise<Organization> {
+    async update(id: number, dto: UpdateOrganizationDto, userId: number): Promise<Organization> {
         const org = await this.findByIdWithRelations(id);
         org.name = dto.name;
         org.updatedBy = userId;
@@ -67,10 +57,7 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async updateOpenDataDkRegistered(
-        id: number,
-        userId: number
-    ): Promise<Organization> {
+    async updateOpenDataDkRegistered(id: number, userId: number): Promise<Organization> {
         const org = await this.findByIdWithRelations(id);
         org.openDataDkRegistered = true;
         org.updatedBy = userId;
@@ -84,14 +71,9 @@ export class OrganizationService {
         return await this.organizationRepository.save(org);
     }
 
-    async rejectAwaitingUser(
-        user: User,
-        organization: Organization
-    ): Promise<Organization> {
+    async rejectAwaitingUser(user: User, organization: Organization): Promise<Organization> {
         if (organization.awaitingUsers.find(dbUser => dbUser.id === user.id)) {
-            const index = organization.awaitingUsers.findIndex(
-                dbUser => dbUser.id === user.id
-            );
+            const index = organization.awaitingUsers.findIndex(dbUser => dbUser.id === user.id);
             organization.awaitingUsers.splice(index, 1);
             await this.userService.sendRejectionMail(user, organization);
             return await this.organizationRepository.save(organization);
@@ -110,9 +92,7 @@ export class OrganizationService {
         };
     }
 
-    mapPermissionsToOrganizations(
-        permissions: Permission[]
-    ): Organization[] {
+    mapPermissionsToOrganizations(permissions: Permission[]): Organization[] {
         const requestedOrganizations: Organization[] = [];
 
         for (let index = 0; index < permissions.length; index++) {
@@ -141,14 +121,12 @@ export class OrganizationService {
         return requestedOrganizations;
     }
 
-    mapPermissionsToOneOrganization(
-        permissions: Permission[]
-    ): Organization {
+    mapPermissionsToOneOrganization(permissions: Permission[]): Organization {
         const org: Organization = new Organization();
 
         permissions.map(permission => {
             org.id = permission.organization.id;
-            org.name = permission.organization.name
+            org.name = permission.organization.name;
         });
 
         org.permissions = [];
@@ -163,9 +141,7 @@ export class OrganizationService {
         return org;
     }
 
-    async findAllPaginated(
-        query?: ListAllEntitiesDto
-    ): Promise<ListAllOrganizationsResponseDto> {
+    async findAllPaginated(query?: ListAllEntitiesDto): Promise<ListAllOrganizationsResponseDto> {
         const sorting: { [id: string]: string | number } = this.getSorting(query);
 
         const [data, count] = await this.organizationRepository.findAndCount({
@@ -182,8 +158,11 @@ export class OrganizationService {
     }
 
     async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
+        // const allowedOrgs = req.user.permissions.getAllApplicationsWithAtLeastRead();
+
         const [data, count] = await this.organizationRepository.findAndCount({
             select: ["id", "name"],
+            // where: { id: In(allowedOrgs) },
         });
 
         return {
@@ -218,9 +197,7 @@ export class OrganizationService {
         const sorting: { [id: string]: string | number } = {};
         if (
             query?.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "lastLogin")
+            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin")
         ) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
         } else {
@@ -230,7 +207,7 @@ export class OrganizationService {
     }
 
     async findById(organizationId: number): Promise<Organization> {
-        return await this.organizationRepository.findOneByOrFail({ id: organizationId});
+        return await this.organizationRepository.findOneByOrFail({ id: organizationId });
     }
 
     async findByIdWithRelations(organizationId: number): Promise<Organization> {

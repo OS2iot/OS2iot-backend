@@ -148,7 +148,7 @@ export class ApplicationService {
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
             .innerJoin("application.permissions", "perm")
-            .leftJoinAndSelect("application.iotDevices", "iotdevices")
+            // .leftJoinAndSelect("application.iotDevices", "iotdevices")
             .where("perm.id = :permId", { permId: permissionId })
             .take(+query.limit)
             .skip(+query.offset)
@@ -424,7 +424,7 @@ export class ApplicationService {
                 name: device.name,
                 type: device.type,
                 latestSentMessage: device.latestReceivedMessage?.sentTime,
-                location: device.location
+                location: device.location,
             };
         });
 
