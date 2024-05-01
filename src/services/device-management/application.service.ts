@@ -443,7 +443,8 @@ export class ApplicationService {
             query.orderOn === "rssi" ||
             query.orderOn === "snr" ||
             query.orderOn === "deviceModel" ||
-            query.orderOn === "dataTargets"
+            query.orderOn === "dataTargets" ||
+            query.orderOn === "commentOnLocation"
         ) {
             if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
