@@ -14,7 +14,7 @@ export class TestPayloadDecoderController {
     })
     async decode(@Body() body: TestPayloadDecoderDto): Promise<any> {
         try {
-            return this.payloadDecoderExecutorService.allUntrustedCodeWithJsonStrings(
+            return await this.payloadDecoderExecutorService.allUntrustedCodeWithJsonStrings(
                 body.code,
                 body.iotDeviceJsonString,
                 body.rawPayloadJsonString

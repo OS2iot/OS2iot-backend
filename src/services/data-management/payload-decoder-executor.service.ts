@@ -1,40 +1,63 @@
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
-import { Copy, ExternalCopy, Isolate } from "isolated-vm";
+import * as worker_threads from "node:worker_threads";
 
 @Injectable()
 export class PayloadDecoderExecutorService {
     private readonly logger = new Logger(PayloadDecoderExecutorService.name);
 
-    allUntrustedCodeWithJsonStrings(code: string, iotDeviceString: string, rawPayloadString: string): string {
+    async allUntrustedCodeWithJsonStrings(
+        code: string,
+        iotDeviceString: string,
+        rawPayloadString: string
+    ): Promise<string> {
         const iotDevice = JSON.parse(iotDeviceString);
         const rawPayload = JSON.parse(rawPayloadString);
         const parsedCode = JSON.parse(code);
 
-        return this.callUntrustedCode(parsedCode, iotDevice, rawPayload);
+        return await this.callUntrustedCode(parsedCode, iotDevice, rawPayload);
     }
 
-    callUntrustedCode(code: string, iotDevice: IoTDevice | any, rawPayload: JSON): string {
-        const isolate = new Isolate();
-        const context = isolate.createContextSync();
-        const jail = context.global;
+    async callUntrustedCode(code: string, iotDevice: IoTDevice | any, rawPayload: JSON): Promise<string> {
+        // Left as check of surrounding code for worker function
+        // const workerFunction = () => {
+        //     const { parentPort, workerData } = require("worker_threads");
+        //     const innerPayload = workerData.innerPayload;
+        //     const innerIotDevice = workerData.innerIotDevice;
+        //
+        //     code;
+        //
+        //     const result = decode(innerPayload, innerIotDevice);
+        //     parentPort.postMessage(result);
+        // };
 
-        jail.setSync("global", jail.derefInto());
+        const workerCode = `
+        const { parentPort, workerData } = require("worker_threads");
+        const innerPayload = workerData.innerPayload;
+        const innerIotDevice = workerData.innerIotDevice;
 
-        //Isolated can not read atob. Therefore change to Buffer.From()
-        jail.setSync("atob", function (str: string): Copy<string> {
-            return new ExternalCopy(Buffer.from(str, "base64").toString("binary")).copyInto();
+        ${code}
+
+        const result = decode(innerPayload, innerIotDevice);
+        parentPort.postMessage(result);`;
+
+        const workerFunction = new Promise((resolve, reject) => {
+            const worker = new worker_threads.Worker(workerCode, {
+                eval: true,
+                workerData: { innerPayload: rawPayload, innerIotDevice: iotDevice },
+            });
+
+            worker.on("message", message => {
+                resolve(message);
+                worker.terminate();
+            });
+
+            worker.on("error", err => {
+                reject(err);
+                worker.terminate();
+            });
         });
-        jail.setSync("innerIotDevice", new ExternalCopy(iotDevice).copyInto());
-        jail.setSync("innerPayload", new ExternalCopy(rawPayload).copyInto());
-        jail.setSync("reply", function (result: object) {
-            return new ExternalCopy(result);
-        });
 
-        const callingCode = `\n\nconst res = decode(innerPayload, innerIotDevice); \n reply(res);`;
-        const combinedCode = code + callingCode;
-
-        const result: ExternalCopy = context.evalSync(combinedCode);
-        return JSON.stringify(result.copy());
+        return (await workerFunction) as string;
     }
 }
