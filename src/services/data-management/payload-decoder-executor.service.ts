@@ -58,6 +58,6 @@ export class PayloadDecoderExecutorService {
             });
         });
 
-        return (await workerFunction) as string;
+        return JSON.stringify(await workerFunction);
     }
 }
