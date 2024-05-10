@@ -158,11 +158,9 @@ export class OrganizationService {
     }
 
     async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
-        // const allowedOrgs = req.user.permissions.getAllApplicationsWithAtLeastRead();
 
         const [data, count] = await this.organizationRepository.findAndCount({
             select: ["id", "name"],
-            // where: { id: In(allowedOrgs) },
         });
 
         return {

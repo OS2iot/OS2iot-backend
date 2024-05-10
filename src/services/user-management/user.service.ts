@@ -1,10 +1,4 @@
-import {
-    BadRequestException,
-    forwardRef,
-    Inject,
-    Injectable,
-    Logger,
-} from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
 import { In, Repository } from "typeorm";
@@ -50,23 +44,13 @@ export class UserService {
         );
     }
 
-    async acceptUser(
-        user: User,
-        org: Organization,
-        newUserPermissions: Permission[]
-    ): Promise<User> {
+    async acceptUser(user: User, org: Organization, newUserPermissions: Permission[]): Promise<User> {
         user.awaitingConfirmation = false;
 
-        if (
-            user.permissions.find(perms =>
-                newUserPermissions.some(newPerm => newPerm.id === perms.id)
-            )
-        ) {
+        if (user.permissions.find(perms => newUserPermissions.some(newPerm => newPerm.id === perms.id))) {
             throw new BadRequestException(ErrorCodes.UserAlreadyInPermission);
         } else {
-            const index = user.requestedOrganizations.findIndex(
-                dbOrg => dbOrg.id === org.id
-            );
+            const index = user.requestedOrganizations.findIndex(dbOrg => dbOrg.id === org.id);
             user.requestedOrganizations.splice(index, 1);
             user.permissions.push(...newUserPermissions);
             await this.sendVerificationMail(user, org);
@@ -90,8 +74,8 @@ export class UserService {
 
     async findOne(id: number, getExtendedInformation: boolean = false): Promise<User> {
         const relations = ["permissions", "requestedOrganizations"];
-
-        if (getExtendedInformation) {
+        const extendedBoolean = this.parseBoolean(getExtendedInformation);
+        if (extendedBoolean) {
             relations.push("permissions.organization");
             relations.push("permissions.users");
             relations.push("permissions.type");
@@ -160,11 +144,8 @@ export class UserService {
         await this.setPasswordHash(mappedUser, dto.password);
 
         if (dto.globalAdmin) {
-            const globalAdminPermission =
-                await this.permissionService.findOrCreateGlobalAdminPermission();
-            await this.permissionService.addUsersToPermission(globalAdminPermission, [
-                mappedUser,
-            ]);
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            await this.permissionService.addUsersToPermission(globalAdminPermission, [mappedUser]);
         }
 
         return await this.userRepository.save(mappedUser, { reload: true });
@@ -178,10 +159,7 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
-    private async mapKombitLoginProfileToUser(
-        user: User,
-        profile: Profile
-    ): Promise<void> {
+    private async mapKombitLoginProfileToUser(user: User, profile: Profile): Promise<void> {
         user.active = true;
         user.nameId = profile.nameID;
         user.name = this.extractNameFromNameIDSAMLAttribute(profile.nameID);
@@ -238,9 +216,7 @@ export class UserService {
 
         // If nameId set, this is a Kombit user and we are NOT allowed to set the password
         if (dto.password && !mappedUser.nameId) {
-            this.logger.log(
-                `Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`
-            );
+            this.logger.log(`Changing password for user: id: ${mappedUser.id} - '${mappedUser.email}' ...`);
             await this.setPasswordHash(mappedUser, dto.password);
         }
 
@@ -251,21 +227,14 @@ export class UserService {
 
     private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
         if (dto.globalAdmin) {
-            const globalAdminPermission =
-                await this.permissionService.findOrCreateGlobalAdminPermission();
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
             // Don't do anything if the user already is global admin.
             if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
-                await this.permissionService.addUsersToPermission(globalAdminPermission, [
-                    mappedUser,
-                ]);
+                await this.permissionService.addUsersToPermission(globalAdminPermission, [mappedUser]);
             }
         } else {
-            const globalAdminPermission =
-                await this.permissionService.findOrCreateGlobalAdminPermission();
-            await this.permissionService.removeUserFromPermission(
-                globalAdminPermission,
-                mappedUser
-            );
+            const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+            await this.permissionService.removeUserFromPermission(globalAdminPermission, mappedUser);
         }
     }
 
@@ -290,9 +259,7 @@ export class UserService {
         const sorting: { [id: string]: string | number } = {};
         if (
             query.orderOn != null &&
-            (query.orderOn == "id" ||
-                query.orderOn == "name" ||
-                query.orderOn == "lastLogin")
+            (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin")
         ) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
         } else {
@@ -315,10 +282,7 @@ export class UserService {
         };
     }
 
-    async getUsersOnPermissionId(
-        permissionId: number,
-        query: ListAllEntitiesDto
-    ): Promise<ListAllUsersResponseDto> {
+    async getUsersOnPermissionId(permissionId: number, query: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         const [data, count] = await this.userRepository
             .createQueryBuilder("user")
             .innerJoin("user.permissions", "p")
@@ -333,19 +297,12 @@ export class UserService {
         };
     }
 
-    async getUsersOnOrganization(
-        organizationId: number,
-        query: ListAllEntitiesDto
-    ): Promise<ListAllUsersResponseDto> {
+    async getUsersOnOrganization(organizationId: number, query: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
         let orderBy = `user.id`;
-        if (
-            query.orderOn !== null &&
-            (query.orderOn === "id" || query.orderOn === "name")
-        ) {
+        if (query.orderOn !== null && (query.orderOn === "id" || query.orderOn === "name")) {
             orderBy = `user.${query.orderOn}`;
         }
-        const order: "DESC" | "ASC" =
-            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
 
         const [data, count] = await this.userRepository
             .createQueryBuilder("user")
@@ -353,6 +310,31 @@ export class UserService {
             .where('"p"."organizationId" = :organizationId', {
                 organizationId: organizationId,
             })
+            .take(+query.limit)
+            .skip(+query.offset)
+            .orderBy(orderBy, order)
+            .getManyAndCount();
+
+        return {
+            data: data.map(x => x as UserResponseDto),
+            count: count,
+        };
+    }
+
+    async getUsersOnOrganizations(
+        organizationIds: number[],
+        query: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        let orderBy = `user.id`;
+        if (query.orderOn !== null && (query.orderOn === "id" || query.orderOn === "name")) {
+            orderBy = `user.${query.orderOn}`;
+        }
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+
+        const [data, count] = await this.userRepository
+            .createQueryBuilder("user")
+            .innerJoin("user.permissions", "p")
+            .where("p.organizationId IN (:...organizationIds)", { organizationIds: organizationIds })
             .take(+query.limit)
             .skip(+query.offset)
             .orderBy(orderBy, order)
@@ -374,10 +356,7 @@ export class UserService {
         };
     }
 
-    async sendOrganizationRequestMail(
-        user: User,
-        organization: Organization
-    ): Promise<void> {
+    async sendOrganizationRequestMail(user: User, organization: Organization): Promise<void> {
         const emails = await this.getOrgAdminEmails(organization);
 
         await this.oS2IoTMail.sendMail({
@@ -386,9 +365,9 @@ export class UserService {
             html: `<p>Ny ansøgning til din organisation i OS2iot</p>
             <p><a href="${this.configService.get<string>(
                 "frontend.baseurl"
-            )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${
-                user.name
-            } i organisationen ${organization.name}
+            )}/admin/users">Klik her</a> for at bekræfte eller afvise brugeren ${user.name} i organisationen ${
+                organization.name
+            }
             </p>
             <p>Find brugeren under fanebladet "Afventende brugere"</p>`, // html body
         });
@@ -412,13 +391,9 @@ export class UserService {
 
     async getOrgAdminEmails(organization: Organization): Promise<string[]> {
         const emails: string[] = [];
-        const globalAdminPermission: Permission =
-            await this.permissionService.getGlobalPermission();
+        const globalAdminPermission: Permission = await this.permissionService.getGlobalPermission();
         organization.permissions.forEach(permission => {
-            if (
-                isPermissionType(permission, PermissionType.OrganizationUserAdmin) &&
-                permission.users.length > 0
-            ) {
+            if (isPermissionType(permission, PermissionType.OrganizationUserAdmin) && permission.users.length > 0) {
                 permission.users.forEach(user => {
                     emails.push(user.email);
                 });
@@ -433,19 +408,12 @@ export class UserService {
         return emails;
     }
 
-    async getAwaitingUsers(
-        query?: ListAllEntitiesDto,
-        organizationIds?: number[]
-    ): Promise<ListAllUsersResponseDto> {
+    async getAwaitingUsers(query?: ListAllEntitiesDto, organizationIds?: number[]): Promise<ListAllUsersResponseDto> {
         let orderBy = `user.id`;
-        if (
-            query.orderOn !== null &&
-            (query.orderOn === "id" || query.orderOn === "name")
-        ) {
+        if (query.orderOn !== null && (query.orderOn === "id" || query.orderOn === "name")) {
             orderBy = `user.${query.orderOn}`;
         }
-        const order: "DESC" | "ASC" =
-            query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
+        const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() == "DESC" ? "DESC" : "ASC";
 
         let usersQuery = this.userRepository
             .createQueryBuilder("user")
@@ -472,5 +440,13 @@ export class UserService {
     async hideWelcome(id: number): Promise<boolean> {
         const res = await this.userRepository.update(id, { showWelcomeScreen: false });
         return !!res.affected;
+    }
+
+    parseBoolean(value: any): boolean {
+        if (value === 'false') {
+            return false;
+        } else {
+            return !!value;
+        }
     }
 }
