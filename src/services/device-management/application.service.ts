@@ -57,7 +57,7 @@ export class ApplicationService {
             where: orgCondition,
             take: query.limit,
             skip: query.offset,
-            relations: ["iotDevices"],
+            relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
             order: sorting,
         });
 
@@ -148,7 +148,10 @@ export class ApplicationService {
         const [result, total] = await this.applicationRepository
             .createQueryBuilder("application")
             .innerJoin("application.permissions", "perm")
-            // .leftJoinAndSelect("application.iotDevices", "iotdevices")
+            .leftJoinAndSelect("application.iotDevices", "iotdevices")
+            .leftJoinAndSelect("application.dataTargets", "datatargets")
+            .leftJoinAndSelect("application.controlledProperties", "controlledproperties")
+            .leftJoinAndSelect("application.deviceTypes", "devicetypes")
             .where("perm.id = :permId", { permId: permissionId })
             .take(+query.limit)
             .skip(+query.offset)
@@ -440,7 +443,8 @@ export class ApplicationService {
             query.orderOn === "rssi" ||
             query.orderOn === "snr" ||
             query.orderOn === "deviceModel" ||
-            query.orderOn === "dataTargets"
+            query.orderOn === "dataTargets" ||
+            query.orderOn === "commentOnLocation"
         ) {
             if (query.orderOn === "active") {
                 orderBy = `metadata.sentTime`;
