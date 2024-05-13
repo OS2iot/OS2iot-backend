@@ -427,7 +427,7 @@ export class ApplicationService {
                 name: device.name,
                 type: device.type,
                 latestSentMessage: device.latestReceivedMessage?.sentTime,
-                location: device.location
+                location: device.location,
             };
         });
 

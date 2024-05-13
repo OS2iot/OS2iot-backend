@@ -39,12 +39,14 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import { PermissionType } from "@enum/permission-type.enum";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
-@ApiTags("User Management")
+@ApiTags("Organization")
 @Controller("organization")
 @GlobalAdmin()
 export class OrganizationController {
@@ -121,6 +123,7 @@ export class OrganizationController {
         @Param("id", new ParseIntPipe()) id: number
     ): Promise<Organization> {
         try {
+            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationRead);
             return await this.organizationService.findByIdWithRelations(id);
         } catch (err) {
             throw new NotFoundException(ErrorCodes.IdDoesNotExists);

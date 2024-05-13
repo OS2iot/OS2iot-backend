@@ -235,7 +235,15 @@ export class UserController {
 
     @Get()
     @ApiOperation({ summary: "Get all users" })
-    async findAll(@Query() query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
-        return await this.userService.findAll(query);
+    async findAll(
+        @Req() req: AuthenticatedRequest,
+        @Query() query?: ListAllEntitiesDto
+    ): Promise<ListAllUsersResponseDto> {
+        if (req.user.permissions.isGlobalAdmin) {
+            return await this.userService.findAll(query);
+        } else {
+            const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+            return await this.userService.getUsersOnOrganizations(allowedOrganizations, query);
+        }
     }
 }
