@@ -39,33 +39,20 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
 
         // Fetch related objects
         const dto = payload.body as RawIoTDeviceRequestDto;
-        const connections = await this.connectionService.findAllByIoTDeviceIdWithDeviceModel(
-            dto.iotDeviceId
-        );
-        this.logger.debug(
-            `Found ${connections.count} connections for IoT-Device ${dto.iotDeviceId}`
-        );
+        const connections = await this.connectionService.findAllByIoTDeviceIdWithDeviceModel(dto.iotDeviceId);
+        this.logger.debug(`Found ${connections.count} connections for IoT-Device ${dto.iotDeviceId}`);
 
         // Find Unique payloadDecoders
         await this.doTransformationsAndSend(connections, dto);
     }
 
-    private async doTransformationsAndSend(
-        connections: ListAllConnectionsResponseDto,
-        dto: RawIoTDeviceRequestDto
-    ) {
+    private async doTransformationsAndSend(connections: ListAllConnectionsResponseDto, dto: RawIoTDeviceRequestDto) {
         const uniqueCombinations = _.uniqBy(connections.data, x => x.payloadDecoder?.id);
         for (const connection of uniqueCombinations) {
             try {
-                const iotDevice = connection.iotDevices.find(
-                    x => x.id === dto.iotDeviceId
-                );
+                const iotDevice = connection.iotDevices.find(x => x.id === dto.iotDeviceId);
 
-                await this.decodeAndSendTransformed(
-                    connection.payloadDecoder,
-                    iotDevice,
-                    dto.rawPayload
-                );
+                await this.decodeAndSendTransformed(connection.payloadDecoder, iotDevice, dto.rawPayload);
             } catch (err) {
                 this.logger.error(err);
             }
@@ -77,26 +64,14 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
         relatedIoTDevice: IoTDevice,
         rawPayload: JSON
     ) {
-        const payloadToSend = await this.decodeIfNeeded(
-            payloadDecoder,
-            relatedIoTDevice,
-            rawPayload
-        );
+        const payloadToSend = await this.decodeIfNeeded(payloadDecoder, relatedIoTDevice, rawPayload);
 
         // Add transformed request to Kafka
-        await this.sendTransformedRequest(
-            relatedIoTDevice,
-            payloadDecoder,
-            payloadToSend
-        );
+        await this.sendTransformedRequest(relatedIoTDevice, payloadDecoder, payloadToSend);
     }
 
-    private async decodeIfNeeded(
-        payloadDecoder: PayloadDecoder,
-        relatedIoTDevice: IoTDevice,
-        rawPayload: JSON
-    ) {
-        let res;
+    private async decodeIfNeeded(payloadDecoder: PayloadDecoder, relatedIoTDevice: IoTDevice, rawPayload: JSON) {
+        let res: string;
         if (payloadDecoder != undefined) {
             this.logger.debug(
                 `Decoding payload of IoT-Device ${relatedIoTDevice.id} with decoder ${payloadDecoder?.id}`
@@ -108,17 +83,11 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
                 relatedIoTDevice.type === IoTDeviceType.LoRaWAN &&
                 payloadDecoder.decodingFunction.includes("lorawanSettings")
             ) {
-                localDevice = await this.chirpstackDeviceService.enrichLoRaWANDevice(
-                    relatedIoTDevice
-                );
+                localDevice = await this.chirpstackDeviceService.enrichLoRaWANDevice(relatedIoTDevice);
             }
 
             // Decode the payload
-            res = this.executor.callUntrustedCode(
-                payloadDecoder.decodingFunction,
-                localDevice,
-                rawPayload
-            );
+            res = await this.executor.callUntrustedCode(payloadDecoder.decodingFunction, localDevice, rawPayload);
 
             this.logger.debug(`Decoded payload to: '${res}'`);
         } else {
@@ -146,10 +115,7 @@ export class PayloadDecoderListenerService extends AbstractKafkaConsumer {
             topicName: KafkaTopic.TRANSFORMED_REQUEST,
         };
 
-        const rawStatus = await this.kafkaService.sendMessage(
-            KafkaTopic.TRANSFORMED_REQUEST,
-            kafkapayload
-        );
+        const rawStatus = await this.kafkaService.sendMessage(KafkaTopic.TRANSFORMED_REQUEST, kafkapayload);
 
         if (rawStatus) {
             const metadata = rawStatus as RecordMetadata[];
