@@ -3,12 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import {
-    DCATRootObject,
-    Dataset,
-    ContactPoint,
-    Distribution,
-} from "@dto/open-data-dk-dcat.dto";
+import { DCATRootObject, Dataset, ContactPoint, Distribution } from "@dto/open-data-dk-dcat.dto";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { Organization } from "@entities/organization.entity";
 import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
@@ -29,9 +24,7 @@ export class OpenDataDkSharingService {
     private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
     private readonly logger = new Logger(OpenDataDkSharingService.name);
 
-    async getDecodedDataInDataset(
-        dataset: OpenDataDkDataset
-    ): Promise<any[] | { error: ErrorCodes }> {
+    async getDecodedDataInDataset(dataset: OpenDataDkDataset): Promise<any[] | { error: ErrorCodes }> {
         const rawData = await this.repository
             .createQueryBuilder("dataset")
             .innerJoinAndSelect("dataset.dataTarget", "dt")
@@ -55,28 +48,26 @@ export class OpenDataDkSharingService {
         const results: any[] = [];
         rawData.dataTarget.connections.forEach(connection => {
             this.logger.debug(`Got connection(${connection.id})`);
-            connection.iotDevices.forEach(device => {
-                this.decodeDevice(device, connection, results);
+            connection.iotDevices.forEach(async device => {
+                await this.decodeDevice(device, connection, results);
             });
         });
         return results;
     }
 
-    private decodeDevice(
+    private async decodeDevice(
         device: IoTDevice,
         connection: IoTDevicePayloadDecoderDataTargetConnection,
         results: any[]
     ) {
         this.logger.debug(`Doing device ${device.name} / ${device.id}`);
         if (!device.latestReceivedMessage) {
-            this.logger.debug(
-                `Device ${device.name} / ${device.id} has no data ... skipping`
-            );
+            this.logger.debug(`Device ${device.name} / ${device.id} has no data ... skipping`);
             return;
         }
         try {
             if (connection.payloadDecoder != null) {
-                const decoded = this.payloadDecoderExecutorService.callUntrustedCode(
+                const decoded = await this.payloadDecoderExecutorService.callUntrustedCode(
                     connection.payloadDecoder.decodingFunction,
                     device,
                     device.latestReceivedMessage.rawData
@@ -110,12 +101,8 @@ export class OpenDataDkSharingService {
             .getOne();
     }
 
-    async getAllOpenDataDkSharesForOrganization(
-        organization: Organization
-    ): Promise<OpenDataDkDataset[]> {
-        return this.findDatasetWithRelations()
-            .where("org.id = :orgId", { orgId: organization.id })
-            .getMany();
+    async getAllOpenDataDkSharesForOrganization(organization: Organization): Promise<OpenDataDkDataset[]> {
+        return this.findDatasetWithRelations().where("org.id = :orgId", { orgId: organization.id }).getMany();
     }
 
     private findDatasetWithRelations() {
@@ -126,10 +113,7 @@ export class OpenDataDkSharingService {
             .innerJoin("app.belongsTo", "org");
     }
 
-    private mapToDCAT(
-        organization: Organization,
-        datasets: OpenDataDkDataset[]
-    ): DCATRootObject {
+    private mapToDCAT(organization: Organization, datasets: OpenDataDkDataset[]): DCATRootObject {
         const root = new DCATRootObject();
         root["@context"] = "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld";
         root["@type"] = "dcat:Catalog";
@@ -181,10 +165,7 @@ export class OpenDataDkSharingService {
     }
 
     private generateUrl(organization: Organization, dataset: OpenDataDkDataset): string {
-        const controllerUrl = Reflect.getMetadata(
-            PATH_METADATA,
-            OpenDataDkSharingController
-        );
+        const controllerUrl = Reflect.getMetadata(PATH_METADATA, OpenDataDkSharingController);
         const organizationId = organization.id;
         return `${this.BACKEND_BASE_URL}/api/v1/${controllerUrl}/${organizationId}/data/${dataset.id}`;
     }
