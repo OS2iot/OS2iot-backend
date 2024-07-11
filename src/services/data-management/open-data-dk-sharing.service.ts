@@ -12,13 +12,16 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import configuration from "@config/configuration";
 import { OpenDataDkSharingController } from "@admin-controller/open-data-dk-sharing.controller";
 import { ErrorCodes } from "@enum/error-codes.enum";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Injectable()
 export class OpenDataDkSharingService {
     constructor(
         @InjectRepository(OpenDataDkDataset)
         private repository: Repository<OpenDataDkDataset>,
-        private payloadDecoderExecutorService: PayloadDecoderExecutorService
+        private payloadDecoderExecutorService: PayloadDecoderExecutorService,
+        private chirpstackDeviceService: ChirpstackDeviceService
     ) {}
 
     private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
@@ -40,18 +43,17 @@ export class OpenDataDkSharingService {
             return { error: ErrorCodes.NoData };
         }
 
-        return this.decodeData(rawData);
+        return await this.decodeData(rawData);
     }
 
-    private decodeData(rawData: OpenDataDkDataset) {
-        // TODO: Do this in parallel
+    private async decodeData(rawData: OpenDataDkDataset) {
         const results: any[] = [];
-        rawData.dataTarget.connections.forEach(connection => {
+        for (const connection of rawData.dataTarget.connections) {
             this.logger.debug(`Got connection(${connection.id})`);
-            connection.iotDevices.forEach(async device => {
+            for (const device of connection.iotDevices) {
                 await this.decodeDevice(device, connection, results);
-            });
-        });
+            }
+        }
         return results;
     }
 
@@ -67,6 +69,14 @@ export class OpenDataDkSharingService {
         }
         try {
             if (connection.payloadDecoder != null) {
+                // Enrich lorawan devices with chirpstack data
+                if (
+                    device.type === IoTDeviceType.LoRaWAN &&
+                    connection.payloadDecoder.decodingFunction.includes("lorawanSettings")
+                ) {
+                    device = await this.chirpstackDeviceService.enrichLoRaWANDevice(device);
+                }
+
                 const decoded = await this.payloadDecoderExecutorService.callUntrustedCode(
                     connection.payloadDecoder.decodingFunction,
                     device,
