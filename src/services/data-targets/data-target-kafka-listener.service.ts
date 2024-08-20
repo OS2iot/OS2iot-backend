@@ -44,23 +44,16 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         try {
             iotDevice = await this.ioTDeviceService.findOne(dto.iotDeviceId);
         } catch (err) {
-            this.logger.error(
-                `Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`
-            );
+            this.logger.error(`Error finding IoTDevice by id: ${dto.iotDeviceId}. Stopping.`);
             return;
         }
 
-        this.logger.debug(
-            `Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`
-        );
+        this.logger.debug(`Sending payload from deviceId: ${iotDevice.id}; Name: '${iotDevice.name}'`);
 
         await this.findDataTargetsAndSend(iotDevice, dto);
     }
 
-    private async findDataTargetsAndSend(
-        iotDevice: IoTDevice,
-        dto: TransformedPayloadDto
-    ) {
+    private async findDataTargetsAndSend(iotDevice: IoTDevice, dto: TransformedPayloadDto) {
         // Get connections in order to only send to the dataTargets which is identified by the pair of IoTDevice and PayloadDecoder
         const dataTargets = await this.dataTargetService.findDataTargetsByConnectionPayloadDecoderAndIoTDevice(
             iotDevice.id,
@@ -79,13 +72,9 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
             if (target.type == DataTargetType.HttpPush) {
                 try {
                     const status = await this.httpPushDataTargetService.send(target, dto);
-                    this.logger.debug(
-                        `Sent to HttpPush target: ${JSON.stringify(status)}`
-                    );
+                    this.logger.debug(`Sent to HttpPush target: ${JSON.stringify(status)}`);
                 } catch (err) {
-                    this.logger.error(
-                        `Error while sending to Http Push DataTarget: ${err}`
-                    );
+                    this.logger.error(`Error while sending to Http Push DataTarget: ${err}`);
                 }
             } else if (target.type == DataTargetType.Fiware) {
                 try {
@@ -100,8 +89,10 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
                 } catch (err) {
                     this.logger.error(`Error while sending to MQTT DataTarget: ${err}`);
                 }
+            } else if (target.type === DataTargetType.OpenDataDK) {
+                // OpenDataDk data targets are handled uniquely and ignored here.
             } else {
-                throw new NotImplementedException(`Not implemented for: ${target.type}`);
+                this.logger.error(`Not implemented for: ${target.type}`);
             }
         });
     }

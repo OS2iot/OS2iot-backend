@@ -4,9 +4,10 @@ import { OpenDataDkSharingService } from "@services/data-management/open-data-dk
 import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PayloadDecoderExecutorModuleModule } from "@modules/payload-decoder-executor-module.module";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
-    imports: [SharedModule, OrganizationModule, PayloadDecoderExecutorModuleModule],
+    imports: [SharedModule, OrganizationModule, PayloadDecoderExecutorModuleModule, ChirpstackAdministrationModule],
     controllers: [OpenDataDkSharingController],
     providers: [OpenDataDkSharingService],
 })
