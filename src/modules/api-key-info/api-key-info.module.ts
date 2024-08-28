@@ -5,9 +5,9 @@ import { forwardRef, Module } from "@nestjs/common";
 import { ApiKeyInfoService } from "@services/api-key-info/api-key-info.service";
 
 @Module({
-    imports: [SharedModule, forwardRef(() => OrganizationModule)],
-    providers: [ApiKeyInfoService],
-    exports: [ApiKeyInfoService],
-    controllers: [ApiKeyInfoController],
+  imports: [SharedModule, forwardRef(() => OrganizationModule)],
+  providers: [ApiKeyInfoService],
+  exports: [ApiKeyInfoService],
+  controllers: [ApiKeyInfoController],
 })
 export class ApiKeyInfoModule {}

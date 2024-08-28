@@ -8,15 +8,15 @@ import { ApplicationModule } from "./application.module";
 import { IoTDeviceModule } from "./iot-device.module";
 
 @Module({
-    imports: [
-        SharedModule,
-        forwardRef(() => ApplicationModule), // because of circular reference
-        HttpModule,
-        ChirpstackAdministrationModule,
-        IoTDeviceModule,
-    ],
-    exports: [MulticastService],
-    controllers: [MulticastController],
-    providers: [MulticastService],
+  imports: [
+    SharedModule,
+    forwardRef(() => ApplicationModule), // because of circular reference
+    HttpModule,
+    ChirpstackAdministrationModule,
+    IoTDeviceModule,
+  ],
+  exports: [MulticastService],
+  controllers: [MulticastController],
+  providers: [MulticastService],
 })
 export class MulticastModule {}

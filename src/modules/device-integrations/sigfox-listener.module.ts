@@ -6,7 +6,7 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { SharedModule } from "@modules/shared.module";
 
 @Module({
-    imports: [SharedModule, IoTDeviceModule, ReceiveDataModule],
-    controllers: [SigFoxListenerController],
+  imports: [SharedModule, IoTDeviceModule, ReceiveDataModule],
+  controllers: [SigFoxListenerController],
 })
 export class SigFoxListenerModule {}

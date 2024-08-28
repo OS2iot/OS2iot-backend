@@ -1,8 +1,8 @@
 export class ListAllUsersMinimalResponseDto {
-    users: UsersMinimal[];
+  users: UsersMinimal[];
 }
 
 export class UsersMinimal {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }

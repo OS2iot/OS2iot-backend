@@ -17,32 +17,30 @@ import { ApiKeyStrategy } from "@auth/api-key.strategy";
 import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({ load: [configuration] }),
-        PassportModule.register({ defaultStrategy: "jwt" }),
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: async (configService: ConfigService) => ({
-                secret: configService.get<string>("jwt.secret"),
-                signOptions: {
-                    expiresIn: configService.get<string>("jwt.expiresIn"),
-                },
-            }),
-        }),
-        forwardRef(() => UserModule),
-        forwardRef(() => PermissionModule),
-        forwardRef(() => OrganizationModule),
-        forwardRef(() => ApiKeyModule)
-    ],
-    providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy, ApiKeyStrategy],
-    exports: [AuthService],
-    controllers: [AuthController],
+  imports: [
+    ConfigModule.forRoot({ load: [configuration] }),
+    PassportModule.register({ defaultStrategy: "jwt" }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>("jwt.secret"),
+        signOptions: {
+          expiresIn: configService.get<string>("jwt.expiresIn"),
+        },
+      }),
+    }),
+    forwardRef(() => UserModule),
+    forwardRef(() => PermissionModule),
+    forwardRef(() => OrganizationModule),
+    forwardRef(() => ApiKeyModule),
+  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy, ApiKeyStrategy],
+  exports: [AuthService],
+  controllers: [AuthController],
 })
 export class AuthModule {
-    configure(consumer: MiddlewareConsumer): void {
-        consumer
-            .apply(HandleRedirectUrlParameterMiddleware)
-            .forRoutes("auth/kombit/login");
-    }
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(HandleRedirectUrlParameterMiddleware).forRoutes("auth/kombit/login");
+  }
 }

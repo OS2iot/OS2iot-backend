@@ -3,7 +3,7 @@ import { TestPayloadDecoderController } from "@admin-controller/test-payload-dec
 import { PayloadDecoderExecutorModuleModule } from "@modules/payload-decoder-executor-module.module";
 
 @Module({
-    imports: [PayloadDecoderExecutorModuleModule],
-    controllers: [TestPayloadDecoderController],
+  imports: [PayloadDecoderExecutorModuleModule],
+  controllers: [TestPayloadDecoderController],
 })
 export class TestPayloadDecoderModule {}

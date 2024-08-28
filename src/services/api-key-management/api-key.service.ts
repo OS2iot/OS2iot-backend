@@ -15,128 +15,111 @@ import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class ApiKeyService {
-    constructor(
-        @InjectRepository(ApiKey)
-        private apiKeyRepository: Repository<ApiKey>,
-        @Inject(forwardRef(() => PermissionService))
-        private permissionService: PermissionService
-    ) {}
-    private readonly logger = new Logger(ApiKeyService.name, { timestamp: true });
+  constructor(
+    @InjectRepository(ApiKey)
+    private apiKeyRepository: Repository<ApiKey>,
+    @Inject(forwardRef(() => PermissionService))
+    private permissionService: PermissionService
+  ) {}
+  private readonly logger = new Logger(ApiKeyService.name, { timestamp: true });
 
-    findOne(key: string): Promise<ApiKey> {
-        return this.apiKeyRepository.findOne({
-            where: { key },
-            relations: ["systemUser"],
-        });
+  findOne(key: string): Promise<ApiKey> {
+    return this.apiKeyRepository.findOne({
+      where: { key },
+      relations: ["systemUser"],
+    });
+  }
+
+  findOneByIdWithPermissions(id: number): Promise<ApiKey> {
+    return this.apiKeyRepository.findOne({
+      where: { id },
+      relations: [nameof<ApiKey>("permissions")],
+    });
+  }
+
+  findOneByIdWithRelations(id: number): Promise<ApiKey> {
+    return this.apiKeyRepository.findOne({
+      where: { id },
+      relations: [nameof<ApiKey>("permissions"), nameof<ApiKey>("systemUser")],
+    });
+  }
+
+  async findAllByOrganizationId(query: ListAllApiKeysDto): Promise<ListAllApiKeysResponseDto> {
+    const permIds = (await this.permissionService.getAllPermissionsInOrganizations([query.organizationId])).data.map(
+      x => x.id
+    );
+
+    let dbQuery = this.apiKeyRepository
+      .createQueryBuilder("api_key")
+      .innerJoinAndSelect("api_key.permissions", "perm")
+      .innerJoinAndSelect("perm.organization", "org")
+      .take(query.limit ? +query.limit : 100)
+      .skip(query.offset ? +query.offset : 0);
+
+    if (permIds.length) {
+      dbQuery = dbQuery.where("perm.id IN (:...permIds)", { permIds });
     }
 
-    findOneByIdWithPermissions(id: number): Promise<ApiKey> {
-        return this.apiKeyRepository.findOne({
-            where: { id },
-            relations: [nameof<ApiKey>("permissions")],
-        });
+    if (query.orderOn && query.sort) {
+      dbQuery = dbQuery.orderBy(`api_key.${query.orderOn}`, query.sort.toUpperCase() as "ASC" | "DESC");
     }
 
-    findOneByIdWithRelations(id: number): Promise<ApiKey> {
-        return this.apiKeyRepository.findOne({
-            where: { id },
-            relations: [nameof<ApiKey>("permissions"), nameof<ApiKey>("systemUser")],
-        });
+    const [data, count] = await dbQuery.getManyAndCount();
+
+    return {
+      data,
+      count,
+    };
+  }
+
+  async create(dto: CreateApiKeyDto, userId: number): Promise<ApiKeyResponseDto> {
+    // Create the key
+    const apiKey = new ApiKey();
+    apiKey.key = uuidv4();
+    apiKey.name = dto.name;
+    apiKey.updatedBy = userId;
+    apiKey.createdBy = userId;
+
+    // Create the system user
+    const systemUser = new User();
+    systemUser.active = false;
+    systemUser.isSystemUser = true;
+    systemUser.passwordHash = uuidv4(); // Random password, user can never log in
+    systemUser.name = apiKey.name;
+    apiKey.systemUser = systemUser;
+
+    if (dto.permissionIds?.length > 0) {
+      const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
+
+      apiKey.permissions = permissionsDb.map(pm => ({ ...pm, apiKeys: null }));
     }
 
-    async findAllByOrganizationId(
-        query: ListAllApiKeysDto
-    ): Promise<ListAllApiKeysResponseDto> {
-        const permIds = (
-            await this.permissionService.getAllPermissionsInOrganizations([
-                query.organizationId,
-            ])
-        ).data.map(x => x.id);
+    return await this.apiKeyRepository.save(apiKey);
+  }
 
-        let dbQuery = this.apiKeyRepository
-            .createQueryBuilder("api_key")
-            .innerJoinAndSelect("api_key.permissions", "perm")
-            .innerJoinAndSelect("perm.organization", "org")
-            .take(query.limit ? +query.limit : 100)
-            .skip(query.offset ? +query.offset : 0);
+  async update(id: number, dto: UpdateApiKeyDto, userId: number): Promise<ApiKeyResponseDto> {
+    const apiKey = await this.findOneByIdWithRelations(id);
+    apiKey.name = dto.name;
+    apiKey.updatedBy = userId;
 
-        if (permIds.length) {
-            dbQuery = dbQuery.where("perm.id IN (:...permIds)", { permIds });
-        }
-
-        if (query.orderOn && query.sort) {
-            dbQuery = dbQuery.orderBy(
-                `api_key.${query.orderOn}`,
-                query.sort.toUpperCase() as "ASC" | "DESC"
-            );
-        }
-
-        const [data, count] = await dbQuery.getManyAndCount();
-
-        return {
-            data,
-            count,
-        };
+    if (dto.permissionIds?.length) {
+      const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
+      apiKey.permissions = permissionsDb.map(pm => ({
+        ...pm,
+        apiKeys: [],
+      }));
     }
 
-    async create(dto: CreateApiKeyDto, userId: number): Promise<ApiKeyResponseDto> {
-        // Create the key
-        const apiKey = new ApiKey();
-        apiKey.key = uuidv4();
-        apiKey.name = dto.name;
-        apiKey.updatedBy = userId;
-        apiKey.createdBy = userId;
-
-        // Create the system user
-        const systemUser = new User();
-        systemUser.active = false;
-        systemUser.isSystemUser = true;
-        systemUser.passwordHash = uuidv4(); // Random password, user can never log in
-        systemUser.name = apiKey.name;
-        apiKey.systemUser = systemUser;
-
-        if (dto.permissionIds?.length > 0) {
-            const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissionIds
-            );
-
-            apiKey.permissions = permissionsDb.map(
-                pm => ({ ...pm, apiKeys: null })
-            );
-        }
-
-        return await this.apiKeyRepository.save(apiKey);
+    if (dto.name !== apiKey.name) {
+      apiKey.systemUser.name = dto.name;
+      apiKey.name = dto.name;
     }
 
-    async update(
-        id: number,
-        dto: UpdateApiKeyDto,
-        userId: number
-    ): Promise<ApiKeyResponseDto> {
-        const apiKey = await this.findOneByIdWithRelations(id);
-        apiKey.name = dto.name;
-        apiKey.updatedBy = userId;
+    return await this.apiKeyRepository.save(apiKey);
+  }
 
-        if (dto.permissionIds?.length) {
-            const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissionIds
-            );
-            apiKey.permissions = permissionsDb.map(pm => ({
-                ...pm,
-                apiKeys: [],
-            }));
-        }
-
-        if (dto.name !== apiKey.name) {
-            apiKey.systemUser.name = dto.name;
-            apiKey.name = dto.name;
-        }
-
-        return await this.apiKeyRepository.save(apiKey);
-    }
-
-    async delete(id: number): Promise<DeleteResponseDto> {
-        const res = await this.apiKeyRepository.delete(id);
-        return new DeleteResponseDto(res.affected);
-    }
+  async delete(id: number): Promise<DeleteResponseDto> {
+    const res = await this.apiKeyRepository.delete(id);
+    return new DeleteResponseDto(res.affected);
+  }
 }

@@ -2,5 +2,5 @@
 import { ApiBearerAuth, ApiSecurity } from "@nestjs/swagger";
 
 export function ApiAuth() {
-    return applyDecorators(ApiBearerAuth(), ApiSecurity("X-API-KEY"));
+  return applyDecorators(ApiBearerAuth(), ApiSecurity("X-API-KEY"));
 }

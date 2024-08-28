@@ -6,9 +6,9 @@ import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.
 import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
 
 export const iotDeviceTypeMap = {
-    [IoTDeviceType.GenericHttp]: GenericHTTPDevice,
-    [IoTDeviceType.LoRaWAN]: LoRaWANDevice,
-    [IoTDeviceType.SigFox]: SigFoxDevice,
-    [IoTDeviceType.MQTTInternalBroker]: MQTTInternalBrokerDevice,
-    [IoTDeviceType.MQTTExternalBroker]: MQTTExternalBrokerDevice,
+  [IoTDeviceType.GenericHttp]: GenericHTTPDevice,
+  [IoTDeviceType.LoRaWAN]: LoRaWANDevice,
+  [IoTDeviceType.SigFox]: SigFoxDevice,
+  [IoTDeviceType.MQTTInternalBroker]: MQTTInternalBrokerDevice,
+  [IoTDeviceType.MQTTExternalBroker]: MQTTExternalBrokerDevice,
 };

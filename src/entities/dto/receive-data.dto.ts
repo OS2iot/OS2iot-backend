@@ -9,7 +9,7 @@ import { IsOptional } from "class-validator";
  * @see https://github.com/typestack/class-validator/issues/1503
  */
 export class ReceiveDataDto {
-    @Exclude()
-    @IsOptional()
-    ignoreMe: unknown;
+  @Exclude()
+  @IsOptional()
+  ignoreMe: unknown;
 }

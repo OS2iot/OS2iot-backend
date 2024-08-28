@@ -13,55 +13,55 @@ import { Gateway } from "@entities/gateway.entity";
 @Entity("organization")
 @Unique(["name"])
 export class Organization extends DbBaseEntity {
-    @Column({ unique: true })
-    name: string;
+  @Column({ unique: true })
+  name: string;
 
-    @Column({ default: false })
-    openDataDkRegistered: boolean;
+  @Column({ default: false })
+  openDataDkRegistered: boolean;
 
-    @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Application,
-        application => application.belongsTo,
-        { onDelete: "CASCADE" }
-    )
-    applications: Application[];
-
-    @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Permission,
-        permission => permission.organization,
-        { onDelete: "CASCADE" }
-    )
-    permissions: Permission[];
-
-    @OneToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => PayloadDecoder,
-        payloadDecoder => payloadDecoder.organization,
-        { onDelete: "CASCADE", nullable: true }
-    )
-    payloadDecoders?: PayloadDecoder[];
-
+  @OneToMany(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @OneToMany(type => SigFoxGroup, sigfoxGroup => sigfoxGroup.belongsTo, {
-        onDelete: "CASCADE",
-        nullable: true,
-    })
-    sigfoxGroups: SigFoxGroup[];
+    type => Application,
+    application => application.belongsTo,
+    { onDelete: "CASCADE" }
+  )
+  applications: Application[];
 
+  @OneToMany(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @OneToMany(type => DeviceModel, deviceModel => deviceModel.belongsTo, {
-        onDelete: "CASCADE",
-        nullable: true,
-    })
-    deviceModels?: DeviceModel[];
+    type => Permission,
+    permission => permission.organization,
+    { onDelete: "CASCADE" }
+  )
+  permissions: Permission[];
 
-    @ManyToMany(_ => User, user => user.requestedOrganizations, {
-        nullable: true,
-    })
-    awaitingUsers?: User[];
+  @OneToMany(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    type => PayloadDecoder,
+    payloadDecoder => payloadDecoder.organization,
+    { onDelete: "CASCADE", nullable: true }
+  )
+  payloadDecoders?: PayloadDecoder[];
 
-    @OneToMany(_ => Gateway, gateway => gateway.organization, { nullable: true })
-    gateways?: Gateway[];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  @OneToMany(type => SigFoxGroup, sigfoxGroup => sigfoxGroup.belongsTo, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
+  sigfoxGroups: SigFoxGroup[];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  @OneToMany(type => DeviceModel, deviceModel => deviceModel.belongsTo, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
+  deviceModels?: DeviceModel[];
+
+  @ManyToMany(_ => User, user => user.requestedOrganizations, {
+    nullable: true,
+  })
+  awaitingUsers?: User[];
+
+  @OneToMany(_ => Gateway, gateway => gateway.organization, { nullable: true })
+  gateways?: Gateway[];
 }

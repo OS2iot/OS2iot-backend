@@ -4,9 +4,9 @@ import { HealthCheckModule } from "@modules/health-check.module";
 
 @Global()
 @Module({
-    controllers: [],
-    imports: [HealthCheckModule],
-    providers: [KafkaService],
-    exports: [KafkaService],
+  controllers: [],
+  imports: [HealthCheckModule],
+  providers: [KafkaService],
+  exports: [KafkaService],
 })
 export class KafkaModule {}

@@ -5,8 +5,8 @@ import { ChirpstackAdministrationModule } from "./device-integrations/chirpstack
 import { SharedModule } from "./shared.module";
 
 @Module({
-    imports: [ChirpstackAdministrationModule, SharedModule],
-    providers: [SearchService],
-    controllers: [SearchController],
+  imports: [ChirpstackAdministrationModule, SharedModule],
+  providers: [SearchService],
+  controllers: [SearchController],
 })
 export class SearchModule {}

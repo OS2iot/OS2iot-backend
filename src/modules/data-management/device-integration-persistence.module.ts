@@ -5,7 +5,7 @@ import { Module } from "@nestjs/common";
 import { DeviceIntegrationPersistenceService } from "@services/data-management/device-integration-persistence.service";
 
 @Module({
-    imports: [SharedModule, IoTDeviceModule, HttpModule],
-    providers: [DeviceIntegrationPersistenceService],
+  imports: [SharedModule, IoTDeviceModule, HttpModule],
+  providers: [DeviceIntegrationPersistenceService],
 })
 export class DeviceIntegrationPersistenceModule {}

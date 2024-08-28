@@ -6,12 +6,8 @@ import { ConfigModule } from "@nestjs/config";
 import { GatewayPersistenceService } from "@services/data-management/gateway-persistence.service";
 
 @Module({
-    imports: [
-        SharedModule,
-        ConfigModule.forRoot({ load: [configuration] }),
-        LoRaWANGatewayModule,
-    ],
-    exports: [],
-    providers: [GatewayPersistenceService],
+  imports: [SharedModule, ConfigModule.forRoot({ load: [configuration] }), LoRaWANGatewayModule],
+  exports: [],
+  providers: [GatewayPersistenceService],
 })
 export class GatewayPersistenceModule {}

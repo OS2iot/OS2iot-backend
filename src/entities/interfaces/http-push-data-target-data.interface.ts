@@ -1,4 +1,4 @@
 export interface HttpPushDataTargetData {
-    rawBody: string;
-    mimeType: string;
+  rawBody: string;
+  mimeType: string;
 }

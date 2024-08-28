@@ -12,27 +12,27 @@ import { DeviceModel } from "@entities/device-model.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Header,
-    NotFoundException,
-    Param,
-    ParseIntPipe,
-    Post,
-    Put,
-    Query,
-    Req,
-    UseGuards,
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBadRequestResponse,
-    ApiForbiddenResponse,
-    ApiOperation,
-    ApiTags,
-    ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiForbiddenResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { AuditLog } from "@services/audit-log.service";
 import { DeviceModelService } from "@services/device-management/device-model.service";
@@ -46,93 +46,93 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class DeviceModelController {
-    constructor(private service: DeviceModelService) {}
+  constructor(private service: DeviceModelService) {}
 
-    @Get()
-    @ApiOperation({ summary: "Get all device models" })
-    async findAll(
-        @Req() req: AuthenticatedRequest,
-        @Query() query?: ListAllDeviceModelsDto
-    ): Promise<ListAllDeviceModelResponseDto> {
-        if (query?.organizationId != null) {
-            checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.ApplicationRead);
-            return this.service.getAllDeviceModelsByOrgIds([query?.organizationId], query);
-        }
-
-        const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
-        return this.service.getAllDeviceModelsByOrgIds(orgIds, query);
+  @Get()
+  @ApiOperation({ summary: "Get all device models" })
+  async findAll(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllDeviceModelsDto
+  ): Promise<ListAllDeviceModelResponseDto> {
+    if (query?.organizationId != null) {
+      checkIfUserHasAccessToOrganization(req, query?.organizationId, OrganizationAccessScope.ApplicationRead);
+      return this.service.getAllDeviceModelsByOrgIds([query?.organizationId], query);
     }
 
-    @Get(":id")
-    @ApiOperation({ summary: "Get one device model" })
-    async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DeviceModel> {
-        const deviceModel = await this.service.getById(id);
-        if (!deviceModel) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+    const orgIds = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
+    return this.service.getAllDeviceModelsByOrgIds(orgIds, query);
+  }
 
-        checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationRead);
-        return deviceModel;
+  @Get(":id")
+  @ApiOperation({ summary: "Get one device model" })
+  async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DeviceModel> {
+    const deviceModel = await this.service.getById(id);
+    if (!deviceModel) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
 
-    @Post()
-    @Header("Cache-Control", "none")
-    @ApiOperation({ summary: "Create a new device model" })
-    @ApiBadRequestResponse()
-    async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateDeviceModelDto): Promise<DeviceModel> {
-        try {
-            checkIfUserHasAccessToOrganization(req, dto.belongsToId, OrganizationAccessScope.ApplicationWrite);
+    checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationRead);
+    return deviceModel;
+  }
 
-            const res = await this.service.create(dto, req.user.userId);
-            AuditLog.success(ActionType.CREATE, DeviceModel.name, req.user.userId, res.id);
-            return res;
-        } catch (err) {
-            AuditLog.fail(ActionType.CREATE, DeviceModel.name, req.user.userId);
-            throw err;
-        }
-    }
+  @Post()
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Create a new device model" })
+  @ApiBadRequestResponse()
+  async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateDeviceModelDto): Promise<DeviceModel> {
+    try {
+      checkIfUserHasAccessToOrganization(req, dto.belongsToId, OrganizationAccessScope.ApplicationWrite);
 
-    @Put(":id")
-    @Header("Cache-Control", "none")
-    @ApiOperation({ summary: "Update a device model" })
-    @ApiBadRequestResponse()
-    async update(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number,
-        @Body() dto: UpdateDeviceModelDto
-    ): Promise<DeviceModel> {
-        try {
-            const deviceModel = await this.service.getByIdWithRelations(id);
-            checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
-            const res = await this.service.update(deviceModel, dto, req.user.userId);
-            AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
-            return res;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
-            throw err;
-        }
+      const res = await this.service.create(dto, req.user.userId);
+      AuditLog.success(ActionType.CREATE, DeviceModel.name, req.user.userId, res.id);
+      return res;
+    } catch (err) {
+      AuditLog.fail(ActionType.CREATE, DeviceModel.name, req.user.userId);
+      throw err;
     }
+  }
 
-    @Delete(":id")
-    @Header("Cache-Control", "none")
-    @ApiOperation({ summary: "Delete a device model" })
-    @ApiBadRequestResponse()
-    async delete(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<DeleteResponseDto> {
-        try {
-            const deviceModel = await this.service.getByIdWithRelations(id);
-            checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
-            const res = await this.service.delete(id);
-            AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
-            return new DeleteResponseDto(res.affected);
-        } catch (err) {
-            AuditLog.fail(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
-            if (err?.name == "QueryFailedError") {
-                throw new BadRequestException(ErrorCodes.DeleteNotAllowedItemIsInUse);
-            }
-            throw err;
-        }
+  @Put(":id")
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Update a device model" })
+  @ApiBadRequestResponse()
+  async update(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() dto: UpdateDeviceModelDto
+  ): Promise<DeviceModel> {
+    try {
+      const deviceModel = await this.service.getByIdWithRelations(id);
+      checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
+      const res = await this.service.update(deviceModel, dto, req.user.userId);
+      AuditLog.success(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
+      return res;
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, DeviceModel.name, req.user.userId, id);
+      throw err;
     }
+  }
+
+  @Delete(":id")
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Delete a device model" })
+  @ApiBadRequestResponse()
+  async delete(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<DeleteResponseDto> {
+    try {
+      const deviceModel = await this.service.getByIdWithRelations(id);
+      checkIfUserHasAccessToOrganization(req, deviceModel.belongsTo.id, OrganizationAccessScope.ApplicationWrite);
+      const res = await this.service.delete(id);
+      AuditLog.success(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
+      return new DeleteResponseDto(res.affected);
+    } catch (err) {
+      AuditLog.fail(ActionType.DELETE, DeviceModel.name, req.user.userId, id);
+      if (err?.name == "QueryFailedError") {
+        throw new BadRequestException(ErrorCodes.DeleteNotAllowedItemIsInUse);
+      }
+      throw err;
+    }
+  }
 }

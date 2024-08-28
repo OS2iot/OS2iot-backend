@@ -2,9 +2,9 @@
 import { MQTTDetails } from "@dto/mqtt-internal-broker-device.dto";
 
 export class MQTTExternalBrokerDeviceDTO extends MQTTExternalBrokerDevice {
-    mqttExternalBrokerSettings: MQTTExternalBrokerSettingsDTO;
+  mqttExternalBrokerSettings: MQTTExternalBrokerSettingsDTO;
 }
 
 export class MQTTExternalBrokerSettingsDTO extends MQTTDetails {
-    invalidMqttConfig: boolean;
+  invalidMqttConfig: boolean;
 }

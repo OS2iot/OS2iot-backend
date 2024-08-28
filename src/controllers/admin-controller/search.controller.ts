@@ -19,27 +19,27 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class SearchController {
-    constructor(private service: SearchService) {}
+  constructor(private service: SearchService) {}
 
-    private readonly logger = new Logger(SearchController.name);
+  private readonly logger = new Logger(SearchController.name);
 
-    @Get()
-    @ApiOperation({
-        summary:
-            "Search for " +
-            Object.values(SearchResultType)
-                .filter(x => !isNumber(x))
-                .join(", "),
-    })
-    async search(
-        @Req() req: AuthenticatedRequest,
-        @Query("q") query?: string,
-        @Query("limit", new ParseIntPipe()) limit?: number,
-        @Query("offset", new ParseIntPipe()) offset?: number
-    ): Promise<ListAllSearchResultsResponseDto> {
-        if (query == null || query.trim() === "") {
-            throw new BadRequestException(ErrorCodes.QueryMustNotBeEmpty);
-        }
-        return await this.service.findByQuery(req, query, limit, offset);
+  @Get()
+  @ApiOperation({
+    summary:
+      "Search for " +
+      Object.values(SearchResultType)
+        .filter(x => !isNumber(x))
+        .join(", "),
+  })
+  async search(
+    @Req() req: AuthenticatedRequest,
+    @Query("q") query?: string,
+    @Query("limit", new ParseIntPipe()) limit?: number,
+    @Query("offset", new ParseIntPipe()) offset?: number
+  ): Promise<ListAllSearchResultsResponseDto> {
+    if (query == null || query.trim() === "") {
+      throw new BadRequestException(ErrorCodes.QueryMustNotBeEmpty);
     }
+    return await this.service.findByQuery(req, query, limit, offset);
+  }
 }

@@ -8,9 +8,9 @@ import { OrganizationModule } from "@modules/user-management/organization.module
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
 
 @Module({
-    imports: [SharedModule, IoTDeviceModule, DataTargetModule, OrganizationModule],
-    exports: [PayloadDecoderService],
-    controllers: [PayloadDecoderController],
-    providers: [PayloadDecoderService],
+  imports: [SharedModule, IoTDeviceModule, DataTargetModule, OrganizationModule],
+  exports: [PayloadDecoderService],
+  controllers: [PayloadDecoderController],
+  providers: [PayloadDecoderService],
 })
 export class PayloadDecoderModule {}

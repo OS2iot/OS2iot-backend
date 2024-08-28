@@ -4,8 +4,8 @@ import { HttpPushDataTargetService } from "@services/data-targets/http-push-data
 import { MqttDataTargetService } from "@services/data-targets/mqtt-data-target.service";
 
 @Module({
-    imports: [HttpModule],
-    providers: [HttpPushDataTargetService, MqttDataTargetService],
-    exports: [HttpPushDataTargetService, MqttDataTargetService],
+  imports: [HttpModule],
+  providers: [HttpPushDataTargetService, MqttDataTargetService],
+  exports: [HttpPushDataTargetService, MqttDataTargetService],
 })
 export class DataTargetSenderModule {}

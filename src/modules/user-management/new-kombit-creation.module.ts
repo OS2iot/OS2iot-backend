@@ -7,7 +7,7 @@ import { UserModule } from "./user.module";
 import { PermissionModule } from "./permission.module";
 
 @Module({
-    imports: [SharedModule, OrganizationModule, UserModule, PermissionModule],
-    controllers: [NewKombitCreationController],
+  imports: [SharedModule, OrganizationModule, UserModule, PermissionModule],
+  controllers: [NewKombitCreationController],
 })
 export class NewKombitCreationModule {}

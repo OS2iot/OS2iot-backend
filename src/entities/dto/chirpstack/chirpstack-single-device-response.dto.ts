@@ -1,11 +1,11 @@
 import { ChirpstackDeviceContentsDto } from "./chirpstack-device-contents.dto";
 
 export class ChirpstackSingleDeviceResponseDto {
-    device: ChirpstackDeviceContentsDto;
+  device: ChirpstackDeviceContentsDto;
 
-    lastSeenAt: string;
+  lastSeenAt: string;
 
-    deviceStatusBattery: number;
+  deviceStatusBattery: number;
 
-    deviceStatusMargin: number;
+  deviceStatusMargin: number;
 }

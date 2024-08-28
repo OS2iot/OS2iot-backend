@@ -12,60 +12,47 @@ import { BaseDataTargetService } from "./base-data-target.service";
 
 @Injectable()
 export class MqttDataTargetService extends BaseDataTargetService {
-    constructor(private httpService: HttpService) {
-        super();
-    }
+  constructor(private httpService: HttpService) {
+    super();
+  }
 
-    protected readonly logger = new Logger(MqttDataTargetService.name);
+  protected readonly logger = new Logger(MqttDataTargetService.name);
 
-    send(
-        datatarget: DataTarget,
-        dto: TransformedPayloadDto,
-        onDone: (status: DataTargetSendStatus, targetType: DataTargetType) => void
-    ): void {
-        const config: MqttDataTargetConfiguration = (
-            datatarget as MqttDataTarget
-        ).toConfiguration();
+  send(
+    datatarget: DataTarget,
+    dto: TransformedPayloadDto,
+    onDone: (status: DataTargetSendStatus, targetType: DataTargetType) => void
+  ): void {
+    const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
 
-        // Setup client
-        const client = mqtt.connect(config.url, {
-            clean: true,
-            clientId: MqttClientId,
-            username: config.username,
-            password: config.password,
-            port: config.port,
-            connectTimeout: config.timeout,
-            // Accept connection to servers with self-signed certificates
-            rejectUnauthorized: false,
-        });
-        const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
+    // Setup client
+    const client = mqtt.connect(config.url, {
+      clean: true,
+      clientId: MqttClientId,
+      username: config.username,
+      password: config.password,
+      port: config.port,
+      connectTimeout: config.timeout,
+      // Accept connection to servers with self-signed certificates
+      rejectUnauthorized: false,
+    });
+    const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
 
-        client.once("connect", () => {
-            client.publish(
-                config.topic,
-                JSON.stringify(dto.payload),
-                { qos: config.qos },
-                (err, packet) => {
-                    try {
-                        if (err) {
-                            const status = this.failure(
-                                targetForLogging,
-                                err?.message,
-                                datatarget
-                            );
-                            onDone(status, DataTargetType.MQTT);
-                        } else {
-                            this.logger.debug(
-                                "Packet received: " + JSON.stringify(packet)
-                            );
-                            const status = this.success(targetForLogging);
-                            onDone(status, DataTargetType.MQTT);
-                        }
-                    } finally {
-                        client.end();
-                    }
-                }
-            );
-        });
-    }
+    client.once("connect", () => {
+      client.publish(config.topic, JSON.stringify(dto.payload), { qos: config.qos }, (err, packet) => {
+        try {
+          if (err) {
+            const status = this.failure(targetForLogging, err?.message, datatarget);
+            onDone(status, DataTargetType.MQTT);
+          } else {
+            this.logger.debug("Packet received: " + JSON.stringify(packet));
+            const status = this.success(targetForLogging);
+            onDone(status, DataTargetType.MQTT);
+          }
+        } finally {
+          client.end();
+        }
+      });
+    });
+  }
 }

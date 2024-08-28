@@ -1,3 +1,3 @@
 export enum multicastGroup {
-    ClassC = "CLASS_C",
+  ClassC = "CLASS_C",
 }
