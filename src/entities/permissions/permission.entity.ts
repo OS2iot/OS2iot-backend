@@ -10,42 +10,42 @@ import { nameof } from "@helpers/type-helper";
 
 @Entity("permission")
 export class Permission extends DbBaseEntity {
-    constructor(name: string, org?: Organization, addNewApps = false) {
-        super();
-        this.name = name;
-        this.organization = org;
-        this.automaticallyAddNewApplications = addNewApps;
-    }
+  constructor(name: string, org?: Organization, addNewApps = false) {
+    super();
+    this.name = name;
+    this.organization = org;
+    this.automaticallyAddNewApplications = addNewApps;
+  }
 
-    @OneToMany(() => PermissionTypeEntity, entity => entity.permission, {
-        nullable: false,
-        cascade: true,
-    })
-    type: PermissionTypeEntity[];
+  @OneToMany(() => PermissionTypeEntity, entity => entity.permission, {
+    nullable: false,
+    cascade: true,
+  })
+  type: PermissionTypeEntity[];
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @ManyToMany(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        () => User,
-        user => user.permissions
-    )
-    users: User[];
+  @ManyToMany(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    () => User,
+    user => user.permissions
+  )
+  users: User[];
 
-    @ManyToMany(() => Application, application => application.permissions)
-    applications: Application[];
+  @ManyToMany(() => Application, application => application.permissions)
+  applications: Application[];
 
-    // ORM-specific column for extracting only the ids of related applications
-    @RelationId(nameof<Permission>("applications"))
-    applicationIds: Application["id"][];
+  // ORM-specific column for extracting only the ids of related applications
+  @RelationId(nameof<Permission>("applications"))
+  applicationIds: Application["id"][];
 
-    @Column({ nullable: true, default: false, type: Boolean })
-    automaticallyAddNewApplications = false;
+  @Column({ nullable: true, default: false, type: Boolean })
+  automaticallyAddNewApplications = false;
 
-    @ManyToOne(() => Organization, { onDelete: "CASCADE" })
-    organization: Organization;
+  @ManyToOne(() => Organization, { onDelete: "CASCADE" })
+  organization: Organization;
 
-    @ManyToMany(_ => ApiKey, key => key.permissions, { onDelete: "CASCADE" })
-    apiKeys: ApiKey[];
+  @ManyToMany(_ => ApiKey, key => key.permissions, { onDelete: "CASCADE" })
+  apiKeys: ApiKey[];
 }

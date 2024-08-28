@@ -1,7 +1,7 @@
 export class SigFoxDownlinkCallbackDto {
-    [key: string]: SigFoxDownlinkDataDto;
+  [key: string]: SigFoxDownlinkDataDto;
 }
 
 export class SigFoxDownlinkDataDto {
-    downlinkData: string;
+  downlinkData: string;
 }

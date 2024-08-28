@@ -1,4 +1,4 @@
 ﻿export enum AuthenticationType {
-    PASSWORD = "PASSWORD",
-    CERTIFICATE = "CERTIFICATE",
+  PASSWORD = "PASSWORD",
+  CERTIFICATE = "CERTIFICATE",
 }

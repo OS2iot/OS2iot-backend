@@ -6,30 +6,30 @@ import { DbBaseEntity } from "./base.entity";
 
 @Entity("lorawan-multicast")
 export class LorawanMulticastDefinition extends DbBaseEntity {
-    @Column()
-    address: string;
+  @Column()
+  address: string;
 
-    @Column()
-    networkSessionKey: string;
+  @Column()
+  networkSessionKey: string;
 
-    @Column()
-    applicationSessionKey: string;
+  @Column()
+  applicationSessionKey: string;
 
-    @Column()
-    frameCounter: number;
+  @Column()
+  frameCounter: number;
 
-    @Column()
-    dataRate: number;
+  @Column()
+  dataRate: number;
 
-    @Column()
-    frequency: number;
+  @Column()
+  frequency: number;
 
-    @Column()
-    groupType: multicastGroup;
+  @Column()
+  groupType: multicastGroup;
 
-    @OneToOne(type => Multicast, multicast => multicast.lorawanMulticastDefinition)
-    multicast: Multicast;
+  @OneToOne(type => Multicast, multicast => multicast.lorawanMulticastDefinition)
+  multicast: Multicast;
 
-    @Column({ nullable: true })
-    chirpstackGroupId?: string;
+  @Column({ nullable: true })
+  chirpstackGroupId?: string;
 }

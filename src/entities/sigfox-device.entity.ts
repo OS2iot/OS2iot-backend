@@ -6,22 +6,22 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 
 @ChildEntity(IoTDeviceType.SigFox)
 export class SigFoxDevice extends IoTDevice {
-    @Column({ nullable: true })
-    @Max(8, { message: "Must at most be 8 characters" })
-    deviceId: string;
+  @Column({ nullable: true })
+  @Max(8, { message: "Must at most be 8 characters" })
+  deviceId: string;
 
-    @Column({ nullable: true })
-    @Max(24, { message: "Must at most be 24 characters" })
-    deviceTypeId: string;
+  @Column({ nullable: true })
+  @Max(24, { message: "Must at most be 24 characters" })
+  deviceTypeId: string;
 
-    @Column({ nullable: true })
-    groupId: string;
+  @Column({ nullable: true })
+  groupId: string;
 
-    @Column({ nullable: true })
-    downlinkPayload: string;
+  @Column({ nullable: true })
+  downlinkPayload: string;
 
-    @BeforeInsert()
-    private beforeInsert() {
-        this.type = IoTDeviceType.SigFox;
-    }
+  @BeforeInsert()
+  private beforeInsert() {
+    this.type = IoTDeviceType.SigFox;
+  }
 }

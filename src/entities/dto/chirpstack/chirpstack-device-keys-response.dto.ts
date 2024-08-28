@@ -1,9 +1,9 @@
 export class ChirpstackDeviceKeysResponseDto {
-    deviceKeys: ChirpstackDeviceKeysContentDto;
+  deviceKeys: ChirpstackDeviceKeysContentDto;
 }
 
 export class ChirpstackDeviceKeysContentDto {
-    devEUI: string;
-    nwkKey: string;
-    appKey: string;
+  devEUI: string;
+  nwkKey: string;
+  appKey: string;
 }

@@ -6,9 +6,9 @@ import { OrganizationController } from "@user-management-controller/organization
 import { UserModule } from "./user.module";
 
 @Module({
-    imports: [SharedModule, forwardRef(() => PermissionModule), forwardRef(() => UserModule)],
-    providers: [OrganizationService],
-    exports: [OrganizationService],
-    controllers: [OrganizationController],
+  imports: [SharedModule, forwardRef(() => PermissionModule), forwardRef(() => UserModule)],
+  providers: [OrganizationService],
+  exports: [OrganizationService],
+  controllers: [OrganizationController],
 })
 export class OrganizationModule {}

@@ -1,5 +1,5 @@
 export enum ActivationType {
-    NONE = "NONE",
-    OTAA = "OTAA",
-    ABP = "ABP",
+  NONE = "NONE",
+  OTAA = "OTAA",
+  ABP = "ABP",
 }

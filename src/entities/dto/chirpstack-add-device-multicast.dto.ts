@@ -1,4 +1,4 @@
 export class AddDeviceToMulticastDto {
-    devEUI: string;
-    multicastGroupID: string;
+  devEUI: string;
+  multicastGroupID: string;
 }

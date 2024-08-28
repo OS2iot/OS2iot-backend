@@ -5,11 +5,11 @@ import { GenericSigfoxAdministationService } from "./generic-sigfox-administatio
 
 @Injectable()
 export class SigfoxApiUsersService {
-    constructor(private genericService: GenericSigfoxAdministationService) {}
+  constructor(private genericService: GenericSigfoxAdministationService) {}
 
-    private readonly BASE_URL = "api-users";
+  private readonly BASE_URL = "api-users";
 
-    async getByUserId(userId: string, credentials: SigFoxGroup): Promise<SigFoxApiUsersContent> {
-        return await this.genericService.get(`${this.BASE_URL}/${userId}`, credentials);
-    }
+  async getByUserId(userId: string, credentials: SigFoxGroup): Promise<SigFoxApiUsersContent> {
+    return await this.genericService.get(`${this.BASE_URL}/${userId}`, credentials);
+  }
 }

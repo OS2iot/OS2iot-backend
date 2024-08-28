@@ -6,20 +6,20 @@ import { CreateDateColumn, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Update
  * Name is DbBaseEntity to not clash with BaseEntity from TypeORM (which is used in the active record).
  */
 export abstract class DbBaseEntity {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @ManyToOne("User", { nullable: true })
-    @JoinColumn()
-    createdBy?: number;
+  @ManyToOne("User", { nullable: true })
+  @JoinColumn()
+  createdBy?: number;
 
-    @ManyToOne("User", { nullable: true })
-    @JoinColumn()
-    updatedBy?: number;
+  @ManyToOne("User", { nullable: true })
+  @JoinColumn()
+  updatedBy?: number;
 }

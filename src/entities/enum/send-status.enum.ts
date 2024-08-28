@@ -1,4 +1,4 @@
 export enum SendStatus {
-    OK = "OK",
-    ERROR = "ERROR",
+  OK = "OK",
+  ERROR = "ERROR",
 }

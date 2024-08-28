@@ -9,15 +9,15 @@ import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 
 @Module({
-    imports: [
-        AuthModule,
-        SigFoxGroupModule,
-        SigFoxAdministrationModule,
-        SigFoxUsersModule,
-        forwardRef(() => IoTDeviceModule),
-    ],
-    controllers: [SigFoxApiDeviceController],
-    providers: [SigFoxApiDeviceService, SigfoxApiGroupService],
-    exports: [SigFoxApiDeviceService, SigfoxApiGroupService],
+  imports: [
+    AuthModule,
+    SigFoxGroupModule,
+    SigFoxAdministrationModule,
+    SigFoxUsersModule,
+    forwardRef(() => IoTDeviceModule),
+  ],
+  controllers: [SigFoxApiDeviceController],
+  providers: [SigFoxApiDeviceService, SigfoxApiGroupService],
+  exports: [SigFoxApiDeviceService, SigfoxApiGroupService],
 })
 export class SigfoxDeviceModule {}

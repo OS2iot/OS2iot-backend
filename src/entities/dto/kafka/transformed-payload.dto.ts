@@ -1,5 +1,5 @@
 export class TransformedPayloadDto {
-    payload: JSON;
-    iotDeviceId: number;
-    payloadDecoderId?: number;
+  payload: JSON;
+  iotDeviceId: number;
+  payloadDecoderId?: number;
 }

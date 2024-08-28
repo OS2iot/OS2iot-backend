@@ -8,19 +8,19 @@ import { Transform } from "class-transformer";
 import { DefaultLimit, DefaultOffset } from "@config/constants/pagination-constants";
 
 export class ListAllGatewaysDto extends OmitType(ListAllEntitiesDto, ["limit", "offset"]) {
-    @IsSwaggerOptional({ description: "Filter to one organization" })
-    @StringToNumber()
-    organizationId?: number;
+  @IsSwaggerOptional({ description: "Filter to one organization" })
+  @StringToNumber()
+  organizationId?: number;
 
-    @ApiProperty({ type: Number, required: false })
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => NullableStringToNumber(value))
-    limit? = DefaultLimit;
+  @ApiProperty({ type: Number, required: false })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => NullableStringToNumber(value))
+  limit? = DefaultLimit;
 
-    @ApiProperty({ type: Number, required: false })
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => NullableStringToNumber(value))
-    offset? = DefaultOffset;
+  @ApiProperty({ type: Number, required: false })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => NullableStringToNumber(value))
+  offset? = DefaultOffset;
 }

@@ -7,66 +7,66 @@ import { GatewayPlacement, GatewayStatus } from "@enum/gateway.enum";
 
 @Entity("gateway")
 export class Gateway extends DbBaseEntity {
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({ nullable: true })
-    description?: string;
+  @Column({ nullable: true })
+  description?: string;
 
-    @Column()
-    @Length(16, 16, { message: "Must be 16 characters" })
-    gatewayId: string;
+  @Column()
+  @Length(16, 16, { message: "Must be 16 characters" })
+  gatewayId: string;
 
-    @ManyToOne(_ => Organization, organization => organization.gateways, { onDelete: "CASCADE" })
-    organization: Organization;
+  @ManyToOne(_ => Organization, organization => organization.gateways, { onDelete: "CASCADE" })
+  organization: Organization;
 
-    @Column()
-    rxPacketsReceived: number;
+  @Column()
+  rxPacketsReceived: number;
 
-    @Column()
-    txPacketsEmitted: number;
+  @Column()
+  txPacketsEmitted: number;
 
-    @Column()
-    tags: string;
+  @Column()
+  tags: string;
 
-    @Column({
-        type: "geometry",
-        nullable: true,
-        spatialFeatureType: "Point",
-        srid: 4326,
-    })
-    location?: Point;
+  @Column({
+    type: "geometry",
+    nullable: true,
+    spatialFeatureType: "Point",
+    srid: 4326,
+  })
+  location?: Point;
 
-    @Column({ type: "decimal", nullable: true })
-    altitude?: number;
+  @Column({ type: "decimal", nullable: true })
+  altitude?: number;
 
-    @Column({ nullable: true })
-    lastSeenAt?: Date;
+  @Column({ nullable: true })
+  lastSeenAt?: Date;
 
-    @Column("enum", { nullable: true, enum: GatewayPlacement })
-    placement?: GatewayPlacement;
+  @Column("enum", { nullable: true, enum: GatewayPlacement })
+  placement?: GatewayPlacement;
 
-    @Column({ nullable: true })
-    modelName?: string;
+  @Column({ nullable: true })
+  modelName?: string;
 
-    @Column({ nullable: true })
-    antennaType?: string;
+  @Column({ nullable: true })
+  antennaType?: string;
 
-    @Column("enum", { nullable: true, enum: GatewayStatus })
-    status?: GatewayStatus;
+  @Column("enum", { nullable: true, enum: GatewayStatus })
+  status?: GatewayStatus;
 
-    @Column({ nullable: true })
-    gatewayResponsibleName?: string;
+  @Column({ nullable: true })
+  gatewayResponsibleName?: string;
 
-    @Column({ nullable: true })
-    gatewayResponsibleEmail?: string;
+  @Column({ nullable: true })
+  gatewayResponsibleEmail?: string;
 
-    @Column({ nullable: true })
-    gatewayResponsiblePhoneNumber?: string;
+  @Column({ nullable: true })
+  gatewayResponsiblePhoneNumber?: string;
 
-    @Column({ nullable: true })
-    operationalResponsibleName?: string;
+  @Column({ nullable: true })
+  operationalResponsibleName?: string;
 
-    @Column({ nullable: true })
-    operationalResponsibleEmail?: string;
+  @Column({ nullable: true })
+  operationalResponsibleEmail?: string;
 }

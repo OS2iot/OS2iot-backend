@@ -9,15 +9,15 @@ import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({ load: [configuration] }),
-        AuthModule,
-        SigFoxGroupModule,
-        SigFoxAdministrationModule,
-        SigFoxUsersModule,
-    ],
-    controllers: [SigfoxDeviceTypeController],
-    providers: [SigFoxApiDeviceTypeService],
-    exports: [SigFoxApiDeviceTypeService],
+  imports: [
+    ConfigModule.forRoot({ load: [configuration] }),
+    AuthModule,
+    SigFoxGroupModule,
+    SigFoxAdministrationModule,
+    SigFoxUsersModule,
+  ],
+  controllers: [SigfoxDeviceTypeController],
+  providers: [SigFoxApiDeviceTypeService],
+  exports: [SigFoxApiDeviceTypeService],
 })
 export class SigfoxDeviceTypeModule {}

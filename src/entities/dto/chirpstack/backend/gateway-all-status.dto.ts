@@ -9,14 +9,14 @@ import { GatewayStatus } from "./gateway-status.dto";
 export class GatewayGetAllStatusResponseDto extends ListAllEntitiesResponseDto<GatewayStatus> {}
 
 export class ListAllGatewayStatusDto extends ListAllEntitiesDto {
-    @IsSwaggerOptional()
-    @StringToNumber()
-    organizationId?: number;
+  @IsSwaggerOptional()
+  @StringToNumber()
+  organizationId?: number;
 
-    @IsSwaggerOptional({
-        default: GatewayStatusInterval.DAY,
-        enum: GatewayStatusInterval,
-    })
-    @IsEnum(GatewayStatusInterval)
-    timeInterval: GatewayStatusInterval = GatewayStatusInterval.DAY;
+  @IsSwaggerOptional({
+    default: GatewayStatusInterval.DAY,
+    enum: GatewayStatusInterval,
+  })
+  @IsEnum(GatewayStatusInterval)
+  timeInterval: GatewayStatusInterval = GatewayStatusInterval.DAY;
 }

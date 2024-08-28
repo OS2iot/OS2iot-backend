@@ -9,15 +9,15 @@ import { ReceiveDataService } from "@services/data-management/receive-data.servi
 import { HttpModule } from "@nestjs/axios";
 
 @Module({
-    imports: [
-        SharedModule,
-        ChirpstackAdministrationModule,
-        HttpModule,
-        forwardRef(() => ApplicationModule),
-        forwardRef(() => IoTDeviceModule),
-    ],
-    exports: [ReceiveDataService],
-    controllers: [ReceiveDataController],
-    providers: [ReceiveDataService],
+  imports: [
+    SharedModule,
+    ChirpstackAdministrationModule,
+    HttpModule,
+    forwardRef(() => ApplicationModule),
+    forwardRef(() => IoTDeviceModule),
+  ],
+  exports: [ReceiveDataService],
+  controllers: [ReceiveDataController],
+  providers: [ReceiveDataService],
 })
 export class ReceiveDataModule {}

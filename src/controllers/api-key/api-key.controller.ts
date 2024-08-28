@@ -11,27 +11,27 @@ import { ApiKey } from "@entities/api-key.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
-    Body,
-    Controller,
-    Delete,
-    ForbiddenException,
-    Get,
-    NotFoundException,
-    Param,
-    ParseIntPipe,
-    Post,
-    Put,
-    Query,
-    Req,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import {
-    ApiBadRequestResponse,
-    ApiForbiddenResponse,
-    ApiNotFoundResponse,
-    ApiOperation,
-    ApiTags,
-    ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { ApiKeyService } from "@services/api-key-management/api-key.service";
 import { AuditLog } from "@services/audit-log.service";
@@ -48,110 +48,110 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiTags("API Key Management")
 @Controller("api-key")
 export class ApiKeyController {
-    constructor(private apiKeyService: ApiKeyService, private organizationService: OrganizationService) {}
+  constructor(private apiKeyService: ApiKeyService, private organizationService: OrganizationService) {}
 
-    @Post()
-    @ApiOperation({ summary: "Create new API key" })
-    async createApiKey(@Req() req: AuthenticatedRequest, @Body() dto: CreateApiKeyDto): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
+  @Post()
+  @ApiOperation({ summary: "Create new API key" })
+  async createApiKey(@Req() req: AuthenticatedRequest, @Body() dto: CreateApiKeyDto): Promise<ApiKeyResponseDto> {
+    await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
-        try {
-            const result = await this.apiKeyService.create(dto, req.user.userId);
+    try {
+      const result = await this.apiKeyService.create(dto, req.user.userId);
 
-            AuditLog.success(ActionType.CREATE, ApiKey.name, req.user.userId, result.id, result.name);
-            return result;
-        } catch (err) {
-            AuditLog.fail(ActionType.CREATE, ApiKey.name, req.user.userId);
-            throw err;
-        }
+      AuditLog.success(ActionType.CREATE, ApiKey.name, req.user.userId, result.id, result.name);
+      return result;
+    } catch (err) {
+      AuditLog.fail(ActionType.CREATE, ApiKey.name, req.user.userId);
+      throw err;
     }
+  }
 
-    @Put(":id")
-    @ApiOperation({ summary: "Update API key" })
-    @ApiBadRequestResponse()
-    async updateApiKey(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number,
-        @Body() dto: UpdateApiKeyDto
-    ): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
+  @Put(":id")
+  @ApiOperation({ summary: "Update API key" })
+  @ApiBadRequestResponse()
+  async updateApiKey(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() dto: UpdateApiKeyDto
+  ): Promise<ApiKeyResponseDto> {
+    await this.checkIfUserHasAccessToPermissions(req, dto.permissionIds);
 
-        try {
-            const result = await this.apiKeyService.update(id, dto, req.user.userId);
+    try {
+      const result = await this.apiKeyService.update(id, dto, req.user.userId);
 
-            AuditLog.success(ActionType.UPDATE, ApiKey.name, req.user.userId, result.id, result.name);
-            return result;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, ApiKey.name, req.user.userId, id);
-            throw err;
-        }
+      AuditLog.success(ActionType.UPDATE, ApiKey.name, req.user.userId, result.id, result.name);
+      return result;
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, ApiKey.name, req.user.userId, id);
+      throw err;
     }
+  }
 
-    @Delete(":id")
-    @ApiOperation({ summary: "Delete an API key entity" })
-    async deleteApiKey(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<DeleteResponseDto> {
-        try {
-            await this.checkIfUserHasAccessToApiKey(req, id);
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete an API key entity" })
+  async deleteApiKey(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<DeleteResponseDto> {
+    try {
+      await this.checkIfUserHasAccessToApiKey(req, id);
 
-            const result = await this.apiKeyService.delete(id);
+      const result = await this.apiKeyService.delete(id);
 
-            AuditLog.success(ActionType.DELETE, ApiKey.name, req.user.userId, id);
-            return result;
-        } catch (err) {
-            AuditLog.fail(ActionType.DELETE, ApiKey.name, req.user.userId, id);
-            throw err;
-        }
+      AuditLog.success(ActionType.DELETE, ApiKey.name, req.user.userId, id);
+      return result;
+    } catch (err) {
+      AuditLog.fail(ActionType.DELETE, ApiKey.name, req.user.userId, id);
+      throw err;
     }
+  }
 
-    @Get()
-    @ApiOperation({ summary: "Get list of all API keys in organization" })
-    getAllApiKeysInOrganization(
-        @Req() req: AuthenticatedRequest,
-        @Query() query: ListAllApiKeysDto
-    ): Promise<ListAllApiKeysResponseDto> {
-        checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.UserAdministrationWrite);
+  @Get()
+  @ApiOperation({ summary: "Get list of all API keys in organization" })
+  getAllApiKeysInOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListAllApiKeysDto
+  ): Promise<ListAllApiKeysResponseDto> {
+    checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.UserAdministrationWrite);
 
-        try {
-            return this.apiKeyService.findAllByOrganizationId(query);
-        } catch (err) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+    try {
+      return this.apiKeyService.findAllByOrganizationId(query);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
+  }
 
-    @Get(":id")
-    @ApiOperation({ summary: "Get API key" })
-    @ApiNotFoundResponse()
-    async getOneApiKey(
-        @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) id: number
-    ): Promise<ApiKeyResponseDto> {
-        await this.checkIfUserHasAccessToApiKey(req, id);
+  @Get(":id")
+  @ApiOperation({ summary: "Get API key" })
+  @ApiNotFoundResponse()
+  async getOneApiKey(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<ApiKeyResponseDto> {
+    await this.checkIfUserHasAccessToApiKey(req, id);
 
-        try {
-            return await this.apiKeyService.findOneByIdWithPermissions(id);
-        } catch (err) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+    try {
+      return await this.apiKeyService.findOneByIdWithPermissions(id);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
+  }
 
-    private async checkIfUserHasAccessToApiKey(req: AuthenticatedRequest, id: number) {
-        const apiKey = await this.apiKeyService.findOneByIdWithRelations(id);
-        await this.checkIfUserHasAccessToPermissions(
-            req,
-            apiKey.permissions.map(x => x.id)
-        );
+  private async checkIfUserHasAccessToApiKey(req: AuthenticatedRequest, id: number) {
+    const apiKey = await this.apiKeyService.findOneByIdWithRelations(id);
+    await this.checkIfUserHasAccessToPermissions(
+      req,
+      apiKey.permissions.map(x => x.id)
+    );
+  }
+
+  private async checkIfUserHasAccessToPermissions(req: AuthenticatedRequest, permissionIds: number[]) {
+    if (!permissionIds?.length) throw new ForbiddenException();
+
+    const apiKeyOrganizations = await this.organizationService.findByPermissionIds(permissionIds);
+
+    for (const id of apiKeyOrganizations.map(org => org.id)) {
+      checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
     }
-
-    private async checkIfUserHasAccessToPermissions(req: AuthenticatedRequest, permissionIds: number[]) {
-        if (!permissionIds?.length) throw new ForbiddenException();
-
-        const apiKeyOrganizations = await this.organizationService.findByPermissionIds(permissionIds);
-
-        for (const id of apiKeyOrganizations.map(org => org.id)) {
-            checkIfUserHasAccessToOrganization(req, id, OrganizationAccessScope.UserAdministrationWrite);
-        }
-    }
+  }
 }

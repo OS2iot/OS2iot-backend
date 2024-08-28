@@ -18,20 +18,20 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @Read()
 @ApiForbiddenResponse()
 export class SigFoxApiDeviceController {
-    constructor(private sigfoxGroupService: SigFoxGroupService, private iotDeviceService: IoTDeviceService) {}
+  constructor(private sigfoxGroupService: SigFoxGroupService, private iotDeviceService: IoTDeviceService) {}
 
-    @Get()
-    @ApiProduces("application/json")
-    @ApiOperation({
-        summary: "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT",
-    })
-    async getAll(
-        @Req() req: AuthenticatedRequest,
-        @Query("groupId", new ParseIntPipe()) groupId: number
-    ): Promise<SigFoxApiDeviceResponse> {
-        const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(groupId);
-        checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
+  @Get()
+  @ApiProduces("application/json")
+  @ApiOperation({
+    summary: "List all SigFox Devices for a SigFox Group, that are not already created in OS2IoT",
+  })
+  async getAll(
+    @Req() req: AuthenticatedRequest,
+    @Query("groupId", new ParseIntPipe()) groupId: number
+  ): Promise<SigFoxApiDeviceResponse> {
+    const group: SigFoxGroup = await this.sigfoxGroupService.findOneWithPassword(groupId);
+    checkIfUserHasAccessToOrganization(req, group.belongsTo.id, OrganizationAccessScope.ApplicationRead);
 
-        return await this.iotDeviceService.getAllSigfoxDevicesByGroup(group, true);
-    }
+    return await this.iotDeviceService.getAllSigfoxDevicesByGroup(group, true);
+  }
 }

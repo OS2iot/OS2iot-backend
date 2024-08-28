@@ -5,15 +5,15 @@ import { Organization } from "./organization.entity";
 
 @Entity("device_model")
 export class DeviceModel extends DbBaseEntity {
-    @Column({ type: "jsonb", nullable: true })
-    body: JSON;
+  @Column({ type: "jsonb", nullable: true })
+  body: JSON;
 
-    @ManyToOne(type => Organization, organization => organization.deviceModels, {
-        onDelete: "CASCADE",
-    })
-    @JoinColumn()
-    belongsTo: Organization;
+  @ManyToOne(type => Organization, organization => organization.deviceModels, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn()
+  belongsTo: Organization;
 
-    @OneToMany(type => IoTDevice, device => device.deviceModel)
-    devices: IoTDevice[];
+  @OneToMany(type => IoTDevice, device => device.deviceModel)
+  devices: IoTDevice[];
 }

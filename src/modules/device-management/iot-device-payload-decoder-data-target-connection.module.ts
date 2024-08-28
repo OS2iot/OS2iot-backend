@@ -8,9 +8,9 @@ import { SharedModule } from "@modules/shared.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 
 @Module({
-    imports: [SharedModule, IoTDeviceModule, DataTargetModule, PayloadDecoderModule],
-    providers: [IoTDevicePayloadDecoderDataTargetConnectionService],
-    exports: [IoTDevicePayloadDecoderDataTargetConnectionService],
-    controllers: [IoTDevicePayloadDecoderDataTargetConnectionController],
+  imports: [SharedModule, IoTDeviceModule, DataTargetModule, PayloadDecoderModule],
+  providers: [IoTDevicePayloadDecoderDataTargetConnectionService],
+  exports: [IoTDevicePayloadDecoderDataTargetConnectionService],
+  controllers: [IoTDevicePayloadDecoderDataTargetConnectionController],
 })
 export class IoTDevicePayloadDecoderDataTargetConnectionModule {}

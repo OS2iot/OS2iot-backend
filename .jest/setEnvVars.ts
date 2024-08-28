@@ -1,1 +1,1 @@
-process.env.KAFKAJS_LOG_LEVEL='ERROR'
+process.env.KAFKAJS_LOG_LEVEL = "ERROR";

@@ -5,13 +5,13 @@ import { DbBaseEntity } from "./base.entity";
 
 @Entity("application_device_type")
 export class ApplicationDeviceType extends DbBaseEntity {
-    @Column()
-    type: ApplicationDeviceTypeUnion;
+  @Column()
+  type: ApplicationDeviceTypeUnion;
 
-    @ManyToOne(() => Application, application => application.deviceTypes, {
-        onDelete: "CASCADE",
-        // Delete the row instead of null'ing application. Useful for updates
-        orphanedRowAction: "delete",
-    })
-    application: Application;
+  @ManyToOne(() => Application, application => application.deviceTypes, {
+    onDelete: "CASCADE",
+    // Delete the row instead of null'ing application. Useful for updates
+    orphanedRowAction: "delete",
+  })
+  application: Application;
 }

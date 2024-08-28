@@ -7,19 +7,19 @@ import { DbBaseEntity } from "./base.entity";
 
 @Entity("multicast")
 export class Multicast extends DbBaseEntity {
-    @Column()
-    groupName: string;
+  @Column()
+  groupName: string;
 
-    @ManyToOne(_ => Application, application => application.multicasts, { onDelete: "CASCADE" })
-    application: Application;
+  @ManyToOne(_ => Application, application => application.multicasts, { onDelete: "CASCADE" })
+  application: Application;
 
-    @ManyToMany(() => IoTDevice, iotDevices => iotDevices.multicasts)
-    @JoinTable()
-    iotDevices: IoTDevice[];
+  @ManyToMany(() => IoTDevice, iotDevices => iotDevices.multicasts)
+  @JoinTable()
+  iotDevices: IoTDevice[];
 
-    @OneToOne(type => LorawanMulticastDefinition, lorawanMulticastDefinition => lorawanMulticastDefinition.multicast, {
-        cascade: true,
-    })
-    @JoinColumn()
-    lorawanMulticastDefinition: LorawanMulticastDefinition;
+  @OneToOne(type => LorawanMulticastDefinition, lorawanMulticastDefinition => lorawanMulticastDefinition.multicast, {
+    cascade: true,
+  })
+  @JoinColumn()
+  lorawanMulticastDefinition: LorawanMulticastDefinition;
 }

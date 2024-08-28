@@ -5,18 +5,18 @@ import { Between, IsNull, Not, Repository } from "typeorm";
 
 @Injectable()
 export class SigFoxMessagesService {
-    constructor(
-        @InjectRepository(ReceivedMessageSigFoxSignals)
-        private receivedMessageSigFoxSignalsRepository: Repository<ReceivedMessageSigFoxSignals>
-    ) {}
+  constructor(
+    @InjectRepository(ReceivedMessageSigFoxSignals)
+    private receivedMessageSigFoxSignalsRepository: Repository<ReceivedMessageSigFoxSignals>
+  ) {}
 
-    getMessageSignals(deviceId: number, fromDate: Date, toDate: Date): Promise<ReceivedMessageSigFoxSignals[]> {
-        return this.receivedMessageSigFoxSignalsRepository.find({
-            where: {
-                device: { id: deviceId },
-                sentTime: Between(fromDate, toDate),
-                rssi: Not(IsNull()),
-            },
-        });
-    }
+  getMessageSignals(deviceId: number, fromDate: Date, toDate: Date): Promise<ReceivedMessageSigFoxSignals[]> {
+    return this.receivedMessageSigFoxSignalsRepository.find({
+      where: {
+        device: { id: deviceId },
+        sentTime: Between(fromDate, toDate),
+        rssi: Not(IsNull()),
+      },
+    });
+  }
 }

@@ -5,11 +5,11 @@ import { GenericSigfoxAdministationService } from "@services/sigfox/generic-sigf
 
 @Injectable()
 export class SigfoxApiGroupService {
-    constructor(private genericService: GenericSigfoxAdministationService) {}
+  constructor(private genericService: GenericSigfoxAdministationService) {}
 
-    private readonly BASE_URL = "groups";
+  private readonly BASE_URL = "groups";
 
-    async getGroups(credentials: SigFoxGroup): Promise<SigFoxApiGroupsResponse> {
-        return await this.genericService.get(`${this.BASE_URL}`, credentials);
-    }
+  async getGroups(credentials: SigFoxGroup): Promise<SigFoxApiGroupsResponse> {
+    return await this.genericService.get(`${this.BASE_URL}`, credentials);
+  }
 }

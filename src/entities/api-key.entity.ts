@@ -7,20 +7,20 @@ import { Permission } from "./permissions/permission.entity";
 @Entity("api_key")
 @Unique([nameof<ApiKey>("key")])
 export class ApiKey extends DbBaseEntity {
-    @Column()
-    key: string;
+  @Column()
+  key: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @ManyToMany(_ => Permission, apiKeyPm => apiKeyPm.apiKeys)
-    @JoinTable()
-    permissions: Permission[];
+  @ManyToMany(_ => Permission, apiKeyPm => apiKeyPm.apiKeys)
+  @JoinTable()
+  permissions: Permission[];
 
-    @OneToOne(() => User, u => u.apiKeyRef, {
-        nullable: false,
-        cascade: true,
-    })
-    @JoinColumn()
-    systemUser: User;
+  @OneToOne(() => User, u => u.apiKeyRef, {
+    nullable: false,
+    cascade: true,
+  })
+  @JoinColumn()
+  systemUser: User;
 }

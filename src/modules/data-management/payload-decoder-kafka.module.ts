@@ -13,19 +13,19 @@ import { PayloadDecoderListenerService } from "@services/data-management/payload
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
-    imports: [
-        SharedModule,
-        KafkaModule,
-        IoTDevicePayloadDecoderDataTargetConnectionModule,
-        IoTDeviceModule,
-        DataTargetModule,
-        PayloadDecoderModule,
-        HttpModule,
-        ApplicationModule,
-        PayloadDecoderExecutorModuleModule,
-        ChirpstackAdministrationModule,
-    ],
-    controllers: [PayloadDecoderController],
-    providers: [PayloadDecoderListenerService],
+  imports: [
+    SharedModule,
+    KafkaModule,
+    IoTDevicePayloadDecoderDataTargetConnectionModule,
+    IoTDeviceModule,
+    DataTargetModule,
+    PayloadDecoderModule,
+    HttpModule,
+    ApplicationModule,
+    PayloadDecoderExecutorModuleModule,
+    ChirpstackAdministrationModule,
+  ],
+  controllers: [PayloadDecoderController],
+  providers: [PayloadDecoderListenerService],
 })
 export class PayloadDecoderKafkaModule {}

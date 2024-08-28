@@ -7,8 +7,8 @@ import { PayloadDecoderExecutorModuleModule } from "@modules/payload-decoder-exe
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
-    imports: [SharedModule, OrganizationModule, PayloadDecoderExecutorModuleModule, ChirpstackAdministrationModule],
-    controllers: [OpenDataDkSharingController],
-    providers: [OpenDataDkSharingService],
+  imports: [SharedModule, OrganizationModule, PayloadDecoderExecutorModuleModule, ChirpstackAdministrationModule],
+  controllers: [OpenDataDkSharingController],
+  providers: [OpenDataDkSharingService],
 })
 export class OpenDataDkSharingModule {}

@@ -10,21 +10,21 @@ import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { CLIENT_SECRET_PROVIDER, PlainTextClientSecretProvider } from "../../helpers/fiware-token.helper";
 
 @Module({
-    imports: [
-        SharedModule,
-        forwardRef(() => ApplicationModule),
-        OrganizationModule,
-        ConfigModule.forRoot({ load: [configuration] }),
-    ],
-    exports: [DataTargetService],
-    controllers: [DataTargetController],
-    providers: [
-        DataTargetService,
-        OS2IoTMail,
-        {
-            provide: CLIENT_SECRET_PROVIDER,
-            useClass: PlainTextClientSecretProvider,
-        },
-    ],
+  imports: [
+    SharedModule,
+    forwardRef(() => ApplicationModule),
+    OrganizationModule,
+    ConfigModule.forRoot({ load: [configuration] }),
+  ],
+  exports: [DataTargetService],
+  controllers: [DataTargetController],
+  providers: [
+    DataTargetService,
+    OS2IoTMail,
+    {
+      provide: CLIENT_SECRET_PROVIDER,
+      useClass: PlainTextClientSecretProvider,
+    },
+  ],
 })
 export class DataTargetModule {}

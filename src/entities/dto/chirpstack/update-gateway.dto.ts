@@ -4,19 +4,19 @@ import { GatewayContentsDto } from "./gateway-contents.dto";
 import { Type } from "class-transformer";
 
 export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["gatewayId"]) {
-    @ApiHideProperty()
-    gatewayId: string;
+  @ApiHideProperty()
+  gatewayId: string;
 
-    @ApiHideProperty()
-    createdBy?: number;
+  @ApiHideProperty()
+  createdBy?: number;
 
-    @ApiHideProperty()
-    updatedBy?: number;
+  @ApiHideProperty()
+  updatedBy?: number;
 }
 
 export class UpdateGatewayDto {
-    @ApiProperty({ required: true })
-    @ValidateNested({ each: true })
-    @Type(() => UpdateGatewayContentsDto)
-    gateway: UpdateGatewayContentsDto;
+  @ApiProperty({ required: true })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateGatewayContentsDto)
+  gateway: UpdateGatewayContentsDto;
 }

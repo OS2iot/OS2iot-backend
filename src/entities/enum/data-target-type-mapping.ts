@@ -5,8 +5,8 @@ import { OpenDataDkDataTarget } from "@entities/open-data-dk-push-data-target.en
 import { DataTargetType } from "@enum/data-target-type.enum";
 
 export const dataTargetTypeMap = {
-    [DataTargetType.HttpPush]: HttpPushDataTarget,
-    [DataTargetType.Fiware]: FiwareDataTarget,
-    [DataTargetType.MQTT]: MqttDataTarget,
-    [DataTargetType.OpenDataDK]: OpenDataDkDataTarget,
+  [DataTargetType.HttpPush]: HttpPushDataTarget,
+  [DataTargetType.Fiware]: FiwareDataTarget,
+  [DataTargetType.MQTT]: MqttDataTarget,
+  [DataTargetType.OpenDataDK]: OpenDataDkDataTarget,
 };

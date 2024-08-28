@@ -8,40 +8,38 @@ import { OrganizationService } from "@services/user-management/organization.serv
 @ApiTags("OpenData.dk")
 @Controller("open-data-dk-sharing")
 export class OpenDataDkSharingController {
-    constructor(private service: OpenDataDkSharingService, private organizationService: OrganizationService) {}
+  constructor(private service: OpenDataDkSharingService, private organizationService: OrganizationService) {}
 
-    @Get(":organizationId")
-    async getCatalog(@Param("organizationId", new ParseIntPipe()) orgId: number): Promise<DCATRootObject> {
-        let organization;
-        try {
-            organization = await this.organizationService.findById(orgId);
-        } catch (err) {
-            throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
-        }
-
-        return this.service.createDCAT(organization);
+  @Get(":organizationId")
+  async getCatalog(@Param("organizationId", new ParseIntPipe()) orgId: number): Promise<DCATRootObject> {
+    let organization;
+    try {
+      organization = await this.organizationService.findById(orgId);
+    } catch (err) {
+      throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
     }
 
-    @Get(":organizationId/data/:shareId")
-    async getData(
-        @Param("organizationId", new ParseIntPipe()) orgId: number,
-        @Param("shareId", new ParseIntPipe()) shareId: number
-    ): Promise<any[] | { error: ErrorCodes }> {
-        let organization;
-        try {
-            organization = await this.organizationService.findById(orgId);
-        } catch (err) {
-            throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
-        }
+    return this.service.createDCAT(organization);
+  }
 
-        const dataset = await this.service.findById(shareId, organization.id);
-        if (!dataset) {
-            throw new NotFoundException(
-                `Could not find dataset with id: ${shareId} on organization: ${organization.id}`
-            );
-        }
-
-        // TODO: Add caching pr. shareId (https://docs.nestjs.com/techniques/caching)
-        return this.service.getDecodedDataInDataset(dataset);
+  @Get(":organizationId/data/:shareId")
+  async getData(
+    @Param("organizationId", new ParseIntPipe()) orgId: number,
+    @Param("shareId", new ParseIntPipe()) shareId: number
+  ): Promise<any[] | { error: ErrorCodes }> {
+    let organization;
+    try {
+      organization = await this.organizationService.findById(orgId);
+    } catch (err) {
+      throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
     }
+
+    const dataset = await this.service.findById(shareId, organization.id);
+    if (!dataset) {
+      throw new NotFoundException(`Could not find dataset with id: ${shareId} on organization: ${organization.id}`);
+    }
+
+    // TODO: Add caching pr. shareId (https://docs.nestjs.com/techniques/caching)
+    return this.service.getDecodedDataInDataset(dataset);
+  }
 }

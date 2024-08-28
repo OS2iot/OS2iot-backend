@@ -13,150 +13,150 @@ import { GenericSigfoxAdministationService } from "./generic-sigfox-administatio
 
 @Injectable()
 export class SigFoxGroupService {
-    constructor(
-        @InjectRepository(SigFoxGroup)
-        private repository: Repository<SigFoxGroup>,
-        @Inject(OrganizationService)
-        private organizationService: OrganizationService,
-        private sigfoxApiGroupService: SigfoxApiGroupService,
-        private genericSigfoxAdministationService: GenericSigfoxAdministationService
-    ) {}
+  constructor(
+    @InjectRepository(SigFoxGroup)
+    private repository: Repository<SigFoxGroup>,
+    @Inject(OrganizationService)
+    private organizationService: OrganizationService,
+    private sigfoxApiGroupService: SigfoxApiGroupService,
+    private genericSigfoxAdministationService: GenericSigfoxAdministationService
+  ) {}
 
-    private readonly logger = new Logger(SigFoxGroupService.name);
+  private readonly logger = new Logger(SigFoxGroupService.name);
 
-    async findAll(): Promise<SigFoxGroup[]> {
-        return await this.repository.find({
-            select: ["username", "password"],
-        });
+  async findAll(): Promise<SigFoxGroup[]> {
+    return await this.repository.find({
+      select: ["username", "password"],
+    });
+  }
+
+  async findAllForOrganization(organizationId: number): Promise<ListAllSigFoxGroupResponseDto> {
+    const [data, count] = await this.repository.findAndCount({
+      where: {
+        belongsTo: {
+          id: organizationId,
+        },
+      },
+      select: ["username", "password", "id"],
+      relations: ["belongsTo"],
+    });
+
+    // TODO: Find a better way to do this
+    //  - Deduplicate lookups at least.
+    await this.addSigFoxDataToAllGroupsAndSave(data);
+
+    return {
+      data: data,
+      count: count,
+    };
+  }
+
+  private async addSigFoxDataToAllGroupsAndSave(data: SigFoxGroup[]) {
+    await Promise.all(data.map(async x => await this.addSigFoxDataToGroupAndSave(x)));
+  }
+
+  private async addSigFoxDataToGroupAndSave(group: SigFoxGroup) {
+    // if password was not included, then include it now.
+    if (group.password == null) {
+      group = await this.findOneWithPassword(group.id);
+    }
+    let apiGroupResponse;
+    try {
+      apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
+    } catch (err) {
+      this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
+      group.sigfoxGroupData = null;
+      return group;
+    }
+    if (apiGroupResponse.data.length > 1) {
+      this.logger.warn(`API user ${group.id} has access to more than one group`);
+    }
+    const firstGroup = apiGroupResponse.data[0];
+    group.sigfoxGroupData = firstGroup;
+    group.sigfoxGroupId = group.sigfoxGroupData.id;
+    await this.repository.save(group);
+    // remove password again ...
+    group.password = undefined;
+  }
+
+  async findOne(id: number): Promise<SigFoxGroup> {
+    const res = await this.findOneWithPassword(id);
+
+    await this.addSigFoxDataToAllGroupsAndSave([res]);
+
+    return res;
+  }
+
+  async findOneForPermissionCheck(id: number): Promise<SigFoxGroup> {
+    return await this.repository.findOneOrFail({
+      where: { id },
+      relations: ["belongsTo"],
+      select: ["username", "sigfoxGroupId", "id"],
+    });
+  }
+
+  async findOneWithPassword(id: number): Promise<SigFoxGroup> {
+    return await this.repository.findOneOrFail({
+      where: { id },
+      relations: ["belongsTo"],
+      select: ["username", "password", "sigfoxGroupId", "id", "createdBy", "updatedBy"],
+      loadRelationIds: {
+        relations: ["createdBy", "updatedBy"],
+      },
+    });
+  }
+
+  async findOneByGroupId(groupId: string, orgId?: number): Promise<SigFoxGroup> {
+    const conditions: FindOptionsWhere<SigFoxGroup> = {
+      sigfoxGroupId: groupId,
+    };
+
+    if (orgId) {
+      conditions.belongsTo = {
+        id: orgId,
+      };
     }
 
-    async findAllForOrganization(organizationId: number): Promise<ListAllSigFoxGroupResponseDto> {
-        const [data, count] = await this.repository.findAndCount({
-            where: {
-                belongsTo: {
-                    id: organizationId,
-                },
-            },
-            select: ["username", "password", "id"],
-            relations: ["belongsTo"],
-        });
+    const options: FindOneOptions<SigFoxGroup> = {
+      where: conditions,
+      relations: ["belongsTo"],
+      select: ["id", "username", "password", "sigfoxGroupId"],
+    };
 
-        // TODO: Find a better way to do this
-        //  - Deduplicate lookups at least.
-        await this.addSigFoxDataToAllGroupsAndSave(data);
+    return await this.repository.findOneOrFail(options);
+  }
 
-        return {
-            data: data,
-            count: count,
-        };
+  async create(query: CreateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
+    const sigfoxGroup = new SigFoxGroup();
+    try {
+      sigfoxGroup.belongsTo = await this.organizationService.findById(query.organizationId);
+    } catch (err) {
+      throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
     }
 
-    private async addSigFoxDataToAllGroupsAndSave(data: SigFoxGroup[]) {
-        await Promise.all(data.map(async x => await this.addSigFoxDataToGroupAndSave(x)));
+    const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
+    mappedSigfoxGroup.createdBy = userId;
+    mappedSigfoxGroup.updatedBy = userId;
+    await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
+    return mappedSigfoxGroup;
+  }
+
+  async update(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
+    const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
+    mappedSigfoxGroup.updatedBy = userId;
+    await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
+    return mappedSigfoxGroup;
+  }
+
+  private async map(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
+    sigfoxGroup.username = query.username;
+    sigfoxGroup.password = query.password;
+
+    // Test that new credentials are good.
+    if (!(await this.genericSigfoxAdministationService.testConnection(sigfoxGroup))) {
+      throw new UnauthorizedException(ErrorCodes.SigFoxBadLogin);
     }
 
-    private async addSigFoxDataToGroupAndSave(group: SigFoxGroup) {
-        // if password was not included, then include it now.
-        if (group.password == null) {
-            group = await this.findOneWithPassword(group.id);
-        }
-        let apiGroupResponse;
-        try {
-            apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
-        } catch (err) {
-            this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
-            group.sigfoxGroupData = null;
-            return group;
-        }
-        if (apiGroupResponse.data.length > 1) {
-            this.logger.warn(`API user ${group.id} has access to more than one group`);
-        }
-        const firstGroup = apiGroupResponse.data[0];
-        group.sigfoxGroupData = firstGroup;
-        group.sigfoxGroupId = group.sigfoxGroupData.id;
-        await this.repository.save(group);
-        // remove password again ...
-        group.password = undefined;
-    }
-
-    async findOne(id: number): Promise<SigFoxGroup> {
-        const res = await this.findOneWithPassword(id);
-
-        await this.addSigFoxDataToAllGroupsAndSave([res]);
-
-        return res;
-    }
-
-    async findOneForPermissionCheck(id: number): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail({
-            where: { id },
-            relations: ["belongsTo"],
-            select: ["username", "sigfoxGroupId", "id"],
-        });
-    }
-
-    async findOneWithPassword(id: number): Promise<SigFoxGroup> {
-        return await this.repository.findOneOrFail({
-            where: { id },
-            relations: ["belongsTo"],
-            select: ["username", "password", "sigfoxGroupId", "id", "createdBy", "updatedBy"],
-            loadRelationIds: {
-                relations: ["createdBy", "updatedBy"],
-            },
-        });
-    }
-
-    async findOneByGroupId(groupId: string, orgId?: number): Promise<SigFoxGroup> {
-        const conditions: FindOptionsWhere<SigFoxGroup> = {
-            sigfoxGroupId: groupId,
-        };
-
-        if (orgId) {
-            conditions.belongsTo = {
-                id: orgId,
-            };
-        }
-
-        const options: FindOneOptions<SigFoxGroup> = {
-            where: conditions,
-            relations: ["belongsTo"],
-            select: ["id", "username", "password", "sigfoxGroupId"],
-        };
-
-        return await this.repository.findOneOrFail(options);
-    }
-
-    async create(query: CreateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
-        const sigfoxGroup = new SigFoxGroup();
-        try {
-            sigfoxGroup.belongsTo = await this.organizationService.findById(query.organizationId);
-        } catch (err) {
-            throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
-        }
-
-        const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
-        mappedSigfoxGroup.createdBy = userId;
-        mappedSigfoxGroup.updatedBy = userId;
-        await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
-        return mappedSigfoxGroup;
-    }
-
-    async update(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
-        const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
-        mappedSigfoxGroup.updatedBy = userId;
-        await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
-        return mappedSigfoxGroup;
-    }
-
-    private async map(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
-        sigfoxGroup.username = query.username;
-        sigfoxGroup.password = query.password;
-
-        // Test that new credentials are good.
-        if (!(await this.genericSigfoxAdministationService.testConnection(sigfoxGroup))) {
-            throw new UnauthorizedException(ErrorCodes.SigFoxBadLogin);
-        }
-
-        return sigfoxGroup;
-    }
+    return sigfoxGroup;
+  }
 }

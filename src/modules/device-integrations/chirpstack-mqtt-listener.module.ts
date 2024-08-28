@@ -5,8 +5,8 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { ChirpstackMQTTListenerService } from "@services/data-management/chirpstack-mqtt-listener.service";
 
 @Module({
-    imports: [ReceiveDataModule, IoTDeviceModule],
-    providers: [ChirpstackMQTTListenerService],
-    exports: [ChirpstackMQTTListenerService],
+  imports: [ReceiveDataModule, IoTDeviceModule],
+  providers: [ChirpstackMQTTListenerService],
+  exports: [ChirpstackMQTTListenerService],
 })
 export class ChirpstackMqttListenerModule {}

@@ -13,15 +13,15 @@ import { GenericChirpstackConfigurationService } from "@services/chirpstack/gene
 import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
-    controllers: [ChirpstackGatewayController, DeviceProfileController],
-    imports: [SharedModule, HttpModule, OrganizationModule, ConfigModule.forRoot({ load: [configuration] })],
-    providers: [
-        GenericChirpstackConfigurationService,
-        ChirpstackGatewayService,
-        DeviceProfileService,
-        ChirpstackDeviceService,
-        ApplicationChirpstackService,
-    ],
-    exports: [ChirpstackDeviceService, ChirpstackGatewayService, DeviceProfileService, ApplicationChirpstackService],
+  controllers: [ChirpstackGatewayController, DeviceProfileController],
+  imports: [SharedModule, HttpModule, OrganizationModule, ConfigModule.forRoot({ load: [configuration] })],
+  providers: [
+    GenericChirpstackConfigurationService,
+    ChirpstackGatewayService,
+    DeviceProfileService,
+    ChirpstackDeviceService,
+    ApplicationChirpstackService,
+  ],
+  exports: [ChirpstackDeviceService, ChirpstackGatewayService, DeviceProfileService, ApplicationChirpstackService],
 })
 export class ChirpstackAdministrationModule {}

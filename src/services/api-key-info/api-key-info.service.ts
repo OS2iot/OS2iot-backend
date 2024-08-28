@@ -4,14 +4,14 @@ import { OrganizationService } from "@services/user-management/organization.serv
 
 @Injectable()
 export class ApiKeyInfoService {
-    constructor(
-        @Inject(forwardRef(() => OrganizationService))
-        private organizationService: OrganizationService
-    ) {}
+  constructor(
+    @Inject(forwardRef(() => OrganizationService))
+    private organizationService: OrganizationService
+  ) {}
 
-    private readonly logger = new Logger(ApiKeyInfoService.name, { timestamp: true });
+  private readonly logger = new Logger(ApiKeyInfoService.name, { timestamp: true });
 
-    findOrganization(orgId: number): Promise<Organization> {
-        return this.organizationService.findById(orgId);
-    }
+  findOrganization(orgId: number): Promise<Organization> {
+    return this.organizationService.findById(orgId);
+  }
 }

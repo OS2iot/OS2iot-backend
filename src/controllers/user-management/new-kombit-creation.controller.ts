@@ -11,24 +11,24 @@ import { User } from "@entities/user.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 
 import {
-    BadRequestException,
-    Body,
-    Controller,
-    Get,
-    NotFoundException,
-    Param,
-    ParseIntPipe,
-    Put,
-    Query,
-    Req,
-    UseGuards,
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Put,
+  Query,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import {
-    ApiForbiddenResponse,
-    ApiNotFoundResponse,
-    ApiOperation,
-    ApiTags,
-    ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
@@ -43,109 +43,109 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiTags("KombitEmailCreation")
 @Controller("kombitCreation")
 export class NewKombitCreationController {
-    constructor(
-        private organizationService: OrganizationService,
-        private userService: UserService,
-        private permissionService: PermissionService
-    ) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private userService: UserService,
+    private permissionService: PermissionService
+  ) {}
 
-    @Put("createNewKombitUser")
-    @ApiOperation({ summary: "Create kombit-user Email" })
-    async newKombitUser(@Req() req: AuthenticatedRequest, @Body() dto: CreateNewKombitUserDto): Promise<User> {
-        try {
-            const dbUser: User = await this.userService.findOne(req.user.userId);
-            const permissions = await this.permissionService.findManyWithRelations(dto.requestedOrganizationIds);
+  @Put("createNewKombitUser")
+  @ApiOperation({ summary: "Create kombit-user Email" })
+  async newKombitUser(@Req() req: AuthenticatedRequest, @Body() dto: CreateNewKombitUserDto): Promise<User> {
+    try {
+      const dbUser: User = await this.userService.findOne(req.user.userId);
+      const permissions = await this.permissionService.findManyWithRelations(dto.requestedOrganizationIds);
 
-            const requestedOrganizations: Organization[] = await this.organizationService.mapPermissionsToOrganizations(
-                permissions
-            );
+      const requestedOrganizations: Organization[] = await this.organizationService.mapPermissionsToOrganizations(
+        permissions
+      );
 
-            if (!dbUser.email) {
-                // The desired email is already in use for another user (this would also throw an error in the database)
-                if (await this.userService.isEmailUsedByAUser(dto.email)) {
-                    throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
-                }
-
-                const updatedUser: User = await this.userService.newKombitUser(dto, requestedOrganizations, dbUser);
-
-                for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
-                    const dbOrg = await this.organizationService.findByIdWithUsers(requestedOrganizations[index].id);
-
-                    await this.organizationService.updateAwaitingUsers(dbOrg, updatedUser);
-                }
-
-                AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
-                return updatedUser;
-            } else {
-                throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
-            }
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
-            throw err;
+      if (!dbUser.email) {
+        // The desired email is already in use for another user (this would also throw an error in the database)
+        if (await this.userService.isEmailUsedByAUser(dto.email)) {
+          throw new BadRequestException(ErrorCodes.EmailAlreadyInUse);
         }
-    }
 
-    @Get("minimal")
-    @ApiOperation({
-        summary: "Get list of the minimal representation of organizations, i.e. id and name.",
-    })
-    async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
-        return await this.organizationService.findAllMinimal();
-    }
+        const updatedUser: User = await this.userService.newKombitUser(dto, requestedOrganizations, dbUser);
 
-    @Get("minimalUsers")
-    @ApiOperation({ summary: "Get all id,names of users" })
-    async findAllMinimalUsers(): Promise<ListAllUsersMinimalResponseDto> {
-        return await this.userService.findAllMinimal();
-    }
+        for (let index = 0; index < dto.requestedOrganizationIds.length; index++) {
+          const dbOrg = await this.organizationService.findByIdWithUsers(requestedOrganizations[index].id);
 
-    @Put("updateUserOrgs")
-    @ApiOperation({ summary: "Updates the users organizations" })
-    @ApiNotFoundResponse()
-    async updateUserOrgs(
-        @Req() req: AuthenticatedRequest,
-        @Body() updateUserOrgsDto: UpdateUserOrgsDto
-    ): Promise<UpdateUserOrgsDto> {
-        try {
-            const user = await this.userService.findOne(req.user.userId);
-            const permissions = await this.permissionService.findManyWithRelations(
-                updateUserOrgsDto.requestedOrganizationIds
-            );
-
-            const requestedOrganizations = this.organizationService.mapPermissionsToOrganizations(permissions);
-
-            for (let index = 0; index < requestedOrganizations.length; index++) {
-                await this.userService.sendOrganizationRequestMail(user, requestedOrganizations[index]);
-            }
-
-            for (const org of requestedOrganizations) {
-                const dbOrg = await this.organizationService.findByIdWithUsers(org.id);
-                await this.organizationService.updateAwaitingUsers(dbOrg, user);
-            }
-
-            AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
-            return updateUserOrgsDto;
-        } catch (err) {
-            AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
-            throw err;
+          await this.organizationService.updateAwaitingUsers(dbOrg, updatedUser);
         }
-    }
 
-    @Get(":id")
-    @ApiOperation({ summary: "Get one user" })
-    async find(
-        @Param("id", new ParseIntPipe()) id: number,
-        @Query("extendedInfo") extendedInfo?: boolean
-    ): Promise<UserResponseDto> {
-        const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
-        try {
-            // Don't leak the passwordHash
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { passwordHash, ...user } = await this.userService.findOne(id, getExtendedInfo);
-
-            return user;
-        } catch (err) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+        AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
+        return updatedUser;
+      } else {
+        throw new BadRequestException(ErrorCodes.EmailAlreadyExists);
+      }
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
+      throw err;
     }
+  }
+
+  @Get("minimal")
+  @ApiOperation({
+    summary: "Get list of the minimal representation of organizations, i.e. id and name.",
+  })
+  async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
+    return await this.organizationService.findAllMinimal();
+  }
+
+  @Get("minimalUsers")
+  @ApiOperation({ summary: "Get all id,names of users" })
+  async findAllMinimalUsers(): Promise<ListAllUsersMinimalResponseDto> {
+    return await this.userService.findAllMinimal();
+  }
+
+  @Put("updateUserOrgs")
+  @ApiOperation({ summary: "Updates the users organizations" })
+  @ApiNotFoundResponse()
+  async updateUserOrgs(
+    @Req() req: AuthenticatedRequest,
+    @Body() updateUserOrgsDto: UpdateUserOrgsDto
+  ): Promise<UpdateUserOrgsDto> {
+    try {
+      const user = await this.userService.findOne(req.user.userId);
+      const permissions = await this.permissionService.findManyWithRelations(
+        updateUserOrgsDto.requestedOrganizationIds
+      );
+
+      const requestedOrganizations = this.organizationService.mapPermissionsToOrganizations(permissions);
+
+      for (let index = 0; index < requestedOrganizations.length; index++) {
+        await this.userService.sendOrganizationRequestMail(user, requestedOrganizations[index]);
+      }
+
+      for (const org of requestedOrganizations) {
+        const dbOrg = await this.organizationService.findByIdWithUsers(org.id);
+        await this.organizationService.updateAwaitingUsers(dbOrg, user);
+      }
+
+      AuditLog.success(ActionType.UPDATE, User.name, req.user.userId);
+      return updateUserOrgsDto;
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, User.name, req.user.userId);
+      throw err;
+    }
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Get one user" })
+  async find(
+    @Param("id", new ParseIntPipe()) id: number,
+    @Query("extendedInfo") extendedInfo?: boolean
+  ): Promise<UserResponseDto> {
+    const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
+    try {
+      // Don't leak the passwordHash
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash, ...user } = await this.userService.findOne(id, getExtendedInfo);
+
+      return user;
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
 }
