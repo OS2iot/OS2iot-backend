@@ -7,20 +7,20 @@ import { SigFoxApiGroupsContent } from "@dto/sigfox/external/sigfox-api-groups-r
 @Entity("sigfox_group")
 @Unique(["username", "belongsTo"])
 export class SigFoxGroup extends DbBaseEntity {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ManyToOne(type => Organization, organization => organization.sigfoxGroups, {
-        onDelete: "CASCADE",
-    })
-    belongsTo: Organization;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  @ManyToOne(type => Organization, organization => organization.sigfoxGroups, {
+    onDelete: "CASCADE",
+  })
+  belongsTo: Organization;
 
-    @Column({ nullable: false })
-    username: string;
+  @Column({ nullable: false })
+  username: string;
 
-    @Column({ nullable: false, select: false })
-    password: string;
+  @Column({ nullable: false, select: false })
+  password: string;
 
-    @Column({ nullable: false, default: "" })
-    sigfoxGroupId: string;
+  @Column({ nullable: false, default: "" })
+  sigfoxGroupId: string;
 
-    sigfoxGroupData?: SigFoxApiGroupsContent;
+  sigfoxGroupData?: SigFoxApiGroupsContent;
 }

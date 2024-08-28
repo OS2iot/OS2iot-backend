@@ -12,112 +12,89 @@ import { OrganizationService } from "@services/user-management/organization.serv
 
 @Injectable()
 export class PayloadDecoderService {
-    constructor(
-        @InjectRepository(PayloadDecoder)
-        private payloadDecoderRepository: Repository<PayloadDecoder>,
-        private organizationService: OrganizationService
-    ) {}
+  constructor(
+    @InjectRepository(PayloadDecoder)
+    private payloadDecoderRepository: Repository<PayloadDecoder>,
+    private organizationService: OrganizationService
+  ) {}
 
-    async findOne(id: number): Promise<PayloadDecoder> {
-        return await this.payloadDecoderRepository.findOneOrFail({
-            where: { id },
-            relations: ["organization"],
-            loadRelationIds: {
-                relations: ["createdBy", "updatedBy"],
-            },
-        });
+  async findOne(id: number): Promise<PayloadDecoder> {
+    return await this.payloadDecoderRepository.findOneOrFail({
+      where: { id },
+      relations: ["organization"],
+      loadRelationIds: {
+        relations: ["createdBy", "updatedBy"],
+      },
+    });
+  }
+
+  private getSorting(query: ListAllEntitiesDto) {
+    const sorting: { [id: string]: string | number } = {};
+    if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name")) {
+      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+    } else {
+      sorting["id"] = "ASC";
+    }
+    return sorting;
+  }
+
+  async findAndCountWithPagination(
+    query: ListAllEntitiesDto,
+    organizationId: number | null | undefined
+  ): Promise<ListAllPayloadDecoderResponseDto> {
+    const [result, total] = await this.payloadDecoderRepository.findAndCount({
+      where: organizationId ? { organization: { id: organizationId } } : {},
+      take: query.limit,
+      skip: query.offset,
+      order: this.getSorting(query),
+      relations: ["organization"],
+    });
+
+    return {
+      data: result,
+      count: total,
+    };
+  }
+
+  async create(createDto: CreatePayloadDecoderDto, userId: number): Promise<PayloadDecoder> {
+    const newPayloadDecoder = new PayloadDecoder();
+    const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(createDto, newPayloadDecoder);
+    mappedPayloadDecoder.createdBy = userId;
+    mappedPayloadDecoder.updatedBy = userId;
+
+    return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
+  }
+
+  async update(id: number, updateDto: UpdatePayloadDecoderDto, userId: number): Promise<PayloadDecoder> {
+    const payloadDecoder = await this.payloadDecoderRepository.findOneByOrFail({
+      id,
+    });
+
+    const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(updateDto, payloadDecoder);
+    mappedPayloadDecoder.updatedBy = userId;
+
+    return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
+  }
+
+  async delete(id: number): Promise<DeleteResult> {
+    return await this.payloadDecoderRepository.delete(id);
+  }
+
+  private async mapDtoToPayloadDecoder(createDto: CreatePayloadDecoderDto, newPayloadDecoder: PayloadDecoder) {
+    newPayloadDecoder.name = createDto.name;
+    try {
+      newPayloadDecoder.decodingFunction = JSON.parse(createDto.decodingFunction);
+    } catch (err) {
+      Logger.error("Failed to parse decodingFunction", err);
+      throw new BadRequestException(ErrorCodes.BadEncoding);
+    }
+    try {
+      newPayloadDecoder.organization = await this.organizationService.findById(createDto.organizationId);
+    } catch (err) {
+      Logger.error(`Could not find Organization with id ${createDto.organizationId}`);
+      throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
     }
 
-    private getSorting(query: ListAllEntitiesDto) {
-        const sorting: { [id: string]: string | number } = {};
-        if (
-            query?.orderOn != null &&
-            (query.orderOn == "id" || query.orderOn == "name")
-        ) {
-            sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-        } else {
-            sorting["id"] = "ASC";
-        }
-        return sorting;
-    }
-
-    async findAndCountWithPagination(
-        query: ListAllEntitiesDto,
-        organizationId: number | null | undefined
-    ): Promise<ListAllPayloadDecoderResponseDto> {
-        const [result, total] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationId ? { organization: {id: organizationId} } : {},
-            take: query.limit,
-            skip: query.offset,
-            order: this.getSorting(query),
-            relations: ["organization"],
-        });
-
-        return {
-            data: result,
-            count: total,
-        };
-    }
-
-    async create(
-        createDto: CreatePayloadDecoderDto,
-        userId: number
-    ): Promise<PayloadDecoder> {
-        const newPayloadDecoder = new PayloadDecoder();
-        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
-            createDto,
-            newPayloadDecoder
-        );
-        mappedPayloadDecoder.createdBy = userId;
-        mappedPayloadDecoder.updatedBy = userId;
-
-        return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
-    }
-
-    async update(
-        id: number,
-        updateDto: UpdatePayloadDecoderDto,
-        userId: number
-    ): Promise<PayloadDecoder> {
-        const payloadDecoder = await this.payloadDecoderRepository.findOneByOrFail({
-            id,
-        });
-
-        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
-            updateDto,
-            payloadDecoder
-        );
-        mappedPayloadDecoder.updatedBy = userId;
-
-        return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
-    }
-
-    async delete(id: number): Promise<DeleteResult> {
-        return await this.payloadDecoderRepository.delete(id);
-    }
-
-    private async mapDtoToPayloadDecoder(
-        createDto: CreatePayloadDecoderDto,
-        newPayloadDecoder: PayloadDecoder
-    ) {
-        newPayloadDecoder.name = createDto.name;
-        try {
-            newPayloadDecoder.decodingFunction = JSON.parse(createDto.decodingFunction);
-        } catch (err) {
-            Logger.error("Failed to parse decodingFunction", err);
-            throw new BadRequestException(ErrorCodes.BadEncoding);
-        }
-        try {
-            newPayloadDecoder.organization = await this.organizationService.findById(
-                createDto.organizationId
-            );
-        } catch (err) {
-            Logger.error(
-                `Could not find Organization with id ${createDto.organizationId}`
-            );
-            throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
-        }
-
-        return newPayloadDecoder;
-    }
+    return newPayloadDecoder;
+  }
 }

@@ -6,8 +6,8 @@ import { Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import {
-    ListAllIoTDevicesMinimalResponseDto,
-    PayloadDecoderIoDeviceMinimalQuery,
+  ListAllIoTDevicesMinimalResponseDto,
+  PayloadDecoderIoDeviceMinimalQuery,
 } from "@dto/list-all-iot-devices-minimal-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
@@ -21,24 +21,19 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class IoTDevicePayloadDecoderController {
-    constructor(private iotDeviceService: IoTDeviceService) {}
+  constructor(private iotDeviceService: IoTDeviceService) {}
 
-    @Get(":payloadDecoderId")
-    @ApiOperation({ summary: "Get IoT-Devices connected to a given payload decoder" })
-    async findAllByPayloadDecoder(
-        @Req() req: AuthenticatedRequest,
-        @Param("payloadDecoderId", new ParseIntPipe()) payloadDecoderId: number,
-        @Query() query: PayloadDecoderIoDeviceMinimalQuery
-    ): Promise<ListAllIoTDevicesMinimalResponseDto> {
-        try {
-            return await this.iotDeviceService.findAllByPayloadDecoder(
-                req,
-                payloadDecoderId,
-                +query.limit,
-                +query.offset
-            );
-        } catch (err) {
-            throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-        }
+  @Get(":payloadDecoderId")
+  @ApiOperation({ summary: "Get IoT-Devices connected to a given payload decoder" })
+  async findAllByPayloadDecoder(
+    @Req() req: AuthenticatedRequest,
+    @Param("payloadDecoderId", new ParseIntPipe()) payloadDecoderId: number,
+    @Query() query: PayloadDecoderIoDeviceMinimalQuery
+  ): Promise<ListAllIoTDevicesMinimalResponseDto> {
+    try {
+      return await this.iotDeviceService.findAllByPayloadDecoder(req, payloadDecoderId, +query.limit, +query.offset);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
+  }
 }

@@ -4,8 +4,8 @@ import { ValidateNested } from "class-validator";
 import { ChirpstackMulticastContentsDto } from "./chirpstack-multicast-contents.dto";
 
 export class CreateMulticastChirpStackDto {
-    @ApiProperty({ required: true })
-    @ValidateNested({ each: true })
-    @Type(() => ChirpstackMulticastContentsDto)
-    multicastGroup: ChirpstackMulticastContentsDto;
+  @ApiProperty({ required: true })
+  @ValidateNested({ each: true })
+  @Type(() => ChirpstackMulticastContentsDto)
+  multicastGroup: ChirpstackMulticastContentsDto;
 }

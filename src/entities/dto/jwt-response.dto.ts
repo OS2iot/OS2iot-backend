@@ -1,3 +1,3 @@
 export class JwtResponseDto {
-    accessToken: string;
+  accessToken: string;
 }

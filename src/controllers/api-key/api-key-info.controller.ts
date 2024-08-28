@@ -15,25 +15,25 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiTags("API key info")
 @Controller("api-key-info")
 export class ApiKeyInfoController {
-    constructor(private apiKeyInfoService: ApiKeyInfoService) {}
-    private readonly logger = new Logger(ApiKeyInfoController.name);
+  constructor(private apiKeyInfoService: ApiKeyInfoService) {}
+  private readonly logger = new Logger(ApiKeyInfoController.name);
 
-    @Get("organization")
-    @ApiOperation({ summary: "Get the organization of an API key" })
-    async findApiKeyOrganization(
-        @Req() req: AuthenticatedRequest,
-        @Query() query?: ListAllEntitiesDto
-    ): Promise<Organization> {
-        // The API Key will have access to at least read from a specific
-        const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
+  @Get("organization")
+  @ApiOperation({ summary: "Get the organization of an API key" })
+  async findApiKeyOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllEntitiesDto
+  ): Promise<Organization> {
+    // The API Key will have access to at least read from a specific
+    const allowedOrganizations = req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead();
 
-        if (allowedOrganizations.length !== 1) {
-            this.logger.error(
-                "API key is possibly tied to more than one organization. API key system user id: " + req.user.userId
-            );
-            throw new BadRequestException();
-        }
-
-        return this.apiKeyInfoService.findOrganization(allowedOrganizations[0]);
+    if (allowedOrganizations.length !== 1) {
+      this.logger.error(
+        "API key is possibly tied to more than one organization. API key system user id: " + req.user.userId
+      );
+      throw new BadRequestException();
     }
+
+    return this.apiKeyInfoService.findOrganization(allowedOrganizations[0]);
+  }
 }

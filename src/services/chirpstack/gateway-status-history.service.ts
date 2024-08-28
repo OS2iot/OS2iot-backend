@@ -1,6 +1,6 @@
 import {
-    GatewayGetAllStatusResponseDto,
-    ListAllGatewayStatusDto,
+  GatewayGetAllStatusResponseDto,
+  ListAllGatewayStatusDto,
 } from "@dto/chirpstack/backend/gateway-all-status.dto";
 import { GatewayStatus } from "@dto/chirpstack/backend/gateway-status.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
@@ -14,141 +14,141 @@ import { GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
 
 @Injectable()
 export class GatewayStatusHistoryService {
-    constructor(
-        @InjectRepository(GatewayStatusHistory)
-        private gatewayStatusHistoryRepository: Repository<GatewayStatusHistory>,
-        private chirpstackGatewayService: ChirpstackGatewayService
-    ) {}
-    private readonly logger = new Logger(GatewayStatusHistoryService.name);
+  constructor(
+    @InjectRepository(GatewayStatusHistory)
+    private gatewayStatusHistoryRepository: Repository<GatewayStatusHistory>,
+    private chirpstackGatewayService: ChirpstackGatewayService
+  ) {}
+  private readonly logger = new Logger(GatewayStatusHistoryService.name);
 
-    public async findAllWithChirpstack(query: ListAllGatewayStatusDto): Promise<GatewayGetAllStatusResponseDto> {
-        // Very expensive operation. Since no gateway data is stored on the backend database, we need
-        // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
-        const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
-        const gatewayIds = gateways.resultList.map(gateway => gateway.gatewayId);
-        const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
+  public async findAllWithChirpstack(query: ListAllGatewayStatusDto): Promise<GatewayGetAllStatusResponseDto> {
+    // Very expensive operation. Since no gateway data is stored on the backend database, we need
+    // to get them from Chirpstack. There's no filter by tags support so we must fetch all gateways.
+    const gateways = await this.chirpstackGatewayService.getAll(query.organizationId);
+    const gatewayIds = gateways.resultList.map(gateway => gateway.gatewayId);
+    const fromDate = gatewayStatusIntervalToDate(query.timeInterval);
 
-        if (!gatewayIds.length) {
-            return { count: 0, data: [] };
-        }
+    if (!gatewayIds.length) {
+      return { count: 0, data: [] };
+    }
 
-        const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
-            where: {
-                mac: In(gatewayIds),
-                timestamp: MoreThanOrEqual(fromDate),
-            },
+    const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
+      where: {
+        mac: In(gatewayIds),
+        timestamp: MoreThanOrEqual(fromDate),
+      },
+    });
+    // To know the status of each gateway up till the first status since the start date,
+    // we must fetch the previous status
+    const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(gatewayIds, fromDate);
+
+    const statusHistories = this.mergeStatusHistories(
+      fromDate,
+      statusHistoriesInPeriod,
+      latestStatusHistoryPerGatewayBeforePeriod
+    );
+
+    const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.resultList, statusHistories);
+
+    return {
+      data,
+      count: gateways.totalCount,
+    };
+  }
+
+  public async findOne(gateway: GatewayResponseDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
+    const fromDate = gatewayStatusIntervalToDate(timeInterval);
+
+    const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
+      where: {
+        mac: gateway.gatewayId,
+        timestamp: MoreThanOrEqual(fromDate),
+      },
+    });
+
+    const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(
+      [gateway.gatewayId],
+      fromDate
+    );
+
+    const statusHistories = this.mergeStatusHistories(
+      fromDate,
+      statusHistoriesInPeriod,
+      latestStatusHistoryPerGatewayBeforePeriod
+    );
+
+    return this.mapStatusHistoryToGateway(gateway, statusHistories);
+  }
+
+  public findLatestPerGateway(): Promise<GatewayStatusHistory[]> {
+    return this.gatewayStatusHistoryRepository
+      .createQueryBuilder("status_history")
+      .distinctOn([nameof<GatewayStatusHistory>("mac")])
+      .orderBy({
+        [nameof<GatewayStatusHistory>("mac")]: "ASC",
+        [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+      })
+      .getMany();
+  }
+
+  public createMany(histories: GatewayStatusHistory[]): Promise<GatewayStatusHistory[]> {
+    return this.gatewayStatusHistoryRepository.save(histories);
+  }
+
+  private fetchLatestStatusBeforeDate(gatewayIds: string[], date: Date) {
+    return this.gatewayStatusHistoryRepository
+      .createQueryBuilder("status_history")
+      .where("status_history.mac IN (:...gatewayIds)", { gatewayIds })
+      .andWhere("status_history.timestamp < :date", { date })
+      .distinctOn([nameof<GatewayStatusHistory>("mac")])
+      .orderBy({
+        [nameof<GatewayStatusHistory>("mac")]: "ASC",
+        [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
+      })
+      .getMany();
+  }
+
+  private mergeStatusHistories(
+    fromDate: Date,
+    statusHistoriesInPeriod: GatewayStatusHistory[],
+    latestStatusHistoryPerGateway: GatewayStatusHistory[]
+  ): GatewayStatusHistory[] {
+    const combinedHistories = statusHistoriesInPeriod.slice();
+
+    latestStatusHistoryPerGateway.forEach(latestHistory => {
+      // Ensure that the timestamp is within the time period
+      latestHistory.timestamp = fromDate;
+      combinedHistories.push(latestHistory);
+    });
+
+    return combinedHistories;
+  }
+
+  private mapStatusHistoryToGateways(
+    gateways: GatewayResponseDto[],
+    statusHistories: GatewayStatusHistory[]
+  ): GatewayStatus[] {
+    return gateways.map(gateway => {
+      return this.mapStatusHistoryToGateway(gateway, statusHistories);
+    });
+  }
+
+  private mapStatusHistoryToGateway(gateway: GatewayResponseDto, statusHistories: GatewayStatusHistory[]) {
+    const statusTimestamps = statusHistories.reduce((res: GatewayStatus["statusTimestamps"], history) => {
+      if (history.mac === gateway.gatewayId) {
+        res.push({
+          timestamp: history.timestamp,
+          wasOnline: history.wasOnline,
         });
-        // To know the status of each gateway up till the first status since the start date,
-        // we must fetch the previous status
-        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(gatewayIds, fromDate);
+      }
 
-        const statusHistories = this.mergeStatusHistories(
-            fromDate,
-            statusHistoriesInPeriod,
-            latestStatusHistoryPerGatewayBeforePeriod
-        );
+      return res;
+    }, []);
 
-        const data: GatewayStatus[] = this.mapStatusHistoryToGateways(gateways.resultList, statusHistories);
-
-        return {
-            data,
-            count: gateways.totalCount,
-        };
-    }
-
-    public async findOne(gateway: GatewayResponseDto, timeInterval: GatewayStatusInterval): Promise<GatewayStatus> {
-        const fromDate = gatewayStatusIntervalToDate(timeInterval);
-
-        const statusHistoriesInPeriod = await this.gatewayStatusHistoryRepository.find({
-            where: {
-                mac: gateway.gatewayId,
-                timestamp: MoreThanOrEqual(fromDate),
-            },
-        });
-
-        const latestStatusHistoryPerGatewayBeforePeriod = await this.fetchLatestStatusBeforeDate(
-            [gateway.gatewayId],
-            fromDate
-        );
-
-        const statusHistories = this.mergeStatusHistories(
-            fromDate,
-            statusHistoriesInPeriod,
-            latestStatusHistoryPerGatewayBeforePeriod
-        );
-
-        return this.mapStatusHistoryToGateway(gateway, statusHistories);
-    }
-
-    public findLatestPerGateway(): Promise<GatewayStatusHistory[]> {
-        return this.gatewayStatusHistoryRepository
-            .createQueryBuilder("status_history")
-            .distinctOn([nameof<GatewayStatusHistory>("mac")])
-            .orderBy({
-                [nameof<GatewayStatusHistory>("mac")]: "ASC",
-                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
-            })
-            .getMany();
-    }
-
-    public createMany(histories: GatewayStatusHistory[]): Promise<GatewayStatusHistory[]> {
-        return this.gatewayStatusHistoryRepository.save(histories);
-    }
-
-    private fetchLatestStatusBeforeDate(gatewayIds: string[], date: Date) {
-        return this.gatewayStatusHistoryRepository
-            .createQueryBuilder("status_history")
-            .where("status_history.mac IN (:...gatewayIds)", { gatewayIds })
-            .andWhere("status_history.timestamp < :date", { date })
-            .distinctOn([nameof<GatewayStatusHistory>("mac")])
-            .orderBy({
-                [nameof<GatewayStatusHistory>("mac")]: "ASC",
-                [nameof<GatewayStatusHistory>("timestamp")]: "DESC",
-            })
-            .getMany();
-    }
-
-    private mergeStatusHistories(
-        fromDate: Date,
-        statusHistoriesInPeriod: GatewayStatusHistory[],
-        latestStatusHistoryPerGateway: GatewayStatusHistory[]
-    ): GatewayStatusHistory[] {
-        const combinedHistories = statusHistoriesInPeriod.slice();
-
-        latestStatusHistoryPerGateway.forEach(latestHistory => {
-            // Ensure that the timestamp is within the time period
-            latestHistory.timestamp = fromDate;
-            combinedHistories.push(latestHistory);
-        });
-
-        return combinedHistories;
-    }
-
-    private mapStatusHistoryToGateways(
-        gateways: GatewayResponseDto[],
-        statusHistories: GatewayStatusHistory[]
-    ): GatewayStatus[] {
-        return gateways.map(gateway => {
-            return this.mapStatusHistoryToGateway(gateway, statusHistories);
-        });
-    }
-
-    private mapStatusHistoryToGateway(gateway: GatewayResponseDto, statusHistories: GatewayStatusHistory[]) {
-        const statusTimestamps = statusHistories.reduce((res: GatewayStatus["statusTimestamps"], history) => {
-            if (history.mac === gateway.gatewayId) {
-                res.push({
-                    timestamp: history.timestamp,
-                    wasOnline: history.wasOnline,
-                });
-            }
-
-            return res;
-        }, []);
-
-        return {
-            id: gateway.gatewayId,
-            name: gateway.name,
-            statusTimestamps,
-        };
-    }
+    return {
+      id: gateway.gatewayId,
+      name: gateway.name,
+      statusTimestamps,
+    };
+  }
 }

@@ -8,9 +8,9 @@ import { HttpModule } from "@nestjs/axios";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
-    controllers: [LoRaWANGatewayController],
-    imports: [SharedModule, HttpModule, OrganizationModule],
-    providers: [ChirpstackGatewayService, GatewayStatusHistoryService, GatewayBootstrapperService],
-    exports: [GatewayStatusHistoryService],
+  controllers: [LoRaWANGatewayController],
+  imports: [SharedModule, HttpModule, OrganizationModule],
+  providers: [ChirpstackGatewayService, GatewayStatusHistoryService, GatewayBootstrapperService],
+  exports: [GatewayStatusHistoryService],
 })
 export class LoRaWANGatewayModule {}

@@ -6,17 +6,17 @@ import { In, Repository } from "typeorm";
 
 @Injectable()
 export class IoTLoRaWANDeviceService {
-    constructor(
-        @InjectRepository(LoRaWANDevice)
-        private iotLorawanDeviceRepository: Repository<LoRaWANDevice>
-    ) {}
+  constructor(
+    @InjectRepository(LoRaWANDevice)
+    private iotLorawanDeviceRepository: Repository<LoRaWANDevice>
+  ) {}
 
-    private readonly logger = new Logger(IoTLoRaWANDeviceService.name, { timestamp: true });
+  private readonly logger = new Logger(IoTLoRaWANDeviceService.name, { timestamp: true });
 
-    public getDeviceEUIsByIds(deviceEUIs: string[]): Promise<LoRaWANDeviceId[]> {
-        return this.iotLorawanDeviceRepository.find({
-            select: ["deviceEUI"],
-            where: { deviceEUI: In(deviceEUIs) },
-        });
-    }
+  public getDeviceEUIsByIds(deviceEUIs: string[]): Promise<LoRaWANDeviceId[]> {
+    return this.iotLorawanDeviceRepository.find({
+      select: ["deviceEUI"],
+      where: { deviceEUI: In(deviceEUIs) },
+    });
+  }
 }

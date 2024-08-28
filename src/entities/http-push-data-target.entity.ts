@@ -8,32 +8,32 @@ import { HttpPushDataTargetConfiguration } from "./interfaces/http-push-data-tar
 
 @ChildEntity(DataTargetType.HttpPush)
 export class HttpPushDataTarget extends DataTarget {
-    @Column()
-    url: string;
+  @Column()
+  url: string;
 
-    @Column({ default: 30000, comment: "HTTP call timeout in milliseconds" })
-    timeout: number;
+  @Column({ default: 30000, comment: "HTTP call timeout in milliseconds" })
+  timeout: number;
 
-    @Column({ nullable: true })
-    authorizationHeader?: string;
+  @Column({ nullable: true })
+  authorizationHeader?: string;
 
-    @BeforeInsert()
-    private beforeInsert() {
-        /**
-         * Generate uuid (version 4 = random) to be used as the apiKey for this GenericHTTPDevice
-         */
-        this.type = DataTargetType.HttpPush;
-    }
+  @BeforeInsert()
+  private beforeInsert() {
+    /**
+     * Generate uuid (version 4 = random) to be used as the apiKey for this GenericHTTPDevice
+     */
+    this.type = DataTargetType.HttpPush;
+  }
 
-    toConfiguration(): HttpPushDataTargetConfiguration {
-        return {
-            url: this.url,
-            timeout: this.timeout,
-            authorizationType:
-                this.authorizationHeader != ""
-                    ? AuthorizationType.HEADER_BASED_AUTHORIZATION
-                    : AuthorizationType.NO_AUTHORIZATION,
-            authorizationHeader: this.authorizationHeader,
-        };
-    }
+  toConfiguration(): HttpPushDataTargetConfiguration {
+    return {
+      url: this.url,
+      timeout: this.timeout,
+      authorizationType:
+        this.authorizationHeader != ""
+          ? AuthorizationType.HEADER_BASED_AUTHORIZATION
+          : AuthorizationType.NO_AUTHORIZATION,
+      authorizationHeader: this.authorizationHeader,
+    };
+  }
 }

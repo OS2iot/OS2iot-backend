@@ -3,14 +3,14 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 import { AuthenticatedUser } from "./authenticated-user";
 
 export type AuthenticatedRequest = {
-    user: AuthenticatedUser;
+  user: AuthenticatedUser;
 };
 
 export type AuthenticatedRequestLocalStrategy = {
-    user: User;
+  user: User;
 };
 
 export class AuthenticatedRequestKombitStrategy {
-    user: User | ErrorCodes;
-    cookies: any;
+  user: User | ErrorCodes;
+  cookies: any;
 }

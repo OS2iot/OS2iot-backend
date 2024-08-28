@@ -8,14 +8,14 @@ import { PermissionService } from "@services/user-management/permission.service"
 import { PermissionController } from "@user-management-controller/permission.controller";
 
 @Module({
-    imports: [
-        SharedModule,
-        forwardRef(() => ApplicationModule),
-        forwardRef(() => UserModule),
-        forwardRef(() => OrganizationModule),
-    ],
-    providers: [PermissionService],
-    exports: [PermissionService],
-    controllers: [PermissionController],
+  imports: [
+    SharedModule,
+    forwardRef(() => ApplicationModule),
+    forwardRef(() => UserModule),
+    forwardRef(() => OrganizationModule),
+  ],
+  providers: [PermissionService],
+  exports: [PermissionService],
+  controllers: [PermissionController],
 })
 export class PermissionModule {}

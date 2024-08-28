@@ -1,6 +1,6 @@
 export class ChirpstackErrorResponseDto {
-    error: string;
-    code: number;
-    message: string;
-    details: any[];
+  error: string;
+  code: number;
+  message: string;
+  details: any[];
 }

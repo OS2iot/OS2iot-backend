@@ -1,11 +1,4 @@
-import {
-    Column,
-    Entity,
-    ManyToOne,
-    OneToMany,
-    OneToOne,
-    TableInheritance,
-} from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, OneToOne, TableInheritance } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";
@@ -15,32 +8,32 @@ import { IoTDevicePayloadDecoderDataTargetConnection } from "./iot-device-payloa
 
 @Entity("data_target")
 @TableInheritance({
-    column: { type: "enum", name: "type", enum: DataTargetType },
+  column: { type: "enum", name: "type", enum: DataTargetType },
 })
 export abstract class DataTarget extends DbBaseEntity {
-    @Column("enum", {
-        enum: DataTargetType,
-    })
-    type: DataTargetType;
+  @Column("enum", {
+    enum: DataTargetType,
+  })
+  type: DataTargetType;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @ManyToOne(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type => Application,
-        application => application.iotDevices,
-        { onDelete: "CASCADE" }
-    )
-    application: Application;
-
-    @OneToMany(type => IoTDevicePayloadDecoderDataTargetConnection, c => c.dataTarget)
-    connections: IoTDevicePayloadDecoderDataTargetConnection[];
-
+  @ManyToOne(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @OneToOne(type => OpenDataDkDataset, o => o.dataTarget, {
-        nullable: true,
-        cascade: true,
-    })
-    openDataDkDataset: OpenDataDkDataset;
+    type => Application,
+    application => application.iotDevices,
+    { onDelete: "CASCADE" }
+  )
+  application: Application;
+
+  @OneToMany(type => IoTDevicePayloadDecoderDataTargetConnection, c => c.dataTarget)
+  connections: IoTDevicePayloadDecoderDataTargetConnection[];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  @OneToOne(type => OpenDataDkDataset, o => o.dataTarget, {
+    nullable: true,
+    cascade: true,
+  })
+  openDataDkDataset: OpenDataDkDataset;
 }

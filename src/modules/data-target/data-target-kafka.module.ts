@@ -14,20 +14,20 @@ import { DataTargetKafkaListenerService } from "@services/data-targets/data-targ
 import { DataTargetFiwareSenderModule } from "./data-target-fiware-sender.module";
 
 @Module({
-    imports: [
-        SharedModule,
-        HttpModule,
-        KafkaModule,
-        DataTargetSenderModule,
-        DataTargetFiwareSenderModule,
-        DeviceIntegrationPersistenceModule,
-        IoTDeviceModule,
-        ChirpstackAdministrationModule,
-        IoTDevicePayloadDecoderDataTargetConnectionModule,
-        ApplicationModule,
-        DataTargetModule,
-        GatewayPersistenceModule,
-    ],
-    providers: [DataTargetKafkaListenerService],
+  imports: [
+    SharedModule,
+    HttpModule,
+    KafkaModule,
+    DataTargetSenderModule,
+    DataTargetFiwareSenderModule,
+    DeviceIntegrationPersistenceModule,
+    IoTDeviceModule,
+    ChirpstackAdministrationModule,
+    IoTDevicePayloadDecoderDataTargetConnectionModule,
+    ApplicationModule,
+    DataTargetModule,
+    GatewayPersistenceModule,
+  ],
+  providers: [DataTargetKafkaListenerService],
 })
 export class DataTargetKafkaModule {}

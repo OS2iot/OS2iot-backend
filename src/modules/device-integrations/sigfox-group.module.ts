@@ -8,9 +8,9 @@ import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-
 import { SigfoxApiGroupService } from "@services/sigfox/sigfox-api-group.service";
 
 @Module({
-    imports: [SharedModule, OrganizationModule, SigFoxAdministrationModule],
-    controllers: [SigfoxGroupController],
-    providers: [SigFoxGroupService, SigfoxApiGroupService],
-    exports: [SigFoxGroupService],
+  imports: [SharedModule, OrganizationModule, SigFoxAdministrationModule],
+  controllers: [SigfoxGroupController],
+  providers: [SigFoxGroupService, SigfoxApiGroupService],
+  exports: [SigFoxGroupService],
 })
 export class SigFoxGroupModule {}

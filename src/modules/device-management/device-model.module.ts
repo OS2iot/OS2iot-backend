@@ -5,9 +5,9 @@ import { SharedModule } from "@modules/shared.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 
 @Module({
-    imports: [SharedModule, OrganizationModule],
-    providers: [DeviceModelService],
-    controllers: [DeviceModelController],
-    exports: [DeviceModelService],
+  imports: [SharedModule, OrganizationModule],
+  providers: [DeviceModelService],
+  controllers: [DeviceModelController],
+  exports: [DeviceModelService],
 })
 export class DeviceModelModule {}

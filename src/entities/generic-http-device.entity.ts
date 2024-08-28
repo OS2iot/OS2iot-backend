@@ -6,19 +6,19 @@ import { IoTDeviceType } from "@enum/device-type.enum";
 
 @ChildEntity(IoTDeviceType.GenericHttp)
 export class GenericHTTPDevice extends IoTDevice {
-    @Column({
-        nullable: true,
-        type: "varchar",
-        comment: "Used for GenericHTTPDevice",
-    })
-    apiKey: string;
+  @Column({
+    nullable: true,
+    type: "varchar",
+    comment: "Used for GenericHTTPDevice",
+  })
+  apiKey: string;
 
-    @BeforeInsert()
-    private beforeInsert() {
-        /**
-         * Generate uuid (version 4 = random) to be used as the apiKey for this GenericHTTPDevice
-         */
-        this.apiKey = uuidv4();
-        this.type = IoTDeviceType.GenericHttp;
-    }
+  @BeforeInsert()
+  private beforeInsert() {
+    /**
+     * Generate uuid (version 4 = random) to be used as the apiKey for this GenericHTTPDevice
+     */
+    this.apiKey = uuidv4();
+    this.type = IoTDeviceType.GenericHttp;
+  }
 }

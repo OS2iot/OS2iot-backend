@@ -1,10 +1,10 @@
 export interface SigFoxApiBulkTransferRequestDto {
-    deviceTypeId: string;
-    data: SigFoxApiBulkTransferDeviceSettings[];
+  deviceTypeId: string;
+  data: SigFoxApiBulkTransferDeviceSettings[];
 }
 
 export interface SigFoxApiBulkTransferDeviceSettings {
-    id: string;
-    keepHistory: boolean;
-    activable: boolean;
+  id: string;
+  keepHistory: boolean;
+  activable: boolean;
 }

@@ -4,8 +4,8 @@ import { BeforeInsert, ChildEntity } from "typeorm";
 
 @ChildEntity(DataTargetType.OpenDataDK)
 export class OpenDataDkDataTarget extends DataTarget {
-    @BeforeInsert()
-    private beforeInsert() {
-        this.type = DataTargetType.OpenDataDK;
-    }
+  @BeforeInsert()
+  private beforeInsert() {
+    this.type = DataTargetType.OpenDataDK;
+  }
 }

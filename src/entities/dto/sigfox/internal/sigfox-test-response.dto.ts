@@ -1,3 +1,3 @@
 export class SigFoxTestResponse {
-    status: boolean;
+  status: boolean;
 }
