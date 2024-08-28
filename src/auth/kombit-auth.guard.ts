@@ -1,10 +1,5 @@
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    ExecutionContext,
-    Injectable,
-    Logger,
-    UnauthorizedException,
-} from "@nestjs/common";
+import { ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { Request as expressRequest, Response } from "express";
 import { RedirectingException } from "./redirecting-exception";
@@ -17,13 +12,7 @@ export class KombitAuthGuard extends AuthGuard("kombit") {
 
     private readonly logger = new Logger(KombitAuthGuard.name);
 
-    handleRequest(
-        err: any,
-        user: any,
-        info: any,
-        context: ExecutionContext,
-        status: any
-    ) {
+    handleRequest(err: any, user: any, info: any, context: ExecutionContext, status: any) {
         if (err || !user) {
             const req: expressRequest = context.switchToHttp().getRequest();
             const res: Response = context.switchToHttp().getResponse();
@@ -32,12 +21,8 @@ export class KombitAuthGuard extends AuthGuard("kombit") {
 
             if (redirectTarget) {
                 const redirectError =
-                    err?.message == ErrorCodes.UserInactive
-                        ? ErrorCodes.UserInactive
-                        : ErrorCodes.KOMBITLoginFailed;
-                throw new RedirectingException(
-                    `${redirectTarget}?error=${redirectError}`
-                );
+                    err?.message == ErrorCodes.UserInactive ? ErrorCodes.UserInactive : ErrorCodes.KOMBITLoginFailed;
+                throw new RedirectingException(`${redirectTarget}?error=${redirectError}`);
             } else {
                 throw new UnauthorizedException(ErrorCodes.MissingRole);
             }

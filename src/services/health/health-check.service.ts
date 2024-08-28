@@ -10,12 +10,9 @@ export class HealthCheckService {
     private readonly MAX_HEARTBEAT_DELAY = 60000;
 
     isKafkaOk(): boolean {
-        const isOk =
-            new Date().valueOf() - this.lastHeartbeat <= this.MAX_HEARTBEAT_DELAY;
+        const isOk = new Date().valueOf() - this.lastHeartbeat <= this.MAX_HEARTBEAT_DELAY;
         if (!isOk) {
-            this.logger.error(
-                `Healthcheck not OK. Last heartbeat from Kafka was at ${this.lastHeartbeat}`
-            );
+            this.logger.error(`Healthcheck not OK. Last heartbeat from Kafka was at ${this.lastHeartbeat}`);
         }
         return isOk;
     }

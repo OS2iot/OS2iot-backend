@@ -6,7 +6,7 @@ export class CreateNewKombitUserDto {
     @IsEmail()
     @IsNotEmpty()
     email: string;
-    
+
     @ApiProperty({ required: true })
     @ArrayMinSize(1)
     requestedOrganizationIds: number[];

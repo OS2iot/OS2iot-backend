@@ -53,9 +53,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
             client.subscribe(this.MQTT_DEVICE_DATA_TOPIC);
 
             client.on("message", async (topic, message) => {
-                this.logger.debug(
-                    `Received MQTT - Topic: '${topic}' - message: '${message}'`
-                );
+                this.logger.debug(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
 
                 if (topic.startsWith(this.MQTT_DEVICE_DATA_PREFIX)) {
                     // Handle data coming in
@@ -75,9 +73,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
         const iotDevice = await this.iotDeviceService.findMQTTDevice(deviceId);
 
         if (iotDevice === undefined) {
-            this.logger.warn(
-                `Unknown DeviceId attempted to send data via MQTT DeviceId: ${deviceId}`
-            );
+            this.logger.warn(`Unknown DeviceId attempted to send data via MQTT DeviceId: ${deviceId}`);
             return;
         }
 
@@ -90,15 +86,11 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
 
     private async seedSuperUser() {
         if (await this.iotDeviceService.getMqttSuperUser()) {
-            this.logger.debug(
-                "MQTT Listener superuser already exists. New one wont be seeded"
-            );
+            this.logger.debug("MQTT Listener superuser already exists. New one wont be seeded");
             return;
         }
 
-        const certificateDetails = await this.mqttService.generateCertificate(
-            this.superUserName
-        );
+        const certificateDetails = await this.mqttService.generateCertificate(this.superUserName);
 
         await this.mqttInternalBrokerDeviceRepository.save({
             type: IoTDeviceType.MQTTInternalBroker,

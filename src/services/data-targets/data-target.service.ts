@@ -12,21 +12,12 @@ import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    BadRequestException,
-    forwardRef,
-    Inject,
-    Injectable,
-    Logger,
-} from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
-import {
-    CLIENT_SECRET_PROVIDER,
-    ClientSecretProvider,
-} from "../../helpers/fiware-token.helper";
+import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
 import { User } from "@entities/user.entity";
 
 @Injectable()
@@ -76,12 +67,9 @@ export class DataTargetService {
                 appId: query.applicationId,
             });
         } else if (applicationIds) {
-            queryBuilder = queryBuilder.where(
-                '"application"."id" IN (:...allowedApplications)',
-                {
-                    allowedApplications: applicationIds,
-                }
-            );
+            queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
+                allowedApplications: applicationIds,
+            });
         }
         return queryBuilder;
     }
@@ -109,11 +97,7 @@ export class DataTargetService {
         const res = await this.dataTargetRepository
             .createQueryBuilder("dt")
             .addSelect("dt.clientSecret")
-            .innerJoin(
-                "iot_device_payload_decoder_data_target_connection",
-                "con",
-                'con."dataTargetId" = dt.id'
-            )
+            .innerJoin("iot_device_payload_decoder_data_target_connection", "con", 'con."dataTargetId" = dt.id')
             .innerJoin(
                 "iot_dev_pay_dec_dat_tar_con_iot_dev_iot_dev",
                 "jt",
@@ -131,17 +115,11 @@ export class DataTargetService {
         }
     }
 
-    async create(
-        createDataTargetDto: CreateDataTargetDto,
-        userId: number
-    ): Promise<DataTarget> {
+    async create(createDataTargetDto: CreateDataTargetDto, userId: number): Promise<DataTarget> {
         const childType = dataTargetTypeMap[createDataTargetDto.type];
 
         const dataTarget = this.createDataTargetByDto<DataTarget>(childType);
-        const mappedDataTarget = await this.mapDtoToDataTarget(
-            createDataTargetDto,
-            dataTarget
-        );
+        const mappedDataTarget = await this.mapDtoToDataTarget(createDataTargetDto, dataTarget);
 
         if (createDataTargetDto.openDataDkDataset) {
             dataTarget.openDataDkDataset = new OpenDataDkDataset();
@@ -162,21 +140,15 @@ export class DataTargetService {
         return await entityManager.save(mappedDataTarget, {});
     }
 
-    async update(
-        id: number,
-        updateDataTargetDto: UpdateDataTargetDto,
-        userId: number
-    ): Promise<DataTarget> {
-        const existing = await this.dataTargetRepository.createQueryBuilder('target')
-            .addSelect('target.clientSecret')
-            .leftJoinAndSelect('target.openDataDkDataset', 'openDataDkDataset')
-            .where('target.id = :id', { id })
+    async update(id: number, updateDataTargetDto: UpdateDataTargetDto, userId: number): Promise<DataTarget> {
+        const existing = await this.dataTargetRepository
+            .createQueryBuilder("target")
+            .addSelect("target.clientSecret")
+            .leftJoinAndSelect("target.openDataDkDataset", "openDataDkDataset")
+            .where("target.id = :id", { id })
             .getOneOrFail();
 
-        const mappedDataTarget = await this.mapDtoToDataTarget(
-            updateDataTargetDto,
-            existing
-        );
+        const mappedDataTarget = await this.mapDtoToDataTarget(updateDataTargetDto, existing);
 
         if (updateDataTargetDto.openDataDkDataset) {
             if (existing.openDataDkDataset == null) {
@@ -200,10 +172,7 @@ export class DataTargetService {
         return this.dataTargetRepository.delete(id);
     }
 
-    private async mapDtoToDataTarget(
-        dataTargetDto: CreateDataTargetDto,
-        dataTarget: DataTarget
-    ): Promise<DataTarget> {
+    private async mapDtoToDataTarget(dataTargetDto: CreateDataTargetDto, dataTarget: DataTarget): Promise<DataTarget> {
         dataTarget.name = dataTargetDto.name;
         if (dataTargetDto.applicationId != null) {
             try {
@@ -211,9 +180,7 @@ export class DataTargetService {
                     dataTargetDto.applicationId
                 );
             } catch (err) {
-                this.logger.error(
-                    `Could not find application with id: ${dataTargetDto.applicationId}`
-                );
+                this.logger.error(`Could not find application with id: ${dataTargetDto.applicationId}`);
 
                 throw new BadRequestException(ErrorCodes.IdDoesNotExists);
             }
@@ -226,10 +193,7 @@ export class DataTargetService {
         return dataTarget;
     }
 
-    private mapOpenDataDk(
-        dto: CreateOpenDataDkDatasetDto,
-        o: OpenDataDkDataset
-    ): OpenDataDkDataset {
+    private mapOpenDataDk(dto: CreateOpenDataDkDatasetDto, o: OpenDataDkDataset): OpenDataDkDataset {
         o.name = dto.name;
         o.license = dto.license;
         o.authorName = dto.authorName;
@@ -241,10 +205,7 @@ export class DataTargetService {
         return o;
     }
 
-    private async mapDtoToTypeSpecificDataTarget(
-        dataTargetDto: CreateDataTargetDto,
-        dataTarget: DataTarget
-    ) {
+    private async mapDtoToTypeSpecificDataTarget(dataTargetDto: CreateDataTargetDto, dataTarget: DataTarget) {
         if (dataTargetDto.type === DataTargetType.HttpPush) {
             const httpPushDataTarget = dataTarget as HttpPushDataTarget;
             httpPushDataTarget.url = dataTargetDto.url;
@@ -280,24 +241,25 @@ export class DataTargetService {
         return new childDataTargetType();
     }
 
-    public async sendOpenDataDkMail(
-        mailInfoDto: OddkMailInfo,
-        userId: number,
-    ): Promise<boolean> {
-        const user = await this.userRepository.findOneByOrFail({id: userId});
+    public async sendOpenDataDkMail(mailInfoDto: OddkMailInfo, userId: number): Promise<boolean> {
+        const user = await this.userRepository.findOneByOrFail({ id: userId });
         await this.oS2IoTMail.sendMailChecked({
             to: "info@opendata.dk",
             subject: "Ny integration til OS2IoT",
-            html: `<p>
+            html:
+                `<p>
                 Hej Open Data DK,<br>
                 <br>
                 Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
                 I kan høste fra ${mailInfoDto.sharingUrl} <br>
                 Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
-                <br>`
-                + (mailInfoDto.comment ? ('Kommentar: ' + mailInfoDto.comment + '<br><br>') : '')
-                + 'Mvh.<br>' + user.name + '<br>' + user.email
-            + '</p>',
+                <br>` +
+                (mailInfoDto.comment ? "Kommentar: " + mailInfoDto.comment + "<br><br>" : "") +
+                "Mvh.<br>" +
+                user.name +
+                "<br>" +
+                user.email +
+                "</p>",
         });
         return true;
     }

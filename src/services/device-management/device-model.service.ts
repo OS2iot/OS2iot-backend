@@ -96,11 +96,7 @@ export class DeviceModelService {
         return this.update(deviceModel, dto, userId);
     }
 
-    async update(
-        deviceModel: DeviceModel,
-        dto: UpdateDeviceModelDto,
-        userId: number
-    ): Promise<DeviceModel> {
+    async update(deviceModel: DeviceModel, dto: UpdateDeviceModelDto, userId: number): Promise<DeviceModel> {
         this.validateModel(dto.body);
 
         deviceModel.body = dto.body;

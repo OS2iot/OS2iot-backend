@@ -50,7 +50,6 @@ import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
-
     constructor(private configService: ConfigService, private deviceProfileService: DeviceProfileService) {
         super();
 

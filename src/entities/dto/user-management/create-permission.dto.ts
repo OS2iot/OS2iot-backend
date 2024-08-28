@@ -12,10 +12,10 @@ export class CreatePermissionDto {
         enum: PermissionType,
     })
     @IsArray()
-    @ArrayDistinct(nameof<PermissionTypeDto>('type'))
+    @ArrayDistinct(nameof<PermissionTypeDto>("type"))
     @Type(() => PermissionTypeDto)
     @ValidateNested({ each: true })
-    levels: PermissionTypeDto[]
+    levels: PermissionTypeDto[];
 
     @ApiProperty({ required: true })
     @IsString()

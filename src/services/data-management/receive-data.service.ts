@@ -32,37 +32,20 @@ export class ReceiveDataService {
         await this.doSendToKafka(payload, KafkaTopic.RAW_REQUEST);
     }
 
-    async sendRawGatewayStateToKafka(
-        gatewayId: string,
-        data: string,
-        timestamp?: number
-    ): Promise<void> {
+    async sendRawGatewayStateToKafka(gatewayId: string, data: string, timestamp?: number): Promise<void> {
         const dto = new RawGatewayStateDto();
         dto.gatewayId = gatewayId;
         dto.rawPayload = JSON.parse(data);
-        const payload = this.buildMessage(
-            dto,
-            "GATEWAY",
-            KafkaTopic.RAW_GATEWAY_STATE,
-            timestamp
-        );
+        const payload = this.buildMessage(dto, "GATEWAY", KafkaTopic.RAW_GATEWAY_STATE, timestamp);
 
         await this.doSendToKafka(payload, KafkaTopic.RAW_GATEWAY_STATE);
     }
 
-    private buildMessage(
-        dto: RawRequestDto,
-        type: string,
-        topicName: KafkaTopic,
-        timestamp?: number
-    ): KafkaPayload {
+    private buildMessage(dto: RawRequestDto, type: string, topicName: KafkaTopic, timestamp?: number): KafkaPayload {
         this.logger.debug(`Received data, sending to Kafka`);
         dto.type = type;
         // We cannot generically know when it was sent by the device, "now" is accurate enough
-        dto.unixTimestamp =
-            timestamp !== null && timestamp !== undefined
-                ? timestamp
-                : new Date().valueOf();
+        dto.unixTimestamp = timestamp !== null && timestamp !== undefined ? timestamp : new Date().valueOf();
 
         const payload: KafkaPayload = {
             messageId: `${type}${new Date().valueOf()}`,

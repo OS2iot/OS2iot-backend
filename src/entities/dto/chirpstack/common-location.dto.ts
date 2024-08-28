@@ -18,7 +18,7 @@ export class CommonLocationDto {
     altitude?: number;
 
     @ApiHideProperty()
-    source?: LocationSourceMap[keyof LocationSourceMap]
+    source?: LocationSourceMap[keyof LocationSourceMap];
 
     @ApiProperty({ required: false })
     @IsOptional()

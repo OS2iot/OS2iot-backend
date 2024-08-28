@@ -15,11 +15,7 @@ export abstract class BaseDataTargetService {
         return { status: SendStatus.OK };
     }
 
-    failure(
-        receiver: string,
-        errorMessage: string,
-        dataTarget: DataTarget
-    ): DataTargetSendStatus {
+    failure(receiver: string, errorMessage: string, dataTarget: DataTarget): DataTargetSendStatus {
         this.baseLogger.error(
             `Datatarget {Id: ${dataTarget.id}, Name: ${dataTarget.name}} Send to ${receiver} failed with error ${errorMessage}`
         );

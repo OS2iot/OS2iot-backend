@@ -7,12 +7,7 @@ import { SigFoxApiContractService } from "@services/sigfox/sigfox-api-contract.s
 import { SigFoxApiContractController } from "@admin-controller/sigfox/sigfox-api-contract.controller";
 
 @Module({
-    imports: [
-        AuthModule,
-        SigFoxGroupModule,
-        SigFoxAdministrationModule,
-        SigFoxUsersModule,
-    ],
+    imports: [AuthModule, SigFoxGroupModule, SigFoxAdministrationModule, SigFoxUsersModule],
     controllers: [SigFoxApiContractController],
     providers: [SigFoxApiContractService],
     exports: [SigFoxApiContractService],

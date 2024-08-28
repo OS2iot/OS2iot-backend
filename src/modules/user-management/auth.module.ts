@@ -33,7 +33,7 @@ import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
         forwardRef(() => UserModule),
         forwardRef(() => PermissionModule),
         forwardRef(() => OrganizationModule),
-        forwardRef(() => ApiKeyModule)
+        forwardRef(() => ApiKeyModule),
     ],
     providers: [AuthService, LocalStrategy, JwtStrategy, KombitStrategy, ApiKeyStrategy],
     exports: [AuthService],
@@ -41,8 +41,6 @@ import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
 })
 export class AuthModule {
     configure(consumer: MiddlewareConsumer): void {
-        consumer
-            .apply(HandleRedirectUrlParameterMiddleware)
-            .forRoutes("auth/kombit/login");
+        consumer.apply(HandleRedirectUrlParameterMiddleware).forRoutes("auth/kombit/login");
     }
 }

@@ -66,10 +66,7 @@ export class GenericSigfoxAdministationService {
 
     async testConnection(sigfoxGroup: SigFoxGroup): Promise<boolean> {
         try {
-            const apiUsers = await this.get<SigFoxApiUsersResponseDto>(
-                "api-users",
-                sigfoxGroup
-            );
+            const apiUsers = await this.get<SigFoxApiUsersResponseDto>("api-users", sigfoxGroup);
             return apiUsers.data.length > 0;
         } catch (err) {
             return false;
@@ -83,18 +80,10 @@ export class GenericSigfoxAdministationService {
         dto = undefined,
         useCache = false,
     }: RequestParameters): Promise<T> {
-        const config = await this.generateAxiosConfig(
-            sigfoxGroup,
-            method,
-            path,
-            dto,
-            useCache
-        );
+        const config = await this.generateAxiosConfig(sigfoxGroup, method, path, dto, useCache);
         try {
             const result = await this.httpService.request(config).toPromise();
-            this.logger.debug(
-                `${method} '${path}' got status: '${result.status} ${result.statusText}' `
-            );
+            this.logger.debug(`${method} '${path}' got status: '${result.status} ${result.statusText}' `);
             return result.data;
         } catch (err) {
             this.handleError<T>(method, path, dto, err);
@@ -102,9 +91,7 @@ export class GenericSigfoxAdministationService {
     }
 
     private handleError<T>(method: string, path: string, dto: any, err: any) {
-        this.logger.warn(
-            `${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : "")
-        );
+        this.logger.warn(`${method} '${path}'` + (dto != null ? `: '${JSON.stringify(dto)}'` : ""));
         const response = err?.response;
         if (response?.status == 401) {
             throw new UnauthorizedException(ErrorCodes.SigFoxBadLogin);
@@ -117,9 +104,7 @@ export class GenericSigfoxAdministationService {
 
         this.handleSigFox429<T>(response);
 
-        this.logger.error(
-            `Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`
-        );
+        this.logger.error(`Got unexpected error from SigFox (${response?.status} ${response?.statusText})'`);
         throw err;
     }
 

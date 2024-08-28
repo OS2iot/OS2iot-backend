@@ -40,9 +40,7 @@ export class AuthenticationTokenProvider {
 
     async clearConfig(config: FiwareDataTargetConfiguration): Promise<void> {
         if (config.clientId) {
-            this.logger.debug(
-                `AuthenticationTokenProvider clearing token for ${config.clientId}`
-            );
+            this.logger.debug(`AuthenticationTokenProvider clearing token for ${config.clientId}`);
             const key = config.clientId + config.updatedAt.getTime();
             return this.cacheManager.del(key);
         }
@@ -56,9 +54,7 @@ export class AuthenticationTokenProvider {
             return token;
         } else {
             try {
-                const clientSecret = await this.clientSecretProvider.getClientSecret(
-                    config.clientSecret
-                );
+                const clientSecret = await this.clientSecretProvider.getClientSecret(config.clientSecret);
                 const params = new URLSearchParams([
                     ["grant_type", "client_credentials"],
                     ["client_id", config.clientId],

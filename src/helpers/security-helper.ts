@@ -81,11 +81,7 @@ export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {
     }
 }
 
-function checkIfGlobalAdminOrInList(
-    req: AuthenticatedRequest,
-    list: number[],
-    id: number
-): void {
+function checkIfGlobalAdminOrInList(req: AuthenticatedRequest, list: number[], id: number): void {
     if (req.user.permissions.isGlobalAdmin) {
         return;
     }
@@ -104,13 +100,9 @@ export function isOrganizationPermission(p: Permission): p is Permission {
     ].some(orgPermission => p.type.some(({ type }) => type === orgPermission));
 }
 
-export function isOrganizationApplicationPermission(p: {
-    type: PermissionTypeEntity[];
-}): p is Permission {
+export function isOrganizationApplicationPermission(p: { type: PermissionTypeEntity[] }): p is Permission {
     return p.type.some(
-        ({ type }) =>
-            type === PermissionType.Read ||
-            type === PermissionType.OrganizationApplicationAdmin
+        ({ type }) => type === PermissionType.Read || type === PermissionType.OrganizationApplicationAdmin
     );
 }
 

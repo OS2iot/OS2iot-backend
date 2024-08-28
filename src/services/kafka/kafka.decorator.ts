@@ -19,10 +19,7 @@ export function CombinedSubscribeTo(topic: string, uniqueName: any) {
         }
         const existing = SUBSCRIBER_COMBINED_REF_MAP.get(topic);
         // Append the new subscriber to it
-        SUBSCRIBER_COMBINED_REF_MAP.set(
-            topic,
-            existing.concat([[uniqueName, originalMethod]])
-        );
+        SUBSCRIBER_COMBINED_REF_MAP.set(topic, existing.concat([[uniqueName, originalMethod]]));
         return descriptor;
     };
 }

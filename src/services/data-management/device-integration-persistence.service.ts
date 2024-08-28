@@ -6,10 +6,7 @@ import { ReceivedMessage } from "@entities/received-message.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
 import { subtractHours, subtractYears } from "@helpers/date.helper";
-import {
-    isValidLoRaWANPayload,
-    isValidSigFoxPayload,
-} from "@helpers/message-payload.helper";
+import { isValidLoRaWANPayload, isValidSigFoxPayload } from "@helpers/message-payload.helper";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
@@ -68,10 +65,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         // In order to make statistics on SigFox data, we need to store it for long-term
         if (relatedIoTDevice.type === IoTDeviceType.SigFox) {
             await this.saveSigFoxStats(latestMessage);
-            await this.deleteSigFoxStatsSinceLastHour(
-                latestMessage.sentTime,
-                relatedIoTDevice.id
-            );
+            await this.deleteSigFoxStatsSinceLastHour(latestMessage.sentTime, relatedIoTDevice.id);
             await this.deleteOldSigFoxStats(relatedIoTDevice.id);
         }
     }
@@ -90,22 +84,14 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             existingMessage = new ReceivedMessage();
         }
 
-        const mappedMessage = this.mapDtoToReceivedMessage(
-            dto,
-            existingMessage,
-            relatedIoTDevice
-        );
+        const mappedMessage = this.mapDtoToReceivedMessage(dto, existingMessage, relatedIoTDevice);
         await this.receivedMessageRepository.save(mappedMessage);
-        this.logger.debug(
-            "Saved ReceivedMessage for device with id: " + mappedMessage.device.id
-        );
+        this.logger.debug("Saved ReceivedMessage for device with id: " + mappedMessage.device.id);
 
         return mappedMessage;
     }
 
-    private async findExistingRecevedMessage(
-        relatedIoTDevice: IoTDevice
-    ): Promise<ReceivedMessage> {
+    private async findExistingRecevedMessage(relatedIoTDevice: IoTDevice): Promise<ReceivedMessage> {
         // Use QueryBuilder since the relation only exists from IoT-Device to ReceivedMessage
         return await this.receivedMessageRepository
             .createQueryBuilder("msg")
@@ -121,30 +107,20 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     ): ReceivedMessage {
         existingMessage.device = relatedIoTDevice;
         existingMessage.rawData = dto.rawPayload;
-        existingMessage.sentTime = dto.unixTimestamp
-            ? new Date(dto.unixTimestamp)
-            : new Date();
+        existingMessage.sentTime = dto.unixTimestamp ? new Date(dto.unixTimestamp) : new Date();
 
-        this.mapRxInfoToReceivedMessage(
-            dto.rawPayload,
-            existingMessage,
-            relatedIoTDevice.type
-        );
+        this.mapRxInfoToReceivedMessage(dto.rawPayload, existingMessage, relatedIoTDevice.type);
 
         return existingMessage;
     }
 
-    private mapRxInfoToReceivedMessage(
-        rawPayload: JSON,
-        message: ReceivedMessage,
-        type: IoTDeviceType
-    ) {
+    private mapRxInfoToReceivedMessage(rawPayload: JSON, message: ReceivedMessage, type: IoTDeviceType) {
         if (!rawPayload) {
             return;
         }
 
         // JSON is the same as a Record<string, unknown> which is easier to work with
-        const rawPayloadRecord = (rawPayload as unknown) as Record<string, unknown>;
+        const rawPayloadRecord = rawPayload as unknown as Record<string, unknown>;
 
         try {
             switch (type) {
@@ -157,9 +133,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
                 case IoTDeviceType.GenericHttp:
                     break;
                 default:
-                    this.logger.debug(
-                        "Unable to determine raw payload type of ReceivedMessage"
-                    );
+                    this.logger.debug("Unable to determine raw payload type of ReceivedMessage");
                     break;
             }
         } catch (error) {
@@ -167,10 +141,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         }
     }
 
-    private mapLoRaWANInfoToReceivedMessage(
-        payload: Record<string, unknown>,
-        message: ReceivedMessage
-    ) {
+    private mapLoRaWANInfoToReceivedMessage(payload: Record<string, unknown>, message: ReceivedMessage) {
         if (isValidLoRaWANPayload(payload)) {
             // There's signal info for each nearby gateway. Retrieve the strongest signal strength
             const rssi = Math.max(...payload.rxInfo.map(info => info.rssi));
@@ -178,55 +149,37 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
             message.snr = Number.isInteger(snr) ? snr : message.snr;
         } else {
-            this.logger.debug(
-                "The received LoRaWAN message is either not valid or incomplete"
-            );
+            this.logger.debug("The received LoRaWAN message is either not valid or incomplete");
         }
     }
 
     /**
      * Same principle as {@link mapLoRaWANInfoToReceivedMessage}
      */
-    private mapSigFoxInfoToReceivedMessage(
-        payload: Record<string, unknown>,
-        message: ReceivedMessage
-    ) {
+    private mapSigFoxInfoToReceivedMessage(payload: Record<string, unknown>, message: ReceivedMessage) {
         if (isValidSigFoxPayload(payload)) {
             const rssi = Math.max(...payload.duplicates.map(info => info.rssi));
             const snr = Math.max(...payload.duplicates.map(info => info.snr));
             message.rssi = Number.isInteger(rssi) ? rssi : message.rssi;
             message.snr = Number.isInteger(snr) ? snr : message.snr;
         } else {
-            this.logger.debug(
-                "The received Sigfox message is either not valid or incomplete"
-            );
+            this.logger.debug("The received Sigfox message is either not valid or incomplete");
         }
     }
 
-    private async saveMessageMetadata(
-        dto: RawIoTDeviceRequestDto,
-        relatedIoTDevice: IoTDevice
-    ): Promise<void> {
+    private async saveMessageMetadata(dto: RawIoTDeviceRequestDto, relatedIoTDevice: IoTDevice): Promise<void> {
         // Save this
-        const mappedMetadata = this.mapDtoToNewReceivedMessageMetadata(
-            dto,
-            relatedIoTDevice
-        );
-        const savedMetadata = await this.receivedMessageMetadataRepository.save(
-            mappedMetadata
-        );
+        const mappedMetadata = this.mapDtoToNewReceivedMessageMetadata(dto, relatedIoTDevice);
+        const savedMetadata = await this.receivedMessageMetadataRepository.save(mappedMetadata);
         this.logger.debug(
-            `Saved ReceivedMessageMetadata for device: ${
-                savedMetadata.device.id
-            }. ${JSON.stringify(savedMetadata)}`
+            `Saved ReceivedMessageMetadata for device: ${savedMetadata.device.id}. ${JSON.stringify(savedMetadata)}`
         );
 
         await this.deleteOldMetadata(relatedIoTDevice);
     }
 
     private async deleteOldMetadata(relatedIoTDevice: IoTDevice): Promise<void> {
-        const countToKeep: number =
-            +process.env.METADATA_SAVED_COUNT || this.defaultMetadataSavedCount;
+        const countToKeep: number = +process.env.METADATA_SAVED_COUNT || this.defaultMetadataSavedCount;
         // Find the oldest item to be kept.
         const newestToDelete = await this.receivedMessageMetadataRepository.find({
             where: { device: { id: relatedIoTDevice.id } },
@@ -245,10 +198,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
         await this.doDeleteOldMetadata(relatedIoTDevice, newestToDelete);
     }
 
-    private async doDeleteOldMetadata(
-        relatedIoTDevice: IoTDevice,
-        newestToDelete: ReceivedMessageMetadata[]
-    ) {
+    private async doDeleteOldMetadata(relatedIoTDevice: IoTDevice, newestToDelete: ReceivedMessageMetadata[]) {
         const result = await this.receivedMessageMetadataRepository
             .createQueryBuilder("received_message_metadata")
             .delete()
@@ -261,9 +211,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
                 }
             )
             .execute();
-        this.logger.debug(
-            `Deleted: ${result.affected} rows from received_message_metadata`
-        );
+        this.logger.debug(`Deleted: ${result.affected} rows from received_message_metadata`);
     }
 
     mapDtoToNewReceivedMessageMetadata(
@@ -272,9 +220,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
     ): ReceivedMessageMetadata {
         const newMetadata = new ReceivedMessageMetadata();
         newMetadata.device = relatedIoTDevice;
-        newMetadata.sentTime = dto.unixTimestamp
-            ? new Date(dto.unixTimestamp)
-            : new Date();
+        newMetadata.sentTime = dto.unixTimestamp ? new Date(dto.unixTimestamp) : new Date();
 
         return newMetadata;
     }
@@ -290,10 +236,7 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
      * @param latestMessageTime
      * @param deviceId
      */
-    private async deleteSigFoxStatsSinceLastHour(
-        latestMessageTime: Date,
-        deviceId: number
-    ): Promise<void> {
+    private async deleteSigFoxStatsSinceLastHour(latestMessageTime: Date, deviceId: number): Promise<void> {
         const lastHour = subtractHours(latestMessageTime);
         // Find the oldest items since the last hour
         const oldestToDelete = await this.receivedMessageSigFoxSignalsRepository.find({
@@ -311,13 +254,9 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             return;
         }
 
-        const result = await this.receivedMessageSigFoxSignalsRepository.delete(
-            oldestToDelete.map(old => old.id)
-        );
+        const result = await this.receivedMessageSigFoxSignalsRepository.delete(oldestToDelete.map(old => old.id));
 
-        this.logger.debug(
-            `Deleted: ${result.affected} rows from received_message_sigfox_signals`
-        );
+        this.logger.debug(`Deleted: ${result.affected} rows from received_message_sigfox_signals`);
     }
 
     /**
@@ -339,12 +278,8 @@ export class DeviceIntegrationPersistenceService extends AbstractKafkaConsumer {
             return;
         }
 
-        const result = await this.receivedMessageSigFoxSignalsRepository.delete(
-            oldestToDelete.map(old => old.id)
-        );
+        const result = await this.receivedMessageSigFoxSignalsRepository.delete(oldestToDelete.map(old => old.id));
 
-        this.logger.debug(
-            `Deleted: ${result.affected} rows from received_message_sigfox_signals`
-        );
+        this.logger.debug(`Deleted: ${result.affected} rows from received_message_sigfox_signals`);
     }
 }

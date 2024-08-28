@@ -16,5 +16,5 @@ export type CreateIoTDeviceMapDto = {
     /**
      * If an operation on the dto fails, this should be set
      */
-    error?: Omit<Error, 'name'>;
+    error?: Omit<Error, "name">;
 };

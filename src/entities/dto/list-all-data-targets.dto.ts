@@ -6,8 +6,7 @@ export class ListAllDataTargetsDto extends ListAllEntitiesDto {
     @ApiProperty({
         type: Number,
         required: false,
-        description:
-            "Limit the results to the data-targets associated with a single application",
+        description: "Limit the results to the data-targets associated with a single application",
     })
     applicationId?: number;
 }

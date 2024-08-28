@@ -1,7 +1,4 @@
-import {
-    SigFoxApiDeviceContent,
-    SigFoxApiDeviceResponse,
-} from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { SigFoxApiDeviceContent, SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
@@ -27,13 +24,9 @@ export class PeriodicSigFoxCleanupService {
         const flattenedSigFoxDevices = await this.getDevicesInSigFoxBackend();
         const sigfoxDevicesInDb = await sigfoxDevicesInDatabasePromise;
         // Find all devices ONLY in database and not in sigfox backend
-        const devicesToRemove = _.differenceBy(
-            sigfoxDevicesInDb,
-            flattenedSigFoxDevices,
-            x => {
-                return this.getId(x);
-            }
-        );
+        const devicesToRemove = _.differenceBy(sigfoxDevicesInDb, flattenedSigFoxDevices, x => {
+            return this.getId(x);
+        });
         if (devicesToRemove.length > 0) {
             // Delete them
             const idsToDelete = devicesToRemove.map(x => x.id);
@@ -47,9 +40,7 @@ export class PeriodicSigFoxCleanupService {
         const uniqueSigFoxGroups = _.uniqBy(sigfoxGroups, x => x.username);
         // get all sigfox devices in sigfox backend
         const sigfoxDevicesInBackend = await Promise.all(
-            uniqueSigFoxGroups.map(
-                async x => (await this.sigfoxApiDeviceService.getAllByGroupIds(x)).data
-            )
+            uniqueSigFoxGroups.map(async x => (await this.sigfoxApiDeviceService.getAllByGroupIds(x)).data)
         );
         const flattenedSigFoxDevices = _.flatten(sigfoxDevicesInBackend);
         return flattenedSigFoxDevices;

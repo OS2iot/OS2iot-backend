@@ -1,20 +1,5 @@
-import {
-    Body,
-    Controller,
-    Logger,
-    NotFoundException,
-    Post,
-    Query,
-    BadRequestException,
-    Res,
-} from "@nestjs/common";
-import {
-    ApiBadRequestResponse,
-    ApiNoContentResponse,
-    ApiOkResponse,
-    ApiOperation,
-    ApiTags,
-} from "@nestjs/swagger";
+import { Body, Controller, Logger, NotFoundException, Post, Query, BadRequestException, Res } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiNoContentResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { SigFoxCallbackDto } from "@dto/sigfox/sigfox-callback.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -27,10 +12,7 @@ import { Response } from "express";
 @ApiTags("SigFox")
 @Controller("sigfox-callback")
 export class SigFoxListenerController {
-    constructor(
-        private receiveDataService: ReceiveDataService,
-        private iotDeviceService: IoTDeviceService
-    ) {}
+    constructor(private receiveDataService: ReceiveDataService, private iotDeviceService: IoTDeviceService) {}
 
     private readonly logger = new Logger(SigFoxListenerController.name);
 
@@ -64,12 +46,8 @@ export class SigFoxListenerController {
         return res.status(204).send();
     }
 
-    private async doDownlink(
-        sigfoxDevice: SigFoxDevice
-    ): Promise<SigFoxDownlinkCallbackDto> {
-        this.logger.log(
-            `Time to downlink for device(${sigfoxDevice.id}) sigfoxId(${sigfoxDevice.deviceId})`
-        );
+    private async doDownlink(sigfoxDevice: SigFoxDevice): Promise<SigFoxDownlinkCallbackDto> {
+        this.logger.log(`Time to downlink for device(${sigfoxDevice.id}) sigfoxId(${sigfoxDevice.deviceId})`);
 
         const dto: SigFoxDownlinkCallbackDto = {};
         dto[sigfoxDevice.deviceId] = {
@@ -83,9 +61,7 @@ export class SigFoxListenerController {
 
     private verifyDeviceType(apiKey: string, data: SigFoxCallbackDto) {
         if (apiKey != data?.deviceTypeId) {
-            this.logger.error(
-                `ApiKey(${apiKey}) did not match DeviceTypeId(${data?.deviceTypeId})`
-            );
+            this.logger.error(`ApiKey(${apiKey}) did not match DeviceTypeId(${data?.deviceTypeId})`);
             throw new BadRequestException();
         }
     }
@@ -95,9 +71,7 @@ export class SigFoxListenerController {
             this.logger.debug(`Wanting to send downlink to ${iotDevice.deviceId}`);
         }
         if (!data.ack) {
-            this.logger.debug(
-                `Device ${iotDevice.deviceId} is not ready for downlink ('ack' == false)`
-            );
+            this.logger.debug(`Device ${iotDevice.deviceId} is not ready for downlink ('ack' == false)`);
         }
         return data.ack && iotDevice.downlinkPayload != null;
     }

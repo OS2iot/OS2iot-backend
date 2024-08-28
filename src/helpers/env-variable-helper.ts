@@ -29,5 +29,5 @@ export function formatEmail(email: string | undefined): typeof email {
     }
 
     // Prefix default sender display name
-    return `OS2iot ${email}`
-};
+    return `OS2iot ${email}`;
+}

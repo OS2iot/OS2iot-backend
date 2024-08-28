@@ -27,17 +27,14 @@ export class UserPermissions {
     }
 
     getAllOrganizationsWithAtLeastUserAdminRead(): number[] {
-        return _.union(
-            this.extractKeys(this.orgToReadPermissions),
-            this.getAllOrganizationsWithUserAdmin()
-        );
+        return _.union(this.extractKeys(this.orgToReadPermissions), this.getAllOrganizationsWithUserAdmin());
     }
 
     getAllOrganizationsWithAtLeastApplicationRead(): number[] {
         return _.union(
             this.extractKeys(this.orgToReadPermissions),
             this.getAllOrganizationsWithApplicationAdmin(),
-            this.getAllOrganizationsWithUserAdmin(),
+            this.getAllOrganizationsWithUserAdmin()
         );
     }
 
@@ -59,7 +56,7 @@ export class UserPermissions {
         } else {
             let organizationsWithAdmin = this.getAllOrganizationsWithUserAdmin();
             return organizationsWithAdmin.indexOf(organizationId) > -1;
-        }        
+        }
     }
 
     private extractValues(map: Map<number, number[]>): number[] {

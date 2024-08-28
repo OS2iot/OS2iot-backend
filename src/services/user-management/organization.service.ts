@@ -158,7 +158,6 @@ export class OrganizationService {
     }
 
     async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
-
         const [data, count] = await this.organizationRepository.findAndCount({
             select: ["id", "name"],
         });

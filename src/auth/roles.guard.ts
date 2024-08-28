@@ -11,14 +11,8 @@ export class RolesGuard implements CanActivate {
     private readonly logger = new Logger(RolesGuard.name);
 
     canActivate(context: ExecutionContext): boolean {
-        const roleRequiredMethod = this.reflector.get<string>(
-            RolesMetaData,
-            context.getHandler()
-        );
-        const roleRequiredClass = this.reflector.get<string>(
-            RolesMetaData,
-            context.getClass()
-        );
+        const roleRequiredMethod = this.reflector.get<string>(RolesMetaData, context.getHandler());
+        const roleRequiredClass = this.reflector.get<string>(RolesMetaData, context.getClass());
         const roleRequired = roleRequiredMethod ?? roleRequiredClass;
 
         if (!roleRequired) {

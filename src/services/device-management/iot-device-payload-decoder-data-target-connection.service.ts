@@ -2,13 +2,7 @@ import { off } from "process";
 
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-    DeleteResult,
-    FindOptionsWhere,
-    In,
-    Repository,
-    SelectQueryBuilder,
-} from "typeorm";
+import { DeleteResult, FindOptionsWhere, In, Repository, SelectQueryBuilder } from "typeorm";
 
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
@@ -60,12 +54,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         const innerQuery = this.genDefaultQuery().where("d.application In(:...appIds)", {
             appIds: allowed,
         });
-        return await this.findAllWithWhereQueryBuilder(
-            innerQuery,
-            query.limit,
-            query.offset,
-            query.sort
-        );
+        return await this.findAllWithWhereQueryBuilder(innerQuery, query.limit, query.offset, query.sort);
     }
 
     private async findAllWithWhere(
@@ -122,21 +111,14 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
             .innerJoinAndSelect("dt.application", "dataTargetApp");
     }
 
-    async findAllByIoTDeviceIdWithDeviceModel(
-        id: number
-    ): Promise<ListAllConnectionsResponseDto> {
-        const query = this.genDefaultQuery()
-            .leftJoinAndSelect("d.deviceModel", "dm")
-            .where("d.id = :deviceId", {
-                deviceId: id,
-            });
+    async findAllByIoTDeviceIdWithDeviceModel(id: number): Promise<ListAllConnectionsResponseDto> {
+        const query = this.genDefaultQuery().leftJoinAndSelect("d.deviceModel", "dm").where("d.id = :deviceId", {
+            deviceId: id,
+        });
         return await this.findAllWithWhereQueryBuilder(query);
     }
 
-    async findAllByIoTDeviceId(
-        id: number,
-        allowed?: number[]
-    ): Promise<ListAllConnectionsResponseDto> {
+    async findAllByIoTDeviceId(id: number, allowed?: number[]): Promise<ListAllConnectionsResponseDto> {
         if (allowed != undefined) {
             if (allowed.length === 0) {
                 return {
@@ -144,13 +126,10 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
                     count: 0,
                 };
             }
-            const query = this.genDefaultQuery().where(
-                "d.id = :deviceId and d.application In(:...appIds)",
-                {
-                    deviceId: id,
-                    appIds: allowed,
-                }
-            );
+            const query = this.genDefaultQuery().where("d.id = :deviceId and d.application In(:...appIds)", {
+                deviceId: id,
+                appIds: allowed,
+            });
             return await this.findAllWithWhereQueryBuilder(query);
         } else {
             const query = this.genDefaultQuery().where("d.id = :deviceId", {
@@ -189,10 +168,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         }
     }
 
-    async findAllByDataTargetId(
-        id: number,
-        allowed?: number[]
-    ): Promise<ListAllConnectionsResponseDto> {
+    async findAllByDataTargetId(id: number, allowed?: number[]): Promise<ListAllConnectionsResponseDto> {
         if (allowed != undefined) {
             if (allowed.length === 0) {
                 return {
@@ -221,20 +197,13 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         try {
             return await this.repository.findOneOrFail({
                 where: { id },
-                relations: [
-                    "iotDevices",
-                    "payloadDecoder",
-                    "dataTarget",
-                    "iotDevices.application",
-                ],
+                relations: ["iotDevices", "payloadDecoder", "dataTarget", "iotDevices.application"],
                 loadRelationIds: {
                     relations: ["createdBy", "updatedBy"],
                 },
             });
         } catch (err) {
-            throw new NotFoundException(
-                `Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`
-            );
+            throw new NotFoundException(`Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`);
         }
     }
 
@@ -259,9 +228,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         try {
             connection = await this.repository.findOneByOrFail({ id });
         } catch (err) {
-            throw new NotFoundException(
-                `Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`
-            );
+            throw new NotFoundException(`Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`);
         }
 
         const mapped = await this.mapDtoToConnection(connection, updateConnectionDto);
@@ -281,11 +248,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         await this.mapDataTarget(connection, createConnectionDto);
         await this.mapPayloadDecoder(createConnectionDto, connection);
 
-        if (
-            connection.iotDevices.some(
-                x => x.application.id != connection.dataTarget.application.id
-            )
-        ) {
+        if (connection.iotDevices.some(x => x.application.id != connection.dataTarget.application.id)) {
             throw new BadRequestException(ErrorCodes.NotSameApplication);
         }
 
@@ -318,13 +281,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         createConnectionDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ) {
         try {
-            connection.dataTarget = await this.dataTargetService.findOne(
-                createConnectionDto.dataTargetId
-            );
+            connection.dataTarget = await this.dataTargetService.findOne(createConnectionDto.dataTargetId);
         } catch (err) {
-            throw new BadRequestException(
-                `Could not find DataTarget by id: '${createConnectionDto.dataTargetId}'`
-            );
+            throw new BadRequestException(`Could not find DataTarget by id: '${createConnectionDto.dataTargetId}'`);
         }
     }
 
@@ -333,13 +292,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
         createConnectionDto: CreateIoTDevicePayloadDecoderDataTargetConnectionDto
     ) {
         try {
-            connection.iotDevices = await this.ioTDeviceService.findManyByIds(
-                createConnectionDto.iotDeviceIds
-            );
+            connection.iotDevices = await this.ioTDeviceService.findManyByIds(createConnectionDto.iotDeviceIds);
         } catch (err) {
-            throw new BadRequestException(
-                `Could not find IoT-Device by id: '${createConnectionDto.iotDeviceIds}'`
-            );
+            throw new BadRequestException(`Could not find IoT-Device by id: '${createConnectionDto.iotDeviceIds}'`);
         }
         if (connection.iotDevices.length === 0) {
             throw new BadRequestException(`Must contain at least one IoTDevice`);

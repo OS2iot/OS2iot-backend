@@ -8,16 +8,13 @@ export const deviceModelSchema = {
     type: "object",
     allOf: [
         {
-            $ref:
-                "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons",
+            $ref: "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons",
         },
         {
-            $ref:
-                "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/PhysicalObject-Commons",
+            $ref: "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/PhysicalObject-Commons",
         },
         {
-            $ref:
-                "https://smart-data-models.github.io/dataModel.Device/device-schema.json",
+            $ref: "https://smart-data-models.github.io/dataModel.Device/device-schema.json",
         },
         {
             properties: {
@@ -89,14 +86,7 @@ export const deviceModelSchema = {
                         "Property. Model:'https://schema.org/Text'. The functionality necessary to accomplish the task for which a Device is designed. A device can be designed to perform more than one function. Defined by [SAREF](https://w3id.org/saref#Function). Enum:'levelControl, sensing, onOff, openClose, metering, eventNotification",
                     items: {
                         type: "string",
-                        enum: [
-                            "levelControl",
-                            "sensing",
-                            "onOff",
-                            "openClose",
-                            "metering",
-                            "eventNotification",
-                        ],
+                        enum: ["levelControl", "sensing", "onOff", "openClose", "metering", "eventNotification"],
                     },
                 },
                 supportedUnits: {
@@ -116,40 +106,26 @@ export const deviceModelSchema = {
                 documentation: {
                     type: "string",
                     format: "uri",
-                    description:
-                        "Property. Model:'https://schema.org/URL'. A link to device's documentation.",
+                    description: "Property. Model:'https://schema.org/URL'. A link to device's documentation.",
                 },
                 brandName: {
                     type: "string",
-                    description:
-                        "Property. Model:'https://schema.org/Text'. Device's brand name.",
+                    description: "Property. Model:'https://schema.org/Text'. Device's brand name.",
                 },
                 modelName: {
                     type: "string",
-                    description:
-                        "Property. Model:'https://schema.org/Text. Device's model name.",
+                    description: "Property. Model:'https://schema.org/Text. Device's model name.",
                 },
                 manufacturerName: {
                     type: "string",
-                    description:
-                        "Property. Model:'https://schema.org/Text'. Device's manufacturer name.",
+                    description: "Property. Model:'https://schema.org/Text'. Device's manufacturer name.",
                 },
                 name: {
                     type: "string",
-                    description:
-                        "Property. Model:'https://schema.org/Text'. Device's model name in Portal"
-                }
+                    description: "Property. Model:'https://schema.org/Text'. Device's model name in Portal",
+                },
             },
         },
     ],
-    required: [
-        "id",
-        "type",
-        "category",
-        "controlledProperty",
-        "manufacturerName",
-        "brandName",
-        "modelName",
-        "name"
-    ],
+    required: ["id", "type", "category", "controlledProperty", "manufacturerName", "brandName", "modelName", "name"],
 };

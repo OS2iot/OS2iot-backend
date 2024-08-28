@@ -10,13 +10,8 @@ import { GenericSigfoxAdministationService } from "./generic-sigfox-administatio
 export class SigFoxApiContractService {
     constructor(private genericService: GenericSigfoxAdministationService) {}
 
-    async getContractInfos(
-        sigfoxGroup: SigFoxGroup
-    ): Promise<SigFoxApiContractInfosContent[]> {
-        const res = await this.genericService.get<SigFoxApiContractInfosResponseDto>(
-            "contract-infos",
-            sigfoxGroup
-        );
+    async getContractInfos(sigfoxGroup: SigFoxGroup): Promise<SigFoxApiContractInfosContent[]> {
+        const res = await this.genericService.get<SigFoxApiContractInfosResponseDto>("contract-infos", sigfoxGroup);
 
         return res.data;
     }

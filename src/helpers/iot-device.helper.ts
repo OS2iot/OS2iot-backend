@@ -7,10 +7,7 @@ import { SigFoxDeviceWithBackendDataDto } from "@dto/sigfox-device-with-backend-
 import { UpdateIoTDeviceDto } from "@dto/update-iot-device.dto";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import {
-    ApplicationAccessScope,
-    checkIfUserHasAccessToApplication,
-} from "./security-helper";
+import { ApplicationAccessScope, checkIfUserHasAccessToApplication } from "./security-helper";
 import { CreateMqttExternalBrokerSettingsDto } from "@dto/create-mqtt-external-broker-settings.dto";
 import { AuthenticationType } from "@enum/authentication-type.enum";
 import { CreateMqttInternalBrokerSettingsDto } from "@dto/create-mqtt-internal-broker-settings.dto";
@@ -19,9 +16,10 @@ import { CreateMqttInternalBrokerSettingsDto } from "@dto/create-mqtt-internal-b
  * Iterate through the devices once, splitting it into a tuple with the data we want to log
  * @param response
  */
-export function buildIoTDeviceCreateUpdateAuditData(
-    response: IotDeviceBatchResponseDto[]
-): { deviceIds: number[]; deviceNames: string[] } {
+export function buildIoTDeviceCreateUpdateAuditData(response: IotDeviceBatchResponseDto[]): {
+    deviceIds: number[];
+    deviceNames: string[];
+} {
     return response.reduce(
         (res: { deviceIds: number[]; deviceNames: string[] }, device) => {
             if (!device.data || device.error) {
@@ -37,11 +35,7 @@ export function buildIoTDeviceCreateUpdateAuditData(
 
 export function ensureUpdatePayload(
     validDevices: UpdateIoTDeviceBatchDto,
-    oldIotDevices: (
-        | IoTDevice
-        | LoRaWANDeviceWithChirpstackDataDto
-        | SigFoxDeviceWithBackendDataDto
-    )[],
+    oldIotDevices: (IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto)[],
     devicesNotFound: IotDeviceBatchResponseDto[],
     req: AuthenticatedRequest
 ): (
@@ -50,10 +44,8 @@ export function ensureUpdatePayload(
     currentIndex: number,
     array: UpdateIoTDeviceDto[]
 ) => UpdateIoTDeviceDto[] {
-    return (res: typeof validDevices["data"], updateDeviceDto) => {
-        const oldDevice = oldIotDevices.find(
-            oldDevice => oldDevice.id === updateDeviceDto.id
-        );
+    return (res: (typeof validDevices)["data"], updateDeviceDto) => {
+        const oldDevice = oldIotDevices.find(oldDevice => oldDevice.id === updateDeviceDto.id);
 
         if (!oldDevice) {
             devicesNotFound.push({
@@ -68,19 +60,11 @@ export function ensureUpdatePayload(
             return res;
         }
 
-        checkIfUserHasAccessToApplication(
-            req,
-            oldDevice.application.id,
-            ApplicationAccessScope.Write
-        );
+        checkIfUserHasAccessToApplication(req, oldDevice.application.id, ApplicationAccessScope.Write);
 
         if (updateDeviceDto.applicationId !== oldDevice.application.id) {
             // New application
-            checkIfUserHasAccessToApplication(
-                req,
-                updateDeviceDto.applicationId,
-                ApplicationAccessScope.Write
-            );
+            checkIfUserHasAccessToApplication(req, updateDeviceDto.applicationId, ApplicationAccessScope.Write);
         }
         res.push(updateDeviceDto);
         return res;
@@ -91,9 +75,7 @@ export function isValidIoTDeviceMap(iotDeviceMap: CreateIoTDeviceMapDto): boolea
     return !iotDeviceMap.error && !!iotDeviceMap.iotDevice;
 }
 
-export function filterValidIotDeviceMaps(
-    iotDeviceMap: CreateIoTDeviceMapDto[]
-): CreateIoTDeviceMapDto[] {
+export function filterValidIotDeviceMaps(iotDeviceMap: CreateIoTDeviceMapDto[]): CreateIoTDeviceMapDto[] {
     return iotDeviceMap.filter(map => !map.error && map.iotDevice);
 }
 
@@ -101,9 +83,7 @@ export function filterValidIotDeviceMaps(
  * @param dbIotDevices
  * @returns A new list of processed and failed devices
  */
-export function mapAllDevicesByProcessed(
-    dbIotDevices: IoTDevice[]
-): (
+export function mapAllDevicesByProcessed(dbIotDevices: IoTDevice[]): (
     value: CreateIoTDeviceMapDto,
     index: number,
     array: CreateIoTDeviceMapDto[]

@@ -33,13 +33,9 @@ export class User extends DbBaseEntity {
     @JoinTable()
     permissions: Permission[];
 
-    @ManyToMany(
-        _ => Organization,
-        requestedOrganizations => requestedOrganizations.awaitingUsers,
-        {
-            nullable: true,
-        }
-    )
+    @ManyToMany(_ => Organization, requestedOrganizations => requestedOrganizations.awaitingUsers, {
+        nullable: true,
+    })
     @JoinTable()
     requestedOrganizations: Organization[];
 

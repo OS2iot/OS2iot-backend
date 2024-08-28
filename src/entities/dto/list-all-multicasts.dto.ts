@@ -6,8 +6,7 @@ export class ListAllMulticastsDto extends ListAllEntitiesDto {
     @ApiProperty({
         type: Number,
         required: false,
-        description:
-            "Limit the results to the multicasts associated with a single application",
+        description: "Limit the results to the multicasts associated with a single application",
     })
     applicationId?: number;
 }

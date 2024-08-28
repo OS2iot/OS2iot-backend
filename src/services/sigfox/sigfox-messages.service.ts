@@ -10,11 +10,7 @@ export class SigFoxMessagesService {
         private receivedMessageSigFoxSignalsRepository: Repository<ReceivedMessageSigFoxSignals>
     ) {}
 
-    getMessageSignals(
-        deviceId: number,
-        fromDate: Date,
-        toDate: Date
-    ): Promise<ReceivedMessageSigFoxSignals[]> {
+    getMessageSignals(deviceId: number, fromDate: Date, toDate: Date): Promise<ReceivedMessageSigFoxSignals[]> {
         return this.receivedMessageSigFoxSignalsRepository.find({
             where: {
                 device: { id: deviceId },

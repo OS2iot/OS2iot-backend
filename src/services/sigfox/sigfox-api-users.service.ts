@@ -9,10 +9,7 @@ export class SigfoxApiUsersService {
 
     private readonly BASE_URL = "api-users";
 
-    async getByUserId(
-        userId: string,
-        credentials: SigFoxGroup
-    ): Promise<SigFoxApiUsersContent> {
+    async getByUserId(userId: string, credentials: SigFoxGroup): Promise<SigFoxApiUsersContent> {
         return await this.genericService.get(`${this.BASE_URL}/${userId}`, credentials);
     }
 }

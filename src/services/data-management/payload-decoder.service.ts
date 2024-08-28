@@ -30,10 +30,7 @@ export class PayloadDecoderService {
 
     private getSorting(query: ListAllEntitiesDto) {
         const sorting: { [id: string]: string | number } = {};
-        if (
-            query?.orderOn != null &&
-            (query.orderOn == "id" || query.orderOn == "name")
-        ) {
+        if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name")) {
             sorting[query.orderOn] = query.sort.toLocaleUpperCase();
         } else {
             sorting["id"] = "ASC";
@@ -46,7 +43,7 @@ export class PayloadDecoderService {
         organizationId: number | null | undefined
     ): Promise<ListAllPayloadDecoderResponseDto> {
         const [result, total] = await this.payloadDecoderRepository.findAndCount({
-            where: organizationId ? { organization: {id: organizationId} } : {},
+            where: organizationId ? { organization: { id: organizationId } } : {},
             take: query.limit,
             skip: query.offset,
             order: this.getSorting(query),
@@ -59,34 +56,21 @@ export class PayloadDecoderService {
         };
     }
 
-    async create(
-        createDto: CreatePayloadDecoderDto,
-        userId: number
-    ): Promise<PayloadDecoder> {
+    async create(createDto: CreatePayloadDecoderDto, userId: number): Promise<PayloadDecoder> {
         const newPayloadDecoder = new PayloadDecoder();
-        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
-            createDto,
-            newPayloadDecoder
-        );
+        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(createDto, newPayloadDecoder);
         mappedPayloadDecoder.createdBy = userId;
         mappedPayloadDecoder.updatedBy = userId;
 
         return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
     }
 
-    async update(
-        id: number,
-        updateDto: UpdatePayloadDecoderDto,
-        userId: number
-    ): Promise<PayloadDecoder> {
+    async update(id: number, updateDto: UpdatePayloadDecoderDto, userId: number): Promise<PayloadDecoder> {
         const payloadDecoder = await this.payloadDecoderRepository.findOneByOrFail({
             id,
         });
 
-        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(
-            updateDto,
-            payloadDecoder
-        );
+        const mappedPayloadDecoder = await this.mapDtoToPayloadDecoder(updateDto, payloadDecoder);
         mappedPayloadDecoder.updatedBy = userId;
 
         return await this.payloadDecoderRepository.save(mappedPayloadDecoder);
@@ -96,10 +80,7 @@ export class PayloadDecoderService {
         return await this.payloadDecoderRepository.delete(id);
     }
 
-    private async mapDtoToPayloadDecoder(
-        createDto: CreatePayloadDecoderDto,
-        newPayloadDecoder: PayloadDecoder
-    ) {
+    private async mapDtoToPayloadDecoder(createDto: CreatePayloadDecoderDto, newPayloadDecoder: PayloadDecoder) {
         newPayloadDecoder.name = createDto.name;
         try {
             newPayloadDecoder.decodingFunction = JSON.parse(createDto.decodingFunction);
@@ -108,13 +89,9 @@ export class PayloadDecoderService {
             throw new BadRequestException(ErrorCodes.BadEncoding);
         }
         try {
-            newPayloadDecoder.organization = await this.organizationService.findById(
-                createDto.organizationId
-            );
+            newPayloadDecoder.organization = await this.organizationService.findById(createDto.organizationId);
         } catch (err) {
-            Logger.error(
-                `Could not find Organization with id ${createDto.organizationId}`
-            );
+            Logger.error(`Could not find Organization with id ${createDto.organizationId}`);
             throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
         }
 

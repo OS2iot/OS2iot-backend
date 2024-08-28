@@ -44,13 +44,9 @@ export class ApiKeyService {
         });
     }
 
-    async findAllByOrganizationId(
-        query: ListAllApiKeysDto
-    ): Promise<ListAllApiKeysResponseDto> {
+    async findAllByOrganizationId(query: ListAllApiKeysDto): Promise<ListAllApiKeysResponseDto> {
         const permIds = (
-            await this.permissionService.getAllPermissionsInOrganizations([
-                query.organizationId,
-            ])
+            await this.permissionService.getAllPermissionsInOrganizations([query.organizationId])
         ).data.map(x => x.id);
 
         let dbQuery = this.apiKeyRepository
@@ -65,10 +61,7 @@ export class ApiKeyService {
         }
 
         if (query.orderOn && query.sort) {
-            dbQuery = dbQuery.orderBy(
-                `api_key.${query.orderOn}`,
-                query.sort.toUpperCase() as "ASC" | "DESC"
-            );
+            dbQuery = dbQuery.orderBy(`api_key.${query.orderOn}`, query.sort.toUpperCase() as "ASC" | "DESC");
         }
 
         const [data, count] = await dbQuery.getManyAndCount();
@@ -96,31 +89,21 @@ export class ApiKeyService {
         apiKey.systemUser = systemUser;
 
         if (dto.permissionIds?.length > 0) {
-            const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissionIds
-            );
+            const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
 
-            apiKey.permissions = permissionsDb.map(
-                pm => ({ ...pm, apiKeys: null })
-            );
+            apiKey.permissions = permissionsDb.map(pm => ({ ...pm, apiKeys: null }));
         }
 
         return await this.apiKeyRepository.save(apiKey);
     }
 
-    async update(
-        id: number,
-        dto: UpdateApiKeyDto,
-        userId: number
-    ): Promise<ApiKeyResponseDto> {
+    async update(id: number, dto: UpdateApiKeyDto, userId: number): Promise<ApiKeyResponseDto> {
         const apiKey = await this.findOneByIdWithRelations(id);
         apiKey.name = dto.name;
         apiKey.updatedBy = userId;
 
         if (dto.permissionIds?.length) {
-            const permissionsDb = await this.permissionService.findManyByIds(
-                dto.permissionIds
-            );
+            const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
             apiKey.permissions = permissionsDb.map(pm => ({
                 ...pm,
                 apiKeys: [],

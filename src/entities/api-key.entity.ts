@@ -1,14 +1,6 @@
 import { User } from "@entities/user.entity";
 import { nameof } from "@helpers/type-helper";
-import {
-    Column,
-    Entity,
-    JoinColumn,
-    JoinTable,
-    ManyToMany,
-    OneToOne,
-    Unique,
-} from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, Unique } from "typeorm";
 import { DbBaseEntity } from "./base.entity";
 import { Permission } from "./permissions/permission.entity";
 

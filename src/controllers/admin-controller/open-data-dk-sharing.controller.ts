@@ -8,22 +8,15 @@ import { OrganizationService } from "@services/user-management/organization.serv
 @ApiTags("OpenData.dk")
 @Controller("open-data-dk-sharing")
 export class OpenDataDkSharingController {
-    constructor(
-        private service: OpenDataDkSharingService,
-        private organizationService: OrganizationService
-    ) {}
+    constructor(private service: OpenDataDkSharingService, private organizationService: OrganizationService) {}
 
     @Get(":organizationId")
-    async getCatalog(
-        @Param("organizationId", new ParseIntPipe()) orgId: number
-    ): Promise<DCATRootObject> {
+    async getCatalog(@Param("organizationId", new ParseIntPipe()) orgId: number): Promise<DCATRootObject> {
         let organization;
         try {
             organization = await this.organizationService.findById(orgId);
         } catch (err) {
-            throw new NotFoundException(
-                `Could not find an organization with the id: ${orgId}`
-            );
+            throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
         }
 
         return this.service.createDCAT(organization);
@@ -38,9 +31,7 @@ export class OpenDataDkSharingController {
         try {
             organization = await this.organizationService.findById(orgId);
         } catch (err) {
-            throw new NotFoundException(
-                `Could not find an organization with the id: ${orgId}`
-            );
+            throw new NotFoundException(`Could not find an organization with the id: ${orgId}`);
         }
 
         const dataset = await this.service.findById(shareId, organization.id);

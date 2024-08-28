@@ -1,11 +1,4 @@
-import {
-    Column,
-    Entity,
-    ManyToOne,
-    OneToMany,
-    OneToOne,
-    TableInheritance,
-} from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, OneToOne, TableInheritance } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { DbBaseEntity } from "@entities/base.entity";

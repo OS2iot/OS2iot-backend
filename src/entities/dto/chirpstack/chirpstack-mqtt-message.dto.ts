@@ -7,7 +7,7 @@ export class ChirpstackMQTTMessageDto {
     txInfo: ChirpstackMQTTMessageTxInfoDto;
     dr: number;
     frequency: number;
-    confirmed: boolean
+    confirmed: boolean;
 }
 
 export class ChirpstackMQTTMessageTxInfoDto {

@@ -8,11 +8,7 @@ import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Module({
     imports: [ReceiveDataModule, forwardRef(() => IoTDeviceModule), SharedModule],
-    providers: [
-        InternalMqttClientListenerService,
-        InternalMqttBrokerListenerService,
-        EncryptionHelperService,
-    ],
+    providers: [InternalMqttClientListenerService, InternalMqttBrokerListenerService, EncryptionHelperService],
     exports: [InternalMqttClientListenerService, InternalMqttBrokerListenerService],
 })
 export class InternalMqttListenerModule {}

@@ -1,10 +1,4 @@
-import {
-    BadRequestException,
-    Inject,
-    Injectable,
-    Logger,
-    UnauthorizedException,
-} from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FindOneOptions, Repository, FindOptionsWhere } from "typeorm";
 
@@ -36,9 +30,7 @@ export class SigFoxGroupService {
         });
     }
 
-    async findAllForOrganization(
-        organizationId: number
-    ): Promise<ListAllSigFoxGroupResponseDto> {
+    async findAllForOrganization(organizationId: number): Promise<ListAllSigFoxGroupResponseDto> {
         const [data, count] = await this.repository.findAndCount({
             where: {
                 belongsTo: {
@@ -107,14 +99,7 @@ export class SigFoxGroupService {
         return await this.repository.findOneOrFail({
             where: { id },
             relations: ["belongsTo"],
-            select: [
-                "username",
-                "password",
-                "sigfoxGroupId",
-                "id",
-                "createdBy",
-                "updatedBy",
-            ],
+            select: ["username", "password", "sigfoxGroupId", "id", "createdBy", "updatedBy"],
             loadRelationIds: {
                 relations: ["createdBy", "updatedBy"],
             },
@@ -141,15 +126,10 @@ export class SigFoxGroupService {
         return await this.repository.findOneOrFail(options);
     }
 
-    async create(
-        query: CreateSigFoxGroupRequestDto,
-        userId: number
-    ): Promise<SigFoxGroup> {
+    async create(query: CreateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
         const sigfoxGroup = new SigFoxGroup();
         try {
-            sigfoxGroup.belongsTo = await this.organizationService.findById(
-                query.organizationId
-            );
+            sigfoxGroup.belongsTo = await this.organizationService.findById(query.organizationId);
         } catch (err) {
             throw new BadRequestException(ErrorCodes.OrganizationDoesNotExists);
         }
@@ -161,21 +141,14 @@ export class SigFoxGroupService {
         return mappedSigfoxGroup;
     }
 
-    async update(
-        sigfoxGroup: SigFoxGroup,
-        query: UpdateSigFoxGroupRequestDto,
-        userId: number
-    ): Promise<SigFoxGroup> {
+    async update(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto, userId: number): Promise<SigFoxGroup> {
         const mappedSigfoxGroup = await this.map(sigfoxGroup, query);
         mappedSigfoxGroup.updatedBy = userId;
         await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
         return mappedSigfoxGroup;
     }
 
-    private async map(
-        sigfoxGroup: SigFoxGroup,
-        query: UpdateSigFoxGroupRequestDto
-    ): Promise<SigFoxGroup> {
+    private async map(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
         sigfoxGroup.username = query.username;
         sigfoxGroup.password = query.password;
 

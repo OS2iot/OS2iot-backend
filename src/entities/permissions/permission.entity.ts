@@ -1,15 +1,7 @@
 import { DbBaseEntity } from "@entities/base.entity";
 import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
-import {
-    Column,
-    Entity,
-    ManyToMany,
-    TableInheritance,
-    OneToMany,
-    ManyToOne,
-    RelationId,
-} from "typeorm";
+import { Column, Entity, ManyToMany, TableInheritance, OneToMany, ManyToOne, RelationId } from "typeorm";
 import { PermissionTypeEntity } from "./permission-type.entity";
 import { Application } from "@entities/application.entity";
 import { Organization } from "@entities/organization.entity";

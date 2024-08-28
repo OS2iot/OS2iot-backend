@@ -23,9 +23,7 @@ export class MqttDataTargetService extends BaseDataTargetService {
         dto: TransformedPayloadDto,
         onDone: (status: DataTargetSendStatus, targetType: DataTargetType) => void
     ): void {
-        const config: MqttDataTargetConfiguration = (
-            datatarget as MqttDataTarget
-        ).toConfiguration();
+        const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
 
         // Setup client
         const client = mqtt.connect(config.url, {
@@ -41,31 +39,20 @@ export class MqttDataTargetService extends BaseDataTargetService {
         const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
 
         client.once("connect", () => {
-            client.publish(
-                config.topic,
-                JSON.stringify(dto.payload),
-                { qos: config.qos },
-                (err, packet) => {
-                    try {
-                        if (err) {
-                            const status = this.failure(
-                                targetForLogging,
-                                err?.message,
-                                datatarget
-                            );
-                            onDone(status, DataTargetType.MQTT);
-                        } else {
-                            this.logger.debug(
-                                "Packet received: " + JSON.stringify(packet)
-                            );
-                            const status = this.success(targetForLogging);
-                            onDone(status, DataTargetType.MQTT);
-                        }
-                    } finally {
-                        client.end();
+            client.publish(config.topic, JSON.stringify(dto.payload), { qos: config.qos }, (err, packet) => {
+                try {
+                    if (err) {
+                        const status = this.failure(targetForLogging, err?.message, datatarget);
+                        onDone(status, DataTargetType.MQTT);
+                    } else {
+                        this.logger.debug("Packet received: " + JSON.stringify(packet));
+                        const status = this.success(targetForLogging);
+                        onDone(status, DataTargetType.MQTT);
                     }
+                } finally {
+                    client.end();
                 }
-            );
+            });
         });
     }
 }

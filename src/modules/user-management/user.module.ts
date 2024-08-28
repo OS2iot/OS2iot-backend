@@ -11,7 +11,12 @@ import configuration from "@config/configuration";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 
 @Module({
-    imports: [SharedModule, ConfigModule.forRoot({ load: [configuration] }), forwardRef(() => PermissionModule), forwardRef(() => OrganizationModule)],
+    imports: [
+        SharedModule,
+        ConfigModule.forRoot({ load: [configuration] }),
+        forwardRef(() => PermissionModule),
+        forwardRef(() => OrganizationModule),
+    ],
     controllers: [UserController],
     providers: [UserService, UserBootstrapperService, OS2IoTMail],
     exports: [UserService],

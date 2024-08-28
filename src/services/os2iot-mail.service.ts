@@ -14,9 +14,7 @@ export class OS2IoTMail {
 
     constructor(private configService: ConfigService) {}
 
-    public sendMail = async (
-        mailOptions: Mail.Options
-    ): Promise<SMTPTransport.SentMessageInfo> => {
+    public sendMail = async (mailOptions: Mail.Options): Promise<SMTPTransport.SentMessageInfo> => {
         await this.checkCreateBasicMailTransporter();
         if (!mailOptions.from) {
             mailOptions.from = this.configService.get<string>("email.from");
@@ -25,34 +23,37 @@ export class OS2IoTMail {
             return await this.transporter.sendMail(mailOptions);
         } catch (error) {
             this.logger.error(
-                "Send mail failed. To: " + mailOptions?.to +
-                    ", Subject: " + mailOptions?.subject +
-                    ", Error: " + JSON.stringify(error)
+                "Send mail failed. To: " +
+                    mailOptions?.to +
+                    ", Subject: " +
+                    mailOptions?.subject +
+                    ", Error: " +
+                    JSON.stringify(error)
             );
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
     };
 
-    public sendMailChecked = async (
-        mailOptions: Mail.Options
-    ): Promise<SMTPTransport.SentMessageInfo> => {
+    public sendMailChecked = async (mailOptions: Mail.Options): Promise<SMTPTransport.SentMessageInfo> => {
         const response = await this.sendMail(mailOptions);
         const messageId = response?.messageId;
         if (response?.response) {
-            this.logger.verbose(
-                "Send-mail (messageId: " + messageId + ") response: " + response.response
-            );
+            this.logger.verbose("Send-mail (messageId: " + messageId + ") response: " + response.response);
         }
         if (response?.rejected?.length) {
             this.logger.error(
-                "Not all mail-recipients were accepted by SMPT-server. To: " + mailOptions.to +
-                    ", Subject: " + mailOptions.subject +
-                    ", MessageId: " + messageId +
-                    ", RejectedAddresses: " + response.rejected
+                "Not all mail-recipients were accepted by SMPT-server. To: " +
+                    mailOptions.to +
+                    ", Subject: " +
+                    mailOptions.subject +
+                    ", MessageId: " +
+                    messageId +
+                    ", RejectedAddresses: " +
+                    response.rejected
             );
             throw new BadRequestException(ErrorCodes.SendMailError);
         }
-        console.log('SENT MAIL', response);
+        console.log("SENT MAIL", response);
         return response;
     };
 

@@ -443,7 +443,7 @@ export class UserService {
     }
 
     parseBoolean(value: any): boolean {
-        if (value === 'false') {
+        if (value === "false") {
             return false;
         } else {
             return !!value;

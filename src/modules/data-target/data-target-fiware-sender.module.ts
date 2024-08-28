@@ -1,7 +1,11 @@
 import { HttpModule } from "@nestjs/axios";
 import { CacheModule, Module } from "@nestjs/common";
 import { FiwareDataTargetService } from "@services/data-targets/fiware-data-target.service";
-import { AuthenticationTokenProvider, CLIENT_SECRET_PROVIDER, PlainTextClientSecretProvider } from "../../helpers/fiware-token.helper";
+import {
+    AuthenticationTokenProvider,
+    CLIENT_SECRET_PROVIDER,
+    PlainTextClientSecretProvider,
+} from "../../helpers/fiware-token.helper";
 
 @Module({
     imports: [HttpModule, CacheModule.register()],

@@ -37,8 +37,7 @@ export class MqttService {
                                 serviceCertificate: caCert,
                                 serial: Date.now(),
                                 days: 365,
-                                serviceKeyPassword:
-                                    process.env.CA_KEY_PASSWORD || "os2iot",
+                                serviceKeyPassword: process.env.CA_KEY_PASSWORD || "os2iot",
                             },
                             async function (err, cert) {
                                 if (err) throw err;
@@ -63,11 +62,8 @@ export class MqttService {
     }
 
     public async createTopic(device: MQTTInternalBrokerDevice): Promise<TopicDetails> {
-        const application = await this.applicationService.findOneWithOrganisation(
-            device.application.id
-        );
-        const port =
-            device.authenticationType === AuthenticationType.PASSWORD ? "8885" : "8884";
+        const application = await this.applicationService.findOneWithOrganisation(device.application.id);
+        const port = device.authenticationType === AuthenticationType.PASSWORD ? "8885" : "8884";
         return {
             uRL: `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`,
             topicName: `devices/${application.belongsTo.id}/${device.application.id}/${device.id}`,
@@ -86,12 +82,7 @@ export class MqttService {
             hasher: algo.SHA512,
         });
 
-        return (
-            "PBKDF2$sha512$1000$" +
-            salt.toString(enc.Base64) +
-            "$" +
-            hashed.toString(enc.Base64)
-        );
+        return "PBKDF2$sha512$1000$" + salt.toString(enc.Base64) + "$" + hashed.toString(enc.Base64);
     }
 }
 

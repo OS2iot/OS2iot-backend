@@ -1,13 +1,5 @@
 import { ApiProperty, PickType } from "@nestjs/swagger";
-import {
-    IsHexadecimal,
-    IsInt,
-    IsNumber,
-    IsString,
-    Length,
-    Min,
-    ValidateIf,
-} from "class-validator";
+import { IsHexadecimal, IsInt, IsNumber, IsString, Length, Min, ValidateIf } from "class-validator";
 
 import { ActivationType } from "@enum/lorawan-activation-type.enum";
 

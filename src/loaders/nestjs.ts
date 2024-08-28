@@ -12,7 +12,6 @@ import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapte
 import * as cookieParser from "cookie-parser";
 import { Express } from "express";
 
-
 export async function setupNestJs(
     config: {
         NEST_PORT: number;
@@ -38,11 +37,7 @@ export async function setupNestJs(
     app.use(compression());
     app.use(cookieParser());
 
-    BuiltInLogger.log(
-        `Kafka: ${process.env.KAFKA_HOSTNAME || "localhost"}:${
-            process.env.KAFKA_PORT || "9092"
-        }`
-    );
+    BuiltInLogger.log(`Kafka: ${process.env.KAFKA_HOSTNAME || "localhost"}:${process.env.KAFKA_PORT || "9092"}`);
 
     return app;
 }

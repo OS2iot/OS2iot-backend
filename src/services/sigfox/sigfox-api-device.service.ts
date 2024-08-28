@@ -1,9 +1,6 @@
 import { CreateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/create-sigfox-api-device-request.dto";
 import { SigFoxApiBulkTransferRequestDto } from "@dto/sigfox/external/sigfox-api-bulk-transfer-request.dto";
-import {
-    SigFoxApiDeviceContent,
-    SigFoxApiDeviceResponse,
-} from "@dto/sigfox/external/sigfox-api-device-response.dto";
+import { SigFoxApiDeviceContent, SigFoxApiDeviceResponse } from "@dto/sigfox/external/sigfox-api-device-response.dto";
 import { SigFoxApiIdReferenceDto } from "@dto/sigfox/external/sigfox-api-id-reference.dto";
 import { SigFoxApiSingleDeviceResponseDto } from "@dto/sigfox/external/sigfox-api-single-device-response.dto";
 import { UpdateSigFoxApiDeviceRequestDto } from "@dto/sigfox/external/update-sigfox-api-device-request.dto";
@@ -19,47 +16,29 @@ export class SigFoxApiDeviceService {
 
     private readonly logger = new Logger(SigFoxApiDeviceService.name);
 
-    async getAllByGroupIds(
-        sigfoxGroup: SigFoxGroup,
-        groupIds?: string[]
-    ): Promise<SigFoxApiDeviceResponse> {
-        let url =
-            this.URL_BASE +
-            "?fields=productCertificate(key),contract(name),group(name),deviceType(name)";
+    async getAllByGroupIds(sigfoxGroup: SigFoxGroup, groupIds?: string[]): Promise<SigFoxApiDeviceResponse> {
+        let url = this.URL_BASE + "?fields=productCertificate(key),contract(name),group(name),deviceType(name)";
         if (groupIds?.length > 0) {
             url += "&groupIds=" + groupIds.join(",");
         }
         return await this.genericService.get(url, sigfoxGroup);
     }
 
-    async getByIdSimple(
-        sigfoxGroup: SigFoxGroup,
-        id: string
-    ): Promise<SigFoxApiDeviceContent> {
+    async getByIdSimple(sigfoxGroup: SigFoxGroup, id: string): Promise<SigFoxApiDeviceContent> {
         const devices = await this.getAllByGroupIds(sigfoxGroup);
         return devices.data.find(x => x.id == id);
     }
 
-    async getById(
-        sigfoxGroup: SigFoxGroup,
-        id: string
-    ): Promise<SigFoxApiSingleDeviceResponseDto> {
+    async getById(sigfoxGroup: SigFoxGroup, id: string): Promise<SigFoxApiSingleDeviceResponseDto> {
         const url = `${this.URL_BASE}/${id}`;
         return await this.genericService.get(url, sigfoxGroup, true);
     }
 
-    async create(
-        sigfoxGroup: SigFoxGroup,
-        dto: CreateSigFoxApiDeviceRequestDto
-    ): Promise<SigFoxApiIdReferenceDto> {
+    async create(sigfoxGroup: SigFoxGroup, dto: CreateSigFoxApiDeviceRequestDto): Promise<SigFoxApiIdReferenceDto> {
         return await this.genericService.post(this.URL_BASE, dto, sigfoxGroup);
     }
 
-    async update(
-        group: SigFoxGroup,
-        id: string,
-        dto: UpdateSigFoxApiDeviceRequestDto
-    ): Promise<void> {
+    async update(group: SigFoxGroup, id: string, dto: UpdateSigFoxApiDeviceRequestDto): Promise<void> {
         const URL = `${this.URL_BASE}/${id}`;
         await this.genericService.put(URL, dto, group);
     }
@@ -73,11 +52,7 @@ export class SigFoxApiDeviceService {
         await this.genericService.delete(deleteUrl, group);
     }
 
-    async changeDeviceType(
-        group: SigFoxGroup,
-        id: string,
-        newDeviceType: string
-    ): Promise<void> {
+    async changeDeviceType(group: SigFoxGroup, id: string, newDeviceType: string): Promise<void> {
         const dto: SigFoxApiBulkTransferRequestDto = {
             deviceTypeId: newDeviceType,
             data: [

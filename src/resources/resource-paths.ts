@@ -29,14 +29,6 @@ export const ChirpstackStateTemplatePath = join(
     `resources/chirpstack-state.proto`
 );
 
-export const caCertPath = join(
-    traverseUpUntilSrcFolder(__dirname),
-    "..",
-    "resources/ca.crt"
-);
+export const caCertPath = join(traverseUpUntilSrcFolder(__dirname), "..", "resources/ca.crt");
 
-export const caKeyPath = join(
-    traverseUpUntilSrcFolder(__dirname),
-    "..",
-    "resources/ca.key"
-);
+export const caKeyPath = join(traverseUpUntilSrcFolder(__dirname), "..", "resources/ca.key");

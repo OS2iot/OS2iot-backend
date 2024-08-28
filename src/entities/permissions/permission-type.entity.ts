@@ -8,7 +8,7 @@ import { nameof } from "@helpers/type-helper";
 @Unique([nameof<PermissionTypeEntity>("type"), nameof<PermissionTypeEntity>("permission")])
 export class PermissionTypeEntity extends DbBaseEntity {
     @Column("enum", {
-        enum: PermissionType
+        enum: PermissionType,
     })
     type: PermissionType;
 

@@ -7,10 +7,7 @@ import { forwardRef, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
-import {
-    CLIENT_SECRET_PROVIDER,
-    PlainTextClientSecretProvider,
-} from "../../helpers/fiware-token.helper";
+import { CLIENT_SECRET_PROVIDER, PlainTextClientSecretProvider } from "../../helpers/fiware-token.helper";
 
 @Module({
     imports: [

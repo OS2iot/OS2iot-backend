@@ -30,6 +30,6 @@ export class LorawanMulticastDefinition extends DbBaseEntity {
     @OneToOne(type => Multicast, multicast => multicast.lorawanMulticastDefinition)
     multicast: Multicast;
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     chirpstackGroupId?: string;
 }

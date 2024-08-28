@@ -124,7 +124,7 @@ export class ApplicationController {
     @ApiNotFoundResponse()
     async findIoTDevicesForApplicationMap(
         @Req() req: AuthenticatedRequest,
-        @Param("id", new ParseIntPipe()) applicationId: number,
+        @Param("id", new ParseIntPipe()) applicationId: number
     ): Promise<IoTDevicesListToMapResponseDto[]> {
         checkIfUserHasAccessToApplication(req, applicationId, ApplicationAccessScope.Read);
 

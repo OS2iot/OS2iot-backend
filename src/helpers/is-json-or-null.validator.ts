@@ -1,10 +1,7 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
 import { isJSON } from "validator";
 
-export function IsJSONOrNull(
-    property: string,
-    validationOptions?: ValidationOptions
-) {
+export function IsJSONOrNull(property: string, validationOptions?: ValidationOptions) {
     return function (object: unknown, propertyName: string): void {
         if (!validationOptions?.message) {
             validationOptions = {
@@ -21,7 +18,7 @@ export function IsJSONOrNull(
             options: validationOptions,
             validator: {
                 validate(value: unknown) {
-                    return !value || isJSON(value as string)
+                    return !value || isJSON(value as string);
                 },
             },
         });

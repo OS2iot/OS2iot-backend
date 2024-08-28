@@ -4,21 +4,12 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 
 export abstract class PermissionCreator {
-    private static create(
-        name: string,
-        org?: Organization,
-        addNewApps = false
-    ): Permission {
+    private static create(name: string, org?: Organization, addNewApps = false): Permission {
         const pm = new Permission(name, org, addNewApps);
         return pm;
     }
 
-    static createByTypes(
-        name: string,
-        types: PermissionType[],
-        org?: Organization,
-        addNewApps = false
-    ): Permission {
+    static createByTypes(name: string, types: PermissionType[], org?: Organization, addNewApps = false): Permission {
         const pm = new Permission(name, org, addNewApps);
         pm.type = types.map(type => {
             const entity = new PermissionTypeEntity();
@@ -41,42 +32,24 @@ export abstract class PermissionCreator {
         return pm;
     }
 
-    static createApplicationAdmin(
-        name: string,
-        org?: Organization,
-        addNewApps = false
-    ): Permission {
+    static createApplicationAdmin(name: string, org?: Organization, addNewApps = false): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        pm.type = [
-            { type: PermissionType.OrganizationApplicationAdmin } as PermissionTypeEntity,
-        ];
+        pm.type = [{ type: PermissionType.OrganizationApplicationAdmin } as PermissionTypeEntity];
         return pm;
     }
 
-    static createUserAdmin(
-        name: string,
-        org?: Organization,
-        addNewApps = false
-    ): Permission {
+    static createUserAdmin(name: string, org?: Organization, addNewApps = false): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        pm.type = [
-            { type: PermissionType.OrganizationUserAdmin } as PermissionTypeEntity,
-        ];
+        pm.type = [{ type: PermissionType.OrganizationUserAdmin } as PermissionTypeEntity];
         return pm;
     }
 
-    static createGatewayAdmin(
-        name: string,
-        org?: Organization,
-        addNewApps = false
-    ): Permission {
+    static createGatewayAdmin(name: string, org?: Organization, addNewApps = false): Permission {
         const pm = this.create(name, org, addNewApps);
 
-        pm.type = [
-            { type: PermissionType.OrganizationGatewayAdmin } as PermissionTypeEntity,
-        ];
+        pm.type = [{ type: PermissionType.OrganizationGatewayAdmin } as PermissionTypeEntity];
         return pm;
     }
 }

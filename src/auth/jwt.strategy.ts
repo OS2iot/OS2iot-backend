@@ -27,16 +27,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, JwtStrategyName) {
     }
     private readonly logger = new Logger(JwtStrategy.name);
 
-    private readonly NAME_ID_FORMAT =
-        "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+    private readonly NAME_ID_FORMAT = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
 
     async validate(payload: JwtPayloadDto): Promise<AuthenticatedUser> {
         // Does the user still exist?
         const exists = await this.userService.findOne(payload.sub);
         if (!exists) {
-            this.logger.warn(
-                `Authorization for user with id: ${payload.sub} failed, since they no longer exists`
-            );
+            this.logger.warn(`Authorization for user with id: ${payload.sub} failed, since they no longer exists`);
             throw new UnauthorizedException();
         }
 
@@ -51,9 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, JwtStrategyName) {
             result.nameIDFormat = this.NAME_ID_FORMAT;
         }
         // This data is already validated
-        result.permissions = await this.permissionService.findPermissionGroupedByLevelForUser(
-            payload.sub
-        );
+        result.permissions = await this.permissionService.findPermissionGroupedByLevelForUser(payload.sub);
 
         return result;
     }

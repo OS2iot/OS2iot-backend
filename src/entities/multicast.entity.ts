@@ -1,12 +1,4 @@
-import {
-    Column,
-    Entity,
-    JoinColumn,
-    JoinTable,
-    ManyToMany,
-    ManyToOne,
-    OneToOne,
-} from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne } from "typeorm";
 
 import { Application } from "@entities/application.entity";
 import { IoTDevice } from "./iot-device.entity";
@@ -18,22 +10,16 @@ export class Multicast extends DbBaseEntity {
     @Column()
     groupName: string;
 
-    @ManyToOne(
-        _ => Application,
-        application => application.multicasts,
-        { onDelete: "CASCADE" }
-    )
+    @ManyToOne(_ => Application, application => application.multicasts, { onDelete: "CASCADE" })
     application: Application;
 
     @ManyToMany(() => IoTDevice, iotDevices => iotDevices.multicasts)
     @JoinTable()
     iotDevices: IoTDevice[];
 
-    @OneToOne(
-        type => LorawanMulticastDefinition,
-        lorawanMulticastDefinition => lorawanMulticastDefinition.multicast,
-        { cascade: true }
-    )
+    @OneToOne(type => LorawanMulticastDefinition, lorawanMulticastDefinition => lorawanMulticastDefinition.multicast, {
+        cascade: true,
+    })
     @JoinColumn()
     lorawanMulticastDefinition: LorawanMulticastDefinition;
 }

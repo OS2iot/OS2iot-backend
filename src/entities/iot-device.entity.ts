@@ -78,10 +78,7 @@ export abstract class IoTDevice extends DbBaseEntity {
     )
     receivedMessagesMetadata: ReceivedMessageMetadata[];
 
-    @ManyToMany(
-        () => IoTDevicePayloadDecoderDataTargetConnection,
-        connection => connection.iotDevices
-    )
+    @ManyToMany(() => IoTDevicePayloadDecoderDataTargetConnection, connection => connection.iotDevices)
     connections: IoTDevicePayloadDecoderDataTargetConnection[];
 
     @ManyToOne(() => DeviceModel, deviceModel => deviceModel.devices, {
@@ -94,11 +91,7 @@ export abstract class IoTDevice extends DbBaseEntity {
     @JoinTable()
     multicasts: Multicast[];
 
-    @OneToMany(
-        () => ReceivedMessageSigFoxSignals,
-        message => message.device,
-        { onDelete: "CASCADE" }
-    )
+    @OneToMany(() => ReceivedMessageSigFoxSignals, message => message.device, { onDelete: "CASCADE" })
     receivedSigFoxSignalsMessages: ReceivedMessageSigFoxSignals[];
 
     toString(): string {

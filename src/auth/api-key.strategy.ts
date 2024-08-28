@@ -10,14 +10,8 @@ import { ApiKeyHeader, ApiKeyStrategyName, HeaderApiVerifiedCallback } from "./c
 const passReqToCallback = false;
 
 @Injectable()
-export class ApiKeyStrategy extends PassportStrategy(
-    HeaderAPIKeyStrategy,
-    ApiKeyStrategyName
-) {
-    constructor(
-        private authService: AuthService,
-        private permissionService: PermissionService
-    ) {
+export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, ApiKeyStrategyName) {
+    constructor(private authService: AuthService, private permissionService: PermissionService) {
         super(
             {
                 header: ApiKeyHeader,
@@ -27,19 +21,14 @@ export class ApiKeyStrategy extends PassportStrategy(
         );
     }
 
-    async validate(
-        apiKey: string,
-        _done: HeaderApiVerifiedCallback
-    ): Promise<AuthenticatedUser> {
+    async validate(apiKey: string, _done: HeaderApiVerifiedCallback): Promise<AuthenticatedUser> {
         const apiKeyDb = await this.authService.validateApiKey(apiKey);
         if (!apiKeyDb) {
             throw new UnauthorizedException(ErrorCodes.ApiKeyAuthFailed);
         }
 
         // Get the permissions and the UserID from the API Key instead of the user
-        const permissions = await this.permissionService.findPermissionGroupedByLevelForApiKey(
-            apiKeyDb.id
-        );
+        const permissions = await this.permissionService.findPermissionGroupedByLevelForApiKey(apiKeyDb.id);
 
         // const permissions = dbApiKey.permissions as Permission[];
         const userId = apiKeyDb.systemUser.id;

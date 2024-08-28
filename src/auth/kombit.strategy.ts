@@ -10,19 +10,11 @@ import { Profile, Strategy } from "passport-saml";
 export class KombitStrategy extends PassportStrategy(Strategy, "kombit") {
     constructor(private readonly authService: AuthService) {
         super({
-            issuer: `${
-                configuration()["backend"]["baseurl"]
-            }/api/v1/auth/kombit/metadata`,
-            audience: `${
-                configuration()["backend"]["baseurl"]
-            }/api/v1/auth/kombit/metadata`,
+            issuer: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
+            audience: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
 
-            callbackUrl: `${
-                configuration()["backend"]["baseurl"]
-            }/api/v1/auth/kombit/login/callback`,
-            logoutCallbackUrl: `${
-                configuration()["backend"]["baseurl"]
-            }/api/v1/auth/kombit/logout/callback`,
+            callbackUrl: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/login/callback`,
+            logoutCallbackUrl: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/logout/callback`,
             logoutUrl: configuration()["kombit"]["entryPoint"],
             entryPoint: configuration()["kombit"]["entryPoint"],
             identifierFormat: "",

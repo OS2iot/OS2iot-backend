@@ -3,9 +3,7 @@ type KeyValue<T extends Record<string, unknown>> = {
     value: T[keyof T];
 };
 
-export const recordToEntries = <T extends Record<string, unknown>>(
-    record: T
-): KeyValue<T>[] => {
+export const recordToEntries = <T extends Record<string, unknown>>(record: T): KeyValue<T>[] => {
     return Object.keys(record)
         .filter(entry => isNaN(Number(entry)))
         .map((key: keyof typeof record) => ({
@@ -14,10 +12,7 @@ export const recordToEntries = <T extends Record<string, unknown>>(
         }));
 };
 
-export const findValuesInRecord = <T extends Record<string, string>>(
-    record: T,
-    values: string[]
-): string[] => {
+export const findValuesInRecord = <T extends Record<string, string>>(record: T, values: string[]): string[] => {
     return recordToEntries(record).reduce((res: typeof values, { value }) => {
         if (values.includes(value)) {
             res.push(value);
