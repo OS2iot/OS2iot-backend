@@ -26,12 +26,16 @@ import { DataTargetType } from "@enum/data-target-type.enum";
 import { MulticastService } from "@services/chirpstack/multicast.service";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
+import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class ApplicationService {
   constructor(
     @InjectRepository(Application)
     private applicationRepository: Repository<Application>,
+    @InjectRepository(Permission)
+    private permissionRepository: Repository<Permission>,
     @InjectRepository(IoTDevice)
     private iotDeviceRepository: Repository<IoTDevice>,
     @Inject(forwardRef(() => OrganizationService))
@@ -252,6 +256,36 @@ export class ApplicationService {
 
     mappedApplication.updatedBy = userId;
     return this.applicationRepository.save(mappedApplication, {});
+  }
+
+  async updateOrganization(
+    id: number,
+    updateApplicationDto: UpdateApplicationOrganizationDto,
+    userId: number
+  ): Promise<Application> {
+    const existingApplication = await this.applicationRepository.findOneOrFail({
+      where: { id },
+    });
+
+    const permissions = await this.permissionRepository.find({
+      where: { id: In(updateApplicationDto.permissionIds) },
+      relations: [nameof<Permission>("organization")],
+    });
+
+    const permissionOrganizationSet = new Set<number>(permissions.map(p => p.organization.id));
+    const newOrganization = [...permissionOrganizationSet].length !== 1 ? undefined : permissions[0].organization;
+
+    if (!newOrganization || newOrganization.id !== updateApplicationDto.organizationId) {
+      throw new BadRequestException(ErrorCodes.InvalidPost);
+    }
+
+    existingApplication.permissions = permissions;
+    existingApplication.belongsTo = newOrganization;
+
+    await this.chirpstackApplicationService.updateApplication(existingApplication);
+
+    existingApplication.updatedBy = userId;
+    return this.applicationRepository.save(existingApplication, {});
   }
 
   async delete(id: number): Promise<DeleteResult> {

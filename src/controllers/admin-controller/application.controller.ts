@@ -26,14 +26,21 @@ import {
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
+import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
+import { ActionType } from "@entities/audit-log-entry";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
@@ -42,14 +49,8 @@ import {
   checkIfUserHasAccessToOrganization,
   OrganizationAccessScope,
 } from "@helpers/security-helper";
-import { ApplicationService } from "@services/device-management/application.service";
 import { AuditLog } from "@services/audit-log.service";
-import { ActionType } from "@entities/audit-log-entry";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
-import { ComposeAuthGuard } from "@auth/compose-auth.guard";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
-import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { ApplicationService } from "@services/device-management/application.service";
 
 @ApiTags("Application")
 @Controller("application")
@@ -181,6 +182,23 @@ export class ApplicationController {
     }
 
     const application = await this.applicationService.update(id, updateApplicationDto, req.user.userId);
+
+    AuditLog.success(ActionType.UPDATE, Application.name, req.user.userId, application.id, application.name);
+    return application;
+  }
+
+  @ApplicationAdmin()
+  @Put("updateApplicationOrganization/:id")
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Update application organization" })
+  @ApiBadRequestResponse()
+  async updateOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() updateApplicationDto: UpdateApplicationOrganizationDto
+  ): Promise<Application> {
+    checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Write);
+    const application = await this.applicationService.updateOrganization(id, updateApplicationDto, req.user.userId);
 
     AuditLog.success(ActionType.UPDATE, Application.name, req.user.userId, application.id, application.name);
     return application;
