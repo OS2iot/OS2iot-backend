@@ -8,6 +8,9 @@ export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["gat
   gatewayId: string;
 
   @ApiHideProperty()
+  organizationId?: string;
+
+  @ApiHideProperty()
   createdBy?: number;
 
   @ApiHideProperty()
@@ -19,4 +22,8 @@ export class UpdateGatewayDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateGatewayContentsDto)
   gateway: UpdateGatewayContentsDto;
+}
+
+export class UpdateGatewayOrganizationDto {
+  public organizationId: number;
 }

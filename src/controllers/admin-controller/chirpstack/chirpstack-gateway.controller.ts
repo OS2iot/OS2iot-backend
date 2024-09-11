@@ -6,6 +6,7 @@ import {
   Get,
   InternalServerErrorException,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -19,7 +20,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import { UpdateGatewayDto, UpdateGatewayOrganizationDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
@@ -30,6 +31,7 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { ListAllGatewaysDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways-response.dto";
+import { Gateway as DbGateway } from "@entities/gateway.entity";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -110,6 +112,22 @@ export class ChirpstackGatewayController {
       AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, gatewayId, dto.gateway.name);
       throw err;
     }
+  }
+
+  @Put("updateGatewayOrganization/:id")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
+  @ApiBadRequestResponse()
+  @GatewayAdmin()
+  async updateGatewayOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() dto: UpdateGatewayOrganizationDto
+  ): Promise<DbGateway> {
+    checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
+    const gateway = await this.chirpstackGatewayService.updateOrganization(id, dto, req);
+    AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id, gateway.name);
+    return gateway;
   }
 
   @Delete(":gatewayId")

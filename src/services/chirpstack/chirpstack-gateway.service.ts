@@ -10,7 +10,11 @@ import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dt
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayContentsDto, UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import {
+  UpdateGatewayContentsDto,
+  UpdateGatewayDto,
+  UpdateGatewayOrganizationDto,
+} from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
@@ -41,6 +45,7 @@ import {
   ListAllChirpstackGatewaysResponseDto,
   ListAllGatewaysResponseDto,
 } from "@dto/chirpstack/list-all-gateways-response.dto";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -317,6 +322,22 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         error: e,
       });
     }
+  }
+
+  async updateOrganization(
+    gatewayId: number,
+    dto: UpdateGatewayOrganizationDto,
+    req: AuthenticatedRequest
+  ): Promise<DbGateway> {
+    const gateway = await this.gatewayRepository.findOne({
+      where: { id: gatewayId },
+      relations: [nameof<DbGateway>("organization")],
+    });
+    checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
+
+    const organization = await this.organizationService.findById(dto.organizationId);
+    gateway.organization = organization;
+    return await this.gatewayRepository.save(gateway);
   }
 
   public async updateGatewayStats(
