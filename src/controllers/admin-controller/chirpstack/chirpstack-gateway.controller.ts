@@ -119,15 +119,19 @@ export class ChirpstackGatewayController {
   @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
   @ApiBadRequestResponse()
   @GatewayAdmin()
-  async updateGatewayOrganization(
+  async changeOrganization(
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number,
     @Body() dto: UpdateGatewayOrganizationDto
   ): Promise<DbGateway> {
-    checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
-    const gateway = await this.chirpstackGatewayService.updateOrganization(id, dto, req);
-    AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id, gateway.name);
-    return gateway;
+    try {
+      checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
+      const gateway = await this.chirpstackGatewayService.changeOrganization(id, dto, req);
+      AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id, gateway.name);
+      return gateway;
+    } catch (error) {
+      AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id);
+    }
   }
 
   @Delete(":gatewayId")

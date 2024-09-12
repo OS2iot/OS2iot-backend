@@ -324,7 +324,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
   }
 
-  async updateOrganization(
+  async changeOrganization(
     gatewayId: number,
     dto: UpdateGatewayOrganizationDto,
     req: AuthenticatedRequest
