@@ -267,13 +267,18 @@ export class ApplicationService {
       where: { id },
     });
 
-    const permissions = await this.permissionRepository.find({
+    let permissions = await this.permissionRepository.find({
       where: { id: In(updateApplicationDto.permissionIds) },
       relations: [nameof<Permission>("organization")],
     });
 
     const permissionOrganizationSet = new Set<number>(permissions.map(p => p.organization.id));
-    const newOrganization = [...permissionOrganizationSet].length !== 1 ? undefined : permissions[0].organization;
+    let newOrganization = [...permissionOrganizationSet].length !== 1 ? undefined : permissions[0].organization;
+
+    if (!newOrganization) {
+      newOrganization = await this.organizationService.findByIdWithPermissions(updateApplicationDto.organizationId);
+      permissions = newOrganization.permissions.filter(perm => perm.automaticallyAddNewApplications);
+    }
 
     if (!newOrganization || newOrganization.id !== updateApplicationDto.organizationId) {
       throw new BadRequestException(ErrorCodes.InvalidPost);
