@@ -1,9 +1,9 @@
 ﻿import { DbBaseEntity } from "@entities/base.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
 import { Organization } from "@entities/organization.entity";
-import { Point } from "geojson";
-import { IsEmail, IsPhoneNumber, Length } from "class-validator";
 import { GatewayPlacement, GatewayStatus } from "@enum/gateway.enum";
+import { Length } from "class-validator";
+import { Point } from "geojson";
+import { Column, Entity, ManyToOne } from "typeorm";
 
 @Entity("gateway")
 export class Gateway extends DbBaseEntity {
@@ -13,7 +13,12 @@ export class Gateway extends DbBaseEntity {
   @Column({ nullable: true })
   description?: string;
 
-  @Column()
+  @Column({
+    transformer: {
+      to: (value: string) => value.toLowerCase(),
+      from: (value: string) => value.toLowerCase(),
+    },
+  })
   @Length(16, 16, { message: "Must be 16 characters" })
   gatewayId: string;
 

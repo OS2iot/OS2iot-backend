@@ -94,7 +94,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
   async mapToChirpstackGateway(dto: CreateGatewayDto | UpdateGatewayDto, location: Location, gatewayId?: string) {
     const gateway = new ChirpstackGateway();
-    gateway.setGatewayId(gatewayId ? gatewayId : dto.gateway.gatewayId);
+    gateway.setGatewayId(gatewayId ? gatewayId.toLowerCase() : dto.gateway.gatewayId);
     gateway.setDescription(dto.gateway.description);
     gateway.setName(dto.gateway.name);
     gateway.setLocation(location);
@@ -181,6 +181,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     if (gatewayId?.length != 16) {
       throw new BadRequestException("Invalid gateway id");
     }
+    gatewayId = gatewayId.toLowerCase();
     try {
       const result = new SingleGatewayResponseDto();
       const gateway = await this.gatewayRepository.findOne({
@@ -211,7 +212,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const from_time_timestamp: Timestamp = dateToTimestamp(from);
 
     const request = new GetGatewayMetricsRequest();
-    request.setGatewayId(gatewayId);
+    request.setGatewayId(gatewayId.toLowerCase());
     request.setStart(from_time_timestamp);
     request.setEnd(to_time);
     request.setAggregation(Aggregation.DAY);
@@ -288,6 +289,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     dto: UpdateGatewayDto,
     req: AuthenticatedRequest
   ): Promise<ChirpstackResponseStatus> {
+    gatewayId = gatewayId.toLowerCase();
     dto.gateway = await this.updateDtoContents(dto.gateway);
     dto.gateway.tags = await this.ensureOrganizationIdIsSet(gatewayId, dto, req);
     dto.gateway.tags = this.updateUpdatedByTag(dto, +req.user.userId);
@@ -326,7 +328,10 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     updatedAt: Date,
     lastSeenAt: Date | undefined
   ) {
-    await this.gatewayRepository.update({ gatewayId }, { rxPacketsReceived, txPacketsEmitted, lastSeenAt, updatedAt });
+    await this.gatewayRepository.update(
+      { gatewayId: gatewayId.toLowerCase() },
+      { rxPacketsReceived, txPacketsEmitted, lastSeenAt, updatedAt }
+    );
   }
 
   async ensureOrganizationIdIsSet(
@@ -334,7 +339,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     dto: UpdateGatewayDto,
     req: AuthenticatedRequest
   ): Promise<{ [id: string]: string }> {
-    const existing = await this.getOne(gatewayId);
+    const existing = await this.getOne(gatewayId.toLowerCase());
     const tags = dto.gateway.tags;
     tags[this.ORG_ID_KEY] = `${existing.gateway.organizationId}`;
     // TODO: Interpolated string will never be null?
@@ -346,6 +351,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
   async deleteGateway(gatewayId: string): Promise<ChirpstackResponseStatus> {
     const req = new DeleteGatewayRequest();
+    gatewayId = gatewayId.toLowerCase();
     req.setGatewayId(gatewayId);
     try {
       await this.delete("gateways", this.gatewayClient, req);
