@@ -131,6 +131,7 @@ export class ChirpstackGatewayController {
       return gateway;
     } catch (error) {
       AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id);
+      throw error;
     }
   }
 
