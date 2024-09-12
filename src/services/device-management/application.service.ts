@@ -258,7 +258,7 @@ export class ApplicationService {
     return this.applicationRepository.save(mappedApplication, {});
   }
 
-  async updateOrganization(
+  async changeOrganization(
     id: number,
     updateApplicationDto: UpdateApplicationOrganizationDto,
     userId: number

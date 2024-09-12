@@ -192,16 +192,22 @@ export class ApplicationController {
   @Header("Cache-Control", "none")
   @ApiOperation({ summary: "Update application organization" })
   @ApiBadRequestResponse()
-  async updateOrganization(
+  async changeOrganization(
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number,
     @Body() updateApplicationDto: UpdateApplicationOrganizationDto
   ): Promise<Application> {
     checkIfUserHasAccessToApplication(req, id, ApplicationAccessScope.Write);
-    const application = await this.applicationService.updateOrganization(id, updateApplicationDto, req.user.userId);
+    try {
+      const application = await this.applicationService.changeOrganization(id, updateApplicationDto, req.user.userId);
 
-    AuditLog.success(ActionType.UPDATE, Application.name, req.user.userId, application.id, application.name);
-    return application;
+      AuditLog.success(ActionType.UPDATE, Application.name, req.user.userId, application.id, application.name);
+      return application;
+    } catch (error) {
+      AuditLog.fail(ActionType.UPDATE, Application.name, req.user.userId);
+
+      throw error;
+    }
   }
 
   @ApplicationAdmin()
