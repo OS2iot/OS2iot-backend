@@ -35,7 +35,7 @@ import { OrganizationModule } from "@modules/user-management/organization.module
     forwardRef(() => IoTLoRaWANDeviceModule),
     InternalMqttListenerModule,
   ],
-  exports: [MqttService, IoTDeviceService],
+  exports: [MqttService, IoTDeviceService, IoTDeviceDownlinkService],
   controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],
   providers: [
     PeriodicSigFoxCleanupService,

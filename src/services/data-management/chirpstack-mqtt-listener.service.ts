@@ -1,7 +1,9 @@
 import { MqttClientId } from "@config/constants/mqtt-constants";
 import {
+  ChirpstackMQTTAckMessageDto,
   ChirpstackMQTTConnectionStateMessageDto,
   ChirpstackMQTTMessageDto,
+  ChirpstackMQTTTxAckMessageDto,
 } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { ChirpstackMQTTConnectionStateMessage } from "@dto/chirpstack/state/chirpstack-mqtt-state-message.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -9,6 +11,7 @@ import { hasProps, nameof } from "@helpers/type-helper";
 import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ChirpstackStateTemplatePath } from "@resources/resource-paths";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
+import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import * as mqtt from "mqtt";
 import { Client } from "mqtt";
@@ -16,7 +19,11 @@ import * as Protobuf from "protobufjs";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
-  constructor(private receiveDataService: ReceiveDataService, private iotDeviceService: IoTDeviceService) {
+  constructor(
+    private receiveDataService: ReceiveDataService,
+    private iotDeviceService: IoTDeviceService,
+    private downlinkService: IoTDeviceDownlinkService
+  ) {
     const connStateFullTemplate = Protobuf.loadSync(ChirpstackStateTemplatePath);
     this.connStateType = connStateFullTemplate.lookupType("ConnState");
   }
@@ -29,6 +36,12 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX = "application/";
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC = this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/up";
+  private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_TOPIC =
+    this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/txack";
+  private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_POSTFIX = "/txack";
+  private readonly CHIRPSTACK_MQTT_DEVICE_DATA_ACK_TOPIC =
+    this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/ack";
+  private readonly CHIRPSTACK_MQTT_DEVICE_DATA_ACK_POSTFIX = "/ack";
   private readonly CHIRPSTACK_MQTT_GATEWAY_PREFIX = "gateway/";
   private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC = this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
 
@@ -42,12 +55,26 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     this.client.on("connect", () => {
       this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC);
       this.client.subscribe(this.CHIRPSTACK_MQTT_GATEWAY_TOPIC);
+      this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_TOPIC);
+      this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_ACK_TOPIC);
 
       this.client.on("message", async (topic, message) => {
         this.logger.debug(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
 
         if (topic.startsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX)) {
-          await this.receiveMqttMessage(message.toString());
+          if (topic.endsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_POSTFIX)) {
+            try {
+              await this.receiveMqttTxAckMessage(message.toString());
+            } catch (error) {
+              this.logger.error(`Received TxAckError. Error: ${error}`);
+            }
+          } else if (topic.endsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_ACK_POSTFIX)) {
+            try {
+              await this.receiveMqttAckMessage(message.toString());
+            } catch (error) {
+              this.logger.error(`Received TxAckError. Error: ${error}`);
+            }
+          } else await this.receiveMqttMessage(message.toString());
         } else if (topic.startsWith(this.CHIRPSTACK_MQTT_GATEWAY_PREFIX)) {
           try {
             const decoded = this.connStateType.decode(message);
@@ -75,6 +102,31 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
     }
 
     await this.receiveDataService.sendRawIotDeviceRequestToKafka(iotDevice, message, IoTDeviceType.LoRaWAN.toString());
+  }
+  async receiveMqttTxAckMessage(message: string): Promise<void> {
+    const dto: ChirpstackMQTTTxAckMessageDto = JSON.parse(message);
+    const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
+
+    if (!iotDevice) {
+      this.logger.warn(
+        `Chirpstack sent downlink message to devEUI ${dto.deviceInfo.devEui}, but that's not registered in OS2IoT`
+      );
+      return;
+    }
+    return this.downlinkService.updateTxackDownlink(dto);
+  }
+
+  async receiveMqttAckMessage(message: string): Promise<void> {
+    const dto: ChirpstackMQTTAckMessageDto = JSON.parse(message);
+    const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
+
+    if (!iotDevice) {
+      this.logger.warn(
+        `Chirpstack sent downlink message to devEUI ${dto.deviceInfo.devEui}, but that's not registered in OS2IoT`
+      );
+      return;
+    }
+    return this.downlinkService.updateAckDownlink(dto);
   }
 
   async receiveMqttGatewayStatusMessage(message: Record<string, unknown>): Promise<void> {

@@ -26,3 +26,18 @@ export class ChirpstackMQTTMessageDeviceInfo {
   devEui: string;
   deviceName: string;
 }
+
+export class ChirpstackMQTTTxAckMessageDto {
+  queueItemId: string;
+  time: Date;
+  deviceInfo: ChirpstackMQTTMessageDeviceInfo;
+  fCntDown: number;
+}
+
+export class ChirpstackMQTTAckMessageDto {
+  acknowledged: boolean;
+  queueItemId: string;
+  time: Date;
+  deviceInfo: ChirpstackMQTTMessageDeviceInfo;
+  fCntDown: number;
+}

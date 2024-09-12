@@ -35,7 +35,6 @@ import { AdrAlgorithmDto } from "@dto/chirpstack/adr-algorithm.dto";
 import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { DeviceListItem, ListDevicesRequest, ListDevicesResponse } from "@chirpstack/chirpstack-api/api/device_pb";
 import { ListApplicationsRequest, ListApplicationsResponse } from "@chirpstack/chirpstack-api/api/application_pb";
-import * as google_protobuf_empty_pb from "google-protobuf/google/protobuf/empty_pb";
 import * as BluebirdPromise from "bluebird";
 
 @Injectable()
