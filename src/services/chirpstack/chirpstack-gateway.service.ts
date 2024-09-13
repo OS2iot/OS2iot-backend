@@ -4,6 +4,7 @@ import {
   DeleteGatewayRequest,
   GetGatewayMetricsRequest,
   GetGatewayMetricsResponse,
+  GetGatewayRequest,
   GetGatewayResponse,
   ListGatewaysRequest,
   ListGatewaysResponse,
@@ -84,6 +85,18 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     });
 
     req.setGateway(gatewayChirpstack);
+
+    const getGatewayRequest = new GetGatewayRequest();
+    getGatewayRequest.setGatewayId(gateway.gatewayId);
+    const existingGateway = await this.get<GetGatewayResponse>("gateways", this.gatewayClient, getGatewayRequest).catch(
+      undefined
+    );
+
+    if (existingGateway)
+      throw new BadRequestException({
+        data: { message: "object already exists" },
+      });
+
     try {
       await this.post("gateways", this.gatewayClient, req);
       await this.gatewayRepository.save(gateway);
@@ -314,8 +327,10 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     request.setGateway(gatewayCs);
     try {
-      await this.put("gateways", this.gatewayClient, request);
       await this.gatewayRepository.update({ gatewayId }, gateway);
+      await this.put("gateways", this.gatewayClient, request).catch(
+        async () => await this.post("gateways", this.gatewayClient, request)
+      );
       return { success: true };
     } catch (e) {
       this.logger.error(`Error from Chirpstack: '${JSON.stringify(dto)}', got response: ${JSON.stringify(e)}`);
@@ -370,8 +385,8 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     gatewayId = gatewayId.toLowerCase();
     req.setGatewayId(gatewayId);
     try {
-      await this.delete("gateways", this.gatewayClient, req);
       await this.gatewayRepository.delete({ gatewayId });
+      await this.delete("gateways", this.gatewayClient, req);
       return {
         success: true,
       };
