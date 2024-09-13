@@ -8,9 +8,6 @@ export class UpdateGatewayContentsDto extends OmitType(GatewayContentsDto, ["gat
   gatewayId: string;
 
   @ApiHideProperty()
-  organizationId?: string;
-
-  @ApiHideProperty()
   createdBy?: number;
 
   @ApiHideProperty()

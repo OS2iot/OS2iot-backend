@@ -126,7 +126,7 @@ export class ChirpstackGatewayController {
   ): Promise<DbGateway> {
     try {
       checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
-      const gateway = await this.chirpstackGatewayService.changeOrganization(id, dto, req);
+      const gateway = await this.chirpstackGatewayService.changeOrganization(id, dto);
       AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id, gateway.name);
       return gateway;
     } catch (error) {
