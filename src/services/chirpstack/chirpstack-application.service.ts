@@ -103,6 +103,7 @@ export class ApplicationChirpstackService extends GenericChirpstackConfiguration
     application.setDescription(dto.description ? dto.description : this.DEFAULT_DESCRIPTION);
     application.setName(this.applicationNamePrefix + dto.name);
     application.setTenantId(await this.getDefaultOrganizationId());
+    application.getTagsMap().set(this.ORG_ID_KEY, dto.belongsTo.id.toString());
     req.setApplication(application);
     try {
       await this.put("applications", this.applicationServiceClient, req);

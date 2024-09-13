@@ -21,3 +21,7 @@ export class UpdateGatewayDto {
   @Type(() => UpdateGatewayContentsDto)
   gateway: UpdateGatewayContentsDto;
 }
+
+export class UpdateGatewayOrganizationDto {
+  public organizationId: number;
+}
