@@ -22,7 +22,7 @@ import {
 } from "@nestjs/swagger";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
-import { ApplicationAdmin, GlobalAdmin, Read, UserAdmin } from "@auth/roles.decorator";
+import { ApplicationAdmin, GatewayAdmin, GlobalAdmin, Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
@@ -125,6 +125,21 @@ export class OrganizationController {
       return this.organizationService.findAllPaginated(query);
     } else {
       const allowedOrganizations = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
+      return this.organizationService.findAllInOrganizationList(allowedOrganizations, query);
+    }
+  }
+
+  @Get("gatewayAdmin")
+  @ApiOperation({ summary: "Get list of all Organizations" })
+  @GatewayAdmin()
+  async findAllWithGatewayAdmin(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllEntitiesDto
+  ): Promise<ListAllOrganizationsResponseDto> {
+    if (req.user.permissions.isGlobalAdmin) {
+      return this.organizationService.findAllPaginated(query);
+    } else {
+      const allowedOrganizations = req.user.permissions.getAllOrganizationsWithGatewayAdmin();
       return this.organizationService.findAllInOrganizationList(allowedOrganizations, query);
     }
   }
