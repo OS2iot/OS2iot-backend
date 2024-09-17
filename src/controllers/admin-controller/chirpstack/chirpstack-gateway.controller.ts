@@ -75,6 +75,14 @@ export class ChirpstackGatewayController {
     return await this.chirpstackGatewayService.getWithPaginationAndSorting(query, query.organizationId);
   }
 
+  @Get("getAllForMaps")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "List all Chirpstack gateways for maps" })
+  @Read()
+  async getAllForMaps(@Query() query?: ListAllGatewaysDto): Promise<ListAllGatewaysResponseDto> {
+    return await this.chirpstackGatewayService.getForMaps(query.organizationId);
+  }
+
   @Get(":gatewayId")
   @ApiProduces("application/json")
   @ApiOperation({ summary: "Single Chirpstack gateway" })
