@@ -41,8 +41,8 @@ export class CsvGeneratorService {
       `${name},` +
       `${id},` +
       `${type},` +
-      `${location.coordinates[1] ?? ""},` +
-      `${location.coordinates[0] ?? ""},` +
+      `${location?.coordinates[1] ?? ""},` +
+      `${location?.coordinates[0] ?? ""},` +
       `${commentOnLocation ?? ""},` +
       `${comment ?? ""},` +
       `${device.deviceModel?.id ?? ""},` +
