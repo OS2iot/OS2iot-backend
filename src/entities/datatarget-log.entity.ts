@@ -1,3 +1,4 @@
+import { SendStatus } from "@enum/send-status.enum";
 import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
 import { DbBaseEntity } from "./base.entity";
 import { DataTarget } from "./data-target.entity";
@@ -10,9 +11,8 @@ export class DatatargetLog extends DbBaseEntity {
   @JoinColumn()
   datatarget: DataTarget;
 
-  // TODO: Enum??
   @Column()
-  type: string;
+  type: SendStatus;
 
   @Column()
   statusCode?: number;
@@ -20,14 +20,11 @@ export class DatatargetLog extends DbBaseEntity {
   @Column()
   message?: string;
 
-  // TODO: Maybe better if we could null the reference instead - log could still be valuable without this ref, for debugging datatarget
-  @ManyToOne(() => IoTDevice, { onDelete: "CASCADE" })
+  @ManyToOne(() => IoTDevice, { onDelete: "SET NULL" })
   @JoinColumn()
   iotDevice?: IoTDevice;
 
-  // TODO: Maybe better if we could null the reference instead - log could still be valuable without this ref, for debugging datatarget
-  @ManyToOne(() => PayloadDecoder, { onDelete: "CASCADE" })
+  @ManyToOne(() => PayloadDecoder, { onDelete: "SET NULL" })
   @JoinColumn()
   payloadDecoder?: PayloadDecoder;
-
 }

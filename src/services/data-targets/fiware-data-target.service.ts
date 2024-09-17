@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { AxiosRequestConfig } from "axios";
+import { AxiosError, AxiosRequestConfig, isAxiosError } from "axios";
 
 import { AuthorizationType } from "@enum/authorization-type.enum";
 import { DataTarget } from "@entities/data-target.entity";
@@ -47,14 +47,15 @@ export class FiwareDataTargetService extends BaseDataTargetService {
 
       this.logger.debug(`FiwareDataTarget result: '${JSON.stringify(result.data)}'`);
       if (!result.status.toString().startsWith("2")) {
+        // Note: Axios actually throws on non-2xx codes, so this should never happen (will be handled in catch-block instead)
         this.logger.warn(`Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText}`);
-        // TODO: Should this not return SendStatus.ERROR?
       }
-      return this.success(target);
+      return this.success(target, result.status, result.statusText);
     } catch (err) {
       this.logger.error(`FiwareDataTarget got error: ${err}`);
       await this.authenticationTokenProvider.clearConfig(config);
-      return this.failure(target, err, dataTarget);
+      const axiosErrResp = isAxiosError(err) ? (err as AxiosError)?.response : undefined;
+      return this.failure(target, err, dataTarget, axiosErrResp?.status, axiosErrResp?.statusText);
     }
   }
 

@@ -107,13 +107,16 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     payloadDto: TransformedPayloadDto
   ) => {
     this.logger.debug(`Sent to ${targetType} target: ${JSON.stringify(status)}`);
-    // TODO: Only log here if response-code was error OR this is the first OK after at least one error..
+    if (status.status === SendStatus.OK) {
+      // TODO: Only log here if response-code was error OR this is the first OK after at least one error..
+      const lastWasError = true;
+      if (!lastWasError) return;
+    }
     this.handleDataTargetLogCommon(
       datatarget,
       status?.status,
       status?.statusCode,
-      // TODO: Is it even safe to log the actual error-message here? Could it be a GDPR-problem??
-      status.errorMessage,
+      status?.statusText,
       payloadDto?.iotDeviceId,
       payloadDto?.payloadDecoderId
     );
@@ -129,7 +132,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
       datatarget,
       SendStatus.ERROR,
       undefined,
-      // TODO: Is it even safe to log the actual error-message here? Could it be a GDPR-problem??
+      // TODO: Is there ANY risk of user-data in this error? E.g. if JSON-serialize fails on a specific prop??
       "" + err,
       payloadDto?.iotDeviceId,
       payloadDto?.payloadDecoderId
@@ -146,25 +149,22 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
   ) {
     // Ensure no more than 250 events for this target (delete oldest if needed)
     // TODO: Check DB for existing etc...
-    // Lookup entity for referenced deviceId
-    // TODO: Find by iotDeviceId....
-    const iotDevice: IoTDevice = undefined;
-    // TODO: Find by payloadDecoderId
-    const payloadDecoder: PayloadDecoder = undefined;
+
     // Insert new event
     const logEntity: DatatargetLog = {
-      // Meta-columns should be auto-populated
+      // Meta-columns should be auto-populated på DB/ORM
       id: undefined,
       createdAt: undefined,
       updatedAt: undefined,
-      // Actual data
+      // Actual data and references
       datatarget,
-      type: status.toString(),
+      type: status,
       message,
       statusCode,
-      iotDevice,
-      payloadDecoder,
+      iotDevice: iotDeviceId ? ({ id: iotDeviceId } as IoTDevice) : undefined,
+      payloadDecoder: payloadDecoderId ? ({ id: payloadDecoderId } as PayloadDecoder) : undefined,
     };
+
     // TODO: Insert in DB etc..?
   }
 }

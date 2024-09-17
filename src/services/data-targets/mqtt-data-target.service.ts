@@ -5,14 +5,13 @@ import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { MqttDataTargetConfiguration } from "@interfaces/mqtt-data-target-configuration.interface";
-import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import * as mqtt from "mqtt";
 import { BaseDataTargetService } from "./base-data-target.service";
 
 @Injectable()
 export class MqttDataTargetService extends BaseDataTargetService {
-  constructor(private httpService: HttpService) {
+  constructor() {
     super();
   }
 
@@ -21,7 +20,12 @@ export class MqttDataTargetService extends BaseDataTargetService {
   send(
     datatarget: DataTarget,
     dto: TransformedPayloadDto,
-    onDone: (status: DataTargetSendStatus, targetType: DataTargetType, datatarget: DataTarget, payloadDto: TransformedPayloadDto) => void
+    onDone: (
+      status: DataTargetSendStatus,
+      targetType: DataTargetType,
+      datatarget: DataTarget,
+      payloadDto: TransformedPayloadDto
+    ) => void
   ): void {
     const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
 
@@ -41,12 +45,19 @@ export class MqttDataTargetService extends BaseDataTargetService {
     client.once("connect", () => {
       client.publish(config.topic, JSON.stringify(dto.payload), { qos: config.qos }, (err, packet) => {
         try {
+          const responseInfo = this.decodeMqttResponse(packet);
           if (err) {
-            const status = this.failure(targetForLogging, err?.message, datatarget);
+            const status = this.failure(
+              targetForLogging,
+              err?.message,
+              datatarget,
+              responseInfo?.reasonCode,
+              responseInfo?.reasonString
+            );
             onDone(status, DataTargetType.MQTT, datatarget, dto);
           } else {
             this.logger.debug("Packet received: " + JSON.stringify(packet));
-            const status = this.success(targetForLogging);
+            const status = this.success(targetForLogging, responseInfo?.reasonCode, responseInfo?.reasonString);
             onDone(status, DataTargetType.MQTT, datatarget, dto);
           }
         } finally {
@@ -54,5 +65,29 @@ export class MqttDataTargetService extends BaseDataTargetService {
         }
       });
     });
+  }
+
+  private decodeMqttResponse(
+    packet: mqtt.Packet | undefined
+  ): { reasonString?: string; reasonCode?: number } | undefined {
+    // Some of the packet-types have no usefull info at all
+    if (
+      !packet ||
+      packet.cmd === "pingreq" ||
+      packet.cmd === "pingresp" ||
+      packet.cmd === "publish" ||
+      packet.cmd === "connect"
+    ) {
+      return undefined;
+    }
+    // A few special packets have reason-info other than the reasonString
+    if (packet.cmd === "connack") {
+      return { reasonCode: packet.reasonCode, reasonString: "" + packet.returnCode };
+    }
+    // The remaining packet-types (which is most of them) will have the reasonString, and all except 2 will also have reasonCode
+    return {
+      reasonString: packet.properties?.reasonString,
+      reasonCode: packet.cmd !== "subscribe" && packet.cmd !== "unsubscribe" ? packet.reasonCode : undefined,
+    };
   }
 }

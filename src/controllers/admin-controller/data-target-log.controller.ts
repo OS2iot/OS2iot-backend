@@ -1,5 +1,6 @@
 import { DataTarget } from "@entities/data-target.entity";
 import { DatatargetLog } from "@entities/datatarget-log.entity";
+import { SendStatus } from "@enum/send-status.enum";
 import { Controller, Get, Param, ParseIntPipe } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 
@@ -31,7 +32,7 @@ export class DatatargetLogController {
         id: i,
         createdAt: new Date(),
         updatedAt: new Date(),
-        type: "Error",
+        type: SendStatus.ERROR,
         message: "401 Unauth CDJ",
       });
 
@@ -40,7 +41,7 @@ export class DatatargetLogController {
         id: i + 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        type: "Error",
+        type: SendStatus.ERROR,
         message: "500 Server CDJ",
       });
 
@@ -49,7 +50,7 @@ export class DatatargetLogController {
         id: i + 2,
         createdAt: new Date(),
         updatedAt: new Date(),
-        type: "OK",
+        type: SendStatus.OK,
         message: "200 OK CDJ",
       });
 

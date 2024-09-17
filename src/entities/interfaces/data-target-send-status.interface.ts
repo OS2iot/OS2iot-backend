@@ -4,4 +4,5 @@ export interface DataTargetSendStatus {
   errorMessage?: string;
   status: SendStatus;
   statusCode?: number;
+  statusText?: string;
 }
