@@ -1,20 +1,17 @@
 import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { DataTarget } from "@entities/data-target.entity";
-import { DatatargetLog } from "@entities/datatarget-log.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
-import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
-import { SendStatus } from "@enum/send-status.enum";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { Injectable, Logger } from "@nestjs/common";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { HttpPushDataTargetService } from "@services/data-targets/http-push-data-target.service";
-import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { AbstractKafkaConsumer } from "@services/kafka/kafka.abstract.consumer";
 import { CombinedSubscribeTo } from "@services/kafka/kafka.decorator";
 import { KafkaPayload } from "@services/kafka/kafka.message";
+import { DataTargetLogService } from "./data-target-log.service";
 import { FiwareDataTargetService } from "./fiware-data-target.service";
 import { MqttDataTargetService } from "./mqtt-data-target.service";
 
@@ -28,7 +25,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     private httpPushDataTargetService: HttpPushDataTargetService,
     private fiwareDataTargetService: FiwareDataTargetService,
     private mqttDataTargetService: MqttDataTargetService,
-    private ioTDevicePayloadDecoderDataTargetConnectionService: IoTDevicePayloadDecoderDataTargetConnectionService
+    private dataTargetLogService: DataTargetLogService
   ) {
     super();
   }
@@ -75,22 +72,22 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
       if (target.type == DataTargetType.HttpPush) {
         try {
           const status = await this.httpPushDataTargetService.send(target, dto);
-          this.onSendDone(status, DataTargetType.HttpPush, target, dto);
+          await this.onSendDone(status, DataTargetType.HttpPush, target, dto);
         } catch (err) {
-          this.onSendError(err, DataTargetType.HttpPush, target, dto);
+          await this.onSendError(err, DataTargetType.HttpPush, target, dto);
         }
       } else if (target.type == DataTargetType.Fiware) {
         try {
           const status = await this.fiwareDataTargetService.send(target, dto);
-          this.onSendDone(status, DataTargetType.Fiware, target, dto);
+          await this.onSendDone(status, DataTargetType.Fiware, target, dto);
         } catch (err) {
-          this.onSendError(err, DataTargetType.Fiware, target, dto);
+          await this.onSendError(err, DataTargetType.Fiware, target, dto);
         }
       } else if (target.type === DataTargetType.MQTT) {
         try {
           this.mqttDataTargetService.send(target, dto, this.onSendDone);
         } catch (err) {
-          this.onSendError(err, DataTargetType.MQTT, target, dto);
+          await this.onSendError(err, DataTargetType.MQTT, target, dto);
         }
       } else if (target.type === DataTargetType.OpenDataDK) {
         // OpenDataDk data targets are handled uniquely and ignored here.
@@ -100,71 +97,22 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     });
   }
 
-  private onSendDone = (
+  private onSendDone = async (
     status: DataTargetSendStatus,
     targetType: DataTargetType,
     datatarget: DataTarget,
     payloadDto: TransformedPayloadDto
   ) => {
     this.logger.debug(`Sent to ${targetType} target: ${JSON.stringify(status)}`);
-    if (status.status === SendStatus.OK) {
-      // TODO: Only log here if response-code was error OR this is the first OK after at least one error..
-      const lastWasError = true;
-      if (!lastWasError) return;
-    }
-    this.handleDataTargetLogCommon(
-      datatarget,
-      status?.status,
-      status?.statusCode,
-      status?.statusText,
-      payloadDto?.iotDeviceId,
-      payloadDto?.payloadDecoderId
-    );
+    await this.dataTargetLogService.onSendDone(status, datatarget, payloadDto);
   };
-  private onSendError = (
+  private onSendError = async (
     err: Error,
     targetType: DataTargetType,
     datatarget: DataTarget,
     payloadDto: TransformedPayloadDto
   ) => {
     this.logger.error(`Error while sending to ${targetType} DataTarget: ${err}`);
-    this.handleDataTargetLogCommon(
-      datatarget,
-      SendStatus.ERROR,
-      undefined,
-      // TODO: Is there ANY risk of user-data in this error? E.g. if JSON-serialize fails on a specific prop??
-      "" + err,
-      payloadDto?.iotDeviceId,
-      payloadDto?.payloadDecoderId
-    );
+    await this.dataTargetLogService.onSendError(err, datatarget, payloadDto);
   };
-
-  private handleDataTargetLogCommon(
-    datatarget: DataTarget,
-    status: SendStatus,
-    statusCode?: number,
-    message?: string,
-    iotDeviceId?: number,
-    payloadDecoderId?: number
-  ) {
-    // Ensure no more than 250 events for this target (delete oldest if needed)
-    // TODO: Check DB for existing etc...
-
-    // Insert new event
-    const logEntity: DatatargetLog = {
-      // Meta-columns should be auto-populated på DB/ORM
-      id: undefined,
-      createdAt: undefined,
-      updatedAt: undefined,
-      // Actual data and references
-      datatarget,
-      type: status,
-      message,
-      statusCode,
-      iotDevice: iotDeviceId ? ({ id: iotDeviceId } as IoTDevice) : undefined,
-      payloadDecoder: payloadDecoderId ? ({ id: payloadDecoderId } as PayloadDecoder) : undefined,
-    };
-
-    // TODO: Insert in DB etc..?
-  }
 }
