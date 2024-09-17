@@ -1,4 +1,4 @@
-import { ChirpstackMQTTConnectionStateMessageDto } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
+import { ChirpstackMqttConnectionStateMessageDto } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { RawGatewayStateDto } from "@dto/kafka/raw-gateway-state.dto";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 import { KafkaTopic } from "@enum/kafka-topic.enum";
@@ -36,7 +36,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
   async rawRequestListener(payload: KafkaPayload): Promise<void> {
     this.logger.debug(`RAW_GATEWAY_STATE: '${JSON.stringify(payload)}'`);
     const dto = payload.body as RawGatewayStateDto;
-    const messageState = dto.rawPayload as unknown as ChirpstackMQTTConnectionStateMessageDto;
+    const messageState = dto.rawPayload as unknown as ChirpstackMqttConnectionStateMessageDto;
 
     const statusHistory = this.mapDtoToEntity(dto, messageState);
     await this.gatewayStatusHistoryRepository.save(statusHistory);
@@ -46,7 +46,7 @@ export class GatewayPersistenceService extends AbstractKafkaConsumer {
     await this.deleteOldStatusHistories(dto.gatewayId);
   }
 
-  private mapDtoToEntity(dto: RawGatewayStateDto, messageState: ChirpstackMQTTConnectionStateMessageDto) {
+  private mapDtoToEntity(dto: RawGatewayStateDto, messageState: ChirpstackMqttConnectionStateMessageDto) {
     const statusHistory = new GatewayStatusHistory();
     statusHistory.mac = dto.gatewayId;
     statusHistory.timestamp = dto.unixTimestamp ? new Date(dto.unixTimestamp) : new Date();

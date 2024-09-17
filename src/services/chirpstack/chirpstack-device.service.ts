@@ -6,10 +6,6 @@ import { CreateChirpstackDeviceDto } from "@dto/chirpstack/create-chirpstack-dev
 import { CreateLoRaWANSettingsDto } from "@dto/create-lorawan-settings.dto";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
-import {
-  DeviceDownlinkQueueResponseDto,
-  DeviceQueueItem,
-} from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
@@ -29,6 +25,7 @@ import {
   DeviceKeys,
   DeviceQueueItem as DeviceQueueItemChirpstack,
   EnqueueDeviceQueueItemRequest,
+  EnqueueDeviceQueueItemResponse,
   FlushDeviceQueueRequest,
   GetDeviceActivationRequest,
   GetDeviceActivationResponse,
@@ -43,11 +40,12 @@ import {
   UpdateDeviceKeysRequest,
   UpdateDeviceRequest,
 } from "@chirpstack/chirpstack-api/api/device_pb";
-import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { dateToTimestamp } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
+import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
   constructor(private configService: ConfigService, private deviceProfileService: DeviceProfileService) {
@@ -75,8 +73,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     return { device: csDto };
   }
 
-  public async overwriteDownlink(dto: CreateChirpstackDeviceQueueItemDto): Promise<IdResponse> {
-    await this.deleteDownlinkQueue(dto.deviceQueueItem.devEUI);
+  public async createDownlink(dto: CreateChirpstackDeviceQueueItemDto): Promise<string> {
     try {
       const req = new EnqueueDeviceQueueItemRequest();
       const queueItem = new DeviceQueueItemChirpstack();
@@ -87,7 +84,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
       req.setQueueItem(queueItem);
 
       const res = await this.postDownlink(req);
-      return res;
+      return res.getId();
     } catch (err) {
       const fcntError = "enqueue downlink payload error: get next downlink fcnt for deveui error";
       if (err?.response?.data?.error?.startsWith(fcntError)) {
@@ -108,29 +105,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     }
   }
 
-  public async getDownlinkQueue(deviceEUI: string): Promise<DeviceDownlinkQueueResponseDto> {
-    const req = new GetDeviceQueueItemsRequest();
-    req.setDevEui(deviceEUI);
-    const res = await this.getQueue(req);
-
-    const queueItems: DeviceQueueItem[] = res.getResultList().map(queueItem => {
-      return {
-        confirmed: queueItem.getConfirmed(),
-        devEUI: queueItem.getDevEui(),
-        fCnt: queueItem.getFCntDown(),
-        fPort: queueItem.getFPort(),
-        data: queueItem.getData_asB64(),
-      };
-    });
-
-    const responseDto: DeviceDownlinkQueueResponseDto = {
-      totalCount: res.getTotalCount(),
-      deviceQueueItems: queueItems,
-    };
-    return responseDto;
-  }
-
-  private async deleteDownlinkQueue(deviceEUI: string): Promise<void> {
+  public async deleteDownlinkQueue(deviceEUI: string): Promise<void> {
     const req = new FlushDeviceQueueRequest();
     req.setDevEui(deviceEUI);
     await this.deleteQueue(req);
@@ -530,8 +505,8 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     );
   }
 
-  private async postDownlink(request: EnqueueDeviceQueueItemRequest): Promise<IdResponse> {
-    return await this.makeRequest<IdResponse>(
+  private async postDownlink(request: EnqueueDeviceQueueItemRequest): Promise<EnqueueDeviceQueueItemResponse> {
+    return await this.makeRequest<EnqueueDeviceQueueItemResponse>(
       request,
       this.deviceServiceClient.enqueue,
       "POST DOWNLINK success",

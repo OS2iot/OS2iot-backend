@@ -33,6 +33,7 @@ import { OpenDataDkDataTarget } from "@entities/open-data-dk-push-data-target.en
 import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
 import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
 import { Gateway } from "@entities/gateway.entity";
+import { Downlink } from "@entities/downlink.entity";
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { Gateway } from "@entities/gateway.entity";
       MQTTInternalBrokerDevice,
       MQTTExternalBrokerDevice,
       Gateway,
+      Downlink
     ]),
   ],
   providers: [AuditLog],

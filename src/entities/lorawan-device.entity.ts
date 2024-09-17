@@ -1,8 +1,8 @@
 import { Length } from "class-validator";
-import { BeforeInsert, ChildEntity, Column } from "typeorm";
-
+import { BeforeInsert, ChildEntity, Column, OneToMany } from "typeorm";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
+import { Downlink } from "./downlink.entity";
 
 @ChildEntity(IoTDeviceType.LoRaWAN)
 export class LoRaWANDevice extends IoTDevice {
@@ -19,6 +19,9 @@ export class LoRaWANDevice extends IoTDevice {
 
   @Column({ nullable: true })
   chirpstackApplicationId: string;
+
+  @OneToMany(() => Downlink, downlink => downlink.lorawanDevice, { cascade: true })
+  downlinks: Downlink[];
 
   @BeforeInsert()
   private beforeInsert() {
