@@ -78,7 +78,7 @@ export class DataTargetLogService {
     }
     // Insert new event
     const logEntity: DatatargetLog = {
-      // Meta-columns should be auto-populated på DB/ORM
+      // Meta-columns should be auto-populated by DB/ORM
       id: undefined,
       createdAt: undefined,
       updatedAt: undefined,
