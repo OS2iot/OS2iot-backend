@@ -131,8 +131,8 @@ export class IoTDeviceController {
   }
 
   @Get(":id/historicalDownlink")
-  @ApiOperation({ summary: "Get historical downlink queue for a LoRaWAN device" })
-  async findDownlinkHistoricalQueue(
+  @ApiOperation({ summary: "Get historical downlinks for a LoRaWAN device" })
+  async findHistoricalDownlinks(
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<DownlinkQueueDto[] | DeviceDownlinkQueueResponseDto> {
@@ -149,7 +149,7 @@ export class IoTDeviceController {
     }
     checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
 
-    return this.downlinkService.getHistoricalDownlinkQueue(device.id);
+    return this.downlinkService.getHistoricalDownlinks(device.id);
   }
 
   @Get("/stats/:id")

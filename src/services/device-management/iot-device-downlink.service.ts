@@ -11,8 +11,8 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { CreateChirpstackDeviceQueueItemDto } from "@dto/chirpstack/create-chirpstack-device-queue-item.dto";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import {
-  ChirpstackMQTTAckMessageDto,
-  ChirpstackMQTTTxAckMessageDto,
+  ChirpstackMqttAckMessageDto,
+  ChirpstackMqttTxAckMessageDto,
 } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { Downlink } from "@entities/downlink.entity";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -47,12 +47,12 @@ export class IoTDeviceDownlinkService {
   async flushDownlinkQueue(device: IoTDevice): Promise<void> {
     try {
       if (device.type === IoTDeviceType.LoRaWAN) {
-        const cast = <LoRaWANDevice>device;
+        const loRaWANDevice = <LoRaWANDevice>device;
         await this.downlinkRepository.update(
-          { lorawanDeviceId: cast.id, flushed: false || IsNull() },
+          { lorawanDeviceId: loRaWANDevice.id, flushed: false || IsNull() },
           { flushed: true }
         );
-        await this.chirpstackDeviceService.deleteDownlinkQueue(cast.deviceEUI);
+        await this.chirpstackDeviceService.deleteDownlinkQueue(loRaWANDevice.deviceEUI);
       } else {
         throw new BadRequestException(ErrorCodes.DownlinkNotSupportedForDeviceType);
       }
@@ -91,7 +91,7 @@ export class IoTDeviceDownlinkService {
     };
 
     try {
-      const downlinkQueueId = await this.chirpstackDeviceService.createDownlink(csDto, cast);
+      const downlinkQueueId = await this.chirpstackDeviceService.createDownlink(csDto);
 
       const downlink = new Downlink();
       downlink.queueItemId = downlinkQueueId;
@@ -123,7 +123,7 @@ export class IoTDeviceDownlinkService {
     return Buffer.from(hexBytes, "hex").toString("base64");
   }
 
-  public async updateTxackDownlink(dto: ChirpstackMQTTTxAckMessageDto): Promise<void> {
+  public async updateTxAckDownlink(dto: ChirpstackMqttTxAckMessageDto): Promise<void> {
     try {
       const downlink = await this.downlinkRepository.findOne({ where: { queueItemId: dto.queueItemId } });
       if (!downlink) {
@@ -139,7 +139,7 @@ export class IoTDeviceDownlinkService {
     }
   }
 
-  public async updateAckDownlink(dto: ChirpstackMQTTAckMessageDto): Promise<void> {
+  public async updateAckDownlink(dto: ChirpstackMqttAckMessageDto): Promise<void> {
     try {
       const downlink = await this.downlinkRepository.findOne({ where: { queueItemId: dto.queueItemId } });
       if (!downlink) {
@@ -177,7 +177,7 @@ export class IoTDeviceDownlinkService {
     }
   }
 
-  public async getHistoricalDownlinkQueue(deviceId: number): Promise<DownlinkQueueDto[]> {
+  public async getHistoricalDownlinks(deviceId: number): Promise<DownlinkQueueDto[]> {
     try {
       const downlinks = await this.downlinkRepository.find({
         where: {

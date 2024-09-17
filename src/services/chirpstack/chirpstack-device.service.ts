@@ -73,7 +73,7 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     return { device: csDto };
   }
 
-  public async createDownlink(dto: CreateChirpstackDeviceQueueItemDto, cast: LoRaWANDevice): Promise<string> {
+  public async createDownlink(dto: CreateChirpstackDeviceQueueItemDto): Promise<string> {
     try {
       const req = new EnqueueDeviceQueueItemRequest();
       const queueItem = new DeviceQueueItemChirpstack();

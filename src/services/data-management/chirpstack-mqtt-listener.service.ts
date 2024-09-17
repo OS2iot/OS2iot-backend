@@ -1,9 +1,9 @@
 import { MqttClientId } from "@config/constants/mqtt-constants";
 import {
-  ChirpstackMQTTAckMessageDto,
-  ChirpstackMQTTConnectionStateMessageDto,
-  ChirpstackMQTTMessageDto,
-  ChirpstackMQTTTxAckMessageDto,
+  ChirpstackMqttAckMessageDto,
+  ChirpstackMqttConnectionStateMessageDto,
+  ChirpstackMqttMessageDto,
+  ChirpstackMqttTxAckMessageDto,
 } from "@dto/chirpstack/chirpstack-mqtt-message.dto";
 import { ChirpstackMQTTConnectionStateMessage } from "@dto/chirpstack/state/chirpstack-mqtt-state-message.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -91,7 +91,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
   }
 
   async receiveMqttMessage(message: string): Promise<void> {
-    const dto: ChirpstackMQTTMessageDto = JSON.parse(message);
+    const dto: ChirpstackMqttMessageDto = JSON.parse(message);
     const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
 
     if (!iotDevice) {
@@ -103,8 +103,9 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
 
     await this.receiveDataService.sendRawIotDeviceRequestToKafka(iotDevice, message, IoTDeviceType.LoRaWAN.toString());
   }
+
   async receiveMqttTxAckMessage(message: string): Promise<void> {
-    const dto: ChirpstackMQTTTxAckMessageDto = JSON.parse(message);
+    const dto: ChirpstackMqttTxAckMessageDto = JSON.parse(message);
     const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
 
     if (!iotDevice) {
@@ -113,11 +114,11 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
       );
       return;
     }
-    return this.downlinkService.updateTxackDownlink(dto);
+    return this.downlinkService.updateTxAckDownlink(dto);
   }
 
   async receiveMqttAckMessage(message: string): Promise<void> {
-    const dto: ChirpstackMQTTAckMessageDto = JSON.parse(message);
+    const dto: ChirpstackMqttAckMessageDto = JSON.parse(message);
     const iotDevice = await this.iotDeviceService.findLoRaWANDeviceByDeviceEUI(dto.deviceInfo.devEui);
 
     if (!iotDevice) {
@@ -135,7 +136,7 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
         hasProps(message, nameof<ChirpstackMQTTConnectionStateMessage>("gatewayIdLegacy"))) &&
       (typeof message.gatewayId === "string" || typeof message.gatewayIdLegacy === "string")
     ) {
-      const dto: ChirpstackMQTTConnectionStateMessageDto = {
+      const dto: ChirpstackMqttConnectionStateMessageDto = {
         gatewayId: message.gatewayId
           ? message.gatewayId.toString()
           : message.gatewayIdLegacy
