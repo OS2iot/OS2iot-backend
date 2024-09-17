@@ -36,8 +36,9 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
       this.logger.debug(`HttpPushDataTarget result: '${JSON.stringify(result.data)}'`);
       if (!result.status.toString().startsWith("2")) {
         this.logger.warn(`Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText}`);
+        // TODO: Should this not return SendStatus.ERROR?
       }
-      return this.success(target);
+      return this.success(target, result.status);
     } catch (err) {
       // TODO: Error handling for common errors
       this.logger.error(`HttpPushDataTarget got error: ${err}`);

@@ -1,3 +1,4 @@
+import { DatatargetLogController } from "@admin-controller/data-target-log.controller";
 import { DataTargetController } from "@admin-controller/data-target.controller";
 import configuration from "@config/configuration";
 import { ApplicationModule } from "@modules/device-management/application.module";
@@ -17,7 +18,7 @@ import { CLIENT_SECRET_PROVIDER, PlainTextClientSecretProvider } from "../../hel
     ConfigModule.forRoot({ load: [configuration] }),
   ],
   exports: [DataTargetService],
-  controllers: [DataTargetController],
+  controllers: [DataTargetController, DatatargetLogController],
   providers: [
     DataTargetService,
     OS2IoTMail,

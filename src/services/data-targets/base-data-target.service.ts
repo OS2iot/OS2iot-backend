@@ -10,9 +10,9 @@ import { DataTarget } from "@entities/data-target.entity";
 export abstract class BaseDataTargetService {
   protected readonly baseLogger = new Logger(BaseDataTargetService.name);
 
-  success(receiver: string): DataTargetSendStatus {
+  success(receiver: string, statusCode?: number): DataTargetSendStatus {
     this.baseLogger.debug(`Send to ${receiver} sucessful!`);
-    return { status: SendStatus.OK };
+    return { status: SendStatus.OK, statusCode };
   }
 
   failure(receiver: string, errorMessage: string, dataTarget: DataTarget): DataTargetSendStatus {

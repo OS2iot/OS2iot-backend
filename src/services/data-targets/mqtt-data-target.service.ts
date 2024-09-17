@@ -21,7 +21,7 @@ export class MqttDataTargetService extends BaseDataTargetService {
   send(
     datatarget: DataTarget,
     dto: TransformedPayloadDto,
-    onDone: (status: DataTargetSendStatus, targetType: DataTargetType) => void
+    onDone: (status: DataTargetSendStatus, targetType: DataTargetType, datatarget: DataTarget, payloadDto: TransformedPayloadDto) => void
   ): void {
     const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
 
@@ -43,11 +43,11 @@ export class MqttDataTargetService extends BaseDataTargetService {
         try {
           if (err) {
             const status = this.failure(targetForLogging, err?.message, datatarget);
-            onDone(status, DataTargetType.MQTT);
+            onDone(status, DataTargetType.MQTT, datatarget, dto);
           } else {
             this.logger.debug("Packet received: " + JSON.stringify(packet));
             const status = this.success(targetForLogging);
-            onDone(status, DataTargetType.MQTT);
+            onDone(status, DataTargetType.MQTT, datatarget, dto);
           }
         } finally {
           client.end();
