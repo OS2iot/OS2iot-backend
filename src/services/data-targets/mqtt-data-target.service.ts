@@ -25,6 +25,12 @@ export class MqttDataTargetService extends BaseDataTargetService {
       targetType: DataTargetType,
       datatarget: DataTarget,
       payloadDto: TransformedPayloadDto
+    ) => void,
+    onSendError: (
+      err: Error,
+      targetType: DataTargetType,
+      datatarget: DataTarget,
+      payloadDto: TransformedPayloadDto
     ) => void
   ): void {
     const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
@@ -42,29 +48,31 @@ export class MqttDataTargetService extends BaseDataTargetService {
     });
     const targetForLogging = `MqttDataTarget(URL '${config.url}', topic '${config.topic}')`;
 
-    client.once("connect", () => {
-      client.publish(config.topic, JSON.stringify(dto.payload), { qos: config.qos }, (err, packet) => {
-        try {
-          const responseInfo = this.decodeMqttResponse(packet);
-          if (err) {
-            const status = this.failure(
-              targetForLogging,
-              err?.message,
-              datatarget,
-              responseInfo?.reasonCode,
-              responseInfo?.reasonString
-            );
-            onDone(status, DataTargetType.MQTT, datatarget, dto);
-          } else {
-            this.logger.debug("Packet received: " + JSON.stringify(packet));
-            const status = this.success(targetForLogging, responseInfo?.reasonCode, responseInfo?.reasonString);
-            onDone(status, DataTargetType.MQTT, datatarget, dto);
+    client
+      .once("connect", () => {
+        client.publish(config.topic, JSON.stringify(dto.payload), { qos: config.qos }, (err, packet) => {
+          try {
+            const responseInfo = this.decodeMqttResponse(packet);
+            if (err) {
+              const status = this.failure(
+                targetForLogging,
+                err?.message,
+                datatarget,
+                responseInfo?.reasonCode,
+                responseInfo?.reasonString
+              );
+              onDone(status, DataTargetType.MQTT, datatarget, dto);
+            } else {
+              this.logger.debug("Packet received: " + JSON.stringify(packet));
+              const status = this.success(targetForLogging, responseInfo?.reasonCode, responseInfo?.reasonString);
+              onDone(status, DataTargetType.MQTT, datatarget, dto);
+            }
+          } finally {
+            client.end();
           }
-        } finally {
-          client.end();
-        }
-      });
-    });
+        });
+      })
+      .once("error", err => onSendError(err, DataTargetType.MQTT, datatarget, dto));
   }
 
   private decodeMqttResponse(

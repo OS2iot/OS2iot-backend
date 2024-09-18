@@ -85,7 +85,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
         }
       } else if (target.type === DataTargetType.MQTT) {
         try {
-          this.mqttDataTargetService.send(target, dto, this.onSendDone);
+          this.mqttDataTargetService.send(target, dto, this.onSendDone, this.onSendError);
         } catch (err) {
           await this.onSendError(err, DataTargetType.MQTT, target, dto);
         }
