@@ -89,7 +89,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const getGatewayRequest = new GetGatewayRequest();
     getGatewayRequest.setGatewayId(gateway.gatewayId);
     const existingGateway = await this.get<GetGatewayResponse>("gateways", this.gatewayClient, getGatewayRequest).catch(
-      undefined
+      () => undefined
     );
 
     if (existingGateway)
