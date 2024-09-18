@@ -244,6 +244,36 @@ export class PermissionService {
     } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
       qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
     }
+    const [data, count] = await qb.getManyAndCount();
+
+    return {
+      data: data,
+      count: count,
+    };
+  }
+
+  async getAllPermissionsWithoutUsers(
+    query?: ListAllPermissionsDto,
+    orgs?: number[]
+  ): Promise<ListAllPermissionsResponseDto> {
+    const orderBy = this.getSorting(query);
+    const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
+    let qb: SelectQueryBuilder<Permission> = this.permissionRepository
+      .createQueryBuilder("permission")
+      .leftJoinAndSelect("permission.organization", "org")
+      .leftJoinAndSelect("permission.type", "permission_type")
+      .take(query?.limit ? +query.limit : 100)
+      .skip(query?.offset ? +query.offset : 0)
+      .orderBy(orderBy, order);
+
+    if (orgs) {
+      qb = qb.andWhere({ organization: In(orgs) });
+    } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
+      qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
+    }
+    if (query?.ignoreGlobalAdmin) {
+      qb = qb.andWhere("org.name != :globalAdminName", { globalAdminName: PermissionType.GlobalAdmin });
+    }
 
     const [data, count] = await qb.getManyAndCount();
 
@@ -279,6 +309,13 @@ export class PermissionService {
     query?: ListAllEntitiesDto
   ): Promise<ListAllPermissionsResponseDto> {
     return this.getAllPermissions(query, orgs);
+  }
+
+  async getAllPermissionsInOrganizationsWithoutUsers(
+    orgs: number[],
+    query?: ListAllEntitiesDto
+  ): Promise<ListAllPermissionsResponseDto> {
+    return this.getAllPermissionsWithoutUsers(query, orgs);
   }
 
   async getPermission(id: number): Promise<Permission> {

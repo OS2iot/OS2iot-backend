@@ -136,6 +136,7 @@ export class UserService {
 
   async createUser(dto: CreateUserDto, userId: number): Promise<User> {
     const user = new User();
+    user.permissions = await this.permissionService.findManyByIds(dto.permissionIds);
     const mappedUser = this.mapDtoToUser(user, dto);
     mappedUser.createdBy = userId;
     mappedUser.updatedBy = userId;
@@ -211,6 +212,7 @@ export class UserService {
       relations: ["permissions"],
     });
 
+    user.permissions = await this.permissionService.findManyByIds(dto.permissionIds);
     const mappedUser = this.mapDtoToUser(user, dto);
     mappedUser.updatedBy = userId;
 
