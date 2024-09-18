@@ -15,17 +15,17 @@ export class DatatargetLog extends DbBaseEntity {
   @Column()
   type: SendStatus;
 
-  @Column()
+  @Column({ nullable: true })
   statusCode?: number;
 
-  @Column()
+  @Column({ nullable: true })
   message?: string;
 
-  @ManyToOne(() => IoTDevice, { onDelete: "SET NULL" })
+  @ManyToOne(() => IoTDevice, { onDelete: "SET NULL", nullable: true })
   @JoinColumn()
   iotDevice?: IoTDevice;
 
-  @ManyToOne(() => PayloadDecoder, { onDelete: "SET NULL" })
+  @ManyToOne(() => PayloadDecoder, { onDelete: "SET NULL", nullable: true })
   @JoinColumn()
   payloadDecoder?: PayloadDecoder;
 }

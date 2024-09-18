@@ -104,6 +104,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     payloadDto: TransformedPayloadDto
   ) => {
     this.logger.debug(`Sent to ${targetType} target: ${JSON.stringify(status)}`);
+    await this.dataTargetService.updateLastMessageDate(datatarget.id);
     await this.dataTargetLogService.onSendDone(status, datatarget, payloadDto);
   };
   private onSendError = async (
@@ -113,6 +114,7 @@ export class DataTargetKafkaListenerService extends AbstractKafkaConsumer {
     payloadDto: TransformedPayloadDto
   ) => {
     this.logger.error(`Error while sending to ${targetType} DataTarget: ${err}`);
+    await this.dataTargetService.updateLastMessageDate(datatarget.id);
     await this.dataTargetLogService.onSendError(err, datatarget, payloadDto);
   };
 }

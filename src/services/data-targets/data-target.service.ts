@@ -9,6 +9,7 @@ import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
+import { User } from "@entities/user.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -18,7 +19,6 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
 import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
-import { User } from "@entities/user.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -260,5 +260,13 @@ export class DataTargetService {
         "</p>",
     });
     return true;
+  }
+
+  public async updateLastMessageDate(datatargetId: number) {
+    this.dataTargetRepository.update(
+      { id: datatargetId },
+      // Note: The "updatedAt"-part here prevents the updatedAt/updatedBy to be overwritten with unhelpful data from the automatic update of lastMessageDate
+      { lastMessageDate: new Date(), updatedAt: () => '"updatedAt"' }
+    );
   }
 }
