@@ -150,7 +150,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const gateways = await query.getMany();
 
     return {
-      resultList: gateways.map(this.mapGatewayToResponseDto),
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway)),
       totalCount: gateways.length,
     };
   }
@@ -177,7 +177,33 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const [gateways, count] = await query.getManyAndCount();
 
     return {
-      resultList: gateways.map(this.mapGatewayToResponseDto),
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway)),
+      totalCount: count,
+    };
+  }
+
+  public async getForMaps(organizationId?: number): Promise<ListAllGatewaysResponseDto> {
+    let query = this.gatewayRepository
+      .createQueryBuilder("gateway")
+      .innerJoinAndSelect("gateway.organization", "organization")
+      .select([
+        "gateway.location",
+        "gateway.name",
+        "gateway.lastSeenAt",
+        "gateway.id",
+        "gateway.gatewayId",
+        "organization.name",
+        "organization.id",
+      ]);
+
+    if (organizationId) {
+      query = query.where('"organizationId" = :organizationId', { organizationId });
+    }
+
+    const [gateways, count] = await query.getManyAndCount();
+
+    return {
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway, true)),
       totalCount: count,
     };
   }
@@ -461,7 +487,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     return gateway;
   }
-  private mapGatewayToResponseDto(gateway: DbGateway): GatewayResponseDto {
+  private mapGatewayToResponseDto(gateway: DbGateway, forMap = false): GatewayResponseDto {
     const responseDto = gateway as unknown as GatewayResponseDto;
     responseDto.organizationId = gateway.organization.id;
     responseDto.organizationName = gateway.organization.name;
@@ -469,12 +495,17 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const commonLocation = new CommonLocationDto();
     commonLocation.latitude = gateway.location.coordinates[1];
     commonLocation.longitude = gateway.location.coordinates[0];
-    commonLocation.altitude = gateway.altitude;
-    responseDto.tags = JSON.parse(gateway.tags);
+
+    if (!forMap) {
+      commonLocation.altitude = gateway.altitude;
+      responseDto.tags = JSON.parse(gateway.tags);
+    }
+
     responseDto.location = commonLocation;
 
     return responseDto;
   }
+
   async getAllGatewaysFromChirpstack(): Promise<ListAllChirpstackGatewaysResponseDto> {
     const limit = 1000;
     const listReq = new ListGatewaysRequest();
