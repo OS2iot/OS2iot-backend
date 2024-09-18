@@ -15,11 +15,12 @@ export class MqttService {
   public async generateCertificate(deviceName: string): Promise<CertificateDetails> {
     const certificateDetails = new CertificateDetails();
     try {
-      createPrivateKey(2048, (err, { key }) => {
+      createPrivateKey(2048, (err, input) => {
         if (err) {
-          console.log("keyerr", err);
+          console.log("keyerr", err, input);
           return;
         }
+        const { key } = input;
         certificateDetails.deviceCertificateKey = key;
         createCSR(
           {

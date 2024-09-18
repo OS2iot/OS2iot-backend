@@ -694,6 +694,9 @@ export class IoTDeviceService {
 
         map.iotDevice.deviceModel = deviceModelMatch;
       }
+      else {
+        map.iotDevice.deviceModel = null;
+      }
     }
   }
 
