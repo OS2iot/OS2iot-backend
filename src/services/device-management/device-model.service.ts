@@ -9,6 +9,7 @@ import * as AJV from "ajv";
 import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class DeviceModelService {
@@ -52,6 +53,7 @@ export class DeviceModelService {
       take: query?.limit ? +query.limit : 100,
       skip: query?.offset ? +query.offset : 0,
       order: this.getSorting(query),
+      relations: [nameof<DeviceModel>("belongsTo")],
     });
 
     return {

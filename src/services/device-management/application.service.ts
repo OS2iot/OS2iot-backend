@@ -61,7 +61,7 @@ export class ApplicationService {
       where: orgCondition,
       take: query.limit,
       skip: query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
+      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
       order: sorting,
     });
 
@@ -83,7 +83,7 @@ export class ApplicationService {
           : { id: In(allowedApplications) },
       take: query.limit,
       skip: query.offset,
-      relations: ["iotDevices"],
+      relations: ["iotDevices", nameof<Application>("belongsTo")],
       order: { id: query.sort },
     });
 
@@ -102,7 +102,7 @@ export class ApplicationService {
       where: allowedOrganisations != null ? { belongsTo: In(allowedOrganisations) } : {},
       take: +query.limit,
       skip: +query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
+      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
       order: sorting,
     });
 
