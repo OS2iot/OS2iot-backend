@@ -454,6 +454,17 @@ export class PermissionService {
     return await this.permissionRepository.findBy({ id: In(ids) });
   }
 
+  async findManyByIdsIncludeOrgs(ids: number[]): Promise<Permission[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    return await this.permissionRepository.find({
+      where: { id: In(ids) },
+      relations: ["organization"],
+    });
+  }
+
   private hasAccessToAllApplicationsInOrganization(permissions: PermissionMinimalDto[]) {
     return permissions.some(x => x.permission_type_type == PermissionType.OrganizationUserAdmin);
   }
