@@ -487,7 +487,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     return gateway;
   }
-  private mapGatewayToResponseDto(gateway: DbGateway, fromMap = false): GatewayResponseDto {
+  private mapGatewayToResponseDto(gateway: DbGateway, forMap = false): GatewayResponseDto {
     const responseDto = gateway as unknown as GatewayResponseDto;
     responseDto.organizationId = gateway.organization.id;
     responseDto.organizationName = gateway.organization.name;
@@ -496,7 +496,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     commonLocation.latitude = gateway.location.coordinates[1];
     commonLocation.longitude = gateway.location.coordinates[0];
 
-    if (!fromMap) {
+    if (!forMap) {
       commonLocation.altitude = gateway.altitude;
       responseDto.tags = JSON.parse(gateway.tags);
     }
