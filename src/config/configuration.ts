@@ -9,6 +9,7 @@ export default (): any => {
       username: process.env.DATABASE_USERNAME || "os2iot",
       password: process.env.DATABASE_PASSWORD || "toi2so",
       ssl: process.env.DATABASE_ENABLE_SSL === "true",
+      timezone: 'Z'
     },
     jwt: {
       secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",

@@ -1,30 +1,7 @@
 import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common";
-import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
-import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
-import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
-import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
-import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayContentsDto, UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
-import { ErrorCodes } from "@enum/error-codes.enum";
-import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
-import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Gateway as DbGateway } from "@entities/gateway.entity";
-import { Repository } from "typeorm";
-import { OrganizationService } from "@services/user-management/organization.service";
-import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
-import {
+  Gateway as ChirpstackGateway,
   CreateGatewayRequest,
   DeleteGatewayRequest,
-  Gateway as ChirpstackGateway,
   GetGatewayMetricsRequest,
   GetGatewayMetricsResponse,
   GetGatewayResponse,
@@ -32,15 +9,43 @@ import {
   ListGatewaysResponse,
   UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
-import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation, Location } from "@chirpstack/chirpstack-api/common/common_pb";
-import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
+import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
+import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
+import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
+import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
+import { GatewayContentsDto } from "@dto/chirpstack/gateway-contents.dto";
 import { ChirpstackGatewayResponseDto, GatewayResponseDto } from "@dto/chirpstack/gateway-response.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { GatewayStatsElementDto } from "@dto/chirpstack/gateway-stats.response.dto";
 import {
   ListAllChirpstackGatewaysResponseDto,
   ListAllGatewaysResponseDto,
 } from "@dto/chirpstack/list-all-gateways-response.dto";
+import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
+import {
+  UpdateGatewayContentsDto,
+  UpdateGatewayDto,
+  UpdateGatewayOrganizationDto,
+} from "@dto/chirpstack/update-gateway.dto";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { Gateway as DbGateway } from "@entities/gateway.entity";
+import { ErrorCodes } from "@enum/error-codes.enum";
+import { dateToTimestamp, timestampToDate } from "@helpers/date.helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
+import { nameof } from "@helpers/type-helper";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
+import { OrganizationService } from "@services/user-management/organization.service";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
@@ -145,7 +150,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const gateways = await query.getMany();
 
     return {
-      resultList: gateways.map(this.mapGatewayToResponseDto),
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway)),
       totalCount: gateways.length,
     };
   }
@@ -172,7 +177,33 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const [gateways, count] = await query.getManyAndCount();
 
     return {
-      resultList: gateways.map(this.mapGatewayToResponseDto),
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway)),
+      totalCount: count,
+    };
+  }
+
+  public async getForMaps(organizationId?: number): Promise<ListAllGatewaysResponseDto> {
+    let query = this.gatewayRepository
+      .createQueryBuilder("gateway")
+      .innerJoinAndSelect("gateway.organization", "organization")
+      .select([
+        "gateway.location",
+        "gateway.name",
+        "gateway.lastSeenAt",
+        "gateway.id",
+        "gateway.gatewayId",
+        "organization.name",
+        "organization.id",
+      ]);
+
+    if (organizationId) {
+      query = query.where('"organizationId" = :organizationId', { organizationId });
+    }
+
+    const [gateways, count] = await query.getManyAndCount();
+
+    return {
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway, true)),
       totalCount: count,
     };
   }
@@ -319,6 +350,17 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
   }
 
+  async changeOrganization(gatewayId: number, dto: UpdateGatewayOrganizationDto): Promise<DbGateway> {
+    const gateway = await this.gatewayRepository.findOne({
+      where: { id: gatewayId },
+      relations: [nameof<DbGateway>("organization")],
+    });
+
+    const organization = await this.organizationService.findById(dto.organizationId);
+    gateway.organization = organization;
+    return await this.gatewayRepository.save(gateway);
+  }
+
   public async updateGatewayStats(
     gatewayId: string,
     rxPacketsReceived: number,
@@ -445,7 +487,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     return gateway;
   }
-  private mapGatewayToResponseDto(gateway: DbGateway): GatewayResponseDto {
+  private mapGatewayToResponseDto(gateway: DbGateway, forMap = false): GatewayResponseDto {
     const responseDto = gateway as unknown as GatewayResponseDto;
     responseDto.organizationId = gateway.organization.id;
     responseDto.organizationName = gateway.organization.name;
@@ -453,12 +495,17 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const commonLocation = new CommonLocationDto();
     commonLocation.latitude = gateway.location.coordinates[1];
     commonLocation.longitude = gateway.location.coordinates[0];
-    commonLocation.altitude = gateway.altitude;
-    responseDto.tags = JSON.parse(gateway.tags);
+
+    if (!forMap) {
+      commonLocation.altitude = gateway.altitude;
+      responseDto.tags = JSON.parse(gateway.tags);
+    }
+
     responseDto.location = commonLocation;
 
     return responseDto;
   }
+
   async getAllGatewaysFromChirpstack(): Promise<ListAllChirpstackGatewaysResponseDto> {
     const limit = 1000;
     const listReq = new ListGatewaysRequest();

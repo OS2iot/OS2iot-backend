@@ -10,5 +10,5 @@ export class CreateIoTDeviceDownlinkDto {
   port?: number;
 
   @ApiPropertyOptional({ default: true })
-  confirmed?: boolean;
+  confirmedDownlink?: boolean;
 }

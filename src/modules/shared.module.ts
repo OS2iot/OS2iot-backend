@@ -8,6 +8,7 @@ import { ControlledProperty } from "@entities/controlled-property.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { DatatargetLog } from "@entities/datatarget-log.entity";
 import { DeviceModel } from "@entities/device-model.entity";
+import { Downlink } from "@entities/downlink.entity";
 import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { GatewayStatusHistory } from "@entities/gateway-status-history.entity";
 import { Gateway } from "@entities/gateway.entity";
@@ -71,6 +72,7 @@ import { AuditLog } from "@services/audit-log.service";
       MQTTInternalBrokerDevice,
       MQTTExternalBrokerDevice,
       Gateway,
+      Downlink,
     ]),
   ],
   providers: [AuditLog],
