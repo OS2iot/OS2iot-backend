@@ -272,6 +272,9 @@ export class IoTDeviceController {
   ): Promise<IoTDevice> {
     // Old application
     const dbIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, false);
+
+    if (dbIotDevice.type === IoTDeviceType.SigFox) throw new BadRequestException(ErrorCodes.NotValidFormat);
+
     try {
       checkIfUserHasAccessToApplication(req, dbIotDevice.application.id, ApplicationAccessScope.Write);
       if (updateDto.applicationId !== dbIotDevice.application.id) {
