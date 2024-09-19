@@ -8,7 +8,7 @@ import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interf
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, MoreThan, Repository } from "typeorm";
 
 @Injectable()
 export class DataTargetLogService {
@@ -91,5 +91,23 @@ export class DataTargetLogService {
       payloadDecoder: payloadDecoderId ? ({ id: payloadDecoderId } as PayloadDecoder) : undefined,
     };
     await this.datatargetLogRepository.insert(logEntity);
+  }
+
+  public async getDatatargetWithRecentError(datatargetIds: number[]): Promise<Set<number>> {
+    const dateLimit = new Date();
+    dateLimit.setHours(dateLimit.getHours() - 24);
+
+    const res = await this.datatargetLogRepository
+      .createQueryBuilder()
+      .where({
+        datatarget: { id: In(datatargetIds) },
+        type: SendStatus.ERROR,
+        createdAt: MoreThan(dateLimit),
+      })
+      .select('"datatargetId"')
+      .distinct(true)
+      .getRawMany();
+
+    return new Set<number>(res.map(row => row.datatargetId));
   }
 }

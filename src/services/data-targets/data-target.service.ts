@@ -1,6 +1,6 @@
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
-import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
+import { DataTargetDto, ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { OddkMailInfo } from "@dto/oddk-mail-info.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
@@ -19,6 +19,7 @@ import { ApplicationService } from "@services/device-management/application.serv
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
 import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
+import { DataTargetLogService } from "./data-target-log.service";
 
 @Injectable()
 export class DataTargetService {
@@ -31,7 +32,8 @@ export class DataTargetService {
     private applicationService: ApplicationService,
     @Inject(CLIENT_SECRET_PROVIDER)
     private clientSecretProvider: ClientSecretProvider,
-    private oS2IoTMail: OS2IoTMail
+    private oS2IoTMail: OS2IoTMail,
+    private dataTargetLogService: DataTargetLogService
   ) {}
   private readonly logger = new Logger(DataTargetService.name);
 
@@ -51,8 +53,13 @@ export class DataTargetService {
 
     const [result, total] = await queryBuilder.getManyAndCount();
 
+    const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError(result.map(dt => dt.id));
+    const resultWithErrorInfo = result.map(
+      dt => ({ ...dt, hasRecentErrors: idsWithRecentError.has(dt.id) } as DataTargetDto)
+    );
+
     return {
-      data: result,
+      data: resultWithErrorInfo,
       count: total,
     };
   }
@@ -82,6 +89,12 @@ export class DataTargetService {
         relations: ["createdBy", "updatedBy"],
       },
     });
+  }
+
+  public async findOneWithHasRecentError(id: number): Promise<DataTargetDto> {
+    const datatarget = await this.findOne(id);
+    const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError([id]);
+    return { ...datatarget, hasRecentErrors: idsWithRecentError.has(id) };
   }
 
   async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
