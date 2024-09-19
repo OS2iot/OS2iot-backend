@@ -71,6 +71,13 @@ import * as fs from "fs";
 import { caCertPath } from "@resources/resource-paths";
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
+import { UpdateIoTDeviceApplication } from "@dto/update-iot-device-application.dto";
+import { nameof } from "@helpers/type-helper";
+import { DataTargetService } from "@services/data-targets/data-target.service";
+import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
+import { DataTarget } from "@entities/data-target.entity";
+import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 type IoTDeviceOrSpecialized =
   | IoTDevice
@@ -93,6 +100,8 @@ export class IoTDeviceService {
     private mqttInternalBrokerDeviceRepository: Repository<MQTTInternalBrokerDevice>,
     @InjectRepository(MQTTExternalBrokerDevice)
     private mqttExternalBrokerDeviceRepository: Repository<MQTTExternalBrokerDevice>,
+    @InjectRepository(IoTDevicePayloadDecoderDataTargetConnection)
+    private deviceConnectionsRepository: Repository<IoTDevicePayloadDecoderDataTargetConnection>,
     private entityManager: EntityManager,
     private applicationService: ApplicationService,
     private chirpstackDeviceService: ChirpstackDeviceService,
@@ -107,7 +116,9 @@ export class IoTDeviceService {
     private internalMqttClientListenerService: InternalMqttClientListenerService,
     private encryptionHelperService: EncryptionHelperService,
     private csvGeneratorService: CsvGeneratorService,
-    private deviceProfileService: DeviceProfileService
+    private deviceProfileService: DeviceProfileService,
+    private dataTargetService: DataTargetService,
+    private payloadDecoderService: PayloadDecoderService
   ) {}
 
   private readonly logger = new Logger(IoTDeviceService.name);
@@ -279,6 +290,7 @@ export class IoTDeviceService {
       .createQueryBuilder("iot_device")
       .loadAllRelationIds({ relations: ["createdBy", "updatedBy"] })
       .innerJoinAndSelect("iot_device.application", "application", 'application.id = iot_device."applicationId"')
+      .innerJoinAndSelect("application.belongsTo", "belongsTo", 'belongsTo.id = application."belongsToId"')
       .leftJoinAndSelect("iot_device.receivedMessagesMetadata", "metadata", 'metadata."deviceId" = iot_device.id')
       .leftJoinAndSelect(
         "iot_device.latestReceivedMessage",
@@ -429,6 +441,59 @@ export class IoTDeviceService {
     const res = await this.iotDeviceRepository.save(mappedIoTDevice);
 
     return res;
+  }
+
+  // eslint-disable-next-line max-lines-per-function
+  async changeApplication(id: number, updateDto: UpdateIoTDeviceApplication, userId: number): Promise<IoTDevice> {
+    const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail({
+      where: { id },
+      relations: { application: { belongsTo: true }, deviceModel: true, connections: true },
+    });
+
+    try {
+      const application = await this.applicationService.findOne(updateDto.applicationId);
+      const deviceModel = await this.deviceModelService.getById(updateDto.deviceModelId);
+
+      const dataTargets = await this.dataTargetService.findDataTargetsByApplicationId(updateDto.applicationId);
+      const payloadDecoders = await this.payloadDecoderService.findAndCountWithPagination({}, null);
+
+      const dataTargetMatches: DataTarget[] = updateDto.dataTargetToPayloadDecoderIds.map(dtAndpl =>
+        dataTargets.find(dt => dt.id === dtAndpl.dataTargetId)
+      );
+
+      const payloadMatches: (PayloadDecoder | undefined)[] = updateDto.dataTargetToPayloadDecoderIds.map(dtAndpl =>
+        payloadDecoders.data.find(pl => pl.id === dtAndpl.payloadDecoderId)
+      );
+
+      if (!application || !deviceModel || dataTargetMatches.some(dt => dt === undefined)) {
+        throw new BadRequestException(ErrorCodes.NotValidFormat);
+      }
+
+      const connectionArray: IoTDevicePayloadDecoderDataTargetConnection[] = [];
+      for (let i = 0; i < dataTargetMatches.length; ++i) {
+        const connection = new IoTDevicePayloadDecoderDataTargetConnection();
+        connection.dataTarget = dataTargetMatches[i];
+        connection.payloadDecoder = payloadMatches[i];
+        connection.iotDevices = [existingIoTDevice];
+        connection.createdAt = new Date();
+        connection.updatedAt = new Date();
+        connectionArray.push(connection);
+      }
+
+      existingIoTDevice.application = application;
+      existingIoTDevice.deviceModel = deviceModel;
+      existingIoTDevice.updatedBy = userId;
+
+      const res = await this.iotDeviceRepository.save(existingIoTDevice);
+      await existingIoTDevice.connections.forEach(async connection => {
+        await this.deviceConnectionsRepository.delete(connection);
+      });
+      const savedConnections = await this.deviceConnectionsRepository.save(connectionArray);
+
+      return res;
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async updateMany(updateDto: UpdateIoTDeviceBatchDto, userId: number): Promise<IotDeviceBatchResponseDto[]> {
@@ -693,8 +758,7 @@ export class IoTDeviceService {
         }
 
         map.iotDevice.deviceModel = deviceModelMatch;
-      }
-      else {
+      } else {
         map.iotDevice.deviceModel = null;
       }
     }

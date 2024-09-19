@@ -58,6 +58,7 @@ import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dt
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { DownlinkQueueDto } from "@dto/downlink.dto";
+import { UpdateIoTDeviceApplication } from "@dto/update-iot-device-application.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -256,6 +257,33 @@ export class IoTDeviceController {
     }
 
     const iotDevice = await this.iotDeviceService.update(id, updateDto, req.user.userId);
+    AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, iotDevice.id, iotDevice.name);
+    return iotDevice;
+  }
+
+  @Put("changeApplication/:id")
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Update an existing IoT-Device" })
+  @ApiBadRequestResponse()
+  async changeApplication(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() updateDto: UpdateIoTDeviceApplication
+  ): Promise<IoTDevice> {
+    // Old application
+    const dbIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, false);
+    try {
+      checkIfUserHasAccessToApplication(req, dbIotDevice.application.id, ApplicationAccessScope.Write);
+      if (updateDto.applicationId !== dbIotDevice.application.id) {
+        // New application
+        checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
+      }
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+      throw err;
+    }
+
+    const iotDevice = await this.iotDeviceService.changeApplication(id, updateDto, req.user.userId);
     AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, iotDevice.id, iotDevice.name);
     return iotDevice;
   }
