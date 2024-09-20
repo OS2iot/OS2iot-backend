@@ -1,20 +1,20 @@
-import { Module, forwardRef, MiddlewareConsumer } from "@nestjs/common";
+import { forwardRef, MiddlewareConsumer, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 
+import { ApiKeyStrategy } from "@auth/api-key.strategy";
+import { HandleRedirectUrlParameterMiddleware } from "@auth/handle-redirect-url-parameter.middleware";
 import { JwtStrategy } from "@auth/jwt.strategy";
+import { KombitStrategy } from "@auth/kombit.strategy";
 import { LocalStrategy } from "@auth/local.strategy";
 import configuration from "@config/configuration";
+import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
 import { UserModule } from "@modules/user-management/user.module";
 import { AuthService } from "@services/user-management/auth.service";
 import { AuthController } from "@user-management-controller/auth.controller";
-import { KombitStrategy } from "@auth/kombit.strategy";
-import { HandleRedirectUrlParameterMiddleware } from "@auth/handle-redirect-url-parameter.middleware";
-import { ApiKeyStrategy } from "@auth/api-key.strategy";
-import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
 
 @Module({
   imports: [
