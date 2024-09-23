@@ -1,21 +1,21 @@
+import { AppModule } from "@modules/app.module";
 import {
   BadRequestException,
-  INestApplication,
-  ValidationPipe,
   Logger as BuiltInLogger,
+  INestApplication,
   LogLevel,
+  ValidationPipe,
 } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import * as compression from "compression";
-import { AppModule } from "@modules/app.module";
 import { ExpressAdapter } from "@nestjs/platform-express/adapters/express-adapter";
+import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
+import { doubleCsrf, doubleCsrfProtection } from "csrf-csrf";
 import { Express } from "express";
-import { doubleCsrfProtection, doubleCsrf } from "csrf-csrf";
 
 export const doubleCsrfUtilities = doubleCsrf({
   getSecret: () => "Secrets", // A function that optionally takes the request and returns a secret
-  cookieName: "__Host-psifi.x-csrf-token", // The name of the cookie to be used, recommend using Host prefix.
+  cookieName: "token-cookie-name", // The name of the cookie to be used, recommend using Host prefix.
   cookieOptions: {
     sameSite: "strict",
     path: "/",
@@ -26,12 +26,7 @@ export const doubleCsrfUtilities = doubleCsrf({
   getTokenFromRequest: req => req.headers["x-csrf-token"], // A function that returns the token from the request
 });
 
-const {
-  invalidCsrfTokenError, // This is just for convenience if you plan on making your own middleware.
-  generateToken, // Use this in your routes to provide a CSRF hash + token cookie and token.
-  validateRequest, // Also a convenience if you plan on making your own middleware.
-  doubleCsrfProtection, // This is the default CSRF protection middleware.
-} = doubleCsrfUtilities;
+const { doubleCsrfProtection } = doubleCsrfUtilities;
 
 export async function setupNestJs(
   config: {
@@ -54,10 +49,13 @@ export async function setupNestJs(
       },
     })
   );
-  app.enableCors();
+  app.enableCors({
+    origin: "http://localhost:4200",
+    credentials: true,
+  });
   app.use(compression());
   app.use(cookieParser());
-  app.use(doubleCsrfProtection);
+  // app.use(doubleCsrfProtection);
 
   BuiltInLogger.log(`Kafka: ${process.env.KAFKA_HOSTNAME || "localhost"}:${process.env.KAFKA_PORT || "9092"}`);
 

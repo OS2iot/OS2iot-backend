@@ -22,7 +22,7 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
 import { HttpModule } from "@nestjs/axios";
-import { MiddlewareConsumer, Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -36,6 +36,7 @@ import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
 import { NewKombitCreationModule } from "./user-management/new-kombit-creation.module";
 import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
 import { CsrfMiddleware } from "@auth/csrf-middelware";
+import { CsrfModule } from "./user-management/csrf.module";
 
 @Module({
   imports: [
@@ -94,15 +95,13 @@ import { CsrfMiddleware } from "@auth/csrf-middelware";
     IoTLoRaWANDeviceModule,
     ApiKeyInfoModule,
     NewKombitCreationModule,
+    CsrfModule,
   ],
   controllers: [],
   providers: [],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(CsrfMiddleware)
-      .exclude("auth/kombit/login", "auth/kombit/login/callback", "auth/login")
-      .forRoutes("*");
+    consumer.apply(CsrfMiddleware).forRoutes("*");
   }
 }
