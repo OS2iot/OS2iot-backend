@@ -5,6 +5,7 @@ import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.
 import { DefaultModule } from "@modules/default.module";
 import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 import { ChirpstackMqttListenerModule } from "@modules/device-integrations/chirpstack-mqtt-listener.module";
+import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
 import { ReceiveDataModule } from "@modules/device-integrations/receive-data.module";
 import { SigFoxAdministrationModule } from "@modules/device-integrations/sigfox-administration.module";
 import { SigfoxContractModule } from "@modules/device-integrations/sigfox-contract.module";
@@ -22,7 +23,7 @@ import { AuthModule } from "@modules/user-management/auth.module";
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
 import { HttpModule } from "@nestjs/axios";
-import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -33,10 +34,8 @@ import { MulticastModule } from "./device-management/multicast.module";
 import { OpenDataDkSharingModule } from "./open-data-dk-sharing.module";
 import { SearchModule } from "./search.module";
 import { TestPayloadDecoderModule } from "./test-payload-decoder.module";
-import { NewKombitCreationModule } from "./user-management/new-kombit-creation.module";
-import { InternalMqttListenerModule } from "@modules/device-integrations/internal-mqtt-listener.module";
-import { CsrfMiddleware } from "@auth/csrf-middelware";
 import { CsrfModule } from "./user-management/csrf.module";
+import { NewKombitCreationModule } from "./user-management/new-kombit-creation.module";
 
 @Module({
   imports: [
@@ -100,8 +99,4 @@ import { CsrfModule } from "./user-management/csrf.module";
   controllers: [],
   providers: [],
 })
-export class AppModule {
-  configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CsrfMiddleware).forRoutes("*");
-  }
-}
+export class AppModule {}

@@ -1,6 +1,6 @@
 import { GetLogLevels, formatEmail } from "@helpers/env-variable-helper";
 
-export default (): any => {
+export default () => {
   return {
     port: parseInt(process.env.PORT, 10) || 3000,
     database: {
@@ -9,7 +9,7 @@ export default (): any => {
       username: process.env.DATABASE_USERNAME || "os2iot",
       password: process.env.DATABASE_PASSWORD || "toi2so",
       ssl: process.env.DATABASE_ENABLE_SSL === "true",
-      timezone: 'Z'
+      timezone: "Z",
     },
     jwt: {
       secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
@@ -46,6 +46,9 @@ export default (): any => {
     },
     frontend: {
       baseurl: process.env.FRONTEND_BASEURL || "http://localhost:8081",
+    },
+    csrf: {
+      secret: process.env.CSRF_SECRTET || "Secret",
     },
   };
 };

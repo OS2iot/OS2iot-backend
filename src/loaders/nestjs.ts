@@ -1,3 +1,4 @@
+import configuration from "@config/configuration";
 import { AppModule } from "@modules/app.module";
 import {
   BadRequestException,
@@ -14,16 +15,16 @@ import { doubleCsrf, doubleCsrfProtection } from "csrf-csrf";
 import { Express } from "express";
 
 export const doubleCsrfUtilities = doubleCsrf({
-  getSecret: () => "Secrets", // A function that optionally takes the request and returns a secret
-  cookieName: "token-cookie-name", // The name of the cookie to be used, recommend using Host prefix.
+  getSecret: () => configuration()["csrf"]["secret"],
+  cookieName: "x-csrf-cookie", // TODO: consider adding security prefixes for production
   cookieOptions: {
     sameSite: "strict",
     path: "/",
     secure: true,
   },
-  size: 64, // The size of the generated tokens in bits
-  ignoredMethods: ["GET", "HEAD", "OPTIONS"], // A list of request methods that will not be protected.
-  getTokenFromRequest: req => req.headers["x-csrf-token"], // A function that returns the token from the request
+  size: 64,
+  ignoredMethods: ["GET", "HEAD", "OPTIONS"],
+  getTokenFromRequest: req => req.headers["x-csrf-token"],
 });
 
 const { doubleCsrfProtection } = doubleCsrfUtilities;
@@ -50,12 +51,12 @@ export async function setupNestJs(
     })
   );
   app.enableCors({
-    origin: "http://localhost:4200",
+    origin: configuration()["frontend"]["baseurl"],
     credentials: true,
   });
   app.use(compression());
   app.use(cookieParser());
-  // app.use(doubleCsrfProtection);
+  app.use(doubleCsrfProtection);
 
   BuiltInLogger.log(`Kafka: ${process.env.KAFKA_HOSTNAME || "localhost"}:${process.env.KAFKA_PORT || "9092"}`);
 
