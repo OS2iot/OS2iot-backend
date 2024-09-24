@@ -75,7 +75,7 @@ export class DataTargetController {
   @ApiOperation({ summary: "Find DataTarget by id" })
   async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DataTarget> {
     try {
-      const dataTarget = await this.dataTargetService.findOne(id);
+      const dataTarget = await this.dataTargetService.findOneWithHasRecentError(id);
       checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
       return dataTarget;
     } catch (err) {

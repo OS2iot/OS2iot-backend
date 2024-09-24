@@ -8,7 +8,7 @@ import { HttpPushDataTargetData } from "@interfaces/http-push-data-target-data.i
 import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { BaseDataTargetService } from "@services/data-targets/base-data-target.service";
-import { AxiosRequestConfig } from "axios";
+import { AxiosError, AxiosRequestConfig, isAxiosError } from "axios";
 
 @Injectable()
 export class HttpPushDataTargetService extends BaseDataTargetService {
@@ -35,13 +35,15 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
 
       this.logger.debug(`HttpPushDataTarget result: '${JSON.stringify(result.data)}'`);
       if (!result.status.toString().startsWith("2")) {
+        // Note: Axios actually throws on non-2xx codes, so this should never happen (will be handled in catch-block instead)
         this.logger.warn(`Got a non-2xx status-code: ${result.status.toString()} and message: ${result.statusText}`);
       }
-      return this.success(target);
+      return this.success(target, result.status, result.statusText);
     } catch (err) {
       // TODO: Error handling for common errors
       this.logger.error(`HttpPushDataTarget got error: ${err}`);
-      return this.failure(target, err, datatarget);
+      const axiosErrResp = isAxiosError(err) ? (err as AxiosError)?.response : undefined;
+      return this.failure(target, err, datatarget, axiosErrResp?.status, axiosErrResp?.statusText);
     }
   }
 

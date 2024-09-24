@@ -19,6 +19,9 @@ export abstract class DataTarget extends DbBaseEntity {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  lastMessageDate?: Date;
+
   @ManyToOne(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     type => Application,
