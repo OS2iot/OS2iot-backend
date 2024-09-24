@@ -18,6 +18,7 @@ export default (): any => {
     backend: {
       baseurl: process.env.BACKEND_BASEURL || "https://localhost:3000",
       deviceStatsIntervalInDays: parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
+      datatargetLogMaxEvents: process.env.DATATARGET_LOG_MAX_EVENTS || 250,
     },
     kombit: {
       entryPoint:
