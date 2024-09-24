@@ -13,6 +13,7 @@ import { GetGatewayRequest, GetGatewayResponse } from "@chirpstack/chirpstack-ap
 import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grpc_pb";
 import { credentials } from "@grpc/grpc-js";
 import configuration from "@config/configuration";
+import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
@@ -34,6 +35,13 @@ export class LorawanDeviceDatabaseEnrichJob {
     // Select all gateways from our database and chirpstack (Cheaper than individual calls)
     const gateways = await this.gatewayService.getAll();
     const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
+    try {
+      await this.gatewayService.checkForAlarms(
+        gateways.resultList.filter(gw => gw.notificationOffline || gw.notificationUnusualPackages)
+      );
+    } catch (e) {
+      this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
+    }
 
     // Setup batched fetching of status (Only for today)
     await BluebirdPromise.all(
@@ -46,7 +54,7 @@ export class LorawanDeviceDatabaseEnrichJob {
               Date.UTC(fromTime.getUTCFullYear(), fromTime.getUTCMonth(), fromTime.getUTCDate())
             );
 
-            const statsToday = await this.gatewayService.getGatewayStats(gateway.gatewayId, fromUtc, new Date());
+            const statsToday = await this.gatewayService.getGatewayStats(gateway.gatewayId, fromUtc, new Date(), Aggregation.DAY);
             // Save that to our database
             const stats = statsToday[0];
             const chirpstackGateway = chirpstackGateways.resultList.find(g => g.gatewayId === gateway.gatewayId);

@@ -9,7 +9,8 @@ import {
   ListGatewaysResponse,
   UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
-import { Aggregation, Location } from "@chirpstack/chirpstack-api/common/common_pb";
+import { Aggregation, AggregationMap, Location } from "@chirpstack/chirpstack-api/common/common_pb";
+import configuration from "@config/configuration";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
@@ -41,9 +42,12 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+import * as dayjs from "dayjs";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Repository } from "typeorm";
 
@@ -52,7 +56,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
   constructor(
     @InjectRepository(DbGateway)
     private gatewayRepository: Repository<DbGateway>,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private oS2IoTMail: OS2IoTMail,
+    private configService: ConfigService
   ) {
     super();
   }
@@ -224,7 +230,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       const now = new Date();
       const statsFrom = new Date(new Date().setDate(now.getDate() - this.GATEWAY_STATS_INTERVAL_IN_DAYS));
 
-      result.stats = await this.getGatewayStats(gatewayId, statsFrom, now);
+      result.stats = await this.getGatewayStats(gatewayId, statsFrom, now, Aggregation.DAY);
       result.gateway = this.mapGatewayToResponseDto(gateway);
 
       return result;
@@ -237,7 +243,12 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
   }
 
-  async getGatewayStats(gatewayId: string, from: Date, to: Date): Promise<GatewayStatsElementDto[]> {
+  async getGatewayStats(
+    gatewayId: string,
+    from: Date,
+    to: Date,
+    aggregation: AggregationMap[keyof AggregationMap]
+  ): Promise<GatewayStatsElementDto[]> {
     const to_time = dateToTimestamp(to);
     const from_time_timestamp: Timestamp = dateToTimestamp(from);
 
@@ -245,7 +256,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     request.setGatewayId(gatewayId);
     request.setStart(from_time_timestamp);
     request.setEnd(to_time);
-    request.setAggregation(Aggregation.DAY);
+    request.setAggregation(aggregation);
 
     const metaData = this.makeMetadataHeader();
 
@@ -438,6 +449,12 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     gateway.gatewayResponsiblePhoneNumber = dto.gatewayResponsiblePhoneNumber;
     gateway.operationalResponsibleName = dto.operationalResponsibleName;
     gateway.operationalResponsibleEmail = dto.operationalResponsibleEmail;
+    gateway.alarmMail = dto.alarmMail;
+    gateway.notificationOffline = dto.notificationOffline;
+    gateway.notificationUnusualPackages = dto.notificationUnusualPackages;
+    gateway.amountOfMinutes = dto.amountOfMinutes;
+    gateway.minimumPackages = dto.minimumPackages;
+    gateway.maximumPackages = dto.maximumPackages;
 
     const tempTags = { ...dto.tags };
     tempTags[this.ORG_ID_KEY] = undefined;
@@ -554,5 +571,90 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
 
     return orderBy;
+  }
+
+  checkForMinMaxNumbers(dto: UpdateGatewayDto) {
+    if (dto.gateway.minimumPackages > dto.gateway.maximumPackages) {
+      throw new BadRequestException({
+        success: false,
+        error: "Minimum has to be under maximum, and maximum has to be over minimum",
+      });
+    }
+  }
+  async checkForAlarms(gateways: GatewayResponseDto[]) {
+    for (let index = 0; index < gateways.length; index++) {
+      if (gateways[index].notificationOffline && gateways[index].notificationUnusualPackages) {
+        await this.checkForNotificationOfflineAlarms(gateways[index]);
+        await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
+      } else if (gateways[index].notificationUnusualPackages) {
+        await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
+      } else if (gateways[index].notificationOffline) {
+        await this.checkForNotificationOfflineAlarms(gateways[index]);
+      }
+    }
+  }
+
+  private async checkForNotificationOfflineAlarms(gateway: GatewayResponseDto) {
+    const actualDate = dayjs();
+    const lastSeen = dayjs(gateway.lastSeenAt);
+    if (actualDate.diff(lastSeen, "minute") > gateway.amountOfMinutes && !gateway.hasSentOfflineNotification) {
+      await this.oS2IoTMail.sendMail({
+        to: gateway.alarmMail,
+        subject: `OS2iot alarm: ${gateway.name} er offline`,
+        html: `<p>OS2iot alarm</p>
+               <p>Gateway’en ${gateway.name} er offline.</p>
+               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
+               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
+          gateway.gatewayId
+        }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>
+              `,
+      });
+      await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: true });
+    } else if (gateway.hasSentOfflineNotification && actualDate.diff(lastSeen, "minute") <= gateway.amountOfMinutes) {
+      await this.oS2IoTMail.sendMail({
+        to: gateway.alarmMail,
+        subject: `OS2iot alarm: ${gateway.name} er online igen`,
+        html: `<p>OS2iot alarm</p>
+               <p>Gateway’en ${gateway.name} er kommet online igen ${gateway.lastSeenAt.toLocaleString("da-DK", {
+          timeZone: "Europe/Copenhagen",
+        })}.</p>
+               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
+               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
+          gateway.gatewayId
+        }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,
+      });
+      await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: false });
+    }
+  }
+  private async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
+    const toTime = new Date();
+    const fromTime = new Date(toTime.getTime() - 60 * 60 * 1000);
+
+    if (!gateway.lastSeenAt || (gateway.lastSentNotification && gateway.lastSentNotification > fromTime)) {
+      return;
+    }
+
+    const statsLastHour = await this.getGatewayStats(gateway.gatewayId, fromTime, toTime, Aggregation.HOUR);
+    let receivedPackagesLastHour = 0;
+    statsLastHour.forEach(stats => {
+      receivedPackagesLastHour += stats.rxPacketsReceived;
+    });
+
+    if (receivedPackagesLastHour > gateway.minimumPackages && receivedPackagesLastHour < gateway.maximumPackages) {
+      return;
+    }
+
+    await this.oS2IoTMail.sendMail({
+      to: gateway.alarmMail,
+      subject: `OS2iot alarm: ${gateway.name} har et uregelmæssigt pakkemønster`,
+      html: `<p>OS2iot alarm</p>
+             <p>Gateway’en ${gateway.name} har et uregelmæssigt pakkemønster.</p>
+             <p>Antal modtagne pakker den seneste time: ${receivedPackagesLastHour}</p>
+             <p>Der udsendes besked hver time indtil pakkemønsteret igen er regelmæssigt.</p>
+             <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
+        gateway.gatewayId
+      }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,
+    });
+    await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { lastSentNotification: new Date() });
   }
 }

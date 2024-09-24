@@ -35,4 +35,12 @@ export class GatewayResponseDto {
   lastSeenAt?: Date;
   updatedBy?: number;
   createdBy?: number;
+  notificationOffline?: boolean;
+  notificationUnusualPackages?: boolean;
+  amountOfMinutes?: number;
+  minimumPackages?: number;
+  maximumPackages?: number;
+  alarmMail?: string;
+  hasSentOfflineNotification?: boolean;
+  lastSentNotification?: Date;
 }

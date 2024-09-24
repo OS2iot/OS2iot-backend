@@ -11,6 +11,7 @@ import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gatewa
 import { DeviceProfileService } from "@services/chirpstack/device-profile.service";
 import { GenericChirpstackConfigurationService } from "@services/chirpstack/generic-chirpstack-configuration.service";
 import { OrganizationModule } from "@modules/user-management/organization.module";
+import { OS2IoTMail } from "@services/os2iot-mail.service";
 
 @Module({
   controllers: [ChirpstackGatewayController, DeviceProfileController],
@@ -21,6 +22,7 @@ import { OrganizationModule } from "@modules/user-management/organization.module
     DeviceProfileService,
     ChirpstackDeviceService,
     ApplicationChirpstackService,
+    OS2IoTMail
   ],
   exports: [ChirpstackDeviceService, ChirpstackGatewayService, DeviceProfileService, ApplicationChirpstackService],
 })
