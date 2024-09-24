@@ -42,5 +42,4 @@ export class GatewayResponseDto {
   maximumPackages?: number;
   alarmMail?: string;
   hasSentOfflineNotification?: boolean;
-  lastSentNotification?: Date;
 }

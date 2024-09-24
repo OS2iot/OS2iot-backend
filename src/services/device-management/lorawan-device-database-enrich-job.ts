@@ -36,9 +36,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     const gateways = await this.gatewayService.getAll();
     const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
     try {
-      await this.gatewayService.checkForAlarms(
-        gateways.resultList.filter(gw => gw.notificationOffline || gw.notificationUnusualPackages)
-      );
+      await this.gatewayService.checkForAlarms(gateways.resultList.filter(gw => gw.notificationOffline));
     } catch (e) {
       this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
     }
@@ -54,7 +52,12 @@ export class LorawanDeviceDatabaseEnrichJob {
               Date.UTC(fromTime.getUTCFullYear(), fromTime.getUTCMonth(), fromTime.getUTCDate())
             );
 
-            const statsToday = await this.gatewayService.getGatewayStats(gateway.gatewayId, fromUtc, new Date(), Aggregation.DAY);
+            const statsToday = await this.gatewayService.getGatewayStats(
+              gateway.gatewayId,
+              fromUtc,
+              new Date(),
+              Aggregation.DAY
+            );
             // Save that to our database
             const stats = statsToday[0];
             const chirpstackGateway = chirpstackGateways.resultList.find(g => g.gatewayId === gateway.gatewayId);
@@ -75,6 +78,19 @@ export class LorawanDeviceDatabaseEnrichJob {
         }
       )
     );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async checkUnusualPackagesForGateways() {
+    const gateways = await this.gatewayService.getAllWithUnusualPackagesAlarms();
+    try {
+      for (let index = 0; index < gateways.resultList.length; index++) {
+        await this.gatewayService.checkForNotificationUnusualPackagesAlarms(gateways.resultList[index]);
+      }
+    } catch (e) {
+      this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
+      throw e;
+    }
   }
 
   @Timeout(30000)

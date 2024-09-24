@@ -144,6 +144,17 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     return tags;
   }
 
+  async getAllWithUnusualPackagesAlarms(): Promise<ListAllGatewaysResponseDto> {
+    const gateways = await this.gatewayRepository.find({
+      where: { notificationUnusualPackages: true },
+      relations: ["organization"],
+    });
+    return {
+      resultList: gateways.map(gateway => this.mapGatewayToResponseDto(gateway)),
+      totalCount: gateways.length,
+    };
+  }
+
   async getAll(organizationId?: number): Promise<ListAllGatewaysResponseDto> {
     let query = this.gatewayRepository
       .createQueryBuilder("gateway")
@@ -583,12 +594,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
   }
   async checkForAlarms(gateways: GatewayResponseDto[]) {
     for (let index = 0; index < gateways.length; index++) {
-      if (gateways[index].notificationOffline && gateways[index].notificationUnusualPackages) {
-        await this.checkForNotificationOfflineAlarms(gateways[index]);
-        await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
-      } else if (gateways[index].notificationUnusualPackages) {
-        await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
-      } else if (gateways[index].notificationOffline) {
+      if (gateways[index].notificationOffline) {
         await this.checkForNotificationOfflineAlarms(gateways[index]);
       }
     }
@@ -626,21 +632,27 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: false });
     }
   }
-  private async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
-    const toTime = new Date();
-    const fromTime = new Date(toTime.getTime() - 60 * 60 * 1000);
-
-    if (!gateway.lastSeenAt || (gateway.lastSentNotification && gateway.lastSentNotification > fromTime)) {
+  public async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
+    if (!gateway.lastSeenAt) {
       return;
     }
 
-    const statsLastHour = await this.getGatewayStats(gateway.gatewayId, fromTime, toTime, Aggregation.HOUR);
-    let receivedPackagesLastHour = 0;
-    statsLastHour.forEach(stats => {
-      receivedPackagesLastHour += stats.rxPacketsReceived;
+    const dayBeforeToTime = new Date();
+    dayBeforeToTime.setDate(dayBeforeToTime.getDate() - 1);
+
+    const gatewayStats = await this.getGatewayStats(
+      gateway.gatewayId,
+      dayBeforeToTime,
+      dayBeforeToTime,
+      Aggregation.DAY
+    );
+
+    let receivedPackages = 0;
+    gatewayStats.forEach(stats => {
+      receivedPackages += stats.rxPacketsReceived;
     });
 
-    if (receivedPackagesLastHour > gateway.minimumPackages && receivedPackagesLastHour < gateway.maximumPackages) {
+    if (receivedPackages > gateway.minimumPackages && receivedPackages < gateway.maximumPackages) {
       return;
     }
 
@@ -649,12 +661,11 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       subject: `OS2iot alarm: ${gateway.name} har et uregelmæssigt pakkemønster`,
       html: `<p>OS2iot alarm</p>
              <p>Gateway’en ${gateway.name} har et uregelmæssigt pakkemønster.</p>
-             <p>Antal modtagne pakker den seneste time: ${receivedPackagesLastHour}</p>
-             <p>Der udsendes besked hver time indtil pakkemønsteret igen er regelmæssigt.</p>
+             <p>Antal modtagne pakker det seneste døgn: ${receivedPackages}</p>
+             <p>Der udsendes besked hvert døgn indtil pakkemønsteret igen er regelmæssigt.</p>
              <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
         gateway.gatewayId
       }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,
     });
-    await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { lastSentNotification: new Date() });
   }
 }

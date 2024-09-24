@@ -83,6 +83,4 @@ export class Gateway extends DbBaseEntity {
   alarmMail?: string;
   @Column({ nullable: true })
   hasSentOfflineNotification?: boolean;
-  @Column({ nullable: true })
-  lastSentNotification?: Date;
 }
