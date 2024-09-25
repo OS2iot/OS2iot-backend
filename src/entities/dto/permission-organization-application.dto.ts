@@ -54,7 +54,7 @@ export class UserPermissions {
     if (this.isGlobalAdmin) {
       return true;
     } else {
-      let organizationsWithAdmin = this.getAllOrganizationsWithUserAdmin();
+      const organizationsWithAdmin = this.getAllOrganizationsWithUserAdmin();
       return organizationsWithAdmin.indexOf(organizationId) > -1;
     }
   }
