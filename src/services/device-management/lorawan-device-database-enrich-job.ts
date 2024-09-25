@@ -67,7 +67,7 @@ export class LorawanDeviceDatabaseEnrichJob {
               stats.rxPacketsReceived,
               stats.txPacketsEmitted,
               gateway.updatedAt,
-              chirpstackGateway.lastSeenAt ? timestampToDate(chirpstackGateway.lastSeenAt) : undefined
+              chirpstackGateway?.lastSeenAt ? timestampToDate(chirpstackGateway.lastSeenAt) : undefined
             );
           } catch (err) {
             this.logger.error(`Gateway status fetch failed with: ${JSON.stringify(err)}`, err);
