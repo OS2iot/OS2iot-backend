@@ -191,7 +191,7 @@ export class PermissionController {
   ): Promise<ListAllPermissionsResponseDto> {
     if (!req.user.permissions.isGlobalAdmin) {
       const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
-      return this.permissionService.getAllPermissionsInOrganizationsWithoutUsers(allowedOrganizations, query);
+      return this.permissionService.getAllPermissionsWithoutUsers(query, allowedOrganizations);
     }
     return this.permissionService.getAllPermissionsWithoutUsers(query);
   }

@@ -79,9 +79,6 @@ export class UserController {
       if (err instanceof QueryFailedError && err.message.startsWith("duplicate key value violates unique constraint")) {
         throw new BadRequestException(ErrorCodes.UserAlreadyExists);
       }
-      if (err.status === 403) {
-        throw err;
-      }
 
       this.logger.error(err);
       throw new InternalServerErrorException();

@@ -226,8 +226,8 @@ export class PermissionService {
 
   async getAllPermissions(query?: ListAllPermissionsDto, orgs?: number[]): Promise<ListAllPermissionsResponseDto> {
     const orderBy = this.getSorting(query);
-    const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
-    let qb: SelectQueryBuilder<Permission> = this.permissionRepository
+    const order = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
+    let queryBuilder = this.permissionRepository
       .createQueryBuilder("permission")
       .leftJoinAndSelect("permission.organization", "org")
       .leftJoinAndSelect("permission.users", "user")
@@ -237,14 +237,14 @@ export class PermissionService {
       .orderBy(orderBy, order);
 
     if (query?.userId !== undefined && query.userId !== "undefined") {
-      qb = qb.andWhere("user.id = :userId", { userId: +query.userId });
+      queryBuilder = queryBuilder.andWhere("user.id = :userId", { userId: +query.userId });
     }
     if (orgs) {
-      qb = qb.andWhere({ organization: In(orgs) });
+      queryBuilder = queryBuilder.andWhere({ organization: In(orgs) });
     } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
-      qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
+      queryBuilder = queryBuilder.andWhere("org.id = :orgId", { orgId: +query.organisationId });
     }
-    const [data, count] = await qb.getManyAndCount();
+    const [data, count] = await queryBuilder.getManyAndCount();
 
     return {
       data: data,
@@ -257,8 +257,8 @@ export class PermissionService {
     orgs?: number[]
   ): Promise<ListAllPermissionsResponseDto> {
     const orderBy = this.getSorting(query);
-    const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
-    let qb: SelectQueryBuilder<Permission> = this.permissionRepository
+    const order = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
+    let queryBuilder = this.permissionRepository
       .createQueryBuilder("permission")
       .leftJoinAndSelect("permission.organization", "org")
       .leftJoinAndSelect("permission.type", "permission_type")
@@ -267,15 +267,18 @@ export class PermissionService {
       .orderBy(orderBy, order);
 
     if (orgs) {
-      qb = qb.andWhere({ organization: In(orgs) });
+      queryBuilder = queryBuilder.andWhere({ organization: In(orgs) });
     } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
-      qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
-    }
-    if (query?.ignoreGlobalAdmin) {
-      qb = qb.andWhere("org.name != :globalAdminName", { globalAdminName: PermissionType.GlobalAdmin });
+      queryBuilder = queryBuilder.andWhere("org.id = :orgId", { orgId: +query.organisationId });
     }
 
-    const [data, count] = await qb.getManyAndCount();
+    if (query?.ignoreGlobalAdmin) {
+      queryBuilder = queryBuilder.andWhere("org.name != :globalAdminName", {
+        globalAdminName: PermissionType.GlobalAdmin,
+      });
+    }
+
+    const [data, count] = await queryBuilder.getManyAndCount();
 
     return {
       data: data,
@@ -309,13 +312,6 @@ export class PermissionService {
     query?: ListAllEntitiesDto
   ): Promise<ListAllPermissionsResponseDto> {
     return this.getAllPermissions(query, orgs);
-  }
-
-  async getAllPermissionsInOrganizationsWithoutUsers(
-    orgs: number[],
-    query?: ListAllEntitiesDto
-  ): Promise<ListAllPermissionsResponseDto> {
-    return this.getAllPermissionsWithoutUsers(query, orgs);
   }
 
   async getPermission(id: number): Promise<Permission> {
