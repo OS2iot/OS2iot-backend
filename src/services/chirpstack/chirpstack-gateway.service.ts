@@ -62,6 +62,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     super();
   }
   GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
+  GATEWAY_LAST_ACTIVE_SINCE_IN_MINUTES = 3;
   private readonly logger = new Logger(ChirpstackGatewayService.name, {
     timestamp: true,
   });
@@ -606,6 +607,30 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
   }
 
+  private async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
+    if (!gateway.lastSeenAt) {
+      return;
+    }
+
+    const dayBeforeToTime = new Date();
+    dayBeforeToTime.setDate(dayBeforeToTime.getDate() - 1);
+
+    const gatewayStats = await this.getGatewayStats(
+      gateway.gatewayId,
+      dayBeforeToTime,
+      dayBeforeToTime,
+      Aggregation.DAY
+    );
+
+    const receivedPackages = gatewayStats[0].rxPacketsReceived;
+
+    if (gateway.minimumPackages < receivedPackages && receivedPackages < gateway.maximumPackages) {
+      return;
+    }
+
+    await this.sendEmailForUnusualPackages(gateway, receivedPackages);
+  }
+
   private async checkForNotificationOfflineAlarms(gateway: GatewayResponseDto) {
     const currentDate = dayjs();
     const lastSeen = dayjs(gateway.lastSeenAt);
@@ -617,7 +642,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: true });
     } else if (
       gateway.hasSentOfflineNotification &&
-      currentDate.diff(lastSeen, "minute") <= gateway.offlineAlarmThresholdMinutes
+      currentDate.diff(lastSeen, "minute") <= this.GATEWAY_LAST_ACTIVE_SINCE_IN_MINUTES
     ) {
       await this.sendEmailForNotificationOnlineAgain(gateway);
       await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: false });
@@ -653,27 +678,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     });
   }
 
-  public async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
-    if (!gateway.lastSeenAt) {
-      return;
-    }
-
-    const dayBeforeToTime = new Date();
-    dayBeforeToTime.setDate(dayBeforeToTime.getDate() - 1);
-
-    const gatewayStats = await this.getGatewayStats(
-      gateway.gatewayId,
-      dayBeforeToTime,
-      dayBeforeToTime,
-      Aggregation.DAY
-    );
-
-    const receivedPackages = gatewayStats[0].rxPacketsReceived;
-
-    if (gateway.minimumPackages < receivedPackages && receivedPackages < gateway.maximumPackages) {
-      return;
-    }
-
+  private async sendEmailForUnusualPackages(gateway: GatewayResponseDto, receivedPackages: number) {
     await this.oS2IoTMail.sendMail({
       to: gateway.alarmMail,
       subject: `OS2iot alarm: ${gateway.name} har et uregelmæssigt pakkemønster`,
