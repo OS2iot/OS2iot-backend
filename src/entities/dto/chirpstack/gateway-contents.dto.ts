@@ -1,16 +1,18 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Transform, Type } from "class-transformer";
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsHexadecimal,
-  IsJSON,
+  IsInt,
   IsOptional,
   IsPhoneNumber,
   IsString,
   Length,
   Matches,
   MaxLength,
+  Min,
   MinLength,
   ValidateIf,
   ValidateNested,
@@ -106,6 +108,40 @@ export class GatewayContentsDto {
   @ValidateIf(value => !isNullOrWhitespace(value.operationalResponsibleEmail))
   @IsEmail()
   operationalResponsibleEmail?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  notifyOffline?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  notifyUnusualPackages?: boolean;
+
+  @ApiProperty({ required: false })
+  @Min(1)
+  @IsInt()
+  @ValidateIf(value => value.notifyOffline)
+  offlineAlarmThresholdMinutes?: number;
+
+  @ApiProperty({ required: false })
+  @Min(0)
+  @IsInt()
+  @ValidateIf(value => value.notifyUnusualPackages)
+  minimumPackages?: number;
+
+  @ApiProperty({ required: false })
+  @Min(0)
+  @IsInt()
+  @ValidateIf(value => value.notifyUnusualPackages)
+  maximumPackages?: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsEmail()
+  @ValidateIf(value => (value.notifyOffline || value.notifyUnusualPackages) && !value.alarmMail)
+  alarmMail?: string;
 
   @ApiHideProperty()
   tenantId: string;

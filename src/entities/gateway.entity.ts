@@ -74,4 +74,18 @@ export class Gateway extends DbBaseEntity {
 
   @Column({ nullable: true })
   operationalResponsibleEmail?: string;
+  @Column({ nullable: true })
+  notifyOffline?: boolean;
+  @Column({ nullable: true })
+  notifyUnusualPackages?: boolean;
+  @Column({ nullable: true })
+  offlineAlarmThresholdMinutes?: number;
+  @Column({ nullable: true })
+  minimumPackages?: number;
+  @Column({ nullable: true })
+  maximumPackages?: number;
+  @Column({ nullable: true })
+  alarmMail?: string;
+  @Column({ nullable: true })
+  hasSentOfflineNotification?: boolean;
 }
