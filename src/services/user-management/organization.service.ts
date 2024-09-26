@@ -236,7 +236,12 @@ export class OrganizationService {
   }
 
   async delete(id: number): Promise<DeleteResponseDto> {
-    const res = await this.organizationRepository.delete(id);
+    const dbOrganization = await this.organizationRepository.findOne({ where: { id }, relations: { gateways: true } });
+    if (dbOrganization?.gateways?.length !== 0) {
+      throw new BadRequestException(ErrorCodes.OrganizationCannotBeDeletedHasGateways);
+    }
+
+    const res = await this.organizationRepository.delete(dbOrganization.id);
     if (res.affected == 0) {
       throw new NotFoundException();
     }
