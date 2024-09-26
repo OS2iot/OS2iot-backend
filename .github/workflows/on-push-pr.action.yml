@@ -17,12 +17,9 @@ jobs:
   vulnerabilities-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        name: Checkout repository
-      - uses: debricked/actions/scan@v1
-        name: Run a vulnerability scan
+      - uses: actions/checkout@v4
+      - uses: debricked/actions@v4
         env:
-          # Token must have API access scope to run scans
           DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
   code-build:
     runs-on: ubuntu-latest

@@ -206,6 +206,19 @@ export class PermissionController {
     return this.permissionService.getAllPermissions(query);
   }
 
+  @Get("getAllPermissionsWithoutUsers")
+  @ApiOperation({ summary: "Get list of all permissions without include users" })
+  async getAllPermissionsWithoutUsers(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllPermissionsDto
+  ): Promise<ListAllPermissionsResponseDto> {
+    if (!req.user.permissions.isGlobalAdmin) {
+      const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      return this.permissionService.getAllPermissionsWithoutUsers(query, allowedOrganizations);
+    }
+    return this.permissionService.getAllPermissionsWithoutUsers(query);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Get permissions entity" })
   @ApiNotFoundResponse()

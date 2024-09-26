@@ -1,3 +1,4 @@
+import { Permission } from "@entities/permissions/permission.entity";
 import { IsNotBlank } from "@helpers/is-not-blank.validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsString, Length } from "class-validator";
@@ -23,4 +24,7 @@ export class CreateUserDto {
 
   @ApiProperty({ required: false })
   globalAdmin?: boolean;
+
+  @ApiProperty({ required: false })
+  permissionIds?: number[];
 }

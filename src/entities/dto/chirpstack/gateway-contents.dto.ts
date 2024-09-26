@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import {
   IsEmail,
   IsEnum,
@@ -36,6 +36,7 @@ export class GatewayContentsDto {
   @IsString()
   @IsHexadecimal()
   @Length(16, 16)
+  @Transform(({ value }) => value.toLowerCase())
   gatewayId: string;
 
   @ApiProperty({ required: false })

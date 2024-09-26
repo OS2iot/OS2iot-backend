@@ -20,6 +20,8 @@ import { EncryptionHelperService } from "@services/encryption-helper.service";
 import { CsvGeneratorService } from "@services/csv-generator.service";
 import { LorawanDeviceDatabaseEnrichJob } from "@services/device-management/lorawan-device-database-enrich-job";
 import { OrganizationModule } from "@modules/user-management/organization.module";
+import { DataTargetModule } from "./data-target.module";
+import { PayloadDecoderModule } from "./payload-decoder.module";
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { OrganizationModule } from "@modules/user-management/organization.module
     forwardRef(() => SigfoxDeviceModule),
     forwardRef(() => IoTLoRaWANDeviceModule),
     InternalMqttListenerModule,
+    DataTargetModule,
+    forwardRef(() => PayloadDecoderModule),
   ],
   exports: [MqttService, IoTDeviceService, IoTDeviceDownlinkService],
   controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],
