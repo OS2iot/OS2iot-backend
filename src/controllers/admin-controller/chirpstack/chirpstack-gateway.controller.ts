@@ -47,7 +47,7 @@ export class ChirpstackGatewayController {
   @GatewayAdmin()
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
     checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
-    this.chirpstackGatewayService.checkForMinMaxNumbers(dto);
+    this.chirpstackGatewayService.validatePackageAlarmInput(dto);
     try {
       const gateway = await this.chirpstackGatewayService.createNewGateway(dto, req.user.userId);
       AuditLog.success(
@@ -111,7 +111,7 @@ export class ChirpstackGatewayController {
     @Body() dto: UpdateGatewayDto
   ): Promise<ChirpstackResponseStatus> {
     try {
-      this.chirpstackGatewayService.checkForMinMaxNumbers(dto);
+      this.chirpstackGatewayService.validatePackageAlarmInput(dto);
       if (dto.gateway.gatewayId) {
         throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
       }

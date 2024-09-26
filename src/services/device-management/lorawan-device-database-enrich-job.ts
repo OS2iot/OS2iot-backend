@@ -36,7 +36,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     const gateways = await this.gatewayService.getAll();
     const chirpstackGateways = await this.gatewayService.getAllGatewaysFromChirpstack();
     try {
-      await this.gatewayService.checkForAlarms(gateways.resultList.filter(gw => gw.notificationOffline));
+      await this.gatewayService.checkForAlarms(gateways.resultList.filter(gw => gw.notifyOffline));
     } catch (e) {
       this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
     }
@@ -84,9 +84,7 @@ export class LorawanDeviceDatabaseEnrichJob {
   async checkUnusualPackagesForGateways() {
     const gateways = await this.gatewayService.getAllWithUnusualPackagesAlarms();
     try {
-      for (let index = 0; index < gateways.resultList.length; index++) {
-        await this.gatewayService.checkForNotificationUnusualPackagesAlarms(gateways.resultList[index]);
-      }
+      await this.gatewayService.checkForUnusualPackagesAlarms(gateways.resultList.filter(gw => gw.notifyUnusualPackages));
     } catch (e) {
       this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
       throw e;

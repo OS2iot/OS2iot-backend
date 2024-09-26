@@ -111,35 +111,35 @@ export class GatewayContentsDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsBoolean()
-  notificationOffline?: boolean;
+  notifyOffline?: boolean;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsBoolean()
-  notificationUnusualPackages?: boolean;
+  notifyUnusualPackages?: boolean;
+
+  @ApiProperty({ required: false })
+  @Min(1)
+  @IsInt()
+  @ValidateIf(value => value.notifyOffline)
+  offlineAlarmThresholdMinutes?: number;
 
   @ApiProperty({ required: false })
   @Min(0)
   @IsInt()
-  @ValidateIf(value => value.notificationOffline)
-  amountOfMinutes?: number;
-
-  @ApiProperty({ required: false })
-  @Min(0)
-  @IsInt()
-  @ValidateIf(value => value.notificationUnusualPackages)
+  @ValidateIf(value => value.notifyUnusualPackages)
   minimumPackages?: number;
 
   @ApiProperty({ required: false })
   @Min(0)
   @IsInt()
-  @ValidateIf(value => value.notificationUnusualPackages)
+  @ValidateIf(value => value.notifyUnusualPackages)
   maximumPackages?: number;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsEmail()
-  @ValidateIf(value => (value.notificationOffline || value.notificationUnusualPackages) && !value.alarmMail)
+  @ValidateIf(value => (value.notifyOffline || value.notifyUnusualPackages) && !value.alarmMail)
   alarmMail?: string;
 
   @ApiHideProperty()

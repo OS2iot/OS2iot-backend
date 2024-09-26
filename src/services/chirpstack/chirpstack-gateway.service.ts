@@ -10,7 +10,6 @@ import {
   UpdateGatewayRequest,
 } from "@chirpstack/chirpstack-api/api/gateway_pb";
 import { Aggregation, AggregationMap, Location } from "@chirpstack/chirpstack-api/common/common_pb";
-import configuration from "@config/configuration";
 import { ChirpstackErrorResponseDto } from "@dto/chirpstack/chirpstack-error-response.dto";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CommonLocationDto } from "@dto/chirpstack/common-location.dto";
@@ -146,7 +145,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
   async getAllWithUnusualPackagesAlarms(): Promise<ListAllGatewaysResponseDto> {
     const gateways = await this.gatewayRepository.find({
-      where: { notificationUnusualPackages: true },
+      where: { notifyUnusualPackages: true },
       relations: ["organization"],
     });
     return {
@@ -461,9 +460,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     gateway.operationalResponsibleName = dto.operationalResponsibleName;
     gateway.operationalResponsibleEmail = dto.operationalResponsibleEmail;
     gateway.alarmMail = dto.alarmMail;
-    gateway.notificationOffline = dto.notificationOffline;
-    gateway.notificationUnusualPackages = dto.notificationUnusualPackages;
-    gateway.amountOfMinutes = dto.amountOfMinutes;
+    gateway.notifyOffline = dto.notifyOffline;
+    gateway.notifyUnusualPackages = dto.notifyUnusualPackages;
+    gateway.offlineAlarmThresholdMinutes = dto.offlineAlarmThresholdMinutes;
     gateway.minimumPackages = dto.minimumPackages;
     gateway.maximumPackages = dto.maximumPackages;
 
@@ -584,7 +583,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     return orderBy;
   }
 
-  checkForMinMaxNumbers(dto: UpdateGatewayDto) {
+  validatePackageAlarmInput(dto: UpdateGatewayDto) {
     if (dto.gateway.minimumPackages > dto.gateway.maximumPackages) {
       throw new BadRequestException({
         success: false,
@@ -592,46 +591,68 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       });
     }
   }
+
   async checkForAlarms(gateways: GatewayResponseDto[]) {
     for (let index = 0; index < gateways.length; index++) {
-      if (gateways[index].notificationOffline) {
+      if (gateways[index].notifyOffline) {
         await this.checkForNotificationOfflineAlarms(gateways[index]);
       }
     }
   }
 
+  async checkForUnusualPackagesAlarms(gateways: GatewayResponseDto[]) {
+    for (let index = 0; index < gateways.length; index++) {
+      await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
+    }
+  }
+
   private async checkForNotificationOfflineAlarms(gateway: GatewayResponseDto) {
-    const actualDate = dayjs();
+    const currentDate = dayjs();
     const lastSeen = dayjs(gateway.lastSeenAt);
-    if (actualDate.diff(lastSeen, "minute") > gateway.amountOfMinutes && !gateway.hasSentOfflineNotification) {
-      await this.oS2IoTMail.sendMail({
-        to: gateway.alarmMail,
-        subject: `OS2iot alarm: ${gateway.name} er offline`,
-        html: `<p>OS2iot alarm</p>
-               <p>Gateway’en ${gateway.name} er offline.</p>
-               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
-               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
-          gateway.gatewayId
-        }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>
-              `,
-      });
+    if (
+      currentDate.diff(lastSeen, "minute") >= gateway.offlineAlarmThresholdMinutes &&
+      !gateway.hasSentOfflineNotification
+    ) {
+      await this.sendEmailForNotificationOffline(gateway);
       await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: true });
-    } else if (gateway.hasSentOfflineNotification && actualDate.diff(lastSeen, "minute") <= gateway.amountOfMinutes) {
-      await this.oS2IoTMail.sendMail({
-        to: gateway.alarmMail,
-        subject: `OS2iot alarm: ${gateway.name} er online igen`,
-        html: `<p>OS2iot alarm</p>
-               <p>Gateway’en ${gateway.name} er kommet online igen ${gateway.lastSeenAt.toLocaleString("da-DK", {
-          timeZone: "Europe/Copenhagen",
-        })}.</p>
-               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
-               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
-          gateway.gatewayId
-        }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,
-      });
+    } else if (
+      gateway.hasSentOfflineNotification &&
+      currentDate.diff(lastSeen, "minute") <= gateway.offlineAlarmThresholdMinutes
+    ) {
+      await this.sendEmailForNotificationOnlineAgain(gateway);
       await this.gatewayRepository.update({ gatewayId: gateway.gatewayId }, { hasSentOfflineNotification: false });
     }
   }
+
+  private async sendEmailForNotificationOnlineAgain(gateway: GatewayResponseDto) {
+    await this.oS2IoTMail.sendMail({
+      to: gateway.alarmMail,
+      subject: `OS2iot alarm: ${gateway.name} er online igen`,
+      html: `<p>OS2iot alarm</p>
+               <p>Gateway’en ${gateway.name} er kommet online igen ${gateway.lastSeenAt.toLocaleString("da-DK", {
+        timeZone: "Europe/Copenhagen",
+      })}.</p>
+               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
+               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
+        gateway.gatewayId
+      }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,
+    });
+  }
+
+  private async sendEmailForNotificationOffline(gateway: GatewayResponseDto) {
+    await this.oS2IoTMail.sendMail({
+      to: gateway.alarmMail,
+      subject: `OS2iot alarm: ${gateway.name} er offline`,
+      html: `<p>OS2iot alarm</p>
+               <p>Gateway’en ${gateway.name} er offline.</p>
+               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
+               <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
+        gateway.gatewayId
+      }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>
+              `,
+    });
+  }
+
   public async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
     if (!gateway.lastSeenAt) {
       return;
@@ -647,12 +668,9 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
       Aggregation.DAY
     );
 
-    let receivedPackages = 0;
-    gatewayStats.forEach(stats => {
-      receivedPackages += stats.rxPacketsReceived;
-    });
+    const receivedPackages = gatewayStats[0].rxPacketsReceived;
 
-    if (receivedPackages > gateway.minimumPackages && receivedPackages < gateway.maximumPackages) {
+    if (gateway.minimumPackages < receivedPackages && receivedPackages < gateway.maximumPackages) {
       return;
     }
 
