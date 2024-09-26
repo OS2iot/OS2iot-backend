@@ -50,7 +50,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
-import { ListAllPermissionsSlimResponseDto, PermissionsSlimDto } from "@dto/list-all-permissions-slim-response.dto";
+import { ListAllPermissionsSlimResponseDto } from "@dto/list-all-permissions-slim-response.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiAuth()
