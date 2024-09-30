@@ -4,6 +4,7 @@ import { DatatargetLog } from "@entities/datatarget-log.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { SendStatus } from "@enum/send-status.enum";
+import { isNullOrWhitespace } from "@helpers/string.helper";
 import { DataTargetSendStatus } from "@interfaces/data-target-send-status.interface";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -36,11 +37,20 @@ export class DataTargetLogService {
       if (datatargetLastestEvent?.type !== SendStatus.ERROR) return;
     }
 
+    let statusText: string | null;
+    if (!isNullOrWhitespace(status?.statusText)) {
+      statusText = status?.statusText;
+    } else if (status?.statusCode) {
+      statusText = HttpStatus[status?.statusCode];
+    } else {
+      statusText = status?.errorMessage;
+    }
+
     await this.handleDataTargetLogCommon(
       datatarget,
       status?.status,
       status?.statusCode,
-      status?.statusText ?? (status?.statusCode ? HttpStatus[status?.statusCode] : status.errorMessage),
+      statusText,
       payloadDto?.iotDeviceId,
       payloadDto?.payloadDecoderId
     );
