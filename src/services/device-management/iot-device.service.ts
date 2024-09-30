@@ -41,6 +41,8 @@ import {
 } from "@helpers/iot-device.helper";
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -104,6 +106,7 @@ export class IoTDeviceService {
     @InjectRepository(IoTDevicePayloadDecoderDataTargetConnection)
     private deviceConnectionsRepository: Repository<IoTDevicePayloadDecoderDataTargetConnection>,
     private entityManager: EntityManager,
+    @Inject(forwardRef(() => ApplicationService))
     private applicationService: ApplicationService,
     private chirpstackDeviceService: ChirpstackDeviceService,
     private applicationChirpstackService: ApplicationChirpstackService,
@@ -118,7 +121,9 @@ export class IoTDeviceService {
     private encryptionHelperService: EncryptionHelperService,
     private csvGeneratorService: CsvGeneratorService,
     private deviceProfileService: DeviceProfileService,
+    @Inject(forwardRef(() => DataTargetService))
     private dataTargetService: DataTargetService,
+    @Inject(forwardRef(() => PayloadDecoderService))
     private payloadDecoderService: PayloadDecoderService
   ) {}
 

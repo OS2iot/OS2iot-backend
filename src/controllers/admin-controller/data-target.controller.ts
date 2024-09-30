@@ -40,6 +40,7 @@ import { ActionType } from "@entities/audit-log-entry";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { OddkMailInfo } from "@dto/oddk-mail-info.dto";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { TestDataTargetDto, TestDataTargetResultDto } from "@dto/test-data-target.dto";
 
 @ApiTags("Data Target")
 @Controller("data-target")
@@ -192,5 +193,12 @@ export class DataTargetController {
     await this.dataTargetService.sendOpenDataDkMail(mailInfoDto, req.user.userId);
     await this.organizationService.updateOpenDataDkRegistered(mailInfoDto.organizationId, req.user.userId);
     return true;
+  }
+
+  @Post("testDataTarget")
+  @ApiOperation({ summary: "Send a ping or test data packet to a data target" })
+  async testDataTarget(@Body() testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
+    // Send package
+    return await this.dataTargetService.testDataTarget(testDto);
   }
 }

@@ -1,6 +1,6 @@
-import { BadRequestException, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { FindOneOptions, Repository, FindOptionsWhere } from "typeorm";
+import { FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
 
 import { CreateSigFoxGroupRequestDto } from "@dto/sigfox/internal/create-sigfox-group-request.dto";
 import { ListAllSigFoxGroupResponseDto } from "@dto/sigfox/internal/list-all-sigfox-groups-response.dto";
@@ -13,16 +13,16 @@ import { GenericSigfoxAdministationService } from "./generic-sigfox-administatio
 
 @Injectable()
 export class SigFoxGroupService {
+  private readonly logger = new Logger(SigFoxGroupService.name);
+
   constructor(
     @InjectRepository(SigFoxGroup)
     private repository: Repository<SigFoxGroup>,
-    @Inject(OrganizationService)
+    @Inject(forwardRef(() => OrganizationService))
     private organizationService: OrganizationService,
     private sigfoxApiGroupService: SigfoxApiGroupService,
     private genericSigfoxAdministationService: GenericSigfoxAdministationService
   ) {}
-
-  private readonly logger = new Logger(SigFoxGroupService.name);
 
   async findAll(): Promise<SigFoxGroup[]> {
     return await this.repository.find({
@@ -49,34 +49,6 @@ export class SigFoxGroupService {
       data: data,
       count: count,
     };
-  }
-
-  private async addSigFoxDataToAllGroupsAndSave(data: SigFoxGroup[]) {
-    await Promise.all(data.map(async x => await this.addSigFoxDataToGroupAndSave(x)));
-  }
-
-  private async addSigFoxDataToGroupAndSave(group: SigFoxGroup) {
-    // if password was not included, then include it now.
-    if (group.password == null) {
-      group = await this.findOneWithPassword(group.id);
-    }
-    let apiGroupResponse;
-    try {
-      apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
-    } catch (err) {
-      this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
-      group.sigfoxGroupData = null;
-      return group;
-    }
-    if (apiGroupResponse.data.length > 1) {
-      this.logger.warn(`API user ${group.id} has access to more than one group`);
-    }
-    const firstGroup = apiGroupResponse.data[0];
-    group.sigfoxGroupData = firstGroup;
-    group.sigfoxGroupId = group.sigfoxGroupData.id;
-    await this.repository.save(group);
-    // remove password again ...
-    group.password = undefined;
   }
 
   async findOne(id: number): Promise<SigFoxGroup> {
@@ -146,6 +118,34 @@ export class SigFoxGroupService {
     mappedSigfoxGroup.updatedBy = userId;
     await this.addSigFoxDataToAllGroupsAndSave([mappedSigfoxGroup]);
     return mappedSigfoxGroup;
+  }
+
+  private async addSigFoxDataToAllGroupsAndSave(data: SigFoxGroup[]) {
+    await Promise.all(data.map(async x => await this.addSigFoxDataToGroupAndSave(x)));
+  }
+
+  private async addSigFoxDataToGroupAndSave(group: SigFoxGroup) {
+    // if password was not included, then include it now.
+    if (group.password == null) {
+      group = await this.findOneWithPassword(group.id);
+    }
+    let apiGroupResponse;
+    try {
+      apiGroupResponse = await this.sigfoxApiGroupService.getGroups(group);
+    } catch (err) {
+      this.logger.warn(`Got error from SigFox: ${err?.response?.error}`);
+      group.sigfoxGroupData = null;
+      return group;
+    }
+    if (apiGroupResponse.data.length > 1) {
+      this.logger.warn(`API user ${group.id} has access to more than one group`);
+    }
+    const firstGroup = apiGroupResponse.data[0];
+    group.sigfoxGroupData = firstGroup;
+    group.sigfoxGroupId = group.sigfoxGroupData.id;
+    await this.repository.save(group);
+    // remove password again ...
+    group.password = undefined;
   }
 
   private async map(sigfoxGroup: SigFoxGroup, query: UpdateSigFoxGroupRequestDto): Promise<SigFoxGroup> {
