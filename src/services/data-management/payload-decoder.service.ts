@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DeleteResult, In, Repository } from "typeorm";
+import { DeleteResult, Repository } from "typeorm";
 
 import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { ListAllPayloadDecoderResponseDto } from "@dto/list-all-payload-decoders-response.dto";
+import {
+  ListAllMinimalPayloadDecoderResponseDto,
+  ListAllPayloadDecoderResponseDto,
+} from "@dto/list-all-payload-decoders-response.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
@@ -28,14 +31,13 @@ export class PayloadDecoderService {
     });
   }
 
-  private getSorting(query: ListAllEntitiesDto) {
-    const sorting: { [id: string]: string | number } = {};
-    if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name")) {
-      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-    } else {
-      sorting["id"] = "ASC";
-    }
-    return sorting;
+  async getMinimal(): Promise<ListAllMinimalPayloadDecoderResponseDto> {
+    const payloadDecoders = (await this.payloadDecoderRepository.find()).map(d => ({ id: d.id, name: d.name }));
+
+    return {
+      data: payloadDecoders,
+      count: payloadDecoders.length,
+    };
   }
 
   async findAndCountWithPagination(
@@ -78,6 +80,16 @@ export class PayloadDecoderService {
 
   async delete(id: number): Promise<DeleteResult> {
     return await this.payloadDecoderRepository.delete(id);
+  }
+
+  private getSorting(query: ListAllEntitiesDto) {
+    const sorting: { [id: string]: string | number } = {};
+    if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name")) {
+      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+    } else {
+      sorting["id"] = "ASC";
+    }
+    return sorting;
   }
 
   private async mapDtoToPayloadDecoder(createDto: CreatePayloadDecoderDto, newPayloadDecoder: PayloadDecoder) {
