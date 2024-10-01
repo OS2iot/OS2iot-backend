@@ -18,11 +18,19 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
-import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
+import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "@helpers/fiware-token.helper";
 import { DataTargetLogService } from "./data-target-log.service";
+import { DataTargetSenderService } from "@services/data-targets/data-target-sender.service";
+import { TestDataTargetDto, TestDataTargetResultDto } from "@dto/test-data-target.dto";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { PayloadDecoderExecutorService } from "@services/data-management/payload-decoder-executor.service";
+import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
 
 @Injectable()
 export class DataTargetService {
+  private readonly logger = new Logger(DataTargetService.name);
+
   constructor(
     @InjectRepository(DataTarget)
     private dataTargetRepository: Repository<DataTarget>,
@@ -33,9 +41,14 @@ export class DataTargetService {
     @Inject(CLIENT_SECRET_PROVIDER)
     private clientSecretProvider: ClientSecretProvider,
     private oS2IoTMail: OS2IoTMail,
-    private dataTargetLogService: DataTargetLogService
+    private dataTargetLogService: DataTargetLogService,
+    private dataTargetSenderService: DataTargetSenderService,
+    private payloadDecoderExecutorService: PayloadDecoderExecutorService,
+    @Inject(forwardRef(() => PayloadDecoderService))
+    private payloadDecoderService: PayloadDecoderService,
+    @Inject(forwardRef(() => IoTDeviceService))
+    private iotDeviceService: IoTDeviceService
   ) {}
-  private readonly logger = new Logger(DataTargetService.name);
 
   async findAndCountAllWithPagination(
     query?: ListAllDataTargetsDto,
@@ -62,23 +75,6 @@ export class DataTargetService {
       data: resultWithErrorInfo,
       count: total,
     };
-  }
-
-  private filterByApplication(
-    query: ListAllDataTargetsDto,
-    queryBuilder: SelectQueryBuilder<DataTarget>,
-    applicationIds: number[]
-  ) {
-    if (query.applicationId) {
-      queryBuilder = queryBuilder.where("datatarget.application = :appId", {
-        appId: query.applicationId,
-      });
-    } else if (applicationIds) {
-      queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
-        allowedApplications: applicationIds,
-      });
-    }
-    return queryBuilder;
   }
 
   async findOne(id: number): Promise<DataTarget> {
@@ -185,6 +181,87 @@ export class DataTargetService {
     return this.dataTargetRepository.delete(id);
   }
 
+  public async sendOpenDataDkMail(mailInfoDto: OddkMailInfo, userId: number): Promise<boolean> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+    await this.oS2IoTMail.sendMailChecked({
+      to: "info@opendata.dk",
+      subject: "Ny integration til OS2IoT",
+      html:
+        `<p>
+                Hej Open Data DK,<br>
+                <br>
+                Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
+                I kan høste fra ${mailInfoDto.sharingUrl} <br>
+                Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
+                <br>` +
+        (mailInfoDto.comment ? "Kommentar: " + mailInfoDto.comment + "<br><br>" : "") +
+        "Mvh.<br>" +
+        user.name +
+        "<br>" +
+        user.email +
+        "</p>",
+    });
+    return true;
+  }
+
+  public async updateLastMessageDate(datatargetId: number) {
+    this.dataTargetRepository.update(
+      { id: datatargetId },
+      // Note: The "updatedAt"-part here prevents the updatedAt/updatedBy to be overwritten with unhelpful data from the automatic update of lastMessageDate
+      { lastMessageDate: new Date(), updatedAt: () => '"updatedAt"' }
+    );
+  }
+
+  public async testDataTarget(testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
+    const dataTarget = await this.findOne(testDto.dataTargetId);
+    const iotDevice = await this.iotDeviceService.findOne(testDto.iotDeviceId);
+
+    if (dataTarget.type === DataTargetType.MQTT && !testDto.dataPackage) {
+      const result = await this.dataTargetSenderService.testMqttDataTarget(dataTarget);
+      return { result: result };
+    }
+
+    let rawPackage = JSON.parse(testDto.dataPackage);
+    if (testDto.payloadDecoderId) {
+      const payloadDecoder = await this.payloadDecoderService.findOne(testDto.payloadDecoderId);
+      const decoded = await this.payloadDecoderExecutorService.callUntrustedCode(
+        payloadDecoder.decodingFunction,
+        iotDevice,
+        rawPackage
+      );
+      rawPackage = JSON.parse(decoded);
+    }
+
+    const payloadDto: TransformedPayloadDto = {
+      payload: rawPackage,
+      payloadDecoderId: testDto.payloadDecoderId,
+      iotDeviceId: testDto.iotDeviceId,
+    };
+
+    const result = await this.dataTargetSenderService.sendToDataTarget(dataTarget, payloadDto);
+    return {
+      result,
+      decodedPayload: rawPackage,
+    };
+  }
+
+  private filterByApplication(
+    query: ListAllDataTargetsDto,
+    queryBuilder: SelectQueryBuilder<DataTarget>,
+    applicationIds: number[]
+  ) {
+    if (query.applicationId) {
+      queryBuilder = queryBuilder.where("datatarget.application = :appId", {
+        appId: query.applicationId,
+      });
+    } else if (applicationIds) {
+      queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
+        allowedApplications: applicationIds,
+      });
+    }
+    return queryBuilder;
+  }
+
   private async mapDtoToDataTarget(dataTargetDto: CreateDataTargetDto, dataTarget: DataTarget): Promise<DataTarget> {
     dataTarget.name = dataTargetDto.name;
     if (dataTargetDto.applicationId != null) {
@@ -250,36 +327,5 @@ export class DataTargetService {
 
   private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
     return new childDataTargetType();
-  }
-
-  public async sendOpenDataDkMail(mailInfoDto: OddkMailInfo, userId: number): Promise<boolean> {
-    const user = await this.userRepository.findOneByOrFail({ id: userId });
-    await this.oS2IoTMail.sendMailChecked({
-      to: "info@opendata.dk",
-      subject: "Ny integration til OS2IoT",
-      html:
-        `<p>
-                Hej Open Data DK,<br>
-                <br>
-                Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
-                I kan høste fra ${mailInfoDto.sharingUrl} <br>
-                Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
-                <br>` +
-        (mailInfoDto.comment ? "Kommentar: " + mailInfoDto.comment + "<br><br>" : "") +
-        "Mvh.<br>" +
-        user.name +
-        "<br>" +
-        user.email +
-        "</p>",
-    });
-    return true;
-  }
-
-  public async updateLastMessageDate(datatargetId: number) {
-    this.dataTargetRepository.update(
-      { id: datatargetId },
-      // Note: The "updatedAt"-part here prevents the updatedAt/updatedBy to be overwritten with unhelpful data from the automatic update of lastMessageDate
-      { lastMessageDate: new Date(), updatedAt: () => '"updatedAt"' }
-    );
   }
 }

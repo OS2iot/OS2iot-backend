@@ -20,7 +20,6 @@ export class FiwareDataTargetService extends BaseDataTargetService {
 
   protected readonly logger = new Logger(FiwareDataTargetService.name);
 
-  // eslint-disable-next-line max-lines-per-function
   async send(datatarget: DataTarget, dto: TransformedPayloadDto): Promise<DataTargetSendStatus> {
     const config: FiwareDataTargetConfiguration = (datatarget as FiwareDataTarget).toConfiguration();
 

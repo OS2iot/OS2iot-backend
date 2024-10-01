@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { IoTDevicePayloadDecoderDataTargetConnectionController } from "@admin-controller/iot-device-payload-decoder-data-target-connection.controller";
 import { DataTargetModule } from "@modules/device-management/data-target.module";
@@ -8,7 +8,12 @@ import { SharedModule } from "@modules/shared.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 
 @Module({
-  imports: [SharedModule, IoTDeviceModule, DataTargetModule, PayloadDecoderModule],
+  imports: [
+    SharedModule,
+    forwardRef(() => IoTDeviceModule),
+    forwardRef(() => DataTargetModule),
+    forwardRef(() => PayloadDecoderModule),
+  ],
   providers: [IoTDevicePayloadDecoderDataTargetConnectionService],
   exports: [IoTDevicePayloadDecoderDataTargetConnectionService],
   controllers: [IoTDevicePayloadDecoderDataTargetConnectionController],

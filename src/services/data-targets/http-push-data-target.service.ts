@@ -12,13 +12,33 @@ import { AxiosError, AxiosRequestConfig, isAxiosError } from "axios";
 
 @Injectable()
 export class HttpPushDataTargetService extends BaseDataTargetService {
+  protected readonly logger = new Logger(HttpPushDataTargetService.name);
+
   constructor(private httpService: HttpService) {
     super();
   }
 
-  protected readonly logger = new Logger(HttpPushDataTargetService.name);
+  static makeAxiosConfiguration(
+    config: HttpPushDataTargetConfiguration,
+    data: HttpPushDataTargetData
+  ): AxiosRequestConfig {
+    const axiosConfig: AxiosRequestConfig = {
+      timeout: config.timeout,
+      headers: { "Content-Type": data.mimeType },
+    };
+    if (config.authorizationType !== null && config.authorizationType !== AuthorizationType.NO_AUTHORIZATION) {
+      if (config.authorizationType === AuthorizationType.HTTP_BASIC_AUTHORIZATION) {
+        axiosConfig.auth = {
+          username: config.username,
+          password: config.password,
+        };
+      } else if (config.authorizationType === AuthorizationType.HEADER_BASED_AUTHORIZATION) {
+        axiosConfig.headers["Authorization"] = config.authorizationHeader;
+      }
+    }
+    return axiosConfig;
+  }
 
-  // eslint-disable-next-line max-lines-per-function
   async send(datatarget: DataTarget, dto: TransformedPayloadDto): Promise<DataTargetSendStatus> {
     const data: HttpPushDataTargetData = {
       rawBody: JSON.stringify(dto.payload),
@@ -45,26 +65,5 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
       const axiosErrResp = isAxiosError(err) ? (err as AxiosError)?.response : undefined;
       return this.failure(target, err, datatarget, axiosErrResp?.status, axiosErrResp?.statusText);
     }
-  }
-
-  static makeAxiosConfiguration(
-    config: HttpPushDataTargetConfiguration,
-    data: HttpPushDataTargetData
-  ): AxiosRequestConfig {
-    const axiosConfig: AxiosRequestConfig = {
-      timeout: config.timeout,
-      headers: { "Content-Type": data.mimeType },
-    };
-    if (config.authorizationType !== null && config.authorizationType !== AuthorizationType.NO_AUTHORIZATION) {
-      if (config.authorizationType === AuthorizationType.HTTP_BASIC_AUTHORIZATION) {
-        axiosConfig.auth = {
-          username: config.username,
-          password: config.password,
-        };
-      } else if (config.authorizationType === AuthorizationType.HEADER_BASED_AUTHORIZATION) {
-        axiosConfig.headers["Authorization"] = config.authorizationHeader;
-      }
-    }
-    return axiosConfig;
   }
 }

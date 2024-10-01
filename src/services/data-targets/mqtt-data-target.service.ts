@@ -8,14 +8,15 @@ import { MqttDataTargetConfiguration } from "@interfaces/mqtt-data-target-config
 import { Injectable, Logger } from "@nestjs/common";
 import * as mqtt from "mqtt";
 import { BaseDataTargetService } from "./base-data-target.service";
+import { SendStatus } from "@enum/send-status.enum";
 
 @Injectable()
 export class MqttDataTargetService extends BaseDataTargetService {
+  protected readonly logger = new Logger(MqttDataTargetService.name);
+
   constructor() {
     super();
   }
-
-  protected readonly logger = new Logger(MqttDataTargetService.name);
 
   send(
     datatarget: DataTarget,
@@ -75,10 +76,43 @@ export class MqttDataTargetService extends BaseDataTargetService {
       .once("error", err => onSendError(err, DataTargetType.MQTT, datatarget, dto));
   }
 
+  public async testConnection(datatarget: DataTarget): Promise<DataTargetSendStatus> {
+    const config: MqttDataTargetConfiguration = (datatarget as MqttDataTarget).toConfiguration();
+
+    // Setup client
+    const client = mqtt.connect(config.url, {
+      clean: true,
+      clientId: MqttClientId,
+      username: config.username,
+      password: config.password,
+      port: config.port,
+      connectTimeout: config.timeout,
+      // Accept connection to servers with self-signed certificates
+      rejectUnauthorized: false,
+    });
+
+    // Sleep for 5 seconds to allow the client to fully connect
+    await this.sleep(5000);
+
+    const result: DataTargetSendStatus = client.connected
+      ? {
+          status: SendStatus.OK,
+          statusText: "Connection successful",
+        }
+      : {
+          status: SendStatus.ERROR,
+          statusText: "Unable to connect",
+        };
+
+    client.end();
+
+    return result;
+  }
+
   private decodeMqttResponse(
     packet: mqtt.Packet | undefined
   ): { reasonString?: string; reasonCode?: number } | undefined {
-    // Some of the packet-types have no usefull info at all
+    // Some of the packet-types have no useful info at all
     if (
       !packet ||
       packet.cmd === "pingreq" ||
@@ -97,5 +131,13 @@ export class MqttDataTargetService extends BaseDataTargetService {
       reasonString: packet.properties?.reasonString,
       reasonCode: packet.cmd !== "subscribe" && packet.cmd !== "unsubscribe" ? packet.reasonCode : undefined,
     };
+  }
+
+  private _sleep(ms: number): any {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async sleep(ms: number): Promise<any> {
+    await this._sleep(ms);
   }
 }
