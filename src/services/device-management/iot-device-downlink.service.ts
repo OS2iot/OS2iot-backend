@@ -160,7 +160,7 @@ export class IoTDeviceDownlinkService {
     try {
       const downlinks = await this.downlinkRepository.find({
         where: {
-          lorawanDevice: deviceId,
+          lorawanDeviceId: deviceId,
           flushed: false || IsNull(),
           sendAt: IsNull(),
           acknowledgedAt: IsNull(),
@@ -181,7 +181,7 @@ export class IoTDeviceDownlinkService {
     try {
       const downlinks = await this.downlinkRepository.find({
         where: {
-          lorawanDevice: deviceId,
+          lorawanDeviceId: deviceId,
           sendAt: Not(IsNull()),
         },
         order: {
