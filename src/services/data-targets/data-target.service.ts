@@ -26,6 +26,8 @@ import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
 import { PayloadDecoderExecutorService } from "@services/data-management/payload-decoder-executor.service";
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Injectable()
 export class DataTargetService {
@@ -47,7 +49,8 @@ export class DataTargetService {
     @Inject(forwardRef(() => PayloadDecoderService))
     private payloadDecoderService: PayloadDecoderService,
     @Inject(forwardRef(() => IoTDeviceService))
-    private iotDeviceService: IoTDeviceService
+    private iotDeviceService: IoTDeviceService,
+    private chirpstackDeviceService: ChirpstackDeviceService
   ) {}
 
   async findAndCountAllWithPagination(
@@ -214,7 +217,7 @@ export class DataTargetService {
 
   public async testDataTarget(testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
     const dataTarget = await this.findOne(testDto.dataTargetId);
-    const iotDevice = await this.iotDeviceService.findOne(testDto.iotDeviceId);
+    let iotDevice = await this.iotDeviceService.findOne(testDto.iotDeviceId);
 
     if (dataTarget.type === DataTargetType.MQTT && !testDto.dataPackage) {
       const result = await this.dataTargetSenderService.testMqttDataTarget(dataTarget);
@@ -224,6 +227,10 @@ export class DataTargetService {
     let rawPackage = JSON.parse(testDto.dataPackage);
     if (testDto.payloadDecoderId) {
       const payloadDecoder = await this.payloadDecoderService.findOne(testDto.payloadDecoderId);
+      if (iotDevice.type === IoTDeviceType.LoRaWAN && payloadDecoder.decodingFunction.includes("lorawanSettings")) {
+        iotDevice = await this.chirpstackDeviceService.enrichLoRaWANDevice(iotDevice);
+      }
+
       const decoded = await this.payloadDecoderExecutorService.callUntrustedCode(
         payloadDecoder.decodingFunction,
         iotDevice,

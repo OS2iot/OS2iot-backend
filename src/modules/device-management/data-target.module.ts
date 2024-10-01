@@ -16,6 +16,7 @@ import { DataTargetSenderModule } from "@modules/data-target/data-target-sender.
 import { PayloadDecoderExecutorModuleModule } from "@modules/payload-decoder-executor-module.module";
 import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
 import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
+import { ChirpstackAdministrationModule } from "@modules/device-integrations/chirpstack-administration.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
     forwardRef(() => PayloadDecoderModule),
     forwardRef(() => IoTDeviceModule),
     PayloadDecoderExecutorModuleModule,
+    ChirpstackAdministrationModule,
   ],
   exports: [DataTargetService, DataTargetLogService, DataTargetSenderService],
   controllers: [DataTargetController, DatatargetLogController],
