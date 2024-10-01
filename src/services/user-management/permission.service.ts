@@ -140,31 +140,6 @@ export class PermissionService {
     return await this.permissionRepository.save(permission);
   }
 
-  async autoAddPermissionsToApplication(app: Application): Promise<void> {
-    // Use query builder since the other syntax doesn't support one-to-many for property querying
-    const permissionsInOrganisation = await this.permissionRepository
-      .createQueryBuilder("permission")
-      .where(
-        "permission.organization.id = :orgId" +
-          " AND type.type IN (:...permType)" +
-          ` AND "${nameof<Permission>("automaticallyAddNewApplications")}" = True`,
-        {
-          orgId: app.belongsTo.id,
-          permType: [PermissionType.OrganizationApplicationAdmin, PermissionType.Read],
-        }
-      )
-      .leftJoinAndSelect("permission.applications", "app")
-      .leftJoin("permission.type", "type")
-      .getMany();
-
-    await Promise.all(
-      permissionsInOrganisation.map(async p => {
-        p.applications.push(app);
-        await this.permissionRepository.save(p);
-      })
-    );
-  }
-
   async addUsersToPermission(permission: Permission, users: User[]): Promise<void> {
     users.forEach(x => {
       x.permissions = _.union(x.permissions, [permission]);

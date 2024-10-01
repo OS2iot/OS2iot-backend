@@ -227,8 +227,6 @@ export class ApplicationService {
       });
       const app = await this.applicationRepository.save(mappedApplication);
 
-      await this.permissionService.autoAddPermissionsToApplication(app);
-
       return app;
     } catch (e) {
       throw new BadRequestException(ErrorCodes.InvalidPost);
