@@ -39,7 +39,6 @@ export class HttpPushDataTargetService extends BaseDataTargetService {
     return axiosConfig;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   async send(datatarget: DataTarget, dto: TransformedPayloadDto): Promise<DataTargetSendStatus> {
     const data: HttpPushDataTargetData = {
       rawBody: JSON.stringify(dto.payload),

@@ -91,6 +91,7 @@ export class MqttDataTargetService extends BaseDataTargetService {
       rejectUnauthorized: false,
     });
 
+    // Sleep for 5 seconds to allow the client to fully connect
     await this.sleep(5000);
 
     const result: DataTargetSendStatus = client.connected

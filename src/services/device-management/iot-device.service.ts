@@ -367,7 +367,6 @@ export class IoTDeviceService {
     return res;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   async changeApplication(id: number, updateDto: UpdateIoTDeviceApplication, userId: number): Promise<IoTDevice> {
     const existingIoTDevice = await this.iotDeviceRepository.findOneOrFail({
       where: { id },
