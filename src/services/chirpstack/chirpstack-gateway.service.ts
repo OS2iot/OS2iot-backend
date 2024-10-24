@@ -678,7 +678,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
                <p>Gateway’en ${gateway.name} er kommet online igen ${gateway.lastSeenAt.toLocaleString("da-DK", {
         timeZone: "Europe/Copenhagen",
       })}.</p>
-               <p>Der udsendes først besked igen, når gateway’en kommer online.</p>
+               <p>Der udsendes besked igen, hvis gateway’en går offline i det angivne tidsrum.</p>
                <p>Link: <a href="${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${
         gateway.gatewayId
       }">${this.configService.get<string>("frontend.baseurl")}/gateways/gateway-detail/${gateway.gatewayId}</a></p>`,

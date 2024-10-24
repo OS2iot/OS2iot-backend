@@ -90,6 +90,14 @@ export class DataTargetService {
     });
   }
 
+  async findOneWithClientSecret(id: number): Promise<DataTarget> {
+    return await this.dataTargetRepository
+      .createQueryBuilder("dt")
+      .addSelect("dt.clientSecret")
+      .where('dt."id" = :id', { id: id })
+      .getOne();
+  }
+
   public async findOneWithHasRecentError(id: number): Promise<DataTargetDto> {
     const datatarget = await this.findOne(id);
     const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError([id]);
@@ -245,6 +253,10 @@ export class DataTargetService {
       iotDeviceId: testDto.iotDeviceId,
     };
 
+    if (dataTarget.type === DataTargetType.Fiware) {
+      const fiwareDatatarget = await this.findOneWithClientSecret(testDto.dataTargetId);
+      (dataTarget as FiwareDataTarget).clientSecret = (fiwareDatatarget as FiwareDataTarget).clientSecret;
+    }
     const result = await this.dataTargetSenderService.sendToDataTarget(dataTarget, payloadDto);
     return {
       result,
