@@ -1,7 +1,7 @@
 import { CreateDeviceModelDto } from "@dto/create-device-model.dto";
 import { ListAllDeviceModelResponseDto } from "@dto/list-all-device-model-response.dto";
 import { DeviceModel } from "@entities/device-model.entity";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { DeleteResult, In, Repository } from "typeorm";
@@ -9,29 +9,21 @@ import * as AJV from "ajv";
 import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
+import { nameof } from "@helpers/type-helper";
 
 @Injectable()
 export class DeviceModelService {
+  private avj: AJV.Ajv;
+  private readonly SCHEMA_NAME = "device-model";
+
   constructor(
     @InjectRepository(DeviceModel)
     private repository: Repository<DeviceModel>,
+    @Inject(forwardRef(() => OrganizationService))
     private organizationService: OrganizationService
   ) {
     this.avj = new AJV({ allErrors: true, missingRefs: "ignore", verbose: false });
     this.avj.addSchema(deviceModelSchema, this.SCHEMA_NAME);
-  }
-
-  private avj: AJV.Ajv;
-  private readonly SCHEMA_NAME = "device-model";
-
-  private getSorting(query: ListAllEntitiesDto) {
-    const sorting: { [id: string]: string | number } = {};
-    if (query?.orderOn != null && query.orderOn == "id") {
-      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-    } else {
-      sorting["id"] = "ASC";
-    }
-    return sorting;
   }
 
   async getAllDeviceModelsByOrgIds(
@@ -52,6 +44,7 @@ export class DeviceModelService {
       take: query?.limit ? +query.limit : 100,
       skip: query?.offset ? +query.offset : 0,
       order: this.getSorting(query),
+      relations: [nameof<DeviceModel>("belongsTo")],
     });
 
     return {
@@ -106,6 +99,16 @@ export class DeviceModelService {
 
   async delete(id: number): Promise<DeleteResult> {
     return this.repository.delete(id);
+  }
+
+  private getSorting(query: ListAllEntitiesDto) {
+    const sorting: { [id: string]: string | number } = {};
+    if (query?.orderOn != null && query.orderOn == "id") {
+      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+    } else {
+      sorting["id"] = "ASC";
+    }
+    return sorting;
   }
 
   private validateModel(body: JSON): void {

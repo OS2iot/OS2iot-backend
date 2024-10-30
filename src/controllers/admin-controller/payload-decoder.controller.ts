@@ -31,7 +31,10 @@ import { CreatePayloadDecoderDto } from "@dto/create-payload-decoder.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { ListAllPayloadDecoderDto } from "@dto/list-all-payload-decoder.dto";
-import { ListAllPayloadDecoderResponseDto } from "@dto/list-all-payload-decoders-response.dto";
+import {
+  ListAllMinimalPayloadDecoderResponseDto,
+  ListAllPayloadDecoderResponseDto,
+} from "@dto/list-all-payload-decoders-response.dto";
 import { UpdatePayloadDecoderDto } from "@dto/update-payload-decoder.dto";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -49,9 +52,16 @@ import { ApiAuth } from "@auth/swagger-auth-decorator";
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class PayloadDecoderController {
+  private readonly logger = new Logger(PayloadDecoderController.name);
+
   constructor(private payloadDecoderService: PayloadDecoderService) {}
 
-  private readonly logger = new Logger(PayloadDecoderController.name);
+  @Get("minimal")
+  @ApiOperation({ summary: "Get all Payload Decoders names" })
+  @Read()
+  async getMinimal(): Promise<ListAllMinimalPayloadDecoderResponseDto> {
+    return await this.payloadDecoderService.getMinimal();
+  }
 
   @Get(":id")
   @ApiOperation({ summary: "Find one Payload Decoder by id" })

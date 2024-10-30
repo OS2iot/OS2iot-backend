@@ -26,12 +26,16 @@ import { DataTargetType } from "@enum/data-target-type.enum";
 import { MulticastService } from "@services/chirpstack/multicast.service";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
+import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class ApplicationService {
   constructor(
     @InjectRepository(Application)
     private applicationRepository: Repository<Application>,
+    @InjectRepository(Permission)
+    private permissionRepository: Repository<Permission>,
     @InjectRepository(IoTDevice)
     private iotDeviceRepository: Repository<IoTDevice>,
     @Inject(forwardRef(() => OrganizationService))
@@ -57,7 +61,7 @@ export class ApplicationService {
       where: orgCondition,
       take: query.limit,
       skip: query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
+      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
       order: sorting,
     });
 
@@ -79,7 +83,7 @@ export class ApplicationService {
           : { id: In(allowedApplications) },
       take: query.limit,
       skip: query.offset,
-      relations: ["iotDevices"],
+      relations: ["iotDevices", nameof<Application>("belongsTo")],
       order: { id: query.sort },
     });
 
@@ -98,7 +102,7 @@ export class ApplicationService {
       where: allowedOrganisations != null ? { belongsTo: In(allowedOrganisations) } : {},
       take: +query.limit,
       skip: +query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes"],
+      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
       order: sorting,
     });
 
@@ -223,8 +227,6 @@ export class ApplicationService {
       });
       const app = await this.applicationRepository.save(mappedApplication);
 
-      await this.permissionService.autoAddPermissionsToApplication(app);
-
       return app;
     } catch (e) {
       throw new BadRequestException(ErrorCodes.InvalidPost);
@@ -252,6 +254,41 @@ export class ApplicationService {
 
     mappedApplication.updatedBy = userId;
     return this.applicationRepository.save(mappedApplication, {});
+  }
+
+  async changeOrganization(
+    id: number,
+    updateApplicationDto: UpdateApplicationOrganizationDto,
+    userId: number
+  ): Promise<Application> {
+    const existingApplication = await this.applicationRepository.findOneOrFail({
+      where: { id },
+    });
+
+    let permissions = await this.permissionRepository.find({
+      where: { id: In(updateApplicationDto.permissionIds) },
+      relations: [nameof<Permission>("organization")],
+    });
+
+    const permissionOrganizationSet = new Set<number>(permissions.map(p => p.organization.id));
+    let newOrganization = [...permissionOrganizationSet].length !== 1 ? undefined : permissions[0].organization;
+
+    if (!newOrganization) {
+      newOrganization = await this.organizationService.findByIdWithPermissions(updateApplicationDto.organizationId);
+      permissions = newOrganization.permissions.filter(perm => perm.automaticallyAddNewApplications);
+    }
+
+    if (!newOrganization || newOrganization.id !== updateApplicationDto.organizationId) {
+      throw new BadRequestException(ErrorCodes.InvalidPost);
+    }
+
+    existingApplication.permissions = permissions;
+    existingApplication.belongsTo = newOrganization;
+
+    await this.chirpstackApplicationService.updateApplication(existingApplication);
+
+    existingApplication.updatedBy = userId;
+    return this.applicationRepository.save(existingApplication, {});
   }
 
   async delete(id: number): Promise<DeleteResult> {

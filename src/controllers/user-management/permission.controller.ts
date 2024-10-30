@@ -50,6 +50,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { ListAllPermissionsSlimResponseDto } from "@dto/list-all-permissions-slim-response.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiAuth()
@@ -181,6 +182,41 @@ export class PermissionController {
       return this.permissionService.getAllPermissionsInOrganizations(allowedOrganizations, query);
     }
     return this.permissionService.getAllPermissions(query);
+  }
+
+  @Get("/applicationAdmin")
+  @ApiOperation({ summary: "Get list of all permissions for application admins" })
+  async getAllPermissionsWithApplicationAdmin(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllPermissionsDto
+  ): Promise<ListAllPermissionsSlimResponseDto> {
+    if (!req.user.permissions.isGlobalAdmin && query.organisationId === undefined) {
+      const allowedOrganizations = req.user.permissions.getAllOrganizationsWithApplicationAdmin();
+      const permissions = await this.permissionService.getAllPermissionsInOrganizations(allowedOrganizations, query);
+      return {
+        count: permissions.count,
+        data: permissions.data.map(p => ({
+          id: p.id,
+          name: p.name,
+          automaticallyAddNewApplications: p.automaticallyAddNewApplications,
+          organization: p.organization,
+        })),
+      };
+    }
+    return this.permissionService.getAllPermissions(query);
+  }
+
+  @Get("getAllPermissionsWithoutUsers")
+  @ApiOperation({ summary: "Get list of all permissions without include users" })
+  async getAllPermissionsWithoutUsers(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: ListAllPermissionsDto
+  ): Promise<ListAllPermissionsResponseDto> {
+    if (!req.user.permissions.isGlobalAdmin) {
+      const allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      return this.permissionService.getAllPermissionsWithoutUsers(query, allowedOrganizations);
+    }
+    return this.permissionService.getAllPermissionsWithoutUsers(query);
   }
 
   @Get(":id")

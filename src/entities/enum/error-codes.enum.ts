@@ -50,4 +50,5 @@ export enum ErrorCodes {
   UserAlreadyInPermission = "MESSAGE.USER-ALREADY-IN-PERMISSION",
   CouldntGetApplications = "MESSAGE.COULD-NOT-GET-CS-APPLICATIONS",
   DifferentServiceProfile = "MESSAGE.DIFFERENT-CREATION-SERVICE-PROFILE",
+  OrganizationCannotBeDeletedHasGateways = "MESSAGE.ORGANIZATION-GATEWAYS-EXISTS",
 }

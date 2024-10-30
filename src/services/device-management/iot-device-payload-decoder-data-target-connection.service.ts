@@ -1,6 +1,4 @@
-import { off } from "process";
-
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, FindOptionsWhere, In, Repository, SelectQueryBuilder } from "typeorm";
 
@@ -21,7 +19,9 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     @InjectRepository(IoTDevicePayloadDecoderDataTargetConnection)
     private repository: Repository<IoTDevicePayloadDecoderDataTargetConnection>,
     private ioTDeviceService: IoTDeviceService,
+    @Inject(forwardRef(() => DataTargetService))
     private dataTargetService: DataTargetService,
+    @Inject(forwardRef(() => PayloadDecoderService))
     private payloadDecoderService: PayloadDecoderService
   ) {}
 
@@ -50,54 +50,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
       appIds: allowed,
     });
     return await this.findAllWithWhereQueryBuilder(innerQuery, query.limit, query.offset, query.sort);
-  }
-
-  private async findAllWithWhere(
-    where?: FindOptionsWhere<IoTDevicePayloadDecoderDataTargetConnection>,
-    limit?: number,
-    offset?: number,
-    sort?: "ASC" | "DESC" | 1 | -1
-  ): Promise<ListAllConnectionsResponseDto> {
-    const [result, total] = await this.repository.findAndCount({
-      where: where || {},
-      take: limit || 1000,
-      skip: offset || 0,
-      relations: ["iotDevices", "payloadDecoder", "dataTarget", "iotDevices.application", "dataTarget.application"],
-      order: { id: sort },
-    });
-
-    return {
-      data: result,
-      count: total,
-    };
-  }
-
-  private async findAllWithWhereQueryBuilder(
-    query?: SelectQueryBuilder<IoTDevicePayloadDecoderDataTargetConnection>,
-    limit?: number,
-    offset?: number,
-    sort?: "ASC" | "DESC" | 1 | -1
-  ): Promise<ListAllConnectionsResponseDto> {
-    const [result, total] = await query
-      .limit(limit || 1000)
-      .skip(offset || 0)
-      .orderBy("connection.id")
-      .getManyAndCount();
-
-    return {
-      data: result,
-      count: total,
-    };
-  }
-
-  private genDefaultQuery() {
-    return this.repository
-      .createQueryBuilder("connection")
-      .innerJoinAndSelect("connection.iotDevices", "d")
-      .leftJoinAndSelect("connection.payloadDecoder", "pd")
-      .innerJoinAndSelect("connection.dataTarget", "dt")
-      .innerJoinAndSelect("d.application", "deviceApp")
-      .innerJoinAndSelect("dt.application", "dataTargetApp");
   }
 
   async findAllByIoTDeviceIdWithDeviceModel(id: number): Promise<ListAllConnectionsResponseDto> {
@@ -170,13 +122,12 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
           },
         },
       });
-    } else {
-      return await this.findAllWithWhere({
-        dataTarget: {
-          id,
-        },
-      });
     }
+    return await this.findAllWithWhere({
+      dataTarget: {
+        id,
+      },
+    });
   }
 
   async findOne(id: number): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
@@ -224,6 +175,54 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
 
   async delete(id: number): Promise<DeleteResult> {
     return await this.repository.delete(id);
+  }
+
+  private async findAllWithWhere(
+    where?: FindOptionsWhere<IoTDevicePayloadDecoderDataTargetConnection>,
+    limit?: number,
+    offset?: number,
+    sort?: "ASC" | "DESC" | 1 | -1
+  ): Promise<ListAllConnectionsResponseDto> {
+    const [result, total] = await this.repository.findAndCount({
+      where: where || {},
+      take: limit || 1000,
+      skip: offset || 0,
+      relations: ["iotDevices", "payloadDecoder", "dataTarget", "iotDevices.application", "dataTarget.application"],
+      order: { id: sort },
+    });
+
+    return {
+      data: result,
+      count: total,
+    };
+  }
+
+  private async findAllWithWhereQueryBuilder(
+    query?: SelectQueryBuilder<IoTDevicePayloadDecoderDataTargetConnection>,
+    limit?: number,
+    offset?: number,
+    sort?: "ASC" | "DESC" | 1 | -1
+  ): Promise<ListAllConnectionsResponseDto> {
+    const [result, total] = await query
+      .limit(limit || 1000)
+      .skip(offset || 0)
+      .orderBy("connection.id")
+      .getManyAndCount();
+
+    return {
+      data: result,
+      count: total,
+    };
+  }
+
+  private genDefaultQuery() {
+    return this.repository
+      .createQueryBuilder("connection")
+      .innerJoinAndSelect("connection.iotDevices", "d")
+      .leftJoinAndSelect("connection.payloadDecoder", "pd")
+      .innerJoinAndSelect("connection.dataTarget", "dt")
+      .innerJoinAndSelect("d.application", "deviceApp")
+      .innerJoinAndSelect("dt.application", "dataTargetApp");
   }
 
   private async mapDtoToConnection(

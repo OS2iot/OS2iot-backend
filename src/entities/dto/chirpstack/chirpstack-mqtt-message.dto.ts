@@ -1,28 +1,43 @@
-export class ChirpstackMQTTMessageDto {
+export class ChirpstackMqttMessageDto {
   adr: boolean;
   data: string;
   fCnt: number;
   fPort: number;
-  deviceInfo: ChirpstackMQTTMessageDeviceInfo;
-  txInfo: ChirpstackMQTTMessageTxInfoDto;
+  deviceInfo: ChirpstackMqttMessageDeviceInfo;
+  txInfo: ChirpstackMqttMessageTxInfoDto;
   dr: number;
   frequency: number;
   confirmed: boolean;
 }
 
-export class ChirpstackMQTTMessageTxInfoDto {
+export class ChirpstackMqttMessageTxInfoDto {
   frequency: number;
   dr: number;
 }
 
-export class ChirpstackMQTTConnectionStateMessageDto {
+export class ChirpstackMqttConnectionStateMessageDto {
   gatewayId: string;
   isOnline: boolean;
 }
 
-export class ChirpstackMQTTMessageDeviceInfo {
+export class ChirpstackMqttMessageDeviceInfo {
   applicationID: string;
   applicationName: string;
   devEui: string;
   deviceName: string;
+}
+
+export class ChirpstackMqttTxAckMessageDto {
+  queueItemId: string;
+  time: Date;
+  deviceInfo: ChirpstackMqttMessageDeviceInfo;
+  fCntDown: number;
+}
+
+export class ChirpstackMqttAckMessageDto {
+  acknowledged: boolean;
+  queueItemId: string;
+  time: Date;
+  deviceInfo: ChirpstackMqttMessageDeviceInfo;
+  fCntDown: number;
 }

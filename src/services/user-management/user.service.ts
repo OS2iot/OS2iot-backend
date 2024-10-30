@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
 import { In, Repository } from "typeorm";
@@ -22,6 +22,7 @@ import { ConfigService } from "@nestjs/config";
 import { isPermissionType } from "@helpers/security-helper";
 import { nameof } from "@helpers/type-helper";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class UserService {
@@ -134,8 +135,15 @@ export class UserService {
       .execute();
   }
 
-  async createUser(dto: CreateUserDto, userId: number): Promise<User> {
+  async createUser(dto: CreateUserDto, userId: number, req?: AuthenticatedRequest): Promise<User> {
     const user = new User();
+    const permissions = await this.permissionService.findManyByIdsIncludeOrgs(dto.permissionIds);
+
+    if (req) {
+      this.checkForAccessToPermissions(req, permissions);
+    }
+
+    user.permissions = permissions;
     const mappedUser = this.mapDtoToUser(user, dto);
     mappedUser.createdBy = userId;
     mappedUser.updatedBy = userId;
@@ -205,12 +213,18 @@ export class UserService {
     return user;
   }
 
-  async updateUser(id: number, dto: UpdateUserDto, userId: number): Promise<User> {
+  async updateUser(id: number, dto: UpdateUserDto, userId: number, req: AuthenticatedRequest): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ["permissions"],
     });
+    const permissions = await this.permissionService.findManyByIdsIncludeOrgs(dto.permissionIds);
 
+    if (req) {
+      this.checkForAccessToPermissions(req, permissions);
+    }
+
+    user.permissions = permissions;
     const mappedUser = this.mapDtoToUser(user, dto);
     mappedUser.updatedBy = userId;
 
@@ -223,6 +237,19 @@ export class UserService {
     await this.updateGlobalAdminStatusIfNeeded(dto, mappedUser);
 
     return await this.userRepository.save(mappedUser);
+  }
+
+  private checkForAccessToPermissions(req: AuthenticatedRequest, permissions: Permission[]) {
+    const allowedOrganizations = req?.user.permissions.getAllOrganizationsWithUserAdmin();
+    if (!req.user.permissions.isGlobalAdmin) {
+      const hasAccessToPermissions = permissions.every(permission =>
+        allowedOrganizations.some(org => org === permission.organization?.id)
+      );
+
+      if (!hasAccessToPermissions) {
+        throw new ForbiddenException();
+      }
+    }
   }
 
   private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {

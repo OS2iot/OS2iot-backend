@@ -6,6 +6,7 @@ import {
   Get,
   InternalServerErrorException,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -19,7 +20,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { ChirpstackResponseStatus } from "@dto/chirpstack/chirpstack-response.dto";
 import { CreateGatewayDto } from "@dto/chirpstack/create-gateway.dto";
 import { SingleGatewayResponseDto } from "@dto/chirpstack/single-gateway-response.dto";
-import { UpdateGatewayDto } from "@dto/chirpstack/update-gateway.dto";
+import { UpdateGatewayDto, UpdateGatewayOrganizationDto } from "@dto/chirpstack/update-gateway.dto";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
@@ -30,6 +31,7 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { ListAllGatewaysDto } from "@dto/chirpstack/list-all-gateways.dto";
 import { ListAllGatewaysResponseDto } from "@dto/chirpstack/list-all-gateways-response.dto";
+import { Gateway as DbGateway } from "@entities/gateway.entity";
 
 @ApiTags("Chirpstack")
 @Controller("chirpstack/gateway")
@@ -45,6 +47,7 @@ export class ChirpstackGatewayController {
   @GatewayAdmin()
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateGatewayDto): Promise<ChirpstackResponseStatus> {
     checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
+    this.chirpstackGatewayService.validatePackageAlarmInput(dto);
     try {
       const gateway = await this.chirpstackGatewayService.createNewGateway(dto, req.user.userId);
       AuditLog.success(
@@ -73,6 +76,14 @@ export class ChirpstackGatewayController {
     return await this.chirpstackGatewayService.getWithPaginationAndSorting(query, query.organizationId);
   }
 
+  @Get("getAllForMaps")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "List all Chirpstack gateways for maps" })
+  @Read()
+  async getAllForMaps(@Query() query?: ListAllGatewaysDto): Promise<ListAllGatewaysResponseDto> {
+    return await this.chirpstackGatewayService.getForMaps(query.organizationId);
+  }
+
   @Get(":gatewayId")
   @ApiProduces("application/json")
   @ApiOperation({ summary: "Single Chirpstack gateway" })
@@ -91,7 +102,7 @@ export class ChirpstackGatewayController {
 
   @Put(":gatewayId")
   @ApiProduces("application/json")
-  @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
+  @ApiOperation({ summary: "Updates a Chirpstack Gateway" })
   @ApiBadRequestResponse()
   @GatewayAdmin()
   async update(
@@ -100,6 +111,7 @@ export class ChirpstackGatewayController {
     @Body() dto: UpdateGatewayDto
   ): Promise<ChirpstackResponseStatus> {
     try {
+      this.chirpstackGatewayService.validatePackageAlarmInput(dto);
       if (dto.gateway.gatewayId) {
         throw new BadRequestException(ErrorCodes.GatewayIdNotAllowedInUpdate);
       }
@@ -109,6 +121,27 @@ export class ChirpstackGatewayController {
     } catch (err) {
       AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, gatewayId, dto.gateway.name);
       throw err;
+    }
+  }
+
+  @Put("updateGatewayOrganization/:id")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
+  @ApiBadRequestResponse()
+  @GatewayAdmin()
+  async changeOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() dto: UpdateGatewayOrganizationDto
+  ): Promise<DbGateway> {
+    try {
+      checkIfUserHasAccessToOrganization(req, dto.organizationId, OrganizationAccessScope.GatewayWrite);
+      const gateway = await this.chirpstackGatewayService.changeOrganization(id, dto);
+      AuditLog.success(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id, gateway.name);
+      return gateway;
+    } catch (error) {
+      AuditLog.fail(ActionType.UPDATE, "ChirpstackGateway", req.user.userId, id);
+      throw error;
     }
   }
 

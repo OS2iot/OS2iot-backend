@@ -9,6 +9,7 @@ export default (): any => {
       username: process.env.DATABASE_USERNAME || "os2iot",
       password: process.env.DATABASE_PASSWORD || "toi2so",
       ssl: process.env.DATABASE_ENABLE_SSL === "true",
+      timezone: 'Z'
     },
     jwt: {
       secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
@@ -17,6 +18,7 @@ export default (): any => {
     backend: {
       baseurl: process.env.BACKEND_BASEURL || "https://localhost:3000",
       deviceStatsIntervalInDays: parseInt(process.env.DEVICE_STATS_INTERVAL_IN_DAYS, 10) || 29,
+      datatargetLogMaxEvents: process.env.DATATARGET_LOG_MAX_EVENTS || 250,
     },
     kombit: {
       entryPoint:

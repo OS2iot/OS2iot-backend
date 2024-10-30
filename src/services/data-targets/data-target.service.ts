@@ -1,6 +1,6 @@
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { CreateOpenDataDkDatasetDto } from "@dto/create-open-data-dk-dataset.dto";
-import { ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
+import { DataTargetDto, ListAllDataTargetsResponseDto } from "@dto/list-all-data-targets-response.dto";
 import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { OddkMailInfo } from "@dto/oddk-mail-info.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
@@ -9,6 +9,7 @@ import { FiwareDataTarget } from "@entities/fiware-data-target.entity";
 import { HttpPushDataTarget } from "@entities/http-push-data-target.entity";
 import { MqttDataTarget } from "@entities/mqtt-data-target.entity";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
+import { User } from "@entities/user.entity";
 import { dataTargetTypeMap } from "@enum/data-target-type-mapping";
 import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -17,11 +18,21 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationService } from "@services/device-management/application.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
-import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "../../helpers/fiware-token.helper";
-import { User } from "@entities/user.entity";
+import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "@helpers/fiware-token.helper";
+import { DataTargetLogService } from "./data-target-log.service";
+import { DataTargetSenderService } from "@services/data-targets/data-target-sender.service";
+import { TestDataTargetDto, TestDataTargetResultDto } from "@dto/test-data-target.dto";
+import { TransformedPayloadDto } from "@dto/kafka/transformed-payload.dto";
+import { PayloadDecoderExecutorService } from "@services/data-management/payload-decoder-executor.service";
+import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
+import { IoTDeviceService } from "@services/device-management/iot-device.service";
+import { IoTDeviceType } from "@enum/device-type.enum";
+import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 
 @Injectable()
 export class DataTargetService {
+  private readonly logger = new Logger(DataTargetService.name);
+
   constructor(
     @InjectRepository(DataTarget)
     private dataTargetRepository: Repository<DataTarget>,
@@ -31,9 +42,16 @@ export class DataTargetService {
     private applicationService: ApplicationService,
     @Inject(CLIENT_SECRET_PROVIDER)
     private clientSecretProvider: ClientSecretProvider,
-    private oS2IoTMail: OS2IoTMail
+    private oS2IoTMail: OS2IoTMail,
+    private dataTargetLogService: DataTargetLogService,
+    private dataTargetSenderService: DataTargetSenderService,
+    private payloadDecoderExecutorService: PayloadDecoderExecutorService,
+    @Inject(forwardRef(() => PayloadDecoderService))
+    private payloadDecoderService: PayloadDecoderService,
+    @Inject(forwardRef(() => IoTDeviceService))
+    private iotDeviceService: IoTDeviceService,
+    private chirpstackDeviceService: ChirpstackDeviceService
   ) {}
-  private readonly logger = new Logger(DataTargetService.name);
 
   async findAndCountAllWithPagination(
     query?: ListAllDataTargetsDto,
@@ -51,27 +69,15 @@ export class DataTargetService {
 
     const [result, total] = await queryBuilder.getManyAndCount();
 
+    const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError(result.map(dt => dt.id));
+    const resultWithErrorInfo = result.map(
+      dt => ({ ...dt, hasRecentErrors: idsWithRecentError.has(dt.id) } as DataTargetDto)
+    );
+
     return {
-      data: result,
+      data: resultWithErrorInfo,
       count: total,
     };
-  }
-
-  private filterByApplication(
-    query: ListAllDataTargetsDto,
-    queryBuilder: SelectQueryBuilder<DataTarget>,
-    applicationIds: number[]
-  ) {
-    if (query.applicationId) {
-      queryBuilder = queryBuilder.where("datatarget.application = :appId", {
-        appId: query.applicationId,
-      });
-    } else if (applicationIds) {
-      queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
-        allowedApplications: applicationIds,
-      });
-    }
-    return queryBuilder;
   }
 
   async findOne(id: number): Promise<DataTarget> {
@@ -82,6 +88,20 @@ export class DataTargetService {
         relations: ["createdBy", "updatedBy"],
       },
     });
+  }
+
+  async findOneWithClientSecret(id: number): Promise<DataTarget> {
+    return await this.dataTargetRepository
+      .createQueryBuilder("dt")
+      .addSelect("dt.clientSecret")
+      .where('dt."id" = :id', { id: id })
+      .getOne();
+  }
+
+  public async findOneWithHasRecentError(id: number): Promise<DataTargetDto> {
+    const datatarget = await this.findOne(id);
+    const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError([id]);
+    return { ...datatarget, hasRecentErrors: idsWithRecentError.has(id) };
   }
 
   async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
@@ -172,6 +192,95 @@ export class DataTargetService {
     return this.dataTargetRepository.delete(id);
   }
 
+  public async sendOpenDataDkMail(mailInfoDto: OddkMailInfo, userId: number): Promise<boolean> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+    await this.oS2IoTMail.sendMailChecked({
+      to: "info@opendata.dk",
+      subject: "Ny integration til OS2IoT",
+      html:
+        `<p>
+                Hej Open Data DK,<br>
+                <br>
+                Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
+                I kan høste fra ${mailInfoDto.sharingUrl} <br>
+                Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
+                <br>` +
+        (mailInfoDto.comment ? "Kommentar: " + mailInfoDto.comment + "<br><br>" : "") +
+        "Mvh.<br>" +
+        user.name +
+        "<br>" +
+        user.email +
+        "</p>",
+    });
+    return true;
+  }
+
+  public async updateLastMessageDate(datatargetId: number) {
+    this.dataTargetRepository.update(
+      { id: datatargetId },
+      // Note: The "updatedAt"-part here prevents the updatedAt/updatedBy to be overwritten with unhelpful data from the automatic update of lastMessageDate
+      { lastMessageDate: new Date(), updatedAt: () => '"updatedAt"' }
+    );
+  }
+
+  public async testDataTarget(testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
+    const dataTarget = await this.findOne(testDto.dataTargetId);
+    let iotDevice = await this.iotDeviceService.findOne(testDto.iotDeviceId);
+
+    if (dataTarget.type === DataTargetType.MQTT && !testDto.dataPackage) {
+      const result = await this.dataTargetSenderService.testMqttDataTarget(dataTarget);
+      return { result: result };
+    }
+
+    let rawPackage = JSON.parse(testDto.dataPackage);
+    if (testDto.payloadDecoderId) {
+      const payloadDecoder = await this.payloadDecoderService.findOne(testDto.payloadDecoderId);
+      if (iotDevice.type === IoTDeviceType.LoRaWAN && payloadDecoder.decodingFunction.includes("lorawanSettings")) {
+        iotDevice = await this.chirpstackDeviceService.enrichLoRaWANDevice(iotDevice);
+      }
+
+      const decoded = await this.payloadDecoderExecutorService.callUntrustedCode(
+        payloadDecoder.decodingFunction,
+        iotDevice,
+        rawPackage
+      );
+      rawPackage = JSON.parse(decoded);
+    }
+
+    const payloadDto: TransformedPayloadDto = {
+      payload: rawPackage,
+      payloadDecoderId: testDto.payloadDecoderId,
+      iotDeviceId: testDto.iotDeviceId,
+    };
+
+    if (dataTarget.type === DataTargetType.Fiware) {
+      const fiwareDatatarget = await this.findOneWithClientSecret(testDto.dataTargetId);
+      (dataTarget as FiwareDataTarget).clientSecret = (fiwareDatatarget as FiwareDataTarget).clientSecret;
+    }
+    const result = await this.dataTargetSenderService.sendToDataTarget(dataTarget, payloadDto);
+    return {
+      result,
+      decodedPayload: rawPackage,
+    };
+  }
+
+  private filterByApplication(
+    query: ListAllDataTargetsDto,
+    queryBuilder: SelectQueryBuilder<DataTarget>,
+    applicationIds: number[]
+  ) {
+    if (query.applicationId) {
+      queryBuilder = queryBuilder.where("datatarget.application = :appId", {
+        appId: query.applicationId,
+      });
+    } else if (applicationIds) {
+      queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
+        allowedApplications: applicationIds,
+      });
+    }
+    return queryBuilder;
+  }
+
   private async mapDtoToDataTarget(dataTargetDto: CreateDataTargetDto, dataTarget: DataTarget): Promise<DataTarget> {
     dataTarget.name = dataTargetDto.name;
     if (dataTargetDto.applicationId != null) {
@@ -237,28 +346,5 @@ export class DataTargetService {
 
   private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
     return new childDataTargetType();
-  }
-
-  public async sendOpenDataDkMail(mailInfoDto: OddkMailInfo, userId: number): Promise<boolean> {
-    const user = await this.userRepository.findOneByOrFail({ id: userId });
-    await this.oS2IoTMail.sendMailChecked({
-      to: "info@opendata.dk",
-      subject: "Ny integration til OS2IoT",
-      html:
-        `<p>
-                Hej Open Data DK,<br>
-                <br>
-                Vi har oprettet en integration fra vores organisation i OS2iot til Open Data DK, som I gerne må begynde at høste.<br>
-                I kan høste fra ${mailInfoDto.sharingUrl} <br>
-                Vores data skal knyttes til følgende organisation på opendata.dk: ${mailInfoDto.organizationOddkAlias} <br>
-                <br>` +
-        (mailInfoDto.comment ? "Kommentar: " + mailInfoDto.comment + "<br><br>" : "") +
-        "Mvh.<br>" +
-        user.name +
-        "<br>" +
-        user.email +
-        "</p>",
-    });
-    return true;
   }
 }

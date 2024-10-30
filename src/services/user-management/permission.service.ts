@@ -140,31 +140,6 @@ export class PermissionService {
     return await this.permissionRepository.save(permission);
   }
 
-  async autoAddPermissionsToApplication(app: Application): Promise<void> {
-    // Use query builder since the other syntax doesn't support one-to-many for property querying
-    const permissionsInOrganisation = await this.permissionRepository
-      .createQueryBuilder("permission")
-      .where(
-        "permission.organization.id = :orgId" +
-          " AND type.type IN (:...permType)" +
-          ` AND "${nameof<Permission>("automaticallyAddNewApplications")}" = True`,
-        {
-          orgId: app.belongsTo.id,
-          permType: [PermissionType.OrganizationApplicationAdmin, PermissionType.Read],
-        }
-      )
-      .leftJoinAndSelect("permission.applications", "app")
-      .leftJoin("permission.type", "type")
-      .getMany();
-
-    await Promise.all(
-      permissionsInOrganisation.map(async p => {
-        p.applications.push(app);
-        await this.permissionRepository.save(p);
-      })
-    );
-  }
-
   async addUsersToPermission(permission: Permission, users: User[]): Promise<void> {
     users.forEach(x => {
       x.permissions = _.union(x.permissions, [permission]);
@@ -226,8 +201,8 @@ export class PermissionService {
 
   async getAllPermissions(query?: ListAllPermissionsDto, orgs?: number[]): Promise<ListAllPermissionsResponseDto> {
     const orderBy = this.getSorting(query);
-    const order: "DESC" | "ASC" = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
-    let qb: SelectQueryBuilder<Permission> = this.permissionRepository
+    const order = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
+    let queryBuilder = this.permissionRepository
       .createQueryBuilder("permission")
       .leftJoinAndSelect("permission.organization", "org")
       .leftJoinAndSelect("permission.users", "user")
@@ -237,15 +212,48 @@ export class PermissionService {
       .orderBy(orderBy, order);
 
     if (query?.userId !== undefined && query.userId !== "undefined") {
-      qb = qb.andWhere("user.id = :userId", { userId: +query.userId });
+      queryBuilder = queryBuilder.andWhere("user.id = :userId", { userId: +query.userId });
     }
     if (orgs) {
-      qb = qb.andWhere({ organization: In(orgs) });
+      queryBuilder = queryBuilder.andWhere({ organization: In(orgs) });
     } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
-      qb = qb.andWhere("org.id = :orgId", { orgId: +query.organisationId });
+      queryBuilder = queryBuilder.andWhere("org.id = :orgId", { orgId: +query.organisationId });
+    }
+    const [data, count] = await queryBuilder.getManyAndCount();
+
+    return {
+      data: data,
+      count: count,
+    };
+  }
+
+  async getAllPermissionsWithoutUsers(
+    query?: ListAllPermissionsDto,
+    orgs?: number[]
+  ): Promise<ListAllPermissionsResponseDto> {
+    const orderBy = this.getSorting(query);
+    const order = query?.sort?.toLocaleUpperCase() === "DESC" ? "DESC" : "ASC";
+    let queryBuilder = this.permissionRepository
+      .createQueryBuilder("permission")
+      .leftJoinAndSelect("permission.organization", "org")
+      .leftJoinAndSelect("permission.type", "permission_type")
+      .take(query?.limit ? +query.limit : 100)
+      .skip(query?.offset ? +query.offset : 0)
+      .orderBy(orderBy, order);
+
+    if (orgs) {
+      queryBuilder = queryBuilder.andWhere({ organization: In(orgs) });
+    } else if (query?.organisationId !== undefined && query.organisationId !== "undefined") {
+      queryBuilder = queryBuilder.andWhere("org.id = :orgId", { orgId: +query.organisationId });
     }
 
-    const [data, count] = await qb.getManyAndCount();
+    if (query?.ignoreGlobalAdmin) {
+      queryBuilder = queryBuilder.andWhere("org.name != :globalAdminName", {
+        globalAdminName: PermissionType.GlobalAdmin,
+      });
+    }
+
+    const [data, count] = await queryBuilder.getManyAndCount();
 
     return {
       data: data,
@@ -415,6 +423,17 @@ export class PermissionService {
       return [];
     }
     return await this.permissionRepository.findBy({ id: In(ids) });
+  }
+
+  async findManyByIdsIncludeOrgs(ids: number[]): Promise<Permission[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    return await this.permissionRepository.find({
+      where: { id: In(ids) },
+      relations: ["organization"],
+    });
   }
 
   private hasAccessToAllApplicationsInOrganization(permissions: PermissionMinimalDto[]) {

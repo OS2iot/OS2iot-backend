@@ -42,7 +42,6 @@ import { IoTDeviceDownlinkService } from "@services/device-management/iot-device
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { DeviceDownlinkQueueResponseDto } from "@dto/chirpstack/chirpstack-device-downlink-queue-response.dto";
 import { IoTDeviceType } from "@enum/device-type.enum";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -57,8 +56,9 @@ import { DeviceStatsResponseDto } from "@dto/chirpstack/device/device-stats.resp
 import { GenericHTTPDevice } from "@entities/generic-http-device.entity";
 import { MQTTInternalBrokerDeviceDTO } from "@dto/mqtt-internal-broker-device.dto";
 import { MQTTExternalBrokerDeviceDTO } from "@dto/mqtt-external-broker-device.dto";
-import { IdResponse } from "@interfaces/chirpstack-id-response.interface";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { DownlinkQueueDto } from "@dto/downlink.dto";
+import { UpdateIoTDeviceApplication } from "@dto/update-iot-device-application.dto";
 
 @ApiTags("IoT Device")
 @Controller("iot-device")
@@ -110,7 +110,7 @@ export class IoTDeviceController {
   async findDownlinkQueue(
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number
-  ): Promise<DeviceDownlinkQueueResponseDto> {
+  ): Promise<DownlinkQueueDto[] | DeviceDownlinkQueueResponseDto> {
     let device = undefined;
     try {
       device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, true);
@@ -123,12 +123,34 @@ export class IoTDeviceController {
     }
     checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
     if (device.type === IoTDeviceType.LoRaWAN) {
-      return this.chirpstackDeviceService.getDownlinkQueue((device as LoRaWANDevice).deviceEUI);
+      return this.downlinkService.getDownlinkQueue(device.id);
     } else if (device.type === IoTDeviceType.SigFox) {
       return this.iotDeviceService.getDownlinkForSigfox(device as SigFoxDevice);
     } else {
       throw new BadRequestException(ErrorCodes.OnlyAllowedForLoRaWANAndSigfox);
     }
+  }
+
+  @Get(":id/historicalDownlink")
+  @ApiOperation({ summary: "Get historical downlinks for a LoRaWAN device" })
+  async findHistoricalDownlinks(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<DownlinkQueueDto[] | DeviceDownlinkQueueResponseDto> {
+    let device = undefined;
+
+    try {
+      device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, true);
+    } catch (err) {
+      this.logger.error(`Error occured during findOne: '${JSON.stringify(err)}'`);
+    }
+
+    if (!device) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+    checkIfUserHasAccessToApplication(req, device.application.id, ApplicationAccessScope.Read);
+
+    return this.downlinkService.getHistoricalDownlinks(device.id);
   }
 
   @Get("/stats/:id")
@@ -170,18 +192,44 @@ export class IoTDeviceController {
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number,
     @Body() dto: CreateIoTDeviceDownlinkDto
-  ): Promise<void | IdResponse> {
+  ): Promise<void> {
     try {
       const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
       if (!device) {
         throw new NotFoundException();
       }
       checkIfUserHasAccessToApplication(req, device?.application?.id, ApplicationAccessScope.Write);
-      const result = await this.downlinkService.createDownlink(dto, device);
+
+      await this.downlinkService.createDownlink(dto, device);
+
       AuditLog.success(ActionType.CREATE, "Downlink", req.user.userId);
-      return result;
+      return;
     } catch (err) {
       AuditLog.fail(ActionType.CREATE, "Downlink", req.user.userId);
+      throw err;
+    }
+  }
+
+  @Post(":id/flushDownlinkQueue")
+  @ApiOperation({ summary: "Flush downlink queue" })
+  async flushDownlinkQueue(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<void> {
+    try {
+      const device = await this.iotDeviceService.findOneWithApplicationAndMetadata(id);
+      if (!device) {
+        throw new NotFoundException();
+      }
+
+      checkIfUserHasAccessToApplication(req, device?.application?.id, ApplicationAccessScope.Write);
+
+      await this.downlinkService.flushDownlinkQueue(device);
+
+      AuditLog.success(ActionType.DELETE, "FlushDownlinkQueue", req.user.userId);
+      return;
+    } catch (err) {
+      AuditLog.fail(ActionType.DELETE, "FlushDownlinkQueue", req.user.userId);
       throw err;
     }
   }
@@ -209,6 +257,36 @@ export class IoTDeviceController {
     }
 
     const iotDevice = await this.iotDeviceService.update(id, updateDto, req.user.userId);
+    AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, iotDevice.id, iotDevice.name);
+    return iotDevice;
+  }
+
+  @Put("changeApplication/:id")
+  @Header("Cache-Control", "none")
+  @ApiOperation({ summary: "Update an existing IoT-Device" })
+  @ApiBadRequestResponse()
+  async changeApplication(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() updateDto: UpdateIoTDeviceApplication
+  ): Promise<IoTDevice> {
+    // Old application
+    const dbIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(id, false);
+
+    if (dbIotDevice.type === IoTDeviceType.SigFox) throw new BadRequestException(ErrorCodes.NotValidFormat);
+
+    try {
+      checkIfUserHasAccessToApplication(req, dbIotDevice.application.id, ApplicationAccessScope.Write);
+      if (updateDto.applicationId !== dbIotDevice.application.id) {
+        // New application
+        checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
+      }
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, IoTDevice.name, req.user.userId, id);
+      throw err;
+    }
+
+    const iotDevice = await this.iotDeviceService.changeApplication(id, updateDto, req.user.userId);
     AuditLog.success(ActionType.UPDATE, IoTDevice.name, req.user.userId, iotDevice.id, iotDevice.name);
     return iotDevice;
   }

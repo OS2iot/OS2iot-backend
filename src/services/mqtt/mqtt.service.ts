@@ -1,4 +1,4 @@
-﻿import { Injectable } from "@nestjs/common";
+﻿import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { MQTTInternalBrokerDevice } from "@entities/mqtt-internal-broker-device.entity";
 import { random } from "crypto-js/lib-typedarrays";
 import { algo, enc, PBKDF2 } from "crypto-js";
@@ -10,16 +10,20 @@ import { caCertPath, caKeyPath } from "@resources/resource-paths";
 
 @Injectable()
 export class MqttService {
-  constructor(private applicationService: ApplicationService) {}
+  constructor(
+    @Inject(forwardRef(() => ApplicationService))
+    private applicationService: ApplicationService
+  ) {}
 
   public async generateCertificate(deviceName: string): Promise<CertificateDetails> {
     const certificateDetails = new CertificateDetails();
     try {
-      createPrivateKey(2048, (err, { key }) => {
+      createPrivateKey(2048, (err, input) => {
         if (err) {
-          console.log("keyerr", err);
+          console.log("keyerr", err, input);
           return;
         }
+        const { key } = input;
         certificateDetails.deviceCertificateKey = key;
         createCSR(
           {
