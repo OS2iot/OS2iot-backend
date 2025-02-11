@@ -88,6 +88,22 @@ export class ApplicationController {
   }
 
   @Read()
+  @Get(":id/filter-information")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "returns filter information for application" })
+  @ApiNotFoundResponse()
+  async findFilterInformation(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<string[]> {
+    try {
+      return await this.getFilterInformationInOrganization(req, id, req.user.permissions.isGlobalAdmin);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
+
+  @Read()
   @Get(":id")
   @ApiOperation({ summary: "Find one Application by id" })
   @ApiNotFoundResponse()
@@ -262,5 +278,24 @@ export class ApplicationController {
 
     const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
     return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
+  }
+
+  private async getFilterInformationInOrganization(
+    req: AuthenticatedRequest,
+    organizationId: number,
+    isGlobalAdmin: boolean
+  ) {
+    if (isGlobalAdmin) {
+      return await this.applicationService.findFilterInformation("admin", organizationId);
+    }
+
+    const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+    if (allFromOrg.some(x => x === organizationId)) {
+      return await this.applicationService.findFilterInformation("admin", organizationId);
+    }
+
+    const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+    return await this.applicationService.findFilterInformation(allowedApplications, organizationId);
   }
 }

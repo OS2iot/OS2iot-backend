@@ -3,31 +3,31 @@ import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-respo
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 import { Application } from "@entities/application.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
+import { DataTargetType } from "@enum/data-target-type.enum";
 import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
 import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { MulticastService } from "@services/chirpstack/multicast.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { DeleteResult, In, Repository } from "typeorm";
-import { DataTargetService } from "@services/data-targets/data-target.service";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { MulticastService } from "@services/chirpstack/multicast.service";
-import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
-import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
-import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
-import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class ApplicationService {
@@ -170,6 +170,23 @@ export class ApplicationService {
 
   async findOneWithoutRelations(id: number): Promise<Application> {
     return await this.applicationRepository.findOneByOrFail({ id });
+  }
+
+  async findFilterInformation(applicationIds: number[] | "admin", organizationId: number) {
+    console.log(applicationIds);
+
+    const query = this.applicationRepository
+      .createQueryBuilder("application")
+      .leftJoinAndSelect("application.belongsTo", "organization")
+      .where("organization.id = :organizationId", { organizationId });
+
+    if (applicationIds !== "admin") {
+      query.where("application.id IN (:...applicationIds)", { applicationIds });
+    }
+
+    const result = await query.getMany();
+
+    return [...new Set(result.map(app => app.owner))];
   }
 
   async findOneWithOrganisation(id: number): Promise<Application> {
