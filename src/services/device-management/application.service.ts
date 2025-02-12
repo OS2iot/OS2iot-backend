@@ -1,3 +1,4 @@
+import { ApplicationsWithErrorsResponseDto } from "@dto/applications-dashboard-responses";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import {
   ListAllApplicationsResponseDto,
@@ -30,7 +31,7 @@ import { MulticastService } from "@services/chirpstack/multicast.service";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
-import { DeleteResult, In, Repository } from "typeorm";
+import { Brackets, DeleteResult, In, Repository } from "typeorm";
 
 @Injectable()
 export class ApplicationService {
@@ -52,6 +53,58 @@ export class ApplicationService {
     private chirpstackApplicationService: ApplicationChirpstackService
   ) {}
 
+  async countApplicationsWithError(
+    organizationId: number,
+    whitelist?: number[]
+  ): Promise<ApplicationsWithErrorsResponseDto> {
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoin("app.iotDevices", "device")
+      .leftJoin("app.belongsTo", "organization")
+      .leftJoin("device.latestReceivedMessage", "latestMessage")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .andWhere("app.belongsToId = :organizationId", { organizationId: organizationId });
+
+    if (whitelist && whitelist.length > 0) {
+      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    queryBuilder.andWhere(
+      new Brackets(qb => {
+        qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+      })
+    );
+
+    try {
+      const [result, total] = await queryBuilder.getManyAndCount();
+
+      return {
+        withError: result.length,
+        total: total,
+      };
+    } catch (error) {
+      throw new Error("Database query failed");
+    }
+  }
+  async countAllDevices(organizationId: number, whitelist?: number[]): Promise<number> {
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoinAndSelect("app.iotDevices", "device")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .where("app.belongsToId = :organizationId", { organizationId });
+
+    if (whitelist && whitelist.length > 0) {
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    const count = await queryBuilder.select("COUNT(device.id)", "count").getRawOne();
+
+    try {
+      return count.count ? parseInt(count.count, 10) : 0;
+    } catch (error) {
+      throw new Error("Database query failed");
+    }
+  }
   async findAndCountInList(
     query?: ListAllApplicationsDto,
     whitelist?: number[]
@@ -61,9 +114,9 @@ export class ApplicationService {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
       .leftJoinAndSelect("app.iotDevices", "device")
-      .leftJoinAndSelect("app.dataTargets", "dataTarget")
       .leftJoinAndSelect("app.belongsTo", "organization")
-      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage");
+      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
+      .leftJoinAndSelect("app.dataTargets", "dataTargets");
 
     if (whitelist && whitelist.length > 0) {
       queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
@@ -74,7 +127,6 @@ export class ApplicationService {
     }
 
     if (query.status) {
-      console.log("status : " + query.status);
       queryBuilder.andWhere("app.status = :status", { status: query.status });
     }
 
@@ -82,35 +134,19 @@ export class ApplicationService {
       queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
     }
 
-    if (query.statusCheck) {
+    if (query.statusCheck === "alert") {
       queryBuilder.andWhere(
-        `
-        app.id IN (
-          SELECT
-              app.id,
-              CASE
-                  WHEN COUNT(DISTINCT dataTarget.id) = 0 THEN 'alert'
-                  WHEN latestMessage.sentTime < NOW() - INTERVAL '24 HOURS' THEN 'alert'
-                  ELSE 'stable'
-              END AS statusCheck
-          FROM application app
-          LEFT JOIN data_target dataTarget ON dataTarget.applicationId = app.id
-          LEFT JOIN device ON device.applicationId = app.id
-          LEFT JOIN latestMessage ON latestMessage.deviceId = device.id
-          WHERE app.belongsToId = :organizationId
-          GROUP BY app.id
-          HAVING
-              (
-                  COUNT(DISTINCT dataTarget.id) = 0
-                  OR latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'
-              )
-              AND (
-                  :statusCheck = 'alert'
-                  OR COUNT(DISTINCT dataTarget.id) > 0
-              )
-        )
-        `,
-        { statusCheck: query.statusCheck, organizationId: query.organizationId }
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    if (query.statusCheck === "stable") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+        })
       );
     }
 
@@ -145,7 +181,6 @@ export class ApplicationService {
         count: total,
       };
     } catch (error) {
-      console.error("Error executing query:", error);
       throw new Error("Database query failed");
     }
   }
@@ -252,8 +287,6 @@ export class ApplicationService {
   }
 
   async findFilterInformation(applicationIds: number[] | "admin", organizationId: number) {
-    console.log(applicationIds);
-
     const query = this.applicationRepository
       .createQueryBuilder("application")
       .leftJoinAndSelect("application.belongsTo", "organization")

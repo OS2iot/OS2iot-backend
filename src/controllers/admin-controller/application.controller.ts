@@ -30,6 +30,7 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { ApplicationDashboardResponseDto } from "@dto/applications-dashboard-responses";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
@@ -95,6 +96,22 @@ export class ApplicationController {
   ): Promise<string[]> {
     try {
       return await this.getFilterInformationInOrganization(req, id, req.user.permissions.isGlobalAdmin);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
+
+  @Read()
+  @Get(":id/application-dashboard-data")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "returns applications dashboard data" })
+  @ApiNotFoundResponse()
+  async countApplicationWithError(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<ApplicationDashboardResponseDto> {
+    try {
+      return await this.getApplicationsWithError(req, id, req.user.permissions.isGlobalAdmin);
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -294,5 +311,29 @@ export class ApplicationController {
 
     const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
     return await this.applicationService.findFilterInformation(allowedApplications, organizationId);
+  }
+
+  private async getApplicationsWithError(req: AuthenticatedRequest, organizationId: number, isGlobalAdmin: boolean) {
+    if (isGlobalAdmin) {
+      return {
+        ...(await this.applicationService.countApplicationsWithError(organizationId)),
+        totalDevices: await this.applicationService.countAllDevices(organizationId),
+      };
+    }
+
+    const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+    if (allFromOrg.some(x => x === organizationId)) {
+      return {
+        ...(await this.applicationService.countApplicationsWithError(organizationId)),
+        totalDevices: await this.applicationService.countAllDevices(organizationId),
+      };
+    }
+
+    const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
+    return {
+      ...(await this.applicationService.countApplicationsWithError(organizationId, allowedApplications)),
+      totalDevices: await this.applicationService.countAllDevices(organizationId, allowedApplications),
+    };
   }
 }
