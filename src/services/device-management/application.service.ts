@@ -1,5 +1,8 @@
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import {
+  ListAllApplicationsResponseDto,
+  ListAllApplicationsWithStatusResponseDto,
+} from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
@@ -50,25 +53,101 @@ export class ApplicationService {
   ) {}
 
   async findAndCountInList(
-    query?: ListAllEntitiesDto,
-    whitelist?: number[],
-    allFromOrgs?: number[]
-  ): Promise<ListAllApplicationsResponseDto> {
+    query?: ListAllApplicationsDto,
+    whitelist?: number[]
+  ): Promise<ListAllApplicationsWithStatusResponseDto> {
     const sorting = this.getSortingForApplications(query);
-    const orgCondition =
-      allFromOrgs != null ? { id: In(whitelist), belongsTo: In(allFromOrgs) } : { id: In(whitelist) };
-    const [result, total] = await this.applicationRepository.findAndCount({
-      where: orgCondition,
-      take: query.limit,
-      skip: query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
-      order: sorting,
-    });
 
-    return {
-      data: result,
-      count: total,
-    };
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoinAndSelect("app.iotDevices", "device")
+      .leftJoinAndSelect("app.dataTargets", "dataTarget")
+      .leftJoinAndSelect("app.belongsTo", "organization")
+      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage");
+
+    if (whitelist && whitelist.length > 0) {
+      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    if (query.organizationId) {
+      queryBuilder.andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
+    }
+
+    if (query.status) {
+      console.log("status : " + query.status);
+      queryBuilder.andWhere("app.status = :status", { status: query.status });
+    }
+
+    if (query.owner) {
+      queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
+    }
+
+    if (query.statusCheck) {
+      queryBuilder.andWhere(
+        `
+        app.id IN (
+          SELECT
+              app.id,
+              CASE
+                  WHEN COUNT(DISTINCT dataTarget.id) = 0 THEN 'alert'
+                  WHEN latestMessage.sentTime < NOW() - INTERVAL '24 HOURS' THEN 'alert'
+                  ELSE 'stable'
+              END AS statusCheck
+          FROM application app
+          LEFT JOIN data_target dataTarget ON dataTarget.applicationId = app.id
+          LEFT JOIN device ON device.applicationId = app.id
+          LEFT JOIN latestMessage ON latestMessage.deviceId = device.id
+          WHERE app.belongsToId = :organizationId
+          GROUP BY app.id
+          HAVING
+              (
+                  COUNT(DISTINCT dataTarget.id) = 0
+                  OR latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'
+              )
+              AND (
+                  :statusCheck = 'alert'
+                  OR COUNT(DISTINCT dataTarget.id) > 0
+              )
+        )
+        `,
+        { statusCheck: query.statusCheck, organizationId: query.organizationId }
+      );
+    }
+
+    queryBuilder.orderBy(sorting);
+    queryBuilder.take(query.limit).skip(query.offset);
+
+    try {
+      const [result, total] = await queryBuilder.getManyAndCount();
+      const mappedResult = result.map(app => {
+        const latestMessage = app.iotDevices
+          ?.map(device => device.latestReceivedMessage)
+          .find(msg => msg !== undefined);
+        const hasDataTargets = app.dataTargets && app.dataTargets.length > 0;
+        const isLatestMessageOld = latestMessage
+          ? new Date(latestMessage.sentTime) < new Date(Date.now() - 24 * 60 * 60 * 1000)
+          : false;
+
+        let statusCheck: "stable" | "alert" = "stable";
+
+        if (!hasDataTargets || isLatestMessageOld) {
+          statusCheck = "alert";
+        }
+
+        return {
+          ...app,
+          statusCheck,
+        };
+      });
+
+      return {
+        data: mappedResult,
+        count: total,
+      };
+    } catch (error) {
+      console.error("Error executing query:", error);
+      throw new Error("Database query failed");
+    }
   }
 
   async findAndCountApplicationInWhitelistOrOrganization(
@@ -512,26 +591,34 @@ export class ApplicationService {
     }
     return orderBy;
   }
+  private getSortingForApplications(query: ListAllEntitiesDto): Record<string, "ASC" | "DESC"> {
+    const sorting: Record<string, "ASC" | "DESC"> = {};
 
-  private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
-    const sorting: Record<string, string | number> = {};
-    if (
-      // TODO: Make this nicer
-      query.orderOn != null &&
-      (query.orderOn === "id" ||
-        query.orderOn === "name" ||
-        query.orderOn === "updatedAt" ||
-        query.orderOn === "status" ||
-        query.orderOn === "startDate" ||
-        query.orderOn === "endDate" ||
-        query.orderOn === "owner" ||
-        query.orderOn === "contactPerson" ||
-        query.orderOn === "personalData")
-    ) {
-      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-    } else {
-      sorting["id"] = "ASC";
+    if (query.orderOn) {
+      const validFields = new Set([
+        "id",
+        "name",
+        "updatedAt",
+        "startDate",
+        "endDate",
+        "owner",
+        "contactPerson",
+        "personalData",
+      ]);
+
+      const sortOrder = query.sort.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+      if (query.orderOn === "status") {
+        sorting["status"] = sortOrder;
+      } else if (validFields.has(query.orderOn)) {
+        sorting[`app.${query.orderOn}`] = sortOrder;
+      }
     }
+
+    if (Object.keys(sorting).length === 0) {
+      sorting["app.id"] = "ASC";
+    }
+
     return sorting;
   }
 }

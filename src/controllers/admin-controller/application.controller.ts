@@ -78,10 +78,7 @@ export class ApplicationController {
     @Query() query?: ListAllApplicationsDto
   ): Promise<ListAllApplicationsResponseDto> {
     if (req.user.permissions.isGlobalAdmin) {
-      return this.applicationService.findAndCountWithPagination(
-        query,
-        query.organizationId ? [+query.organizationId] : null
-      );
+      return this.applicationService.findAndCountInList(query);
     }
 
     return await this.getApplicationsForNonGlobalAdmin(req, query);
@@ -273,11 +270,11 @@ export class ApplicationController {
     // User admins have access to all applications in the organization
     const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
     if (allFromOrg.some(x => x === query?.organizationId)) {
-      return await this.applicationService.findAndCountWithPagination(query, [query.organizationId]);
+      return await this.applicationService.findAndCountInList(query, null);
     }
 
     const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-    return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
+    return await this.applicationService.findAndCountInList(query, allowedApplications);
   }
 
   private async getFilterInformationInOrganization(
