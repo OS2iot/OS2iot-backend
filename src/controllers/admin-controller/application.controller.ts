@@ -38,11 +38,13 @@ import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { ListAllIotDevicesDto } from "@dto/list-all-iot-devices.dto";
 import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
   ApplicationAccessScope,
@@ -111,7 +113,11 @@ export class ApplicationController {
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<ApplicationDashboardResponseDto> {
     try {
-      return await this.getApplicationsWithError(req, id, req.user.permissions.isGlobalAdmin);
+      const whitelist = await this.getApplicationsWhiteList(req, id, req.user.permissions.isGlobalAdmin);
+      return {
+        ...(await this.applicationService.countApplicationsWithError(id, whitelist)),
+        totalDevices: await this.applicationService.countAllDevices(id, whitelist),
+      };
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -144,6 +150,23 @@ export class ApplicationController {
 
     try {
       return await this.applicationService.findDevicesForApplication(applicationId, query);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
+
+  @Read()
+  @Get(":id/iot-devices-org")
+  @ApiOperation({ summary: "Find the IoTDevice of an organization" })
+  @ApiNotFoundResponse()
+  async findIoTDevicesForOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) organizationId: number,
+    @Query() query?: ListAllIotDevicesDto
+  ): Promise<IoTDevice[]> {
+    try {
+      const whitelist = await this.getApplicationsWhiteList(req, organizationId, req.user.permissions.isGlobalAdmin);
+      return await this.applicationService.getAllDevices(organizationId, query);
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -313,27 +336,21 @@ export class ApplicationController {
     return await this.applicationService.findFilterInformation(allowedApplications, organizationId);
   }
 
-  private async getApplicationsWithError(req: AuthenticatedRequest, organizationId: number, isGlobalAdmin: boolean) {
+  private async getApplicationsWhiteList(
+    req: AuthenticatedRequest,
+    organizationId: number,
+    isGlobalAdmin: boolean
+  ): Promise<number[] | null> {
     if (isGlobalAdmin) {
-      return {
-        ...(await this.applicationService.countApplicationsWithError(organizationId)),
-        totalDevices: await this.applicationService.countAllDevices(organizationId),
-      };
+      return null;
     }
 
     const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
 
     if (allFromOrg.some(x => x === organizationId)) {
-      return {
-        ...(await this.applicationService.countApplicationsWithError(organizationId)),
-        totalDevices: await this.applicationService.countAllDevices(organizationId),
-      };
+      return null;
     }
 
-    const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-    return {
-      ...(await this.applicationService.countApplicationsWithError(organizationId, allowedApplications)),
-      totalDevices: await this.applicationService.countAllDevices(organizationId, allowedApplications),
-    };
+    return req.user.permissions.getAllApplicationsWithAtLeastRead();
   }
 }

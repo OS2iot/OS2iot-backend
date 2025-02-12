@@ -8,6 +8,7 @@ import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { ListAllIotDevicesDto } from "@dto/list-all-iot-devices.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
 import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
@@ -105,6 +106,57 @@ export class ApplicationService {
       throw new Error("Database query failed");
     }
   }
+
+  async getAllDevices(
+    organizationId: number,
+    query?: ListAllIotDevicesDto,
+    whitelist?: number[] | null
+  ): Promise<IoTDevice[]> {
+    const queryBuilder = this.iotDeviceRepository
+      .createQueryBuilder("device")
+      .leftJoin("device.application", "app")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
+      .addSelect(["latestMessage.id", "latestMessage.sentTime"])
+      .where("app.belongsToId = :organizationId", { organizationId });
+
+    if (whitelist && whitelist.length > 0) {
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    if (query.status) {
+      queryBuilder.andWhere("app.status = :status", { status: query.status });
+    }
+
+    if (query.owner) {
+      queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
+    }
+
+    if (query.statusCheck === "alert") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    if (query.statusCheck === "stable") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    try {
+      const test = await queryBuilder.getMany();
+      return test;
+    } catch (error) {
+      console.error("Database query failed:", error);
+      throw new Error("Database query failed");
+    }
+  }
+
   async findAndCountInList(
     query?: ListAllApplicationsDto,
     whitelist?: number[]
