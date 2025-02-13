@@ -679,25 +679,14 @@ export class ApplicationService {
   private getSortingForApplications(query: ListAllEntitiesDto): Record<string, "ASC" | "DESC"> {
     const sorting: Record<string, "ASC" | "DESC"> = {};
 
-    if (query.orderOn) {
-      const validFields = new Set([
-        "id",
-        "name",
-        "updatedAt",
-        "startDate",
-        "endDate",
-        "owner",
-        "contactPerson",
-        "personalData",
-      ]);
+    if (query.orderOn === "statusCheck") {
+      return sorting;
+    }
 
+    if (query.orderOn) {
       const sortOrder = query.sort.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
-      if (query.orderOn === "status") {
-        sorting["status"] = sortOrder;
-      } else if (validFields.has(query.orderOn)) {
-        sorting[`app.${query.orderOn}`] = sortOrder;
-      }
+      sorting[`app.${query.orderOn}`] = sortOrder;
     }
 
     if (Object.keys(sorting).length === 0) {
