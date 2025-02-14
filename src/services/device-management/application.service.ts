@@ -225,6 +225,8 @@ export class ApplicationService {
         };
       });
 
+      this.externalSortResult(query, mappedResult);
+
       return {
         data: mappedResult,
         count: total,
