@@ -97,7 +97,13 @@ export class ApplicationController {
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<string[]> {
     try {
-      return await this.getFilterInformationInOrganization(req, id, req.user.permissions.isGlobalAdmin);
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+      return await this.applicationService.getFilterInformationInOrganization(
+        allOrgs,
+        id,
+        req.user.permissions.isGlobalAdmin
+      );
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -113,10 +119,17 @@ export class ApplicationController {
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<ApplicationDashboardResponseDto> {
     try {
-      const whitelist = await this.getApplicationsWhiteList(req, id, req.user.permissions.isGlobalAdmin);
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
       return {
-        ...(await this.applicationService.countApplicationsWithError(id, whitelist)),
-        totalDevices: await this.applicationService.countAllDevices(id, whitelist),
+        ...(await this.applicationService.countApplicationsWithError(
+          id,
+          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+        )),
+        totalDevices: await this.applicationService.countAllDevices(
+          id,
+          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+        ),
       };
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
@@ -165,8 +178,12 @@ export class ApplicationController {
     @Query() query?: ListAllIotDevicesDto
   ): Promise<IoTDevice[]> {
     try {
-      const whitelist = await this.getApplicationsWhiteList(req, organizationId, req.user.permissions.isGlobalAdmin);
-      return await this.applicationService.getAllDevices(organizationId, query);
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      return await this.applicationService.getAllDevices(
+        organizationId,
+        query,
+        req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+      );
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -315,42 +332,5 @@ export class ApplicationController {
 
     const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
     return await this.applicationService.findAndCountInList(query, allowedApplications);
-  }
-
-  private async getFilterInformationInOrganization(
-    req: AuthenticatedRequest,
-    organizationId: number,
-    isGlobalAdmin: boolean
-  ) {
-    if (isGlobalAdmin) {
-      return await this.applicationService.findFilterInformation("admin", organizationId);
-    }
-
-    const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
-
-    if (allFromOrg.some(x => x === organizationId)) {
-      return await this.applicationService.findFilterInformation("admin", organizationId);
-    }
-
-    const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-    return await this.applicationService.findFilterInformation(allowedApplications, organizationId);
-  }
-
-  private async getApplicationsWhiteList(
-    req: AuthenticatedRequest,
-    organizationId: number,
-    isGlobalAdmin: boolean
-  ): Promise<number[] | null> {
-    if (isGlobalAdmin) {
-      return null;
-    }
-
-    const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
-
-    if (allFromOrg.some(x => x === organizationId)) {
-      return null;
-    }
-
-    return req.user.permissions.getAllApplicationsWithAtLeastRead();
   }
 }

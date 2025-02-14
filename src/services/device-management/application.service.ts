@@ -56,7 +56,7 @@ export class ApplicationService {
 
   async countApplicationsWithError(
     organizationId: number,
-    whitelist?: number[]
+    whitelist?: number[] | "admin"
   ): Promise<ApplicationsWithErrorsResponseDto> {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
@@ -66,7 +66,7 @@ export class ApplicationService {
       .leftJoin("app.dataTargets", "dataTargets")
       .andWhere("app.belongsToId = :organizationId", { organizationId: organizationId });
 
-    if (whitelist && whitelist.length > 0) {
+    if (whitelist !== "admin" && whitelist.length > 0) {
       queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
     }
 
@@ -87,14 +87,15 @@ export class ApplicationService {
       throw new Error("Database query failed");
     }
   }
-  async countAllDevices(organizationId: number, whitelist?: number[]): Promise<number> {
+
+  async countAllDevices(organizationId: number, whitelist?: number[] | "admin"): Promise<number> {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
       .leftJoinAndSelect("app.iotDevices", "device")
       .leftJoin("app.dataTargets", "dataTargets")
       .where("app.belongsToId = :organizationId", { organizationId });
 
-    if (whitelist && whitelist.length > 0) {
+    if (whitelist != "admin" && whitelist.length > 0) {
       queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
@@ -110,7 +111,7 @@ export class ApplicationService {
   async getAllDevices(
     organizationId: number,
     query?: ListAllIotDevicesDto,
-    whitelist?: number[] | null
+    whitelist?: number[] | "admin"
   ): Promise<IoTDevice[]> {
     const queryBuilder = this.iotDeviceRepository
       .createQueryBuilder("device")
@@ -120,7 +121,7 @@ export class ApplicationService {
       .addSelect(["latestMessage.id", "latestMessage.sentTime"])
       .where("app.belongsToId = :organizationId", { organizationId });
 
-    if (whitelist && whitelist.length > 0) {
+    if (whitelist !== "admin" && whitelist.length > 0) {
       queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
@@ -149,8 +150,7 @@ export class ApplicationService {
     }
 
     try {
-      const test = await queryBuilder.getMany();
-      return test;
+      return await queryBuilder.getMany();
     } catch (error) {
       console.error("Database query failed:", error);
       throw new Error("Database query failed");
@@ -168,14 +168,11 @@ export class ApplicationService {
       .leftJoinAndSelect("app.iotDevices", "device")
       .leftJoinAndSelect("app.belongsTo", "organization")
       .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
-      .leftJoinAndSelect("app.dataTargets", "dataTargets");
+      .leftJoinAndSelect("app.dataTargets", "dataTargets")
+      .andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
 
     if (whitelist && whitelist.length > 0) {
       queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
-    }
-
-    if (query.organizationId) {
-      queryBuilder.andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
     }
 
     if (query.status) {
@@ -338,7 +335,7 @@ export class ApplicationService {
     return await this.applicationRepository.findOneByOrFail({ id });
   }
 
-  async findFilterInformation(applicationIds: number[] | "admin", organizationId: number) {
+  async findOwnerFilterInformation(applicationIds: number[] | "admin", organizationId: number) {
     const query = this.applicationRepository
       .createQueryBuilder("application")
       .leftJoinAndSelect("application.belongsTo", "organization")
@@ -676,14 +673,22 @@ export class ApplicationService {
     }
     return orderBy;
   }
+
   private getSortingForApplications(query: ListAllEntitiesDto): Record<string, "ASC" | "DESC"> {
     const sorting: Record<string, "ASC" | "DESC"> = {};
 
-    if (query.orderOn === "statusCheck") {
-      return sorting;
-    }
-
-    if (query.orderOn) {
+    if (
+      query.orderOn != null &&
+      (query.orderOn === "id" ||
+        query.orderOn === "name" ||
+        query.orderOn === "updatedAt" ||
+        query.orderOn === "status" ||
+        query.orderOn === "startDate" ||
+        query.orderOn === "endDate" ||
+        query.orderOn === "owner" ||
+        query.orderOn === "contactPerson" ||
+        query.orderOn === "personalData")
+    ) {
       const sortOrder = query.sort.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
       sorting[`app.${query.orderOn}`] = sortOrder;
@@ -694,5 +699,17 @@ export class ApplicationService {
     }
 
     return sorting;
+  }
+
+  public async getFilterInformationInOrganization(
+    allowedOrganizations: number[],
+    organizationId: number,
+    isGlobalAdmin: boolean
+  ) {
+    if (isGlobalAdmin || allowedOrganizations.some(x => x === organizationId)) {
+      return await this.findOwnerFilterInformation("admin", organizationId);
+    }
+
+    return await this.findOwnerFilterInformation(allowedOrganizations, organizationId);
   }
 }
