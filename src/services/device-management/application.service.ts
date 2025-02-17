@@ -95,11 +95,11 @@ export class ApplicationService {
       .leftJoin("app.dataTargets", "dataTargets")
       .where("app.belongsToId = :organizationId", { organizationId });
 
-    if (whitelist != "admin" && whitelist.length > 0) {
+    if (whitelist !== "admin" && whitelist.length > 0) {
       queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
-    const count = await queryBuilder.select("COUNT(device.id)", "count").getRawOne();
+    const count = await queryBuilder.select("COUNT(DISTINCT(device.id))", "count").getRawOne();
 
     try {
       return count.count ? parseInt(count.count, 10) : 0;
