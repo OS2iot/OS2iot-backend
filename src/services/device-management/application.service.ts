@@ -1,33 +1,38 @@
+import { ApplicationsWithErrorsResponseDto } from "@dto/applications-dashboard-responses";
 import { CreateApplicationDto } from "@dto/create-application.dto";
-import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
+import {
+  ListAllApplicationsResponseDto,
+  ListAllApplicationsWithStatusResponseDto,
+} from "@dto/list-all-applications-response.dto";
 import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
+import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { ListAllIotDevicesDto } from "@dto/list-all-iot-devices.dto";
 import { LoRaWANDeviceWithChirpstackDataDto } from "@dto/lorawan-device-with-chirpstack-data.dto";
+import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { ApplicationDeviceType } from "@entities/application-device-type.entity";
 import { Application } from "@entities/application.entity";
 import { ControlledProperty } from "@entities/controlled-property.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
+import { Permission } from "@entities/permissions/permission.entity";
 import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
+import { DataTargetType } from "@enum/data-target-type.enum";
 import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
 import { nameof } from "@helpers/type-helper";
 import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { MulticastService } from "@services/chirpstack/multicast.service";
+import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
-import { DeleteResult, In, Repository } from "typeorm";
-import { DataTargetService } from "@services/data-targets/data-target.service";
-import { DataTargetType } from "@enum/data-target-type.enum";
-import { MulticastService } from "@services/chirpstack/multicast.service";
-import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
-import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
-import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
-import { Permission } from "@entities/permissions/permission.entity";
+import { Brackets, DeleteResult, In, Repository } from "typeorm";
 
 @Injectable()
 export class ApplicationService {
@@ -49,26 +54,186 @@ export class ApplicationService {
     private chirpstackApplicationService: ApplicationChirpstackService
   ) {}
 
-  async findAndCountInList(
-    query?: ListAllEntitiesDto,
-    whitelist?: number[],
-    allFromOrgs?: number[]
-  ): Promise<ListAllApplicationsResponseDto> {
-    const sorting = this.getSortingForApplications(query);
-    const orgCondition =
-      allFromOrgs != null ? { id: In(whitelist), belongsTo: In(allFromOrgs) } : { id: In(whitelist) };
-    const [result, total] = await this.applicationRepository.findAndCount({
-      where: orgCondition,
-      take: query.limit,
-      skip: query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
-      order: sorting,
-    });
+  async countApplicationsWithError(
+    organizationId: number,
+    whitelist?: number[] | "admin"
+  ): Promise<ApplicationsWithErrorsResponseDto> {
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoin("app.iotDevices", "device")
+      .leftJoin("app.belongsTo", "organization")
+      .leftJoin("device.latestReceivedMessage", "latestMessage")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .andWhere("app.belongsToId = :organizationId", { organizationId: organizationId });
 
-    return {
-      data: result,
-      count: total,
-    };
+    if (whitelist !== "admin" && whitelist.length > 0) {
+      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    queryBuilder.andWhere(
+      new Brackets(qb => {
+        qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+      })
+    );
+
+    try {
+      const [result, total] = await queryBuilder.getManyAndCount();
+
+      return {
+        withError: result.length,
+        total: total,
+      };
+    } catch (error) {
+      throw new Error("Database query failed");
+    }
+  }
+
+  async countAllDevices(organizationId: number, whitelist?: number[] | "admin"): Promise<number> {
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoinAndSelect("app.iotDevices", "device")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .where("app.belongsToId = :organizationId", { organizationId });
+
+    if (whitelist !== "admin" && whitelist.length > 0) {
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    const count = await queryBuilder.select("COUNT(DISTINCT(device.id))", "count").getRawOne();
+
+    try {
+      return count.count ? parseInt(count.count, 10) : 0;
+    } catch (error) {
+      throw new Error("Database query failed");
+    }
+  }
+
+  async getAllDevices(
+    organizationId: number,
+    query?: ListAllIotDevicesDto,
+    whitelist?: number[] | "admin"
+  ): Promise<IoTDevice[]> {
+    const queryBuilder = this.iotDeviceRepository
+      .createQueryBuilder("device")
+      .leftJoin("device.application", "app")
+      .leftJoin("app.dataTargets", "dataTargets")
+      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
+      .addSelect(["latestMessage.id", "latestMessage.sentTime"])
+      .where("app.belongsToId = :organizationId", { organizationId });
+
+    if (whitelist !== "admin" && whitelist.length > 0) {
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    if (query.status) {
+      queryBuilder.andWhere("app.status = :status", { status: query.status });
+    }
+
+    if (query.owner) {
+      queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
+    }
+
+    if (query.statusCheck === "alert") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    if (query.statusCheck === "stable") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    try {
+      return await queryBuilder.getMany();
+    } catch (error) {
+      console.error("Database query failed:", error);
+      throw new Error("Database query failed");
+    }
+  }
+
+  async findAndCountInList(
+    query?: ListAllApplicationsDto,
+    whitelist?: number[]
+  ): Promise<ListAllApplicationsWithStatusResponseDto> {
+    const sorting = this.getSortingForApplications(query);
+
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder("app")
+      .leftJoinAndSelect("app.iotDevices", "device")
+      .leftJoinAndSelect("app.belongsTo", "organization")
+      .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
+      .leftJoinAndSelect("app.dataTargets", "dataTargets")
+      .andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
+
+    if (whitelist && whitelist.length > 0) {
+      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+    }
+
+    if (query.status) {
+      queryBuilder.andWhere("app.status = :status", { status: query.status });
+    }
+
+    if (query.owner) {
+      queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
+    }
+
+    if (query.statusCheck === "alert") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    if (query.statusCheck === "stable") {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+    }
+
+    queryBuilder.orderBy(sorting);
+    queryBuilder.take(query.limit).skip(query.offset);
+
+    try {
+      const [result, total] = await queryBuilder.getManyAndCount();
+      const mappedResult = result.map(app => {
+        const latestMessage = app.iotDevices
+          ?.map(device => device.latestReceivedMessage)
+          .find(msg => msg !== undefined);
+        const hasDataTargets = app.dataTargets && app.dataTargets.length > 0;
+        const isLatestMessageOld = latestMessage
+          ? new Date(latestMessage.sentTime) < new Date(Date.now() - 24 * 60 * 60 * 1000)
+          : false;
+
+        let statusCheck: "stable" | "alert" = "stable";
+
+        if (!hasDataTargets || isLatestMessageOld) {
+          statusCheck = "alert";
+        }
+
+        return {
+          ...app,
+          statusCheck,
+        };
+      });
+
+      this.externalSortResult(query, mappedResult);
+
+      return {
+        data: mappedResult,
+        count: total,
+      };
+    } catch (error) {
+      throw new Error("Database query failed");
+    }
   }
 
   async findAndCountApplicationInWhitelistOrOrganization(
@@ -170,6 +335,21 @@ export class ApplicationService {
 
   async findOneWithoutRelations(id: number): Promise<Application> {
     return await this.applicationRepository.findOneByOrFail({ id });
+  }
+
+  async findOwnerFilterInformation(applicationIds: number[] | "admin", organizationId: number) {
+    const query = this.applicationRepository
+      .createQueryBuilder("application")
+      .leftJoinAndSelect("application.belongsTo", "organization")
+      .where("organization.id = :organizationId", { organizationId });
+
+    if (applicationIds !== "admin") {
+      query.where("application.id IN (:...applicationIds)", { applicationIds });
+    }
+
+    const result = await query.getMany();
+
+    return [...new Set(result.map(app => app.owner))];
   }
 
   async findOneWithOrganisation(id: number): Promise<Application> {
@@ -496,10 +676,10 @@ export class ApplicationService {
     return orderBy;
   }
 
-  private getSortingForApplications(query: ListAllEntitiesDto): Record<string, string | number> {
-    const sorting: Record<string, string | number> = {};
+  private getSortingForApplications(query: ListAllEntitiesDto): Record<string, "ASC" | "DESC"> {
+    const sorting: Record<string, "ASC" | "DESC"> = {};
+
     if (
-      // TODO: Make this nicer
       query.orderOn != null &&
       (query.orderOn === "id" ||
         query.orderOn === "name" ||
@@ -511,10 +691,27 @@ export class ApplicationService {
         query.orderOn === "contactPerson" ||
         query.orderOn === "personalData")
     ) {
-      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-    } else {
-      sorting["id"] = "ASC";
+      const sortOrder = query.sort.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+      sorting[`app.${query.orderOn}`] = sortOrder;
     }
+
+    if (Object.keys(sorting).length === 0) {
+      sorting["app.id"] = "ASC";
+    }
+
     return sorting;
+  }
+
+  public async getFilterInformationInOrganization(
+    allowedOrganizations: number[],
+    organizationId: number,
+    isGlobalAdmin: boolean
+  ) {
+    if (isGlobalAdmin || allowedOrganizations.some(x => x === organizationId)) {
+      return await this.findOwnerFilterInformation("admin", organizationId);
+    }
+
+    return await this.findOwnerFilterInformation(allowedOrganizations, organizationId);
   }
 }

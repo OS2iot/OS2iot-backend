@@ -30,6 +30,7 @@ import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 import { ApplicationAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { ApplicationDashboardResponseDto } from "@dto/applications-dashboard-responses";
 import { CreateApplicationDto } from "@dto/create-application.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
@@ -37,11 +38,13 @@ import { ListAllApplicationsDto } from "@dto/list-all-applications.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { ListAllIoTDevicesResponseDto } from "@dto/list-all-iot-devices-response.dto";
 import { IoTDevicesListToMapResponseDto } from "@dto/list-all-iot-devices-to-map-response.dto";
+import { ListAllIotDevicesDto } from "@dto/list-all-iot-devices.dto";
 import { UpdateApplicationOrganizationDto } from "@dto/update-application-organization.dto";
 import { UpdateApplicationDto } from "@dto/update-application.dto";
 import { Application } from "@entities/application.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
+import { IoTDevice } from "@entities/iot-device.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import {
   ApplicationAccessScope,
@@ -78,13 +81,59 @@ export class ApplicationController {
     @Query() query?: ListAllApplicationsDto
   ): Promise<ListAllApplicationsResponseDto> {
     if (req.user.permissions.isGlobalAdmin) {
-      return this.applicationService.findAndCountWithPagination(
-        query,
-        query.organizationId ? [+query.organizationId] : null
-      );
+      return this.applicationService.findAndCountInList(query);
     }
 
     return await this.getApplicationsForNonGlobalAdmin(req, query);
+  }
+
+  @Read()
+  @Get(":id/filter-information")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "returns filter information for application" })
+  @ApiNotFoundResponse()
+  async findFilterInformation(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<string[]> {
+    try {
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+      return await this.applicationService.getFilterInformationInOrganization(
+        allOrgs,
+        id,
+        req.user.permissions.isGlobalAdmin
+      );
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
+
+  @Read()
+  @Get(":id/application-dashboard-data")
+  @ApiProduces("application/json")
+  @ApiOperation({ summary: "returns applications dashboard data" })
+  @ApiNotFoundResponse()
+  async countApplicationWithError(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<ApplicationDashboardResponseDto> {
+    try {
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+
+      return {
+        ...(await this.applicationService.countApplicationsWithError(
+          id,
+          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+        )),
+        totalDevices: await this.applicationService.countAllDevices(
+          id,
+          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+        ),
+      };
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
   }
 
   @Read()
@@ -114,6 +163,27 @@ export class ApplicationController {
 
     try {
       return await this.applicationService.findDevicesForApplication(applicationId, query);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+  }
+
+  @Read()
+  @Get(":id/iot-devices-org")
+  @ApiOperation({ summary: "Find the IoTDevice of an organization" })
+  @ApiNotFoundResponse()
+  async findIoTDevicesForOrganization(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) organizationId: number,
+    @Query() query?: ListAllIotDevicesDto
+  ): Promise<IoTDevice[]> {
+    try {
+      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      return await this.applicationService.getAllDevices(
+        organizationId,
+        query,
+        req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+      );
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
@@ -257,10 +327,10 @@ export class ApplicationController {
     // User admins have access to all applications in the organization
     const allFromOrg = req.user.permissions.getAllOrganizationsWithUserAdmin();
     if (allFromOrg.some(x => x === query?.organizationId)) {
-      return await this.applicationService.findAndCountWithPagination(query, [query.organizationId]);
+      return await this.applicationService.findAndCountInList(query, null);
     }
 
     const allowedApplications = req.user.permissions.getAllApplicationsWithAtLeastRead();
-    return await this.applicationService.findAndCountInList(query, allowedApplications, [query.organizationId]);
+    return await this.applicationService.findAndCountInList(query, allowedApplications);
   }
 }
