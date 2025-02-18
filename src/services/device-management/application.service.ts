@@ -70,18 +70,20 @@ export class ApplicationService {
       queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
     }
 
-    queryBuilder.andWhere(
-      new Brackets(qb => {
-        qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
-      })
-    );
-
     try {
-      const [result, total] = await queryBuilder.getManyAndCount();
+      const totalApplications = await queryBuilder.getCount();
+
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+        })
+      );
+
+      const errorApplications = await queryBuilder.getCount();
 
       return {
-        withError: result.length,
-        total: total,
+        withError: errorApplications,
+        total: totalApplications,
       };
     } catch (error) {
       throw new Error("Database query failed");
@@ -169,6 +171,7 @@ export class ApplicationService {
       .leftJoinAndSelect("app.belongsTo", "organization")
       .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
       .leftJoinAndSelect("app.dataTargets", "dataTargets")
+      .leftJoinAndSelect("app.controlledProperties", "controlledProperties")
       .andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
 
     if (whitelist && whitelist.length > 0) {
@@ -277,29 +280,6 @@ export class ApplicationService {
       data: result,
       count: total,
     };
-  }
-
-  // Some sorting fields can't be done in the database
-  private externalSortResult(query: ListAllEntitiesDto, result: Application[]) {
-    // Since openDataDkEnabled is not a database attribute sorting has to be done manually after reading
-    if (query.orderOn === "openDataDkEnabled") {
-      result.sort(
-        (a, b) =>
-          (query.sort.toLowerCase() === "asc" ? -1 : 1) *
-          (Number(!!a.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)) -
-            Number(!!b.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)))
-      );
-    }
-    if (query.orderOn === "devices") {
-      result.sort(
-        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.iotDevices.length - b.iotDevices.length)
-      );
-    }
-    if (query.orderOn === "dataTargets") {
-      result.sort(
-        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.dataTargets.length - b.dataTargets.length)
-      );
-    }
   }
 
   async getApplicationsOnPermissionId(
@@ -531,48 +511,6 @@ export class ApplicationService {
     return false;
   }
 
-  private async mapApplicationDtoToApplication(
-    applicationDto: CreateApplicationDto | UpdateApplicationDto,
-    application: Application,
-    userId: number
-  ): Promise<Application> {
-    application.name = applicationDto.name;
-    application.description = applicationDto.description;
-    application.belongsTo = await this.organizationService.findById(applicationDto.organizationId);
-    application.status = applicationDto.status;
-    // Setting a date to 'undefined' will set it to today in the database
-    application.startDate = applicationDto.startDate ?? null;
-    application.endDate = applicationDto.endDate ?? null;
-    application.category = applicationDto.category;
-    application.owner = applicationDto.owner;
-    application.contactPerson = applicationDto.contactPerson;
-    application.contactEmail = applicationDto.contactEmail;
-    application.contactPhone = applicationDto.contactPhone;
-    application.personalData = applicationDto.personalData;
-    application.hardware = applicationDto.hardware;
-    application.permissions = await this.permissionService.findManyByIds(applicationDto.permissionIds);
-
-    // Set metadata dependencies
-    application.controlledProperties = applicationDto.controlledProperties
-      ? this.buildControlledPropertyDeviceType(
-          ControlledPropertyTypes,
-          applicationDto.controlledProperties,
-          userId,
-          ControlledProperty
-        )
-      : undefined;
-    application.deviceTypes = applicationDto.deviceTypes
-      ? this.buildControlledPropertyDeviceType(
-          ApplicationDeviceTypes,
-          applicationDto.deviceTypes,
-          userId,
-          ApplicationDeviceType
-        )
-      : undefined;
-
-    return application;
-  }
-
   buildControlledPropertyDeviceType<
     T extends Record<string, string>,
     Entity extends ControlledProperty | ApplicationDeviceType
@@ -649,6 +587,83 @@ export class ApplicationService {
     return deviceList;
   }
 
+  public async getFilterInformationInOrganization(
+    allowedOrganizations: number[],
+    organizationId: number,
+    isGlobalAdmin: boolean
+  ) {
+    if (isGlobalAdmin || allowedOrganizations.some(x => x === organizationId)) {
+      return await this.findOwnerFilterInformation("admin", organizationId);
+    }
+
+    return await this.findOwnerFilterInformation(allowedOrganizations, organizationId);
+  }
+
+  // Some sorting fields can't be done in the database
+  private externalSortResult(query: ListAllEntitiesDto, result: Application[]) {
+    // Since openDataDkEnabled is not a database attribute sorting has to be done manually after reading
+    if (query.orderOn === "openDataDkEnabled") {
+      result.sort(
+        (a, b) =>
+          (query.sort.toLowerCase() === "asc" ? -1 : 1) *
+          (Number(!!a.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)) -
+            Number(!!b.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)))
+      );
+    }
+    if (query.orderOn === "devices") {
+      result.sort(
+        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.iotDevices.length - b.iotDevices.length)
+      );
+    }
+    if (query.orderOn === "dataTargets") {
+      result.sort(
+        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.dataTargets.length - b.dataTargets.length)
+      );
+    }
+  }
+
+  private async mapApplicationDtoToApplication(
+    applicationDto: CreateApplicationDto | UpdateApplicationDto,
+    application: Application,
+    userId: number
+  ): Promise<Application> {
+    application.name = applicationDto.name;
+    application.description = applicationDto.description;
+    application.belongsTo = await this.organizationService.findById(applicationDto.organizationId);
+    application.status = applicationDto.status;
+    // Setting a date to 'undefined' will set it to today in the database
+    application.startDate = applicationDto.startDate ?? null;
+    application.endDate = applicationDto.endDate ?? null;
+    application.category = applicationDto.category;
+    application.owner = applicationDto.owner;
+    application.contactPerson = applicationDto.contactPerson;
+    application.contactEmail = applicationDto.contactEmail;
+    application.contactPhone = applicationDto.contactPhone;
+    application.personalData = applicationDto.personalData;
+    application.hardware = applicationDto.hardware;
+    application.permissions = await this.permissionService.findManyByIds(applicationDto.permissionIds);
+
+    // Set metadata dependencies
+    application.controlledProperties = applicationDto.controlledProperties
+      ? this.buildControlledPropertyDeviceType(
+          ControlledPropertyTypes,
+          applicationDto.controlledProperties,
+          userId,
+          ControlledProperty
+        )
+      : undefined;
+    application.deviceTypes = applicationDto.deviceTypes
+      ? this.buildControlledPropertyDeviceType(
+          ApplicationDeviceTypes,
+          applicationDto.deviceTypes,
+          userId,
+          ApplicationDeviceType
+        )
+      : undefined;
+
+    return application;
+  }
+
   private getSortingForIoTDevices(query: ListAllEntitiesDto) {
     let orderBy = `iot_device.id`;
     if (
@@ -701,17 +716,5 @@ export class ApplicationService {
     }
 
     return sorting;
-  }
-
-  public async getFilterInformationInOrganization(
-    allowedOrganizations: number[],
-    organizationId: number,
-    isGlobalAdmin: boolean
-  ) {
-    if (isGlobalAdmin || allowedOrganizations.some(x => x === organizationId)) {
-      return await this.findOwnerFilterInformation("admin", organizationId);
-    }
-
-    return await this.findOwnerFilterInformation(allowedOrganizations, organizationId);
   }
 }
