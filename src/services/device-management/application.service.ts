@@ -56,7 +56,7 @@ export class ApplicationService {
 
   async countApplicationsWithError(
     organizationId: number,
-    whitelist?: number[] | "admin"
+    whitelist: number[] | "admin"
   ): Promise<ApplicationsWithErrorsResponseDto> {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
@@ -64,10 +64,10 @@ export class ApplicationService {
       .leftJoin("app.belongsTo", "organization")
       .leftJoin("device.latestReceivedMessage", "latestMessage")
       .leftJoin("app.dataTargets", "dataTargets")
-      .andWhere("app.belongsToId = :organizationId", { organizationId: organizationId });
+      .where("app.belongsToId = :organizationId", { organizationId: organizationId });
 
     if (whitelist !== "admin" && whitelist.length > 0) {
-      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
     try {
@@ -90,7 +90,7 @@ export class ApplicationService {
     }
   }
 
-  async countAllDevices(organizationId: number, whitelist?: number[] | "admin"): Promise<number> {
+  async countAllDevices(organizationId: number, whitelist: number[] | "admin"): Promise<number> {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
       .leftJoinAndSelect("app.iotDevices", "device")
@@ -175,7 +175,7 @@ export class ApplicationService {
       .andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
 
     if (whitelist && whitelist.length > 0) {
-      queryBuilder.where("app.id IN (:...whitelist)", { whitelist });
+      queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
     if (query.status) {
