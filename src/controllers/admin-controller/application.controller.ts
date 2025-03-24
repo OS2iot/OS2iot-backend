@@ -63,9 +63,9 @@ import { ApplicationService } from "@services/device-management/application.serv
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class ApplicationController {
-  constructor(private applicationService: ApplicationService) {}
-
   private readonly logger = new Logger(ApplicationController.name);
+
+  constructor(private applicationService: ApplicationService) {}
 
   @Read()
   @Get()
@@ -116,19 +116,20 @@ export class ApplicationController {
   @ApiNotFoundResponse()
   async countApplicationWithError(
     @Req() req: AuthenticatedRequest,
-    @Param("id", new ParseIntPipe()) id: number
+    @Param("id", new ParseIntPipe()) organizationId: number
   ): Promise<ApplicationDashboardResponseDto> {
     try {
-      const allOrgs = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      checkIfUserHasAccessToOrganization(req, organizationId, OrganizationAccessScope.ApplicationRead);
+      const whitelist = req.user.permissions.getAllApplicationsWithAtLeastRead();
 
       return {
         ...(await this.applicationService.countApplicationsWithError(
-          id,
-          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+          organizationId,
+          req.user.permissions.isGlobalAdmin ? "admin" : whitelist
         )),
         totalDevices: await this.applicationService.countAllDevices(
-          id,
-          req.user.permissions.isGlobalAdmin ? "admin" : allOrgs
+          organizationId,
+          req.user.permissions.isGlobalAdmin ? "admin" : whitelist
         ),
       };
     } catch (err) {
