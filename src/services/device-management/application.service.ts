@@ -138,7 +138,7 @@ export class ApplicationService {
     if (query.statusCheck === "alert") {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+          qb.andWhere("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
         })
       );
     }
@@ -146,7 +146,7 @@ export class ApplicationService {
     if (query.statusCheck === "stable") {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+          qb.where("dataTargets.id IS NOT NULL").andWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
         })
       );
     }
@@ -186,31 +186,16 @@ export class ApplicationService {
       queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
     }
 
-    if (query.statusCheck === "alert") {
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
-        })
-      );
-    }
-
-    if (query.statusCheck === "stable") {
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          qb.where("dataTargets.id IS NOT NULL").orWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
-        })
-      );
-    }
-
     queryBuilder.orderBy(sorting);
     queryBuilder.take(query.limit).skip(query.offset);
 
     try {
       const [result, total] = await queryBuilder.getManyAndCount();
-      const mappedResult = result.map(app => {
+      let mappedResult = result.map(app => {
         const latestMessage = app.iotDevices
           ?.map(device => device.latestReceivedMessage)
-          .find(msg => msg !== undefined);
+          .sort((a, b) => (a?.sentTime > b?.sentTime ? 1 : -1))
+          .find(msg => msg != undefined);
         const hasDataTargets = app.dataTargets && app.dataTargets.length > 0;
         const isLatestMessageOld = latestMessage
           ? new Date(latestMessage.sentTime) < new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -227,6 +212,12 @@ export class ApplicationService {
           statusCheck,
         };
       });
+
+      if (query.statusCheck === "stable") {
+        mappedResult = mappedResult.filter(a => a.statusCheck === "stable");
+      } else if (query.statusCheck === "alert") {
+        mappedResult = mappedResult.filter(a => a.statusCheck === "alert");
+      }
 
       this.externalSortResult(query, mappedResult);
 
@@ -558,7 +549,11 @@ export class ApplicationService {
     ) as LoRaWANDeviceWithChirpstackDataDto[];
 
     for (const device of loraDevices) {
-      await this.chirpstackDeviceService.enrichLoRaWANDevice(device);
+      try {
+        await this.chirpstackDeviceService.enrichLoRaWANDevice(device);
+      } catch {
+        // ignored
+      }
     }
 
     return {
