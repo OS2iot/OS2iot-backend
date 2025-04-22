@@ -42,5 +42,6 @@ export class ListAllEntitiesDto {
     | "devices"
     | "dataTargets"
     | "organizationName"
-    | "commentOnLocation";
+    | "commentOnLocation"
+    | "statusCheck";
 }
