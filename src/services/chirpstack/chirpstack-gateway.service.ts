@@ -645,7 +645,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     const receivedPackages = gatewayStats[0].rxPacketsReceived;
 
-    if (gateway.minimumPackages < receivedPackages && receivedPackages < gateway.maximumPackages) {
+    if (gateway.minimumPackages <= receivedPackages && receivedPackages <= gateway.maximumPackages) {
       return;
     }
 
