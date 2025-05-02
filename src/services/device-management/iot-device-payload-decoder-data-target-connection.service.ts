@@ -12,6 +12,7 @@ import { PayloadDecoderService } from "@services/data-management/payload-decoder
 import { DataTargetService } from "@services/data-targets/data-target.service";
 
 import { IoTDeviceService } from "./iot-device.service";
+import { IoTDevice } from "@entities/iot-device.entity";
 
 @Injectable()
 export class IoTDevicePayloadDecoderDataTargetConnectionService {
@@ -171,6 +172,27 @@ export class IoTDevicePayloadDecoderDataTargetConnectionService {
     const mapped = await this.mapDtoToConnection(connection, updateConnectionDto);
     mapped.updatedBy = userId;
     return await this.repository.save(mapped);
+  }
+
+  async appendCopiedDevice(
+    id: number,
+    iotDevice: IoTDevice,
+    userId: number
+  ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
+    let connection;
+    try {
+      connection = await this.repository.findOneOrFail({
+        where: { id },
+        relations: ["iotDevices"],
+      });
+    } catch (err) {
+      throw new NotFoundException(`Could not find IoTDevicePayloadDecoderDataTargetConnection by id: ${id}`);
+    }
+
+    connection.iotDevices.push(iotDevice);
+    connection.updatedBy = userId;
+
+    return await this.repository.save(connection);
   }
 
   async delete(id: number): Promise<DeleteResult> {
