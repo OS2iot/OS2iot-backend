@@ -43,5 +43,6 @@ export class ListAllEntitiesDto {
     | "dataTargets"
     | "organizationName"
     | "commentOnLocation"
-    | "statusCheck";
+    | "statusCheck"
+    | "expiresOn";
 }

@@ -5,7 +5,7 @@ import { ListAllApiKeysResponseDto } from "@dto/api-key/list-all-api-keys-respon
 import { ListAllApiKeysDto } from "@dto/api-key/list-all-api-keys.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { ApiKey } from "@entities/api-key.entity";
-import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Repository } from "typeorm";
@@ -21,7 +21,6 @@ export class ApiKeyService {
     @Inject(forwardRef(() => PermissionService))
     private permissionService: PermissionService
   ) {}
-  private readonly logger = new Logger(ApiKeyService.name, { timestamp: true });
 
   findOne(key: string): Promise<ApiKey> {
     return this.apiKeyRepository.findOne({
@@ -61,7 +60,7 @@ export class ApiKeyService {
     }
 
     if (query.orderOn && query.sort) {
-      dbQuery = dbQuery.orderBy(`api_key.${query.orderOn}`, query.sort.toUpperCase() as "ASC" | "DESC");
+      dbQuery = dbQuery.orderBy(`api_key.${query.orderOn}`, query.sort.toUpperCase() as "ASC" | "DESC", "NULLS LAST");
     }
 
     const [data, count] = await dbQuery.getManyAndCount();
@@ -79,6 +78,7 @@ export class ApiKeyService {
     apiKey.name = dto.name;
     apiKey.updatedBy = userId;
     apiKey.createdBy = userId;
+    apiKey.expiresOn = dto.expiresOn;
 
     // Create the system user
     const systemUser = new User();
@@ -86,6 +86,7 @@ export class ApiKeyService {
     systemUser.isSystemUser = true;
     systemUser.passwordHash = uuidv4(); // Random password, user can never log in
     systemUser.name = apiKey.name;
+    systemUser.expiresOn = dto.expiresOn;
     apiKey.systemUser = systemUser;
 
     if (dto.permissionIds?.length > 0) {
@@ -101,6 +102,7 @@ export class ApiKeyService {
     const apiKey = await this.findOneByIdWithRelations(id);
     apiKey.name = dto.name;
     apiKey.updatedBy = userId;
+    apiKey.expiresOn = dto.expiresOn;
 
     if (dto.permissionIds?.length) {
       const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);

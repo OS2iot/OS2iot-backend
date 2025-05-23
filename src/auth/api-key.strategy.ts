@@ -26,6 +26,9 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, ApiKe
     if (!apiKeyDb) {
       throw new UnauthorizedException(ErrorCodes.ApiKeyAuthFailed);
     }
+    if (apiKeyDb.expiresOn < new Date()) {
+      throw new UnauthorizedException(ErrorCodes.ApiKeyExpired);
+    }
 
     // Get the permissions and the UserID from the API Key instead of the user
     const permissions = await this.permissionService.findPermissionGroupedByLevelForApiKey(apiKeyDb.id);

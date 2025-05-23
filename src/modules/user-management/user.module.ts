@@ -1,4 +1,4 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { SharedModule } from "@modules/shared.module";
 import { PermissionModule } from "@modules/user-management/permission.module";
@@ -9,6 +9,7 @@ import { OrganizationModule } from "./organization.module";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "@config/configuration";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
+import { TemporaryAccessService } from "@services/temporary-access.service";
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { OS2IoTMail } from "@services/os2iot-mail.service";
     forwardRef(() => OrganizationModule),
   ],
   controllers: [UserController],
-  providers: [UserService, UserBootstrapperService, OS2IoTMail],
+  providers: [TemporaryAccessService, UserService, UserBootstrapperService, OS2IoTMail],
   exports: [UserService],
 })
 export class UserModule {}

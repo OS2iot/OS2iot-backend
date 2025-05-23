@@ -14,14 +14,13 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-
-import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 import { ApplicationAdmin, GatewayAdmin, GlobalAdmin, Read, UserAdmin } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -38,20 +37,20 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
-import { PermissionType } from "@enum/permission-type.enum";
+import { ComposeAuthGuard } from "@auth/compose-auth.guard";
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiAuth()
+@UseGuards(ComposeAuthGuard, RolesGuard)
+@ApiBearerAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("Organization")
 @Controller("organization")
 @GlobalAdmin()
 export class OrganizationController {
-  constructor(private organizationService: OrganizationService) {}
   private readonly logger = new Logger(OrganizationController.name);
+
+  constructor(private organizationService: OrganizationService) {}
 
   @Post()
   @ApiOperation({ summary: "Create a new Organization" })
