@@ -1,5 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { ArrayNotEmpty, ArrayUnique, IsArray, IsString, Length } from "class-validator";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
+import { ValidateDate } from "@helpers/date.validator";
 
 export class CreateApiKeyDto {
   @ApiProperty({ required: true })
@@ -18,4 +20,8 @@ export class CreateApiKeyDto {
   @ArrayNotEmpty()
   @ArrayUnique()
   permissionIds: number[];
+
+  @IsSwaggerOptional()
+  @ValidateDate()
+  expiresOn?: Date;
 }

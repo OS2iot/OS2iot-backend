@@ -50,4 +50,7 @@ export class User extends DbBaseEntity {
 
   @Column({ default: false })
   showWelcomeScreen: boolean;
+
+  @Column({ nullable: true })
+  expiresOn?: Date;
 }
