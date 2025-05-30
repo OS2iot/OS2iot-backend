@@ -206,33 +206,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     }
   }
 
-  @Delete(":id")
-  @ApplicationAdmin()
-  @ApiNotFoundResponse({
-    description: "If the id of the entity doesn't exist",
-  })
-  async delete(
-    @Req() req: AuthenticatedRequest,
-    @Param("id", new ParseIntPipe()) id: number
-  ): Promise<DeleteResponseDto> {
-    try {
-      const oldConnection = await this.service.findOne(id);
-      await this.checkUserHasWriteAccessToAllIotDevices(
-        oldConnection.iotDevices.map(x => x.id),
-        req
-      );
-      const result = await this.service.delete(id);
-      if (result.affected === 0) {
-        throw new NotFoundException(ErrorCodes.IdDoesNotExists);
-      }
-      AuditLog.success(ActionType.DELETE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
-      return new DeleteResponseDto(result.affected);
-    } catch (err) {
-      AuditLog.fail(ActionType.DELETE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
-      throw err;
-    }
-  }
-
   @Put("appendCopiedDevice/:id")
   @ApplicationAdmin()
   @ApiNotFoundResponse({
@@ -256,6 +229,33 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
       return result;
     } catch (err) {
       AuditLog.fail(ActionType.UPDATE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
+      throw err;
+    }
+  }
+
+  @Delete(":id")
+  @ApplicationAdmin()
+  @ApiNotFoundResponse({
+    description: "If the id of the entity doesn't exist",
+  })
+  async delete(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<DeleteResponseDto> {
+    try {
+      const oldConnection = await this.service.findOne(id);
+      await this.checkUserHasWriteAccessToAllIotDevices(
+        oldConnection.iotDevices.map(x => x.id),
+        req
+      );
+      const result = await this.service.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+      }
+      AuditLog.success(ActionType.DELETE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
+      return new DeleteResponseDto(result.affected);
+    } catch (err) {
+      AuditLog.fail(ActionType.DELETE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
       throw err;
     }
   }
