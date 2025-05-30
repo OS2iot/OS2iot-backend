@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
-import { In, Repository } from "typeorm";
+import { In, LessThan, Repository } from "typeorm";
 
 import { CreateUserDto } from "@dto/user-management/create-user.dto";
 import { UpdateUserDto } from "@dto/user-management/update-user.dto";
@@ -26,6 +26,8 @@ import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name, { timestamp: true });
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -34,8 +36,6 @@ export class UserService {
     private configService: ConfigService,
     private oS2IoTMail: OS2IoTMail
   ) {}
-
-  private readonly logger = new Logger(UserService.name, { timestamp: true });
 
   async isEmailUsedByAUser(email: string): Promise<boolean> {
     return (
@@ -126,6 +126,20 @@ export class UserService {
     ).permissions;
   }
 
+  async disableExpiredUsers() {
+    const now = new Date();
+
+    const users = await this.userRepository.find({
+      where: { expiresOn: LessThan(now), active: true },
+    });
+
+    for (const user of users) {
+      user.active = false;
+    }
+
+    await this.userRepository.save(users);
+  }
+
   async updateLastLoginToNow(user: User): Promise<void> {
     await this.userRepository
       .createQueryBuilder()
@@ -167,52 +181,6 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  private async mapKombitLoginProfileToUser(user: User, profile: Profile): Promise<void> {
-    user.active = true;
-    user.nameId = profile.nameID;
-    user.name = this.extractNameFromNameIDSAMLAttribute(profile.nameID);
-    user.active = true;
-  }
-
-  private extractNameFromNameIDSAMLAttribute(nameId: string): string {
-    return nameId
-      ?.split(",")
-      ?.find(x => x.startsWith("CN="))
-      ?.split("=")
-      ?.pop();
-  }
-
-  private async setPasswordHash(mappedUser: User, password: string) {
-    this.checkPassword(password);
-    // Hash password with bcrpyt
-    const salt = await bcrypt.genSalt(10);
-    mappedUser.passwordHash = await bcrypt.hash(password, salt);
-  }
-
-  private checkPassword(password: string) {
-    if (password.length < 6) {
-      throw new BadRequestException(ErrorCodes.PasswordNotMetRequirements);
-    }
-  }
-
-  private mapDtoToUser(user: User, dto: UpdateUserDto): User {
-    if (user.nameId != null) {
-      if (dto.name && user.name != dto.name) {
-        throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-      }
-      if (dto.password) {
-        throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
-      }
-    }
-
-    user.name = dto.name;
-    user.email = dto.email;
-    user.permissions = user.permissions ? user.permissions : [];
-    user.active = dto.active;
-
-    return user;
-  }
-
   async updateUser(id: number, dto: UpdateUserDto, userId: number, req: AuthenticatedRequest): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
@@ -239,32 +207,6 @@ export class UserService {
     return await this.userRepository.save(mappedUser);
   }
 
-  private checkForAccessToPermissions(req: AuthenticatedRequest, permissions: Permission[]) {
-    const allowedOrganizations = req?.user.permissions.getAllOrganizationsWithUserAdmin();
-    if (!req.user.permissions.isGlobalAdmin) {
-      const hasAccessToPermissions = permissions.every(permission =>
-        allowedOrganizations.some(org => org === permission.organization?.id)
-      );
-
-      if (!hasAccessToPermissions) {
-        throw new ForbiddenException();
-      }
-    }
-  }
-
-  private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
-    if (dto.globalAdmin) {
-      const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-      // Don't do anything if the user already is global admin.
-      if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
-        await this.permissionService.addUsersToPermission(globalAdminPermission, [mappedUser]);
-      }
-    } else {
-      const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
-      await this.permissionService.removeUserFromPermission(globalAdminPermission, mappedUser);
-    }
-  }
-
   async newKombitUser(dto: CreateNewKombitUserDto, requestedOrganizations: Organization[], user: User): Promise<User> {
     user.email = dto.email;
     user.awaitingConfirmation = true;
@@ -280,7 +222,10 @@ export class UserService {
 
   async findAll(query?: ListAllEntitiesDto): Promise<ListAllUsersResponseDto> {
     const sorting: { [id: string]: string | number } = {};
-    if (query.orderOn != null && (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin")) {
+    if (
+      query.orderOn != null &&
+      (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin" || query.orderOn == "expiresOn")
+    ) {
       sorting[query.orderOn] = query.sort.toLocaleUpperCase();
     } else {
       sorting["id"] = "ASC";
@@ -467,6 +412,79 @@ export class UserService {
       return false;
     } else {
       return !!value;
+    }
+  }
+
+  private async mapKombitLoginProfileToUser(user: User, profile: Profile): Promise<void> {
+    user.active = true;
+    user.nameId = profile.nameID;
+    user.name = this.extractNameFromNameIDSAMLAttribute(profile.nameID);
+    user.active = true;
+  }
+
+  private extractNameFromNameIDSAMLAttribute(nameId: string): string {
+    return nameId
+      ?.split(",")
+      ?.find(x => x.startsWith("CN="))
+      ?.split("=")
+      ?.pop();
+  }
+
+  private async setPasswordHash(mappedUser: User, password: string) {
+    this.checkPassword(password);
+    // Hash password with bcrpyt
+    const salt = await bcrypt.genSalt(10);
+    mappedUser.passwordHash = await bcrypt.hash(password, salt);
+  }
+
+  private checkPassword(password: string) {
+    if (password.length < 6) {
+      throw new BadRequestException(ErrorCodes.PasswordNotMetRequirements);
+    }
+  }
+
+  private mapDtoToUser(user: User, dto: UpdateUserDto): User {
+    if (user.nameId != null) {
+      if (dto.name && user.name != dto.name) {
+        throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
+      }
+      if (dto.password) {
+        throw new BadRequestException(ErrorCodes.CannotModifyOnKombitUser);
+      }
+    }
+
+    user.name = dto.name;
+    user.email = dto.email;
+    user.permissions = user.permissions ? user.permissions : [];
+    user.active = dto.active;
+    user.expiresOn = dto.expiresOn;
+
+    return user;
+  }
+
+  private checkForAccessToPermissions(req: AuthenticatedRequest, permissions: Permission[]) {
+    const allowedOrganizations = req?.user.permissions.getAllOrganizationsWithUserAdmin();
+    if (!req.user.permissions.isGlobalAdmin) {
+      const hasAccessToPermissions = permissions.every(permission =>
+        allowedOrganizations.some(org => org === permission.organization?.id)
+      );
+
+      if (!hasAccessToPermissions) {
+        throw new ForbiddenException();
+      }
+    }
+  }
+
+  private async updateGlobalAdminStatusIfNeeded(dto: UpdateUserDto, mappedUser: User) {
+    if (dto.globalAdmin) {
+      const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+      // Don't do anything if the user already is global admin.
+      if (!mappedUser.permissions.some(x => x.id == globalAdminPermission.id)) {
+        await this.permissionService.addUsersToPermission(globalAdminPermission, [mappedUser]);
+      }
+    } else {
+      const globalAdminPermission = await this.permissionService.findOrCreateGlobalAdminPermission();
+      await this.permissionService.removeUserFromPermission(globalAdminPermission, mappedUser);
     }
   }
 }

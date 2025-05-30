@@ -27,6 +27,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -38,10 +39,9 @@ import { AuditLog } from "@services/audit-log.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
 import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiAuth()
+@ApiBearerAuth()
 @UserAdmin()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()

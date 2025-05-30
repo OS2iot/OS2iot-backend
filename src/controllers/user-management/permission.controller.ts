@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -49,11 +50,10 @@ import { PermissionRequestAcceptUser } from "@dto/user-management/add-user-to-pe
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
 import { User } from "@entities/user.entity";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { ListAllPermissionsSlimResponseDto } from "@dto/list-all-permissions-slim-response.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiAuth()
+@ApiBearerAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("Permission")
