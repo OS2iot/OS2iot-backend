@@ -41,6 +41,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { AppendCopiedDeviceDto } from "@dto/append-copied-device.dto";
 
 @ApiTags("IoT-Device, PayloadDecoder and DataTarget Connection")
 @Controller("iot-device-payload-decoder-data-target-connection")
@@ -202,6 +203,33 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     const oldIds = oldConnection.iotDevices.map(x => x.id);
     if (updateDto.iotDeviceIds != oldIds) {
       await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
+    }
+  }
+
+  @Put("appendCopiedDevice/:id")
+  @ApplicationAdmin()
+  @ApiNotFoundResponse({
+    description: "If the id of the entity doesn't exist",
+  })
+  @ApiBadRequestResponse({
+    description: "If one or more of the id's are invalid references.",
+  })
+  async appendCopiedDevice(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number,
+    @Body() dto: AppendCopiedDeviceDto
+  ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
+    try {
+      const newIotDevice = await this.iotDeviceService.findOne(dto.deviceId);
+      checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
+
+      const result = await this.service.appendCopiedDevice(id, newIotDevice, req.user.userId);
+
+      AuditLog.success(ActionType.UPDATE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, result.id);
+      return result;
+    } catch (err) {
+      AuditLog.fail(ActionType.UPDATE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
+      throw err;
     }
   }
 
