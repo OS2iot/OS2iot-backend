@@ -8,6 +8,7 @@ import * as dotenv from "dotenv";
 import { setupNestJs } from "@loaders/nestjs";
 import { setupSwagger } from "@loaders/swagger";
 import configuration from "@config/configuration";
+import helmet from "helmet";
 
 async function bootstrap() {
   // Load .env file as environment before startup.
@@ -21,6 +22,16 @@ async function bootstrap() {
     LOG_LEVELS: configuration()["logLevels"],
   };
   const server = express();
+
+  // Set security headers using Helmet
+  server.use(
+    helmet({
+      referrerPolicy: { policy: "no-referrer-when-downgrade" },
+      xFrameOptions: { action: "deny" },
+      hidePoweredBy: true,
+      strictTransportSecurity: { maxAge: 63072000, includeSubDomains: true, preload: true },
+    })
+  );
 
   const app = await setupNestJs(config, server);
   setupSwagger(app, config.SWAGGER_PREFIX);
