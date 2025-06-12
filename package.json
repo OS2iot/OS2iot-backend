@@ -62,6 +62,7 @@
         "cookie-parser": "^1.4.5",
         "crypto-js": "^4.2.0",
         "dayjs": "^1.11.13",
+        "helmet": "^8.1.0",
         "kafkajs": "^2.2.4",
         "lodash": "^4.17.20",
         "mqtt": "^4.3.7",
