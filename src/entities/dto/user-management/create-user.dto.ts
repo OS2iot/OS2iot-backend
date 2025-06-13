@@ -1,7 +1,8 @@
-import { Permission } from "@entities/permissions/permission.entity";
 import { IsNotBlank } from "@helpers/is-not-blank.validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsString, Length } from "class-validator";
+import { IsSwaggerOptional } from "@helpers/optional-validator";
+import { ValidateDate } from "@helpers/date.validator";
 
 export class CreateUserDto {
   @ApiProperty({ required: true })
@@ -27,4 +28,8 @@ export class CreateUserDto {
 
   @ApiProperty({ required: false })
   permissionIds?: number[];
+
+  @IsSwaggerOptional()
+  @ValidateDate()
+  expiresOn?: Date;
 }

@@ -15,7 +15,7 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
-import { ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { QueryFailedError } from "typeorm";
 
 import { JwtAuthGuard } from "@auth/jwt-auth.guard";
@@ -41,19 +41,18 @@ import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { Organization } from "@entities/organization.entity";
 import { RejectUserDto } from "@dto/user-management/reject-user.dto";
-import { ApiAuth } from "@auth/swagger-auth-decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UserAdmin()
-@ApiAuth()
+@ApiBearerAuth()
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 @ApiTags("User Management")
 @Controller("user")
 export class UserController {
-  constructor(private userService: UserService, private organizationService: OrganizationService) {}
-
   private readonly logger = new Logger(UserController.name);
+
+  constructor(private userService: UserService, private organizationService: OrganizationService) {}
 
   @Get("minimal")
   @ApiOperation({ summary: "Get all id,names of users" })

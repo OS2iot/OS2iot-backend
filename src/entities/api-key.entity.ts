@@ -23,4 +23,7 @@ export class ApiKey extends DbBaseEntity {
   })
   @JoinColumn()
   systemUser: User;
+
+  @Column({ nullable: true })
+  expiresOn?: Date;
 }

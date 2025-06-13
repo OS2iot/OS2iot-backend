@@ -38,6 +38,7 @@ export enum ErrorCodes {
   DeleteNotAllowedHasLoRaWANDevices = "MESSAGE.DELETE-NOT-ALLOWED-HAS-LORAWAN-DEVICE",
   KOMBITLoginFailed = "MESSAGE.KOMBIT-LOGIN-FAILED",
   ApiKeyAuthFailed = "MESSAGE.API-KEY-AUTH-FAILED",
+  ApiKeyExpired = "MESSAGE.API-KEY-EXPIRED",
   TooMuchData = "MESSAGE.TOO-MUCH-DATA",
   ApplicationDoesNotExist = "MESSAGE.APPLICATION-DOES-NOT-EXIST",
   FailedToCreateOrUpdateIotDevice = "MESSAGE.FAILED-TO-CREATE-OR-UPDATE-IOT-DEVICE",
