@@ -171,8 +171,11 @@ export class ApplicationService {
       .leftJoinAndSelect("app.belongsTo", "organization")
       .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
       .leftJoinAndSelect("app.dataTargets", "dataTargets")
-      .leftJoinAndSelect("app.controlledProperties", "controlledProperties")
-      .andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
+      .leftJoinAndSelect("app.controlledProperties", "controlledProperties");
+
+    if (query.organizationId) {
+      queryBuilder.andWhere("app.belongsToId = :organizationId", { organizationId: query.organizationId });
+    }
 
     if (whitelist && whitelist.length > 0) {
       queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
