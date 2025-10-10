@@ -13,27 +13,15 @@ import { ChirpstackStateTemplatePath } from "@resources/resource-paths";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
 import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
-import * as mqtt from "mqtt";
-import { Client } from "mqtt";
+import mqtt, { MqttClient } from "mqtt";
 import * as Protobuf from "protobufjs";
 
 @Injectable()
 export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
-  constructor(
-    private receiveDataService: ReceiveDataService,
-    private iotDeviceService: IoTDeviceService,
-    private downlinkService: IoTDeviceDownlinkService
-  ) {
-    const connStateFullTemplate = Protobuf.loadSync(ChirpstackStateTemplatePath);
-    this.connStateType = connStateFullTemplate.lookupType("ConnState");
-  }
-
+  MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${process.env.CS_MQTT_PORT || "1883"}`;
+  client: MqttClient;
   private readonly logger = new Logger(ChirpstackMQTTListenerService.name);
   private readonly connStateType: Protobuf.Type;
-
-  MQTT_URL = `mqtt://${process.env.CS_MQTT_HOSTNAME || "localhost"}:${process.env.CS_MQTT_PORT || "1883"}`;
-  client: Client;
-
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX = "application/";
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TOPIC = this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX + "+/device/+/event/up";
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_TOPIC =
@@ -44,6 +32,15 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
   private readonly CHIRPSTACK_MQTT_DEVICE_DATA_ACK_POSTFIX = "/ack";
   private readonly CHIRPSTACK_MQTT_GATEWAY_PREFIX = "gateway/";
   private readonly CHIRPSTACK_MQTT_GATEWAY_TOPIC = this.CHIRPSTACK_MQTT_GATEWAY_PREFIX + "+/state/conn";
+
+  constructor(
+    private receiveDataService: ReceiveDataService,
+    private iotDeviceService: IoTDeviceService,
+    private downlinkService: IoTDeviceDownlinkService
+  ) {
+    const connStateFullTemplate = Protobuf.loadSync(ChirpstackStateTemplatePath);
+    this.connStateType = connStateFullTemplate.lookupType("ConnState");
+  }
 
   public async onApplicationBootstrap(): Promise<void> {
     this.logger.debug("Pre-init");

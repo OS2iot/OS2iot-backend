@@ -5,15 +5,15 @@ import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/com
 import { InjectRepository } from "@nestjs/typeorm";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { DeleteResult, In, Repository } from "typeorm";
-import * as AJV from "ajv";
 import { deviceModelSchema } from "@resources/device-model-schema";
 import { UpdateDeviceModelDto } from "@dto/update-device-model.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { nameof } from "@helpers/type-helper";
+import Ajv from "ajv";
 
 @Injectable()
 export class DeviceModelService {
-  private avj: AJV.Ajv;
+  private avj: Ajv;
   private readonly SCHEMA_NAME = "device-model";
 
   constructor(
@@ -22,7 +22,7 @@ export class DeviceModelService {
     @Inject(forwardRef(() => OrganizationService))
     private organizationService: OrganizationService
   ) {
-    this.avj = new AJV({ allErrors: true, missingRefs: "ignore", verbose: false });
+    this.avj = new Ajv({ allErrors: true, verbose: false });
     this.avj.addSchema(deviceModelSchema, this.SCHEMA_NAME);
   }
 
@@ -117,7 +117,7 @@ export class DeviceModelService {
       // Construct error messages like class-validator ...
       const messages = this.avj.errors.map(x => {
         return {
-          property: (x?.params as AJV.RequiredParams)?.missingProperty,
+          property: x?.params?.missingProperty,
           constraints: {
             required: x.message,
           },

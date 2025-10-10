@@ -1,4 +1,4 @@
-import { GetLogLevels, formatEmail } from "@helpers/env-variable-helper";
+import { formatEmail, GetLogLevels } from "@helpers/env-variable-helper";
 
 export default (): any => {
   return {
@@ -9,7 +9,7 @@ export default (): any => {
       username: process.env.DATABASE_USERNAME || "os2iot",
       password: process.env.DATABASE_PASSWORD || "toi2so",
       ssl: process.env.DATABASE_ENABLE_SSL === "true",
-      timezone: 'Z'
+      timezone: "Z",
     },
     jwt: {
       secret: process.env.JWT_SECRET || "secretKey-os2iot-secretKey",
@@ -25,7 +25,7 @@ export default (): any => {
         process.env.KOMBIT_ENTRYPOINT ||
         "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
       certificatePublicKey: process.env.KOMBIT_CERTIFICATEPUBLICKEY || "INSERT_KOMBIT_CERT", // Public certificate from Kombit Test server
-      certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || null,
+      certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || "",
       roleUri: process.env.KOMBIT_ROLE_NAME || "http://os2iot.dk/roles/usersystemrole/adgang/",
     },
     chirpstack: {

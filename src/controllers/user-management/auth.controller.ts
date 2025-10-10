@@ -36,22 +36,22 @@ import { KombitStrategy } from "@auth/kombit.strategy";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { CustomExceptionFilter } from "@auth/custom-exception-filter";
 import { isOrganizationPermission } from "@helpers/security-helper";
-import { RequestWithUser } from "passport-saml/lib/passport-saml/types";
 import Configuration from "@config/configuration";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
+import { RequestWithUser } from "@node-saml/passport-saml/lib/types";
 
 @UseFilters(new CustomExceptionFilter())
 @ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private organisationService: OrganizationService,
     private strategy: KombitStrategy
   ) {}
-
-  private readonly logger = new Logger(AuthController.name);
 
   @Get("kombit/login")
   @ApiOperation({ summary: "Initiate login with Kombit adgangsstyring" })

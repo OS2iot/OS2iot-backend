@@ -12,7 +12,6 @@ import { ErrorCodes } from "@enum/error-codes.enum";
 
 import { PermissionService } from "./permission.service";
 import { ListAllUsersResponseDto } from "@dto/list-all-users-response.dto";
-import { Profile } from "passport-saml";
 import { ListAllUsersMinimalResponseDto } from "@dto/list-all-users-minimal-response.dto";
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { CreateNewKombitUserDto } from "@dto/user-management/create-new-kombit-user.dto";
@@ -23,6 +22,7 @@ import { isPermissionType } from "@helpers/security-helper";
 import { nameof } from "@helpers/type-helper";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
+import { Profile } from "@node-saml/node-saml";
 
 @Injectable()
 export class UserService {

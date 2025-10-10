@@ -12,7 +12,7 @@ import helmet from "helmet";
 
 async function bootstrap() {
   // Load .env file as environment before startup.
-  dotenv.config({ path: "../.env", debug: true });
+  dotenv.config({ path: "./.env", debug: true });
 
   const config = {
     NEST_PORT: 3000,

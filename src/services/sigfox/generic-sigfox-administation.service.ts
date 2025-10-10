@@ -10,22 +10,22 @@ import {
   Logger,
   UnauthorizedException,
 } from "@nestjs/common";
-import { AxiosRequestConfig, Method } from "axios";
-import { ISetupCache, setupCache } from "axios-cache-adapter";
+import axios, { AxiosRequestConfig, Method } from "axios";
+import { setupCache } from "axios-cache-interceptor";
+import type { AxiosCacheInstance } from "axios-cache-interceptor/src/cache/axios";
 
 @Injectable()
 export class GenericSigfoxAdministationService {
-  constructor(private httpService: HttpService) {
-    this.cache = setupCache({
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
-  }
-  private cache: ISetupCache;
-
   BASE_URL = "https://api.sigfox.com/v2/";
   TIMEOUT_IN_MS = 30000;
-
+  private cache: AxiosCacheInstance;
   private readonly logger = new Logger(GenericSigfoxAdministationService.name);
+
+  constructor(private httpService: HttpService) {
+    this.cache = setupCache(axios, {
+      ttl: 5 * 60 * 1000, // 5 minutes
+    });
+  }
 
   async get<T>(path: string, sigfoxGroup: SigFoxGroup, useCache?: boolean): Promise<T> {
     return await this.doRequest<T>({
@@ -144,7 +144,7 @@ export class GenericSigfoxAdministationService {
       axiosConfig.data = dto;
     }
     if (useCache) {
-      axiosConfig.adapter = this.cache.adapter;
+      axiosConfig.adapter = this.cache;
     }
 
     return axiosConfig;
