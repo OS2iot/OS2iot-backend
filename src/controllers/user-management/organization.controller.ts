@@ -89,16 +89,10 @@ export class OrganizationController {
     }
   }
 
-  @Get("minimal")
-  @ApiOperation({
-    summary: "Get list of the minimal representation of organizations, i.e. id and name.",
-  })
-  @Read()
-  async findAllMinimal(): Promise<ListAllMinimalOrganizationsResponseDto> {
-    return await this.organizationService.findAllMinimal();
-  }
-
-  findAll(
+  @Get()
+  @ApiOperation({ summary: "Get list of all Organizations" })
+  @UserAdmin()
+  async findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query?: ListAllEntitiesDto
   ): Promise<ListAllOrganizationsResponseDto> {
