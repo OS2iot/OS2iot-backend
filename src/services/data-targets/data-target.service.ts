@@ -223,8 +223,7 @@ export class DataTargetService {
     );
   }
 
-  public async testDataTarget(testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
-    const dataTarget = await this.findOne(testDto.dataTargetId);
+  public async testDataTarget(testDto: TestDataTargetDto, dataTarget: DataTarget): Promise<TestDataTargetResultDto> {
     let iotDevice = await this.iotDeviceService.findOne(testDto.iotDeviceId);
 
     if (dataTarget.type === DataTargetType.MQTT && !testDto.dataPackage) {

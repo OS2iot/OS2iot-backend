@@ -1,5 +1,6 @@
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { TestPayloadDecoderDto } from "@dto/test-payload-decoder.dto";
-import { BadRequestException, Body, Controller, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Post, Req } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { PayloadDecoderExecutorService } from "@services/data-management/payload-decoder-executor.service";
 

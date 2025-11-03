@@ -1,4 +1,6 @@
+import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 import { IoTDevice } from "@entities/iot-device.entity";
+import { ApplicationAccessScope, checkIfUserHasAccessToApplication } from "@helpers/security-helper";
 import { Injectable, Logger } from "@nestjs/common";
 import * as worker_threads from "node:worker_threads";
 

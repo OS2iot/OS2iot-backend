@@ -31,7 +31,29 @@ export class IoTDevicePayloadDecoderController {
     @Query() query: PayloadDecoderIoDeviceMinimalQuery
   ): Promise<ListAllIoTDevicesMinimalResponseDto> {
     try {
-      return await this.iotDeviceService.findAllByPayloadDecoder(req, payloadDecoderId, +query.limit, +query.offset);
+      const iotDevices = await this.iotDeviceService.findAllByPayloadDecoder(
+        req,
+        payloadDecoderId,
+        +query.limit,
+        +query.offset
+      );
+
+      if (req.user.permissions.isGlobalAdmin) {
+        return iotDevices;
+      }
+
+      const allowedAppIds = req.user.permissions.getAllApplicationsWithAtLeastRead();
+
+      const filteredIotDevices = iotDevices.data.filter(device =>
+        allowedAppIds.find(appId => appId === device.applicationId)
+      );
+
+      const response: ListAllIoTDevicesMinimalResponseDto = {
+        data: filteredIotDevices,
+        count: filteredIotDevices.length,
+      };
+
+      return response;
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }

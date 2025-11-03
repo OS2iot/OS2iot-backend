@@ -433,6 +433,7 @@ export class IoTDeviceController {
       return new StreamableFile(csvFile);
     } catch (err) {
       this.logger.error(err);
+      throw err;
     }
   }
 }

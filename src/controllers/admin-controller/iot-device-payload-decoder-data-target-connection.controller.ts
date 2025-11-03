@@ -56,38 +56,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     private iotDeviceService: IoTDeviceService
   ) {}
 
-  @Get()
-  @ApiProduces("application/json")
-  @ApiOperation({
-    summary: "Find all connections between IoT-Devices, PayloadDecoders and DataTargets (paginated)",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Success",
-    type: ListAllApplicationsResponseDto,
-  })
-  async findAll(
-    @Req() req: AuthenticatedRequest,
-    @Query() query?: ListAllEntitiesDto
-  ): Promise<ListAllConnectionsResponseDto> {
-    if (req.user.permissions.isGlobalAdmin) {
-      return await this.service.findAndCountWithPagination(query);
-    } else {
-      const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-      return await this.service.findAndCountWithPagination(query, allowed);
-    }
-  }
-
-  @Get(":id")
-  @ApiNotFoundResponse({
-    description: "If the id of the entity doesn't exist",
-  })
-  async findOne(
-    @Req() req: AuthenticatedRequest,
-    @Param("id", new ParseIntPipe()) id: number
-  ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-    return await this.service.findOne(id);
-  }
 
   @Get("byIoTDevice/:id")
   @ApiOperation({
@@ -101,24 +69,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
       return await this.service.findAllByIoTDeviceId(id);
     } else {
       return await this.service.findAllByIoTDeviceId(id, req.user.permissions.getAllApplicationsWithAtLeastRead());
-    }
-  }
-
-  @Get("byPayloadDecoder/:id")
-  @ApiOperation({
-    summary: "Find all connections by PayloadDecoder id",
-  })
-  async findByPayloadDecoderId(
-    @Req() req: AuthenticatedRequest,
-    @Param("id", new ParseIntPipe()) id: number
-  ): Promise<ListAllConnectionsResponseDto> {
-    if (req.user.permissions.isGlobalAdmin) {
-      return await this.service.findAllByPayloadDecoderId(id);
-    } else {
-      return await this.service.findAllByPayloadDecoderId(
-        id,
-        req.user.permissions.getAllOrganizationsWithAtLeastApplicationRead()
-      );
     }
   }
 
@@ -196,7 +146,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
   }
 
   private async checkIfUpdateIsAllowed(updateDto: UpdateConnectionDto, req: AuthenticatedRequest, id: number) {
-    const newIotDevice = await this.iotDeviceService.findOne(updateDto.iotDeviceIds[0]);
+    const newIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(updateDto.iotDeviceIds[0]);
     checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
     const oldConnection = await this.service.findOne(id);
     await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);

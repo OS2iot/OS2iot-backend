@@ -28,6 +28,7 @@ import { UserResponseDto } from "@dto/user-response.dto";
 import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import {
   checkIfUserHasAccessToOrganization,
+  checkIfUserHasAccessToUser,
   checkIfUserIsGlobalAdmin,
   OrganizationAccessScope,
 } from "@helpers/security-helper";
@@ -53,12 +54,6 @@ export class UserController {
   private readonly logger = new Logger(UserController.name);
 
   constructor(private userService: UserService, private organizationService: OrganizationService) {}
-
-  @Get("minimal")
-  @ApiOperation({ summary: "Get all id,names of users" })
-  async findAllMinimal(): Promise<ListAllUsersMinimalResponseDto> {
-    return await this.userService.findAllMinimal();
-  }
 
   @Post()
   @ApiOperation({ summary: "Create a new User" })
@@ -189,18 +184,28 @@ export class UserController {
 
   @Get(":id")
   @ApiOperation({ summary: "Get one user" })
-  async find(
-    @Param("id", new ParseIntPipe()) id: number,
-    @Query("extendedInfo") extendedInfo?: boolean
-  ): Promise<UserResponseDto> {
-    const getExtendedInfo = extendedInfo != null ? extendedInfo : false;
+  async find(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<UserResponseDto> {
+    let dbUser;
+
     try {
+      dbUser = await this.userService.findOne(id);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+
+    try {
+      checkIfUserHasAccessToUser(req, dbUser);
+
+      dbUser.permissions.forEach(perm => {
+        delete perm.organization;
+      });
+
       // Don't leak the passwordHash
-      const { passwordHash: _, ...user } = await this.userService.findOne(id, getExtendedInfo);
+      const { passwordHash: _, ...user } = dbUser;
 
       return user;
     } catch (err) {
-      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+      throw err;
     }
   }
 
@@ -213,13 +218,13 @@ export class UserController {
     @Param("organizationId", new ParseIntPipe()) organizationId: number,
     @Query() query?: ListAllEntitiesDto
   ): Promise<ListAllUsersResponseDto> {
-    try {
-      // Check if user has access to organization
-      if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
-        throw new ForbiddenException("User does not have org admin permissions for this organization");
-      }
+    // Check if user has access to organization
+    if (!req.user.permissions.hasUserAdminOnOrganization(organizationId)) {
+      throw new ForbiddenException("User does not have org admin permissions for this organization");
+    }
 
-      // Get user objects
+    // Get user objects
+    try {
       return await this.userService.getUsersOnOrganization(organizationId, query);
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);

@@ -75,12 +75,18 @@ export class DataTargetController {
   @Get(":id")
   @ApiOperation({ summary: "Find DataTarget by id" })
   async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DataTarget> {
+    let dataTarget;
     try {
-      const dataTarget = await this.dataTargetService.findOneWithHasRecentError(id);
+      dataTarget = await this.dataTargetService.findOneWithHasRecentError(id);
+    } catch (err) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+
+    try {
       checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
       return dataTarget;
     } catch (err) {
-      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+      throw err;
     }
   }
 
@@ -197,8 +203,13 @@ export class DataTargetController {
 
   @Post("testDataTarget")
   @ApiOperation({ summary: "Send a ping or test data packet to a data target" })
-  async testDataTarget(@Body() testDto: TestDataTargetDto): Promise<TestDataTargetResultDto> {
+  async testDataTarget(
+    @Req() req: AuthenticatedRequest,
+    @Body() testDto: TestDataTargetDto
+  ): Promise<TestDataTargetResultDto> {
+    const dataTarget = await this.dataTargetService.findOne(testDto.dataTargetId);
+    checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
     // Send package
-    return await this.dataTargetService.testDataTarget(testDto);
+    return await this.dataTargetService.testDataTarget(testDto, dataTarget);
   }
 }

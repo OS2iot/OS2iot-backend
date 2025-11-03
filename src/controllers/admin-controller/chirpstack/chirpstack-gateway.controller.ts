@@ -126,7 +126,7 @@ export class ChirpstackGatewayController {
 
   @Put("updateGatewayOrganization/:id")
   @ApiProduces("application/json")
-  @ApiOperation({ summary: "Create a new Chirpstack Gateway" })
+  @ApiOperation({ summary: "Update gateway organization" })
   @ApiBadRequestResponse()
   @GatewayAdmin()
   async changeOrganization(

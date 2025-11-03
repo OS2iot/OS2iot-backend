@@ -73,14 +73,8 @@ export class UserService {
     });
   }
 
-  async findOne(id: number, getExtendedInformation: boolean = false): Promise<User> {
-    const relations = ["permissions", "requestedOrganizations"];
-    const extendedBoolean = this.parseBoolean(getExtendedInformation);
-    if (extendedBoolean) {
-      relations.push("permissions.organization");
-      relations.push("permissions.users");
-      relations.push("permissions.type");
-    }
+  async findOne(id: number): Promise<User> {
+    const relations = ["permissions", "requestedOrganizations", "permissions.organization"];
 
     return await this.userRepository.findOne({
       where: { id },

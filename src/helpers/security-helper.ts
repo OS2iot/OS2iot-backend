@@ -4,6 +4,7 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { ForbiddenException, BadRequestException } from "@nestjs/common";
 import * as _ from "lodash";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
+import { User } from "@entities/user.entity";
 
 export enum OrganizationAccessScope {
   ApplicationRead,
@@ -73,6 +74,16 @@ export function checkIfUserHasAccessToApplication(
   }
 
   checkIfGlobalAdminOrInList(req, allowedOrganizations, applicationId);
+}
+
+export function checkIfUserHasAccessToUser(req: AuthenticatedRequest, user: User) {
+  const orgs = req.user.permissions.getAllOrganizationsWithAtLeastUserAdminRead();
+
+  const hasAccess = user.permissions.some(perm => orgs.includes(perm.organization?.id));
+
+  if (!hasAccess && !req.user.permissions.isGlobalAdmin) {
+    throw new ForbiddenException();
+  }
 }
 
 export function checkIfUserIsGlobalAdmin(req: AuthenticatedRequest): void {
