@@ -1,36 +1,36 @@
 name: "[Stage, Production] Push/PR action"
 on:
-  # Trigger conditions. This action will be triggered for each condition. Ex.
-  # making a PR from stage to master, then pushing a change to stage will trigger
-  # this action, or all jobs, twice.
-  push:
-    branches:
-      - "stage"
-      - "master"
-    paths:
-      - "src/**"
-  pull_request:
-    branches:
-      - "stage"
-      - "master"
+    # Trigger conditions. This action will be triggered for each condition. Ex.
+    # making a PR from stage to master, then pushing a change to stage will trigger
+    # this action, or all jobs, twice.
+    push:
+        branches:
+            - "stage"
+            - "master"
+        paths:
+            - "src/**"
+    pull_request:
+        branches:
+            - "stage"
+            - "master"
 jobs:
-  vulnerabilities-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: debricked/actions@v4
-        env:
-          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
-  code-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        name: Checkout repository
-      - uses: actions/setup-node@v3
-        name: Set NodeJS version
-        with:
-          node-version: 16
-      - name: Install packages
-        run: "npm ci"
-      - name: Build source
-        run: "npm run build"
+    vulnerabilities-scan:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   uses: debricked/actions@v4
+                env:
+                    DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
+    code-build:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v2
+                name: Checkout repository
+            -   uses: actions/setup-node@v3
+                name: Set NodeJS version
+                with:
+                    node-version: 20
+            -   name: Install packages
+                run: "npm ci"
+            -   name: Build source
+                run: "npm run build"

@@ -1,7 +1,7 @@
 import { HttpService } from "@nestjs/axios";
-import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
-import { Cache } from "cache-manager";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { FiwareDataTargetConfiguration } from "../entities/interfaces/fiware-data-target-configuration.interface";
+import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 
 type TokenEndpointResponse = {
   data: {
@@ -38,7 +38,7 @@ export class AuthenticationTokenProvider {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
-  async clearConfig(config: FiwareDataTargetConfiguration): Promise<void> {
+  async clearConfig(config: FiwareDataTargetConfiguration): Promise<boolean> {
     if (config.clientId) {
       this.logger.debug(`AuthenticationTokenProvider clearing token for ${config.clientId}`);
       const key = config.clientId + config.updatedAt.getTime();
@@ -74,7 +74,7 @@ export class AuthenticationTokenProvider {
         this.logger.debug(
           `AuthenticationTokenProvider caching token for ${config.clientId} (expires in ${ttl} seconds)`
         );
-        await this.cacheManager.set(key, data.access_token, { ttl });
+        await this.cacheManager.set(key, data.access_token, ttl);
         return data.access_token;
       } catch (err) {
         this.logger.error(`AuthenticationTokenProvider got error ${err}`);

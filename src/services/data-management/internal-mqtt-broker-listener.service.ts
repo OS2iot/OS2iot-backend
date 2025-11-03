@@ -1,6 +1,6 @@
 ﻿import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
-import { Client, connect } from "mqtt";
+import { connect, MqttClient } from "mqtt";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import * as fs from "fs";
@@ -14,6 +14,15 @@ import { caCertPath } from "@resources/resource-paths";
 
 @Injectable()
 export class InternalMqttBrokerListenerService implements OnApplicationBootstrap {
+  passwordClient: MqttClient;
+  private superUserName = "SuperUser";
+  private superuserPassword = process.env.MQTT_SUPER_USER_PASSWORD || "SuperUser";
+  private MQTT_URL = `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`;
+  private MQTT_PASSWORD_PORT = "8885";
+  private readonly logger = new Logger(InternalMqttBrokerListenerService.name);
+  private readonly MQTT_DEVICE_DATA_PREFIX = "devices/";
+  private readonly MQTT_DEVICE_DATA_TOPIC = this.MQTT_DEVICE_DATA_PREFIX + "#";
+
   constructor(
     private receiveDataService: ReceiveDataService,
     private iotDeviceService: IoTDeviceService,
@@ -21,16 +30,6 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     @InjectRepository(MQTTInternalBrokerDevice)
     private mqttInternalBrokerDeviceRepository: Repository<MQTTInternalBrokerDevice>
   ) {}
-
-  private superUserName = "SuperUser";
-  private superuserPassword = process.env.MQTT_SUPER_USER_PASSWORD || "SuperUser";
-  private MQTT_URL = `mqtts://${process.env.MQTT_BROKER_HOSTNAME || "localhost"}`;
-  private MQTT_PASSWORD_PORT = "8885";
-  passwordClient: Client;
-  private readonly logger = new Logger(InternalMqttBrokerListenerService.name);
-
-  private readonly MQTT_DEVICE_DATA_PREFIX = "devices/";
-  private readonly MQTT_DEVICE_DATA_TOPIC = this.MQTT_DEVICE_DATA_PREFIX + "#";
 
   public async onApplicationBootstrap(): Promise<void> {
     await this.seedSuperUser();
@@ -48,7 +47,7 @@ export class InternalMqttBrokerListenerService implements OnApplicationBootstrap
     this.configureClient(this.passwordClient);
   }
 
-  private configureClient(client: Client) {
+  private configureClient(client: MqttClient) {
     client.on("connect", () => {
       client.subscribe(this.MQTT_DEVICE_DATA_TOPIC);
 

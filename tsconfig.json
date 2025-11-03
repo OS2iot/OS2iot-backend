@@ -12,7 +12,8 @@
         "baseUrl": "./",
         "incremental": true,
         "noImplicitAny": true,
-        "lib": ["dom", "es2017"],
+        "isolatedModules": false,
+        "lib": ["dom", "es2017", "ESNext.Disposable"],
         "paths": {
             "@services/*": ["src/services/*"],
             "@admin-controller/*": ["src/controllers/admin-controller/*"],

@@ -1,6 +1,6 @@
 ﻿import { forwardRef, Inject, Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ReceiveDataService } from "@services/data-management/receive-data.service";
-import { Client, connect } from "mqtt";
+import { connect, MqttClient } from "mqtt";
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { MQTTExternalBrokerDevice } from "@entities/mqtt-external-broker-device.entity";
 import { IoTDeviceType } from "@enum/device-type.enum";
@@ -9,17 +9,17 @@ import { EncryptionHelperService } from "@services/encryption-helper.service";
 
 @Injectable()
 export class InternalMqttClientListenerService implements OnApplicationBootstrap {
+  clientDictionary: Map<number, MqttClient>;
+  private readonly logger = new Logger(InternalMqttClientListenerService.name);
+
   constructor(
     private receiveDataService: ReceiveDataService,
     @Inject(forwardRef(() => IoTDeviceService))
     private iotDeviceService: IoTDeviceService,
     private encryptionHelperService: EncryptionHelperService
   ) {
-    this.clientDictionary = new Map<number, Client>();
+    this.clientDictionary = new Map<number, MqttClient>();
   }
-
-  clientDictionary: Map<number, Client>;
-  private readonly logger = new Logger(InternalMqttClientListenerService.name);
 
   public async onApplicationBootstrap(): Promise<void> {
     // Get all subscriber devices
@@ -58,7 +58,7 @@ export class InternalMqttClientListenerService implements OnApplicationBootstrap
     this.logger.debug(`Removed client for deviceId: ${mqttSubscriber.id}`);
   }
 
-  private setupClient(client: Client, device: MQTTExternalBrokerDevice) {
+  private setupClient(client: MqttClient, device: MQTTExternalBrokerDevice) {
     client.on("connect", () => {
       client.subscribe(device.mqtttopicname);
       this.logger.debug(`Connected to ${device.mqttURL} for deviceId: ${device.id}`);

@@ -1,5 +1,5 @@
 # from: https://github.com/Saluki/nestjs-template
-FROM node:16-alpine as builder
+FROM node:20-alpine as builder
 
 ENV NODE_ENV build
 

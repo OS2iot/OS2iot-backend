@@ -8,18 +8,19 @@ import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { compare } from "bcryptjs";
-import { Profile } from "passport-saml";
+import { Profile } from "@node-saml/node-saml";
 import * as xml2js from "xml2js";
 import { ApiKeyService } from "../api-key-management/api-key.service";
 import { UserService } from "./user.service";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private readonly KOMBIT_ROLE_URI: string;
+
   constructor(private usersService: UserService, private jwtService: JwtService, private apiKeyService: ApiKeyService) {
     this.KOMBIT_ROLE_URI = configuration()["kombit"]["roleUri"];
   }
-  private readonly logger = new Logger(AuthService.name);
-  private readonly KOMBIT_ROLE_URI: string;
 
   public async validateUser(username: string, password: string): Promise<UserResponseDto> {
     const user = await this.usersService.findOneUserByEmailWithPassword(username);
