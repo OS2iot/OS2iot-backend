@@ -26,7 +26,8 @@ import { ApiKeyModule } from "@modules/api-key-management/api-key.module";
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>("jwt.secret"),
         signOptions: {
-          expiresIn: configService.get<string>("jwt.expiresIn"),
+          // The expected "StringValue" type is not exported
+          expiresIn: configService.get<any>("jwt.expiresIn"),
         },
       }),
     }),
