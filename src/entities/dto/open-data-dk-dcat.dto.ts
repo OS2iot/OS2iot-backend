@@ -37,6 +37,9 @@ export class Dataset {
   distribution: Distribution[];
   spatial: string;
   theme: string[];
+  documentation: string;
+  frequency: string | undefined;
+  dataDirectory: boolean;
 }
 
 export class DCATRootObject {

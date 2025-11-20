@@ -3,7 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import { DCATRootObject, Dataset, ContactPoint, Distribution } from "@dto/open-data-dk-dcat.dto";
+import { ContactPoint, Dataset, DCATRootObject, Distribution } from "@dto/open-data-dk-dcat.dto";
 import { OpenDataDkDataset } from "@entities/open-data-dk-dataset.entity";
 import { Organization } from "@entities/organization.entity";
 import { PayloadDecoderExecutorService } from "./payload-decoder-executor.service";
@@ -17,15 +17,15 @@ import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.
 
 @Injectable()
 export class OpenDataDkSharingService {
+  private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
+  private readonly logger = new Logger(OpenDataDkSharingService.name);
+
   constructor(
     @InjectRepository(OpenDataDkDataset)
     private repository: Repository<OpenDataDkDataset>,
     private payloadDecoderExecutorService: PayloadDecoderExecutorService,
     private chirpstackDeviceService: ChirpstackDeviceService
   ) {}
-
-  private readonly BACKEND_BASE_URL = configuration()["backend"]["baseurl"];
-  private readonly logger = new Logger(OpenDataDkSharingService.name);
 
   async getDecodedDataInDataset(dataset: OpenDataDkDataset): Promise<any[] | { error: ErrorCodes }> {
     const rawData = await this.repository
@@ -44,6 +44,25 @@ export class OpenDataDkSharingService {
     }
 
     return await this.decodeData(rawData);
+  }
+
+  async createDCAT(organization: Organization): Promise<DCATRootObject> {
+    const datasets = await this.getAllOpenDataDkSharesForOrganization(organization);
+
+    return this.mapToDCAT(organization, datasets);
+  }
+
+  async findById(shareId: number, organizationId: number): Promise<OpenDataDkDataset> {
+    return await this.findDatasetWithRelations()
+      .where("dataset.id = :datasetId and org.id = :organizationId", {
+        datasetId: shareId,
+        organizationId: organizationId,
+      })
+      .getOne();
+  }
+
+  async getAllOpenDataDkSharesForOrganization(organization: Organization): Promise<OpenDataDkDataset[]> {
+    return this.findDatasetWithRelations().where("org.id = :orgId", { orgId: organization.id }).getMany();
   }
 
   private async decodeData(rawData: OpenDataDkDataset) {
@@ -96,25 +115,6 @@ export class OpenDataDkSharingService {
     }
   }
 
-  async createDCAT(organization: Organization): Promise<DCATRootObject> {
-    const datasets = await this.getAllOpenDataDkSharesForOrganization(organization);
-
-    return this.mapToDCAT(organization, datasets);
-  }
-
-  async findById(shareId: number, organizationId: number): Promise<OpenDataDkDataset> {
-    return await this.findDatasetWithRelations()
-      .where("dataset.id = :datasetId and org.id = :organizationId", {
-        datasetId: shareId,
-        organizationId: organizationId,
-      })
-      .getOne();
-  }
-
-  async getAllOpenDataDkSharesForOrganization(organization: Organization): Promise<OpenDataDkDataset[]> {
-    return this.findDatasetWithRelations().where("org.id = :orgId", { orgId: organization.id }).getMany();
-  }
-
   private findDatasetWithRelations() {
     return this.repository
       .createQueryBuilder("dataset")
@@ -146,7 +146,8 @@ export class OpenDataDkSharingService {
     ds.landingPage = undefined;
     ds.title = dataset.name;
     ds.description = dataset.description;
-    ds.keyword = dataset.keywords != null ? dataset.keywords : [];
+    ds.theme = dataset.keywords != null ? dataset.keywords : [];
+    ds.keyword = dataset.keywordTags != null ? dataset.keywordTags.split(",") : [];
     ds.issued = dataset.createdAt;
     ds.modified = dataset.updatedAt;
     ds.publisher = {
@@ -156,6 +157,9 @@ export class OpenDataDkSharingService {
     ds.contactPoint["@type"] = "vcard:Contact";
     ds.contactPoint.fn = dataset.authorName;
     ds.contactPoint.hasEmail = `mailto:${dataset.authorEmail}`;
+    ds.documentation = dataset.documentationUrl;
+    ds.frequency = dataset.updateFrequency;
+    ds.dataDirectory = dataset.dataDirectory;
 
     ds.distribution = [this.mapDistribution(organization, dataset)];
 

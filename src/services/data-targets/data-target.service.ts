@@ -307,7 +307,12 @@ export class DataTargetService {
 
     o.description = dto.description;
     o.keywords = dto.keywords;
+    o.keywordTags = dto.keywordTags;
     o.resourceTitle = dto.resourceTitle;
+
+    o.updateFrequency = dto.updateFrequency;
+    o.documentationUrl = dto.documentationUrl;
+    o.dataDirectory = dto.dataDirectory;
     return o;
   }
 

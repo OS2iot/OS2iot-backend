@@ -18,6 +18,9 @@ export class OpenDataDkDataset extends DbBaseEntity {
   @Column("text", { array: true, nullable: true })
   keywords?: string[];
 
+  @Column({ nullable: true })
+  keywordTags?: string;
+
   @Column()
   license: string;
 
@@ -29,4 +32,13 @@ export class OpenDataDkDataset extends DbBaseEntity {
 
   @Column({ nullable: false, default: "" })
   resourceTitle: string;
+
+  @Column({ nullable: true })
+  updateFrequency?: string;
+
+  @Column({ nullable: true })
+  documentationUrl?: string;
+
+  @Column({ nullable: false, default: false })
+  dataDirectory: boolean;
 }
