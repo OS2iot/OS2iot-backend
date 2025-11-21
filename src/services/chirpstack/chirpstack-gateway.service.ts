@@ -90,7 +90,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     Object.entries(dto.gateway.tags).forEach(([key, value]) => {
       gatewayChirpstack.getTagsMap().set(key, value.toString());
     });
-    const test = gatewayChirpstack.getTagsMap();
 
     req.setGateway(gatewayChirpstack);
 
@@ -324,7 +323,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const gatewayCs = await this.mapToChirpstackGateway(dto, location, gatewayId);
 
     Object.entries(dto.gateway.tags).forEach(([key, value]) => {
-      gatewayCs.getTagsMap().set(key, value);
+      gatewayCs.getTagsMap().set(key, value.toString());
     });
 
     request.setGateway(gatewayCs);
