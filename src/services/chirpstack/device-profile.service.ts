@@ -52,7 +52,7 @@ export class DeviceProfileService extends GenericChirpstackConfigurationService 
     const deviceProfile = this.mapToChirpstackDto(dto, true);
 
     Object.entries(dto.deviceProfile.tags).forEach(([key, value]) => {
-      deviceProfile.getTagsMap().set(key, value);
+      deviceProfile.getTagsMap().set(key, value.toString());
     });
 
     req.setDeviceProfile(deviceProfile);

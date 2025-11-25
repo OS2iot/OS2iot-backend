@@ -1,7 +1,7 @@
 import {
-  Gateway as ChirpstackGateway,
   CreateGatewayRequest,
   DeleteGatewayRequest,
+  Gateway as ChirpstackGateway,
   GetGatewayMetricsRequest,
   GetGatewayMetricsResponse,
   GetGatewayRequest,
@@ -53,6 +53,12 @@ import { Repository } from "typeorm";
 
 @Injectable()
 export class ChirpstackGatewayService extends GenericChirpstackConfigurationService {
+  GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
+  GATEWAY_LAST_ACTIVE_SINCE_IN_MINUTES = 3;
+  private readonly logger = new Logger(ChirpstackGatewayService.name, {
+    timestamp: true,
+  });
+
   constructor(
     @InjectRepository(DbGateway)
     private gatewayRepository: Repository<DbGateway>,
@@ -62,11 +68,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
   ) {
     super();
   }
-  GATEWAY_STATS_INTERVAL_IN_DAYS = 29;
-  GATEWAY_LAST_ACTIVE_SINCE_IN_MINUTES = 3;
-  private readonly logger = new Logger(ChirpstackGatewayService.name, {
-    timestamp: true,
-  });
 
   async createNewGateway(dto: CreateGatewayDto, userId: number): Promise<ChirpstackResponseStatus> {
     dto.gateway = await this.updateDtoContents(dto.gateway);
@@ -87,7 +88,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     const gatewayChirpstack = await this.mapToChirpstackGateway(dto, chirpstackLocation);
     Object.entries(dto.gateway.tags).forEach(([key, value]) => {
-      gatewayChirpstack.getTagsMap().set(key, value);
+      gatewayChirpstack.getTagsMap().set(key, value.toString());
     });
 
     req.setGateway(gatewayChirpstack);
@@ -302,54 +303,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     }
   }
 
-  //TODO: This could be moved to a helper function in the future, since it has a lot of similarities with metrics from chirpstack devices.
-  private mapPackets(metrics: GetGatewayMetricsResponse) {
-    const gatewayResponseDto: GatewayStatsElementDto[] = [];
-    const packetCounts: { [timestamp: string]: { rx: number; tx: number } } = {};
-
-    const rxTimestamps = metrics.getRxPackets().getTimestampsList();
-    const rxPackets = metrics
-      .getRxPackets()
-      .getDatasetsList()
-      .find(e => e.getLabel() === "rx_count")
-      .getDataList();
-
-    this.processPackets(rxTimestamps, rxPackets, "rx", packetCounts);
-
-    const txTimestamps = metrics.getTxPackets().getTimestampsList();
-    const txPackets = metrics
-      .getTxPackets()
-      .getDatasetsList()
-      .find(e => e.getLabel() === "tx_count")
-      .getDataList();
-
-    this.processPackets(txTimestamps, txPackets, "tx", packetCounts);
-
-    Object.keys(packetCounts).forEach(timestamp => {
-      const packetCount = packetCounts[timestamp];
-      const dto: GatewayStatsElementDto = {
-        timestamp,
-        rxPacketsReceived: packetCount.rx,
-        txPacketsEmitted: packetCount.tx,
-      };
-      gatewayResponseDto.push(dto);
-    });
-    return gatewayResponseDto;
-  }
-
-  private processPackets(
-    timestamps: Array<Timestamp>,
-    packets: number[],
-    key: string,
-    packetCounts: { [timestamp: string]: { rx: number; tx: number } }
-  ) {
-    timestamps.forEach((timestamp, index) => {
-      const isoTimestamp = timestamp.toDate().toISOString();
-      packetCounts[isoTimestamp] = packetCounts[isoTimestamp] || { rx: 0, tx: 0 };
-      (packetCounts[isoTimestamp] as any)[key] = packets[index];
-    });
-  }
-
   async modifyGateway(
     gatewayId: string,
     dto: UpdateGatewayDto,
@@ -370,7 +323,7 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     const gatewayCs = await this.mapToChirpstackGateway(dto, location, gatewayId);
 
     Object.entries(dto.gateway.tags).forEach(([key, value]) => {
-      gatewayCs.getTagsMap().set(key, value);
+      gatewayCs.getTagsMap().set(key, value.toString());
     });
 
     request.setGateway(gatewayCs);
@@ -445,20 +398,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
         chirpstackError: err?.response?.data as ChirpstackErrorResponseDto,
       };
     }
-  }
-
-  private async updateDtoContents(
-    contentsDto: GatewayContentsDto | UpdateGatewayContentsDto
-  ): Promise<GatewayContentsDto | UpdateGatewayContentsDto> {
-    if (contentsDto?.tagsString) {
-      contentsDto.tags = JSON.parse(contentsDto.tagsString);
-    } else {
-      contentsDto.tags = {};
-    }
-
-    contentsDto.id = contentsDto.gatewayId;
-
-    return contentsDto;
   }
 
   public mapContentsDtoToGateway(dto: GatewayContentsDto) {
@@ -536,24 +475,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
 
     return gateway;
   }
-  private mapGatewayToResponseDto(gateway: DbGateway, forMap = false): GatewayResponseDto {
-    const responseDto = gateway as unknown as GatewayResponseDto;
-    responseDto.organizationId = gateway.organization.id;
-    responseDto.organizationName = gateway.organization.name;
-
-    const commonLocation = new CommonLocationDto();
-    commonLocation.latitude = gateway.location.coordinates[1];
-    commonLocation.longitude = gateway.location.coordinates[0];
-
-    if (!forMap) {
-      commonLocation.altitude = gateway.altitude;
-      responseDto.tags = JSON.parse(gateway.tags);
-    }
-
-    responseDto.location = commonLocation;
-
-    return responseDto;
-  }
 
   async getAllGatewaysFromChirpstack(): Promise<ListAllChirpstackGatewaysResponseDto> {
     const limit = 1000;
@@ -587,24 +508,6 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     return responseList;
   }
 
-  private getSortingForGateways(query: ListAllEntitiesDto) {
-    let orderBy = "gateway.id";
-
-    if (!query.orderOn) {
-      return orderBy;
-    }
-
-    if (query.orderOn === "organizationName") {
-      orderBy = "organization.name";
-    } else if (query.orderOn === "status") {
-      orderBy = "gateway.lastSeenAt";
-    } else {
-      orderBy = `gateway.${query.orderOn}`;
-    }
-
-    return orderBy;
-  }
-
   validatePackageAlarmInput(dto: UpdateGatewayDto) {
     if (dto.gateway.minimumPackages > dto.gateway.maximumPackages) {
       throw new BadRequestException({
@@ -626,6 +529,105 @@ export class ChirpstackGatewayService extends GenericChirpstackConfigurationServ
     for (let index = 0; index < gateways.length; index++) {
       await this.checkForNotificationUnusualPackagesAlarms(gateways[index]);
     }
+  }
+
+  //TODO: This could be moved to a helper function in the future, since it has a lot of similarities with metrics from chirpstack devices.
+  private mapPackets(metrics: GetGatewayMetricsResponse) {
+    const gatewayResponseDto: GatewayStatsElementDto[] = [];
+    const packetCounts: { [timestamp: string]: { rx: number; tx: number } } = {};
+
+    const rxTimestamps = metrics.getRxPackets().getTimestampsList();
+    const rxPackets = metrics
+      .getRxPackets()
+      .getDatasetsList()
+      .find(e => e.getLabel() === "rx_count")
+      .getDataList();
+
+    this.processPackets(rxTimestamps, rxPackets, "rx", packetCounts);
+
+    const txTimestamps = metrics.getTxPackets().getTimestampsList();
+    const txPackets = metrics
+      .getTxPackets()
+      .getDatasetsList()
+      .find(e => e.getLabel() === "tx_count")
+      .getDataList();
+
+    this.processPackets(txTimestamps, txPackets, "tx", packetCounts);
+
+    Object.keys(packetCounts).forEach(timestamp => {
+      const packetCount = packetCounts[timestamp];
+      const dto: GatewayStatsElementDto = {
+        timestamp,
+        rxPacketsReceived: packetCount.rx,
+        txPacketsEmitted: packetCount.tx,
+      };
+      gatewayResponseDto.push(dto);
+    });
+    return gatewayResponseDto;
+  }
+
+  private processPackets(
+    timestamps: Array<Timestamp>,
+    packets: number[],
+    key: string,
+    packetCounts: { [timestamp: string]: { rx: number; tx: number } }
+  ) {
+    timestamps.forEach((timestamp, index) => {
+      const isoTimestamp = timestamp.toDate().toISOString();
+      packetCounts[isoTimestamp] = packetCounts[isoTimestamp] || { rx: 0, tx: 0 };
+      (packetCounts[isoTimestamp] as any)[key] = packets[index];
+    });
+  }
+
+  private async updateDtoContents(
+    contentsDto: GatewayContentsDto | UpdateGatewayContentsDto
+  ): Promise<GatewayContentsDto | UpdateGatewayContentsDto> {
+    if (contentsDto?.tagsString) {
+      contentsDto.tags = JSON.parse(contentsDto.tagsString);
+    } else {
+      contentsDto.tags = {};
+    }
+
+    contentsDto.id = contentsDto.gatewayId;
+
+    return contentsDto;
+  }
+
+  private mapGatewayToResponseDto(gateway: DbGateway, forMap = false): GatewayResponseDto {
+    const responseDto = gateway as unknown as GatewayResponseDto;
+    responseDto.organizationId = gateway.organization.id;
+    responseDto.organizationName = gateway.organization.name;
+
+    const commonLocation = new CommonLocationDto();
+    commonLocation.latitude = gateway.location.coordinates[1];
+    commonLocation.longitude = gateway.location.coordinates[0];
+
+    if (!forMap) {
+      commonLocation.altitude = gateway.altitude;
+      responseDto.tags = JSON.parse(gateway.tags);
+    }
+
+    responseDto.location = commonLocation;
+
+    return responseDto;
+  }
+
+  private getSortingForGateways(query: ListAllEntitiesDto) {
+    let orderBy = "gateway.id";
+
+    if (!query.orderOn) {
+      return orderBy;
+    }
+
+    if (query.orderOn === "organizationName") {
+      orderBy = "organization.name";
+    } else if (query.orderOn === "status") {
+      orderBy = "gateway.lastSeenAt";
+    } else {
+      orderBy = `gateway.${query.orderOn}`;
+    }
+
+    return orderBy;
   }
 
   private async checkForNotificationUnusualPackagesAlarms(gateway: GatewayResponseDto) {
