@@ -39,7 +39,7 @@ export class Dataset {
   theme: string[];
   documentation: string;
   frequency: string | undefined;
-  dataDirectory: boolean;
+  data_directory: boolean;
 }
 
 export class DCATRootObject {

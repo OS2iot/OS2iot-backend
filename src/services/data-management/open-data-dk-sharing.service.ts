@@ -159,7 +159,7 @@ export class OpenDataDkSharingService {
     ds.contactPoint.hasEmail = `mailto:${dataset.authorEmail}`;
     ds.documentation = dataset.documentationUrl;
     ds.frequency = dataset.updateFrequency;
-    ds.dataDirectory = dataset.dataDirectory;
+    ds.data_directory = dataset.dataDirectory;
 
     ds.distribution = [this.mapDistribution(organization, dataset)];
 
