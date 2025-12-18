@@ -38,7 +38,7 @@ export class Dataset {
   spatial: string;
   theme: string[];
   documentation: string;
-  frequency: string | undefined;
+  update_frequency: string | undefined;
   data_directory: boolean;
 }
 
