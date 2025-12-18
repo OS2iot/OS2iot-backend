@@ -22,7 +22,7 @@ import { isPermissionType } from "@helpers/security-helper";
 import { nameof } from "@helpers/type-helper";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { Profile } from "@node-saml/node-saml";
+import { Profile } from "@node-saml/passport-saml";
 
 @Injectable()
 export class UserService {

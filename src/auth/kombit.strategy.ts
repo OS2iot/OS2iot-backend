@@ -14,29 +14,36 @@ export class KombitStrategy extends PassportStrategy(SamlStrategy, "kombit") {
   constructor(private readonly authService: AuthService) {
     super(
       {
-        issuer: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
         callbackUrl: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/login/callback`,
-        publicCert: configuration()["kombit"]["certificatePublicKey"],
-        idpCert: configuration()["kombit"]["certificatePublicKey"],
-        audience: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
-        logoutCallbackUrl: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/logout/callback`,
-        logoutUrl: configuration()["kombit"]["entryPoint"],
         entryPoint: configuration()["kombit"]["entryPoint"],
-        identifierFormat: "",
+        issuer: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
+        audience: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/metadata`,
+        idpCert: configuration()["kombit"]["certificatePublicKey"],
+        privateKey: configuration()["kombit"]["certificatePrivateKey"],
+        publicCert: configuration()["kombit"]["certificateOwnPublicKey"],
         decryptionPvk: configuration()["kombit"]["certificatePrivateKey"],
         signatureAlgorithm: "sha256",
-        disableRequestedAuthnContext: true,
-        authnRequestBinding: "HTTP-Redirect",
+        logoutCallbackUrl: `${configuration()["backend"]["baseurl"]}/api/v1/auth/kombit/logout/callback`,
+        logoutUrl: configuration()["kombit"]["entryPoint"],
         acceptedClockSkewMs: 1000, // Allow some slack in clock sync
+        disableRequestedAuthnContext: true,
+        wantAuthnResponseSigned: false,
+        identifierFormat: "",
+        authnRequestBinding: "HTTP-Redirect",
       },
-      (req, profile, done) => {
+      function (profile: Profile, done: Function) {
         return this.validate(profile, done);
       }
     );
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  async validate(profile: Profile, done: Function): Promise<UserResponseDto> {
+  public async validate(profile: Profile, done: Function): Promise<UserResponseDto> {
+    this.logger.log("Profile", profile);
+    const samlResponse = profile.getSamlResponseXml();
+    this.logger.log("SAML Response", samlResponse);
+    this.logger.log("AssertionXML", profile.getAssertionXml());
+
     try {
       const exists = await this.authService.validateKombitUser(profile);
       done(null, exists);

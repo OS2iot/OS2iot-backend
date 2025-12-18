@@ -24,8 +24,9 @@ export default (): any => {
       entryPoint:
         process.env.KOMBIT_ENTRYPOINT ||
         "https://adgangsstyring.eksterntest-stoettesystemerne.dk/runtime/saml2/issue.idp",
-      certificatePublicKey: process.env.KOMBIT_CERTIFICATEPUBLICKEY || "INSERT_KOMBIT_CERT", // Public certificate from Kombit Test server
+      certificatePublicKey: process.env.KOMBIT_CERTIFICATEPUBLICKEY || "INSERT_KOMBIT_CERT", // Public certificate from Kombit server
       certificatePrivateKey: process.env.KOMBIT_CERTIFICATEPRIVATEKEY || "",
+      certificateOwnPublicKey: process.env.KOMBIT_CERTIFICATEOWNPUBLICKEY || "",
       roleUri: process.env.KOMBIT_ROLE_NAME || "http://os2iot.dk/roles/usersystemrole/adgang/",
     },
     chirpstack: {

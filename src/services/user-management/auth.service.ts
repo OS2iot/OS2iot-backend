@@ -8,7 +8,7 @@ import { ErrorCodes } from "@entities/enum/error-codes.enum";
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { compare } from "bcryptjs";
-import { Profile } from "@node-saml/node-saml";
+import { Profile } from "@node-saml/passport-saml";
 import * as xml2js from "xml2js";
 import { ApiKeyService } from "../api-key-management/api-key.service";
 import { UserService } from "./user.service";
