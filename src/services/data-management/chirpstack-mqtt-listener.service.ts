@@ -56,7 +56,9 @@ export class ChirpstackMQTTListenerService implements OnApplicationBootstrap {
       this.client.subscribe(this.CHIRPSTACK_MQTT_DEVICE_DATA_ACK_TOPIC);
 
       this.client.on("message", async (topic, message) => {
-        this.logger.debug(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
+        if (topic.includes("ack")) {
+          this.logger.log(`Received MQTT - Topic: '${topic}' - message: '${message}'`);
+        }
 
         if (topic.startsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_PREFIX)) {
           if (topic.endsWith(this.CHIRPSTACK_MQTT_DEVICE_DATA_TXACK_POSTFIX)) {

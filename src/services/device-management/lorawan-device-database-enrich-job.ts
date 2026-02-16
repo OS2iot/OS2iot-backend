@@ -14,21 +14,23 @@ import { GatewayServiceClient } from "@chirpstack/chirpstack-api/api/gateway_grp
 import { credentials } from "@grpc/grpc-js";
 import configuration from "@config/configuration";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
+import { IoTDeviceDownlinkService } from "@services/device-management/iot-device-downlink.service";
 
 @Injectable()
 export class LorawanDeviceDatabaseEnrichJob {
+  baseUrlGRPC = `${configuration()["chirpstack"]["hostname"]}:${configuration()["chirpstack"]["port"]}`;
+  private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
+  private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });
+
   constructor(
     private chirpstackDeviceService: ChirpstackDeviceService,
     private gatewayService: ChirpstackGatewayService,
     private iotDeviceService: IoTDeviceService,
     private organizationService: OrganizationService,
     @InjectRepository(Gateway)
-    private gatewayRepository: Repository<Gateway>
+    private gatewayRepository: Repository<Gateway>,
+    private iotDeviceDownlinkService: IoTDeviceDownlinkService
   ) {}
-  baseUrlGRPC = `${configuration()["chirpstack"]["hostname"]}:${configuration()["chirpstack"]["port"]}`;
-  private gatewayClient = new GatewayServiceClient(this.baseUrlGRPC, credentials.createInsecure());
-
-  private readonly logger = new Logger(LorawanDeviceDatabaseEnrichJob.name, { timestamp: true });
 
   @Cron(CronExpression.EVERY_MINUTE)
   async fetchStatusForGateway() {
@@ -84,7 +86,9 @@ export class LorawanDeviceDatabaseEnrichJob {
   async checkUnusualPackagesForGateways() {
     const gateways = await this.gatewayService.getAllWithUnusualPackagesAlarms();
     try {
-      await this.gatewayService.checkForUnusualPackagesAlarms(gateways.resultList.filter(gw => gw.notifyUnusualPackages));
+      await this.gatewayService.checkForUnusualPackagesAlarms(
+        gateways.resultList.filter(gw => gw.notifyUnusualPackages)
+      );
     } catch (e) {
       this.logger.error(`alarm check for gateways failed with: ${JSON.stringify(e)}`, e);
       throw e;
@@ -151,5 +155,22 @@ export class LorawanDeviceDatabaseEnrichJob {
         }
       )
     );
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async getDownlinkQueue() {
+    const unresolvedDownlinks = await this.iotDeviceDownlinkService.getAllUnresolvedDownlinks();
+    const deviceEuis = [...new Set(unresolvedDownlinks.map(d => d.lorawanDevice.deviceEUI))];
+
+    const chirpStackQueueItems: string[] = [];
+    for (const deviceEui of deviceEuis) {
+      const queue = await this.iotDeviceDownlinkService.getChirpStackDownlinkQueue(deviceEui);
+      const ids = queue.map(q => q.getId());
+      chirpStackQueueItems.push(...ids);
+    }
+
+    const desyncedDownlinks = unresolvedDownlinks.filter(d => !chirpStackQueueItems.includes(d.queueItemId));
+
+    await this.iotDeviceDownlinkService.resolveDownlinks(desyncedDownlinks);
   }
 }

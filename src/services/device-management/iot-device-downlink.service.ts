@@ -196,6 +196,34 @@ export class IoTDeviceDownlinkService {
     }
   }
 
+  public async getAllUnresolvedDownlinks(): Promise<Downlink[]> {
+    const downlinks = await this.downlinkRepository.find({
+      where: {
+        flushed: false || IsNull(),
+        sendAt: IsNull(),
+        acknowledgedAt: IsNull(),
+      },
+      relations: {
+        lorawanDevice: true,
+      },
+    });
+
+    return downlinks;
+  }
+
+  public async getChirpStackDownlinkQueue(deviceEui: string) {
+    const result = await this.chirpstackDeviceService.getDownlinkQueue(deviceEui);
+    return result.getResultList();
+  }
+
+  public async resolveDownlinks(downlinks: Downlink[]) {
+    for (const downlink of downlinks) {
+      // Consider: What to do with unresolved
+      downlink.flushed = true;
+    }
+    await this.downlinkRepository.save(downlinks);
+  }
+
   private mapDownlink(downlinks: Downlink[]) {
     const downlinksDtos = downlinks.map(d => {
       const buffer = Buffer.from(d.payload, "base64");

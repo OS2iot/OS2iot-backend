@@ -44,7 +44,6 @@ import { dateToTimestamp } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
-import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 
 @Injectable()
 export class ChirpstackDeviceService extends GenericChirpstackConfigurationService {
@@ -59,6 +58,13 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
   DEVICE_NAME_PREFIX = "OS2IOT-";
   DEFAULT_DESCRIPTION = "Created by OS2IoT";
   private readonly deviceStatsIntervalInDays: number;
+
+  public async getDownlinkQueue(deviceEui: string) {
+    const request = new GetDeviceQueueItemsRequest();
+    request.setDevEui(deviceEui);
+
+    return await this.getQueue(request);
+  }
 
   public makeCreateChirpstackDeviceDto(dto: CreateLoRaWANSettingsDto, name: string): CreateChirpstackDeviceDto {
     const csDto = new ChirpstackDeviceContentsDto();
