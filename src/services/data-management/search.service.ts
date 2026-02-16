@@ -5,7 +5,6 @@ import { Application } from "@entities/application.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ChirpstackGatewayService } from "@services/chirpstack/chirpstack-gateway.service";
 import { isHexadecimal, isUUID } from "class-validator";
 import * as _ from "lodash";
 import { Repository, SelectQueryBuilder } from "typeorm";
@@ -19,7 +18,6 @@ export class SearchService {
   constructor(
     @InjectRepository(Gateway)
     private gatewayRepository: Repository<Gateway>,
-    private gatewayService: ChirpstackGatewayService,
     @InjectRepository(IoTDevice)
     private iotDeviceRepository: Repository<IoTDevice>,
     @InjectRepository(Application)
@@ -35,7 +33,7 @@ export class SearchService {
     const urlDecoded = decodeURIComponent(query);
     const trimmedQuery = urlDecoded.trim();
 
-    const gatewayPromise = this.findGatewaysAndMapType(req, trimmedQuery);
+    const gatewayPromise = this.findGatewaysAndMapType(trimmedQuery);
     const applicationPromise = this.findApplicationsAndMapType(req, trimmedQuery);
     const devicePromise = this.findDevicesAndMapType(req, trimmedQuery);
 
@@ -70,9 +68,9 @@ export class SearchService {
       });
   }
 
-  private async findGatewaysAndMapType(req: AuthenticatedRequest, trimmedQuery: string) {
+  private async findGatewaysAndMapType(trimmedQuery: string) {
     try {
-      const x = await this.findGateways(req, trimmedQuery);
+      const x = await this.findGateways(trimmedQuery);
       return this.addTypeToResults(x, SearchResultType.Gateway);
     } catch (err) {
       this.logger.error(`Failed to search for Gateway, error: ${err}`);
@@ -85,13 +83,13 @@ export class SearchService {
     return sliced;
   }
 
-  private async findGateways(req: AuthenticatedRequest, query: string): Promise<SearchResultDto[]> {
-    // const escapedQuery = encodeURI(trimmedQuery);
-    const queryB = this.gatewayRepository
+  private async findGateways(query: string): Promise<SearchResultDto[]> {
+    const queryBuilder = this.gatewayRepository
       .createQueryBuilder("gateway")
       .where("(gateway.name ilike :name) OR (gateway.gatewayId ilike :name)", {
         name: `%${query}%`,
       });
+
     const toSelect = [
       `"gateway"."id"`,
       `"gateway"."createdAt"`,
@@ -100,7 +98,7 @@ export class SearchService {
       `"gateway"."organizationId"`,
       `"gateway"."gatewayId"`,
     ];
-    return queryB.select(toSelect).getRawMany();
+    return queryBuilder.select(toSelect).getRawMany();
   }
 
   private addTypeToResults(data: SearchResultDto[], type: SearchResultType) {
