@@ -7,7 +7,6 @@ import { PermissionMinimalDto } from "@dto/permission-minimal.dto";
 import { UserPermissions } from "@dto/permission-organization-application.dto";
 import { CreatePermissionDto } from "@dto/user-management/create-permission.dto";
 import { UpdatePermissionDto } from "@dto/user-management/update-permission.dto";
-import { Application } from "@entities/application.entity";
 import { ActionType } from "@entities/audit-log-entry";
 import { Organization } from "@entities/organization.entity";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
@@ -16,8 +15,7 @@ import { User } from "@entities/user.entity";
 import { PermissionType } from "@enum/permission-type.enum";
 import { PermissionCreator } from "@helpers/permission.helper";
 import { isOrganizationApplicationPermission } from "@helpers/security-helper";
-import { nameof } from "@helpers/type-helper";
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { AuditLog } from "@services/audit-log.service";
 import { ApplicationService } from "@services/device-management/application.service";
@@ -25,6 +23,7 @@ import { OrganizationService } from "@services/user-management/organization.serv
 import * as _ from "lodash";
 import { In, Repository, SelectQueryBuilder } from "typeorm";
 import { UserService } from "./user.service";
+import { ErrorCodes } from "@enum/error-codes.enum";
 
 @Injectable()
 export class PermissionService {
@@ -53,53 +52,6 @@ export class PermissionService {
     ]);
     res.forEach(val => AuditLog.success(ActionType.CREATE, Permission.name, userId, val.id, val.name));
     return res;
-  }
-
-  private instantiateDefaultPermissions(org: Organization, userId: number) {
-    const nameSuffixSeparator = " - ";
-    const allAdminSuffix = `${nameSuffixSeparator}${Translations.OrganizationAdmin}`;
-    const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${Translations.ApplicationAdmin}`;
-    const readSuffix = `${nameSuffixSeparator}${Translations.ReadLevel}`;
-
-    const readPermission = PermissionCreator.createRead(org.name + readSuffix, org, true);
-    const orgApplicationAdminPermission = PermissionCreator.createApplicationAdmin(
-      org.name + organizationApplicationAdminSuffix,
-      org,
-      true
-    );
-    orgApplicationAdminPermission.type.push({
-      type: PermissionType.Read,
-    } as PermissionTypeEntity);
-
-    const orgAllAdminPermission = PermissionCreator.createUserAdmin(org.name + allAdminSuffix, org);
-    orgAllAdminPermission.type.push({
-      type: PermissionType.OrganizationApplicationAdmin,
-    } as PermissionTypeEntity);
-    orgAllAdminPermission.type.push({
-      type: PermissionType.OrganizationGatewayAdmin,
-    } as PermissionTypeEntity);
-    orgAllAdminPermission.type.push({
-      type: PermissionType.Read,
-    } as PermissionTypeEntity);
-
-    this.setUserIdOnPermissions(readPermission, userId);
-    this.setUserIdOnPermissions(orgApplicationAdminPermission, userId);
-    this.setUserIdOnPermissions(orgAllAdminPermission, userId);
-
-    readPermission.createdBy = userId;
-    readPermission.updatedBy = userId;
-    orgApplicationAdminPermission.createdBy = userId;
-    orgApplicationAdminPermission.updatedBy = userId;
-    orgAllAdminPermission.createdBy = userId;
-    orgAllAdminPermission.updatedBy = userId;
-    return { readPermission, orgApplicationAdminPermission, orgAllAdminPermission };
-  }
-
-  private setUserIdOnPermissions(permission: Permission, userId: number) {
-    permission.type.forEach(type => {
-      type.createdBy = userId;
-      type.updatedBy = userId;
-    });
   }
 
   async findOrCreateGlobalAdminPermission(): Promise<Permission> {
@@ -145,6 +97,7 @@ export class PermissionService {
       x.permissions = _.union(x.permissions, [permission]);
     });
   }
+
   async removeUserFromPermission(permission: Permission, user: User): Promise<void> {
     user.permissions = user.permissions.filter(x => x.id != permission.id);
   }
@@ -183,20 +136,13 @@ export class PermissionService {
     return savedPermission;
   }
 
-  private async mapToPermission(permission: Permission, dto: UpdatePermissionDto): Promise<void> {
-    if (isOrganizationApplicationPermission(permission)) {
-      permission.applications = await this.applicationService.findManyByIds(dto.applicationIds);
-
-      permission.automaticallyAddNewApplications = dto.automaticallyAddNewApplications;
-    }
-    if (dto?.userIds?.length >= 0) {
-      permission.users = await this.userService.findManyUsersByIds(dto.userIds);
-    }
-  }
-
   async deletePermission(id: number): Promise<DeleteResponseDto> {
-    const res = await this.permissionRepository.delete(id);
-    return new DeleteResponseDto(res.affected);
+    try {
+      const res = await this.permissionRepository.delete(id);
+      return new DeleteResponseDto(res.affected);
+    } catch (e) {
+      throw new BadRequestException(ErrorCodes.DirtyPermissionDelete);
+    }
   }
 
   async getAllPermissions(query?: ListAllPermissionsDto, orgs?: number[]): Promise<ListAllPermissionsResponseDto> {
@@ -259,27 +205,6 @@ export class PermissionService {
       data: data,
       count: count,
     };
-  }
-
-  private getSorting(query: ListAllPermissionsDto | undefined) {
-    let orderBy = `permission.id`;
-    if (
-      query &&
-      query?.orderOn !== null &&
-      (query.orderOn === "id" ||
-        query.orderOn === "name" ||
-        query.orderOn === "type" ||
-        query.orderOn === "organisations")
-    ) {
-      if (query.orderOn === "organisations") {
-        orderBy = "org.name";
-      } else if (query.orderOn === "type") {
-        orderBy = `permission_type.${query.orderOn}`;
-      } else {
-        orderBy = `permission.${query.orderOn}`;
-      }
-    }
-    return orderBy;
   }
 
   async getAllPermissionsInOrganizations(
@@ -396,6 +321,103 @@ export class PermissionService {
     return this.createUserPermissionsFromPermissions(permissions);
   }
 
+  async findManyByIds(ids: number[]): Promise<Permission[]> {
+    if (ids == null || ids?.length == 0) {
+      return [];
+    }
+    return await this.permissionRepository.findBy({ id: In(ids) });
+  }
+
+  async findManyByIdsIncludeOrgs(ids: number[]): Promise<Permission[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    return await this.permissionRepository.find({
+      where: { id: In(ids) },
+      relations: ["organization"],
+    });
+  }
+
+  private instantiateDefaultPermissions(org: Organization, userId: number) {
+    const nameSuffixSeparator = " - ";
+    const allAdminSuffix = `${nameSuffixSeparator}${Translations.OrganizationAdmin}`;
+    const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${Translations.ApplicationAdmin}`;
+    const readSuffix = `${nameSuffixSeparator}${Translations.ReadLevel}`;
+
+    const readPermission = PermissionCreator.createRead(org.name + readSuffix, org, true);
+    const orgApplicationAdminPermission = PermissionCreator.createApplicationAdmin(
+      org.name + organizationApplicationAdminSuffix,
+      org,
+      true
+    );
+    orgApplicationAdminPermission.type.push({
+      type: PermissionType.Read,
+    } as PermissionTypeEntity);
+
+    const orgAllAdminPermission = PermissionCreator.createUserAdmin(org.name + allAdminSuffix, org);
+    orgAllAdminPermission.type.push({
+      type: PermissionType.OrganizationApplicationAdmin,
+    } as PermissionTypeEntity);
+    orgAllAdminPermission.type.push({
+      type: PermissionType.OrganizationGatewayAdmin,
+    } as PermissionTypeEntity);
+    orgAllAdminPermission.type.push({
+      type: PermissionType.Read,
+    } as PermissionTypeEntity);
+
+    this.setUserIdOnPermissions(readPermission, userId);
+    this.setUserIdOnPermissions(orgApplicationAdminPermission, userId);
+    this.setUserIdOnPermissions(orgAllAdminPermission, userId);
+
+    readPermission.createdBy = userId;
+    readPermission.updatedBy = userId;
+    orgApplicationAdminPermission.createdBy = userId;
+    orgApplicationAdminPermission.updatedBy = userId;
+    orgAllAdminPermission.createdBy = userId;
+    orgAllAdminPermission.updatedBy = userId;
+    return { readPermission, orgApplicationAdminPermission, orgAllAdminPermission };
+  }
+
+  private setUserIdOnPermissions(permission: Permission, userId: number) {
+    permission.type.forEach(type => {
+      type.createdBy = userId;
+      type.updatedBy = userId;
+    });
+  }
+
+  private async mapToPermission(permission: Permission, dto: UpdatePermissionDto): Promise<void> {
+    if (isOrganizationApplicationPermission(permission)) {
+      permission.applications = await this.applicationService.findManyByIds(dto.applicationIds);
+
+      permission.automaticallyAddNewApplications = dto.automaticallyAddNewApplications;
+    }
+    if (dto?.userIds?.length >= 0) {
+      permission.users = await this.userService.findManyUsersByIds(dto.userIds);
+    }
+  }
+
+  private getSorting(query: ListAllPermissionsDto | undefined) {
+    let orderBy = `permission.id`;
+    if (
+      query &&
+      query?.orderOn !== null &&
+      (query.orderOn === "id" ||
+        query.orderOn === "name" ||
+        query.orderOn === "type" ||
+        query.orderOn === "organisations")
+    ) {
+      if (query.orderOn === "organisations") {
+        orderBy = "org.name";
+      } else if (query.orderOn === "type") {
+        orderBy = `permission_type.${query.orderOn}`;
+      } else {
+        orderBy = `permission.${query.orderOn}`;
+      }
+    }
+    return orderBy;
+  }
+
   private createUserPermissionsFromPermissions(permissions: PermissionMinimalDto[]): UserPermissions {
     const res = new UserPermissions();
 
@@ -416,24 +438,6 @@ export class PermissionService {
     });
 
     return res;
-  }
-
-  async findManyByIds(ids: number[]): Promise<Permission[]> {
-    if (ids == null || ids?.length == 0) {
-      return [];
-    }
-    return await this.permissionRepository.findBy({ id: In(ids) });
-  }
-
-  async findManyByIdsIncludeOrgs(ids: number[]): Promise<Permission[]> {
-    if (!ids || ids.length === 0) {
-      return [];
-    }
-
-    return await this.permissionRepository.find({
-      where: { id: In(ids) },
-      relations: ["organization"],
-    });
   }
 
   private hasAccessToAllApplicationsInOrganization(permissions: PermissionMinimalDto[]) {

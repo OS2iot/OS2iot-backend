@@ -52,4 +52,5 @@ export enum ErrorCodes {
   CouldntGetApplications = "MESSAGE.COULD-NOT-GET-CS-APPLICATIONS",
   DifferentServiceProfile = "MESSAGE.DIFFERENT-CREATION-SERVICE-PROFILE",
   OrganizationCannotBeDeletedHasGateways = "MESSAGE.ORGANIZATION-GATEWAYS-EXISTS",
+  DirtyPermissionDelete = "PERMISSION.ERRORS.DIRTY-DELETE",
 }
