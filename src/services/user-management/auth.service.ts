@@ -72,7 +72,7 @@ export class AuthService {
   public async issueJwt(email: string, id: number, isKombit?: boolean): Promise<JwtResponseDto> {
     const payload: JwtPayloadDto = { username: email, sub: id, isKombit: isKombit };
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload, {expiresIn: "2H"}),
     };
   }
 
