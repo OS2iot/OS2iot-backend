@@ -157,7 +157,7 @@ export class LorawanDeviceDatabaseEnrichJob {
     );
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async getDownlinkQueue() {
     const unresolvedDownlinks = await this.iotDeviceDownlinkService.getAllUnresolvedDownlinks();
     const deviceEuis = [...new Set(unresolvedDownlinks.map(d => d.lorawanDevice.deviceEUI))];
