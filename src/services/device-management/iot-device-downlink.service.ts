@@ -21,6 +21,9 @@ import { DownlinkQueueDto } from "@dto/downlink.dto";
 
 @Injectable()
 export class IoTDeviceDownlinkService {
+  private readonly logger = new Logger(IoTDeviceDownlinkService.name);
+  private readonly SIGFOX_DOWNLINK_LENGTH_EXACT = 16;
+
   constructor(
     @InjectRepository(Downlink)
     private downlinkRepository: Repository<Downlink>,
@@ -29,8 +32,6 @@ export class IoTDeviceDownlinkService {
     private iotDeviceService: IoTDeviceService,
     private chirpstackDeviceService: ChirpstackDeviceService
   ) {}
-  private readonly logger = new Logger(IoTDeviceDownlinkService.name);
-  private readonly SIGFOX_DOWNLINK_LENGTH_EXACT = 16;
 
   async createDownlink(dto: CreateIoTDeviceDownlinkDto, device: IoTDevice): Promise<void> {
     if (device.type === IoTDeviceType.LoRaWAN) {
@@ -59,68 +60,6 @@ export class IoTDeviceDownlinkService {
     } catch (err) {
       throw err;
     }
-  }
-
-  private async createSigfoxDownlink(dto: CreateIoTDeviceDownlinkDto, cast: SigFoxDevice): Promise<void> {
-    this.validateSigfoxPayload(dto);
-    this.logger.debug(`Creating downlink for device(${cast.id}) sigfoxId(${cast.deviceId})`);
-    cast.downlinkPayload = dto.data;
-    await this.iotDeviceService.save(cast);
-    await this.updateSigFoxDeviceTypeDownlink(cast);
-  }
-
-  private async updateSigFoxDeviceTypeDownlink(cast: SigFoxDevice) {
-    const sigfoxGroup = await this.sigfoxGroupService.findOneByGroupId(cast.groupId);
-    await this.sigfoxApiDeviceTypeService.addOrUpdateCallback(sigfoxGroup, cast.deviceTypeId);
-  }
-
-  private validateSigfoxPayload(dto: CreateIoTDeviceDownlinkDto) {
-    if (dto.data.length !== this.SIGFOX_DOWNLINK_LENGTH_EXACT) {
-      throw new BadRequestException(ErrorCodes.DownlinkLengthWrongForSigfox);
-    }
-  }
-
-  private async createLoraDownlink(dto: CreateIoTDeviceDownlinkDto, cast: LoRaWANDevice): Promise<void> {
-    const csDto: CreateChirpstackDeviceQueueItemDto = {
-      deviceQueueItem: {
-        fPort: dto.port,
-        devEUI: cast.deviceEUI,
-        confirmed: dto.confirmedDownlink,
-        data: this.hexBytesToBase64(dto.data),
-      },
-    };
-
-    try {
-      const downlinkQueueId = await this.chirpstackDeviceService.createDownlink(csDto);
-
-      const downlink = new Downlink();
-      downlink.queueItemId = downlinkQueueId;
-      downlink.payload = csDto.deviceQueueItem.data;
-      downlink.port = csDto.deviceQueueItem.fPort;
-      downlink.lorawanDevice = cast;
-
-      await this.downlinkRepository.save(downlink);
-
-      return;
-    } catch (err) {
-      this.handleErrorsFromChirpstack(csDto, err);
-    }
-  }
-
-  private handleErrorsFromChirpstack(csDto: CreateChirpstackDeviceQueueItemDto, err: any) {
-    this.logger.error(
-      `Error while trying to create downlink i chirpstack. DTO: '${JSON.stringify(csDto)}'. Error: '${JSON.stringify(
-        err?.data
-      )}'`
-    );
-    if (err.status == 400) {
-      throw new BadRequestException("Error 400 from Chirpstack" + JSON.stringify(err?.data));
-    }
-    throw new InternalServerErrorException("Could not send to chirpstack, try again later.");
-  }
-
-  private hexBytesToBase64(hexBytes: string): string {
-    return Buffer.from(hexBytes, "hex").toString("base64");
   }
 
   public async updateTxAckDownlink(dto: ChirpstackMqttTxAckMessageDto): Promise<void> {
@@ -194,6 +133,95 @@ export class IoTDeviceDownlinkService {
     } catch (err) {
       throw err;
     }
+  }
+
+  public async getAllUnresolvedDownlinks(): Promise<Downlink[]> {
+    const downlinks = await this.downlinkRepository.find({
+      where: {
+        flushed: false || IsNull(),
+        sendAt: IsNull(),
+        acknowledgedAt: IsNull(),
+      },
+      relations: {
+        lorawanDevice: true,
+      },
+    });
+
+    return downlinks;
+  }
+
+  public async getChirpStackDownlinkQueue(deviceEui: string) {
+    const result = await this.chirpstackDeviceService.getDownlinkQueue(deviceEui);
+    return result.getResultList();
+  }
+
+  public async resolveDownlinks(downlinks: Downlink[]) {
+    for (const downlink of downlinks) {
+      downlink.sendAt = new Date();
+    }
+    await this.downlinkRepository.save(downlinks);
+  }
+
+  private async createSigfoxDownlink(dto: CreateIoTDeviceDownlinkDto, cast: SigFoxDevice): Promise<void> {
+    this.validateSigfoxPayload(dto);
+    this.logger.debug(`Creating downlink for device(${cast.id}) sigfoxId(${cast.deviceId})`);
+    cast.downlinkPayload = dto.data;
+    await this.iotDeviceService.save(cast);
+    await this.updateSigFoxDeviceTypeDownlink(cast);
+  }
+
+  private async updateSigFoxDeviceTypeDownlink(cast: SigFoxDevice) {
+    const sigfoxGroup = await this.sigfoxGroupService.findOneByGroupId(cast.groupId);
+    await this.sigfoxApiDeviceTypeService.addOrUpdateCallback(sigfoxGroup, cast.deviceTypeId);
+  }
+
+  private validateSigfoxPayload(dto: CreateIoTDeviceDownlinkDto) {
+    if (dto.data.length !== this.SIGFOX_DOWNLINK_LENGTH_EXACT) {
+      throw new BadRequestException(ErrorCodes.DownlinkLengthWrongForSigfox);
+    }
+  }
+
+  private async createLoraDownlink(dto: CreateIoTDeviceDownlinkDto, cast: LoRaWANDevice): Promise<void> {
+    const csDto: CreateChirpstackDeviceQueueItemDto = {
+      deviceQueueItem: {
+        fPort: dto.port,
+        devEUI: cast.deviceEUI,
+        confirmed: dto.confirmedDownlink,
+        data: this.hexBytesToBase64(dto.data),
+      },
+    };
+
+    try {
+      const downlinkQueueId = await this.chirpstackDeviceService.createDownlink(csDto);
+
+      const downlink = new Downlink();
+      downlink.queueItemId = downlinkQueueId;
+      downlink.payload = csDto.deviceQueueItem.data;
+      downlink.port = csDto.deviceQueueItem.fPort;
+      downlink.lorawanDevice = cast;
+
+      await this.downlinkRepository.save(downlink);
+
+      return;
+    } catch (err) {
+      this.handleErrorsFromChirpstack(csDto, err);
+    }
+  }
+
+  private handleErrorsFromChirpstack(csDto: CreateChirpstackDeviceQueueItemDto, err: any) {
+    this.logger.error(
+      `Error while trying to create downlink i chirpstack. DTO: '${JSON.stringify(csDto)}'. Error: '${JSON.stringify(
+        err?.data
+      )}'`
+    );
+    if (err.status == 400) {
+      throw new BadRequestException("Error 400 from Chirpstack" + JSON.stringify(err?.data));
+    }
+    throw new InternalServerErrorException("Could not send to chirpstack, try again later.");
+  }
+
+  private hexBytesToBase64(hexBytes: string): string {
+    return Buffer.from(hexBytes, "hex").toString("base64");
   }
 
   private mapDownlink(downlinks: Downlink[]) {
