@@ -7,7 +7,7 @@ import { IsPhoneNumberString } from "@helpers/phone-number.validator";
 import { nameof } from "@helpers/type-helper";
 import { ApiProperty } from "@nestjs/swagger";
 import { ArrayUnique, IsArray, IsBoolean, IsEnum, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
-import { IsMetadataJson } from "@helpers/is-metadata-json.validator";
+import { IsMetadataJsonObject } from "@helpers/is-metadata-json-object.validator";
 
 export class CreateApplicationDto {
   @ApiProperty({ required: true })
@@ -100,6 +100,6 @@ export class CreateApplicationDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsMetadataJson(nameof<CreateApplicationDto>("metadata"))
+  @IsMetadataJsonObject(nameof<CreateApplicationDto>("metadata"))
   metadata?: JSON;
 }
