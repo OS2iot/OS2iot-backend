@@ -6,16 +6,10 @@ export const deviceModelSchema = {
   title: " - Device Model schema",
   description: "This entity captures the static properties of a Device. ",
   type: "object",
+  // External $ref entries removed - they reference remote schemas that cannot
+  // be fetched from within Docker containers and were never resolved by AJV.
+  // See: https://github.com/smart-data-models/dataModel.Device/blob/master/DeviceModel/schema.json
   allOf: [
-    {
-      $ref: "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons",
-    },
-    {
-      $ref: "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/PhysicalObject-Commons",
-    },
-    {
-      $ref: "https://smart-data-models.github.io/dataModel.Device/device-schema.json",
-    },
     {
       properties: {
         type: {
