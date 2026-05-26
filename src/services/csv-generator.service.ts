@@ -60,7 +60,8 @@ export class CsvGeneratorService {
       `${lorawanSettings?.deviceProfileID ?? ""},` +
       `${lorawanSettings?.skipFCntCheck ?? ""},` +
       `${lorawanSettings?.activationType ?? ""},` +
-      `${lorawanSettings?.OTAAapplicationKey ?? ""}`;
+      `${lorawanSettings?.OTAAapplicationKey ?? ""},` +
+      `${lorawanSettings?.OTAAnetworkKey ?? ""}`;
 
     return csvRow;
   }
@@ -97,4 +98,5 @@ const csvFields = [
   "skipFCntCheck",
   "activationType",
   "OTAAapplicationKey",
+  "OTAAnetworkKey",
 ];
