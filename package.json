@@ -65,7 +65,7 @@
     "lodash": "^4.18.1",
     "mqtt": "^5.15.1",
     "njwt": "^2.0.1",
-    "nodemailer": "^8.0.11",
+    "nodemailer": "^9.0.1",
     "passport": "^0.7.0",
     "passport-headerapikey": "^1.2.2",
     "passport-jwt": "^4.0.1",
