@@ -24,6 +24,14 @@ export class CreateLoRaWANSettingsDto extends PickType(ChirpstackDeviceContentsD
   @IsHexadecimal()
   OTAAapplicationKey?: string;
 
+  /* OTAA — only used for LoRaWAN 1.1.x device profiles (the root NwkKey). */
+  @ApiProperty({ required: false })
+  @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.OTAA && !!o.OTAAnetworkKey)
+  @IsString()
+  @Length(32, 32)
+  @IsHexadecimal()
+  OTAAnetworkKey?: string;
+
   /* ABP */
   @ApiProperty({ required: false })
   @ValidateIf((o: CreateLoRaWANSettingsDto) => o.activationType == ActivationType.ABP)

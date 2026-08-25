@@ -1043,10 +1043,16 @@ export class IoTDeviceService {
 
   private async doActivationByOTAA(dto: CreateIoTDeviceDto, isUpdate: boolean) {
     if (dto.lorawanSettings.OTAAapplicationKey) {
+      const profile = await this.deviceProfileService.findOneDeviceProfileById(
+        dto.lorawanSettings.deviceProfileID
+      );
+      const macVersion = profile.deviceProfile.macVersion;
       await this.chirpstackDeviceService.activateDeviceWithOTAA(
         dto.lorawanSettings.devEUI,
         dto.lorawanSettings.OTAAapplicationKey,
-        isUpdate
+        isUpdate,
+        macVersion,
+        dto.lorawanSettings.OTAAnetworkKey
       );
     } else {
       throw new BadRequestException(ErrorCodes.MissingOTAAInfo);

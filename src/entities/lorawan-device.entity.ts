@@ -15,6 +15,10 @@ export class LoRaWANDevice extends IoTDevice {
   OTAAapplicationKey: string;
 
   @Column({ nullable: true })
+  @Length(32, 32, { message: "Must be 32 characters" })
+  OTAAnetworkKey: string;
+
+  @Column({ nullable: true })
   deviceProfileName: string;
 
   @Column({ nullable: true })
