@@ -181,11 +181,11 @@ export class ApplicationService {
       queryBuilder.andWhere("app.id IN (:...whitelist)", { whitelist });
     }
 
-    if (query.status) {
+    if (query.status && query.status !== "null") {
       queryBuilder.andWhere("app.status = :status", { status: query.status });
     }
 
-    if (query.owner) {
+    if (query.owner && query.owner !== "null") {
       queryBuilder.andWhere("app.owner = :owner", { owner: query.owner });
     }
 
@@ -507,7 +507,7 @@ export class ApplicationService {
 
   buildControlledPropertyDeviceType<
     T extends Record<string, string>,
-    Entity extends ControlledProperty | ApplicationDeviceType
+    Entity extends ControlledProperty | ApplicationDeviceType,
   >(validKeys: T, clientTypes: string[], userId: number, entity: { new (): Entity }): Entity[] {
     // Filter out invalid client values
     const matchingValues = findValuesInRecord(validKeys, clientTypes);
