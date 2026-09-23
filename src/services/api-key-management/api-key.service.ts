@@ -12,6 +12,7 @@ import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { UpdateApiKeyDto } from "@dto/api-key/update-api-key.dto";
 import { nameof } from "@helpers/type-helper";
+import { Permission } from "@entities/permissions/permission.entity";
 
 @Injectable()
 export class ApiKeyService {
@@ -92,7 +93,7 @@ export class ApiKeyService {
     if (dto.permissionIds?.length > 0) {
       const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
 
-      apiKey.permissions = permissionsDb.map(pm => ({ ...pm, apiKeys: null }));
+      apiKey.permissions = permissionsDb.map(pm => ({ ...pm, apiKeys: null } as Permission));
     }
 
     return await this.apiKeyRepository.save(apiKey);
@@ -108,7 +109,7 @@ export class ApiKeyService {
       const permissionsDb = await this.permissionService.findManyByIds(dto.permissionIds);
       apiKey.permissions = permissionsDb.map(pm => ({
         ...pm,
-        apiKeys: [],
+        apiKeys: [] as ApiKey[],
       }));
     }
 

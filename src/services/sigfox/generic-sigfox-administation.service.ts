@@ -11,8 +11,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import axios, { AxiosRequestConfig, Method } from "axios";
-import { setupCache } from "axios-cache-interceptor";
-import type { AxiosCacheInstance } from "axios-cache-interceptor/src/cache/axios";
+import { AxiosCacheInstance, setupCache } from "axios-cache-interceptor";
 
 @Injectable()
 export class GenericSigfoxAdministationService {

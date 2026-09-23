@@ -1,7 +1,9 @@
 {
-    "collection": "@nestjs/schematics",
-    "sourceRoot": "src",
-    "compilerOptions": {
-        "plugins": ["@nestjs/swagger/plugin"]
-    }
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "plugins": ["@nestjs/swagger/plugin"],
+    "tsConfigPath": "tsconfig.build.json"
+  },
+  "entryFile": "main"
 }

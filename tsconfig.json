@@ -1,37 +1,36 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "declaration": true,
-        "removeComments": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "es2017",
-        "sourceMap": true,
-        "outDir": "./dist",
-        "baseUrl": "./",
-        "incremental": true,
-        "noImplicitAny": true,
-        "isolatedModules": false,
-        "lib": ["dom", "es2017", "ESNext.Disposable"],
-        "paths": {
-            "@services/*": ["src/services/*"],
-            "@admin-controller/*": ["src/controllers/admin-controller/*"],
-            "@device-data-controller/*": [
-                "src/controllers/device-data-controller/*"
-            ],
-            "@user-management-controller/*": ["src/controllers/user-management/*"],
-            "@interfaces/*": ["src/entities/interfaces/*"],
-            "@dto/*": ["src/entities/dto/*"],
-            "@enum/*": ["src/entities/enum/*"],
-            "@entities/*": ["src/entities/*"],
-            "@modules/*": ["src/modules/*"],
-            "@loaders/*": ["src/loaders/*"],
-            "@auth/*": ["src/auth/*"],
-            "@helpers/*": ["src/helpers/*"],
-            "@config/*": ["src/config/*"],
-            "@resources/*": ["src/resources/*"],
-        }
-    },
-    "exclude": ["node_modules", "dist", "test"]
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "isolatedModules": false,
+    "lib": ["dom", "es2017", "ESNext.Disposable"],
+    "paths": {
+      "@services/*": ["src/services/*"],
+      "@admin-controller/*": ["src/controllers/admin-controller/*"],
+      "@device-data-controller/*": ["src/controllers/device-data-controller/*"],
+      "@user-management-controller/*": ["src/controllers/user-management/*"],
+      "@interfaces/*": ["src/entities/interfaces/*"],
+      "@dto/*": ["src/entities/dto/*"],
+      "@enum/*": ["src/entities/enum/*"],
+      "@entities/*": ["src/entities/*"],
+      "@modules/*": ["src/modules/*"],
+      "@loaders/*": ["src/loaders/*"],
+      "@auth/*": ["src/auth/*"],
+      "@helpers/*": ["src/helpers/*"],
+      "@config/*": ["src/config/*"],
+      "@resources/*": ["src/resources/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "test"]
 }

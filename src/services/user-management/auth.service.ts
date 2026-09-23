@@ -72,7 +72,7 @@ export class AuthService {
   public async issueJwt(email: string, id: number, isKombit?: boolean): Promise<JwtResponseDto> {
     const payload: JwtPayloadDto = { username: email, sub: id, isKombit: isKombit };
     return {
-      accessToken: this.jwtService.sign(payload, {expiresIn: "2H"}),
+      accessToken: this.jwtService.sign(payload, { expiresIn: "2H" }),
     };
   }
 
@@ -111,7 +111,7 @@ export class AuthService {
 
         return base64Xml;
       })
-      .catch((err: any) => {
+      .catch((err: any): any => {
         this.logger.error("Err: " + err);
         this.logger.error("Could not load attribute in SAML response");
         return null;

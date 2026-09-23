@@ -33,7 +33,7 @@ export class ListAllApplicationsDto extends OmitType(ListAllEntitiesDto, ["limit
   @IsOptional()
   @IsString()
   @Transform(({ value }) => NullableApplicationStatus(value))
-  status?: ApplicationStatus | undefined;
+  status?: ApplicationStatus | undefined | "null";
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
