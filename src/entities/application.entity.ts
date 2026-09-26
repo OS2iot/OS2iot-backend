@@ -14,6 +14,7 @@ import {
   Unique,
 } from "typeorm";
 import { ApplicationDeviceType } from "./application-device-type.entity";
+import { ContactPerson } from "./contact-person.entity";
 import { ControlledProperty } from "./controlled-property.entity";
 import { Multicast } from "./multicast.entity";
 import { Permission } from "./permissions/permission.entity";
@@ -95,6 +96,12 @@ export class Application extends DbBaseEntity {
 
   @Column({ nullable: true })
   contactPhone?: string;
+
+  @OneToMany(() => ContactPerson, entity => entity.application, {
+    nullable: true,
+    cascade: true,
+  })
+  contactPersons?: ContactPerson[];
 
   @Column({ nullable: true })
   personalData?: boolean;

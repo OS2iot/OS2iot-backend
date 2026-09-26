@@ -33,6 +33,8 @@ import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Brackets, DeleteResult, In, Repository } from "typeorm";
+import { ContactPerson } from "@entities/contact-person.entity";
+import { CreateContactPersonDto } from "@dto/create-contact-person.dto";
 
 @Injectable()
 export class ApplicationService {
@@ -245,7 +247,7 @@ export class ApplicationService {
           : { id: In(allowedApplications) },
       take: query.limit,
       skip: query.offset,
-      relations: ["iotDevices", nameof<Application>("belongsTo")],
+      relations: ["iotDevices", nameof<Application>("contactPersons"), nameof<Application>("belongsTo")],
       order: { id: query.sort },
     });
 
@@ -346,6 +348,7 @@ export class ApplicationService {
       relations: [
         "iotDevices",
         "belongsTo",
+        nameof<Application>("contactPersons"),
         nameof<Application>("controlledProperties"),
         nameof<Application>("deviceTypes"),
         "permissions",
@@ -395,6 +398,7 @@ export class ApplicationService {
         nameof<Application>("dataTargets"),
         nameof<Application>("controlledProperties"),
         nameof<Application>("deviceTypes"),
+        nameof<Application>("contactPersons"),
       ],
     });
 
@@ -640,6 +644,18 @@ export class ApplicationService {
     application.personalData = applicationDto.personalData;
     application.hardware = applicationDto.hardware;
     application.permissions = await this.permissionService.findManyByIds(applicationDto.permissionIds);
+
+    application.contactPersons =
+      applicationDto.contactPersons?.map((dto: CreateContactPersonDto): ContactPerson => {
+        const contactPerson = new ContactPerson();
+        contactPerson.id = dto.id;
+        contactPerson.name = dto.name;
+        contactPerson.phone = dto.phone;
+        contactPerson.email = dto.email;
+        contactPerson.role = dto.role;
+
+        return contactPerson;
+      }) ?? [];
 
     // Set metadata dependencies
     application.controlledProperties = applicationDto.controlledProperties

@@ -35,6 +35,7 @@ import { SigFoxDevice } from "@entities/sigfox-device.entity";
 import { SigFoxGroup } from "@entities/sigfox-group.entity";
 import { User } from "@entities/user.entity";
 import { AuditLog } from "@services/audit-log.service";
+import { ContactPerson } from "@entities/contact-person.entity";
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { AuditLog } from "@services/audit-log.service";
       MQTTExternalBrokerDevice,
       Gateway,
       Downlink,
+      ContactPerson,
     ]),
   ],
   providers: [AuditLog],
