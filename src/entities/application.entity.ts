@@ -116,4 +116,7 @@ export class Application extends DbBaseEntity {
 
   @Column({ nullable: true })
   chirpstackId?: string;
+
+  @Column({ type: "jsonb", nullable: true })
+  metadata: JSON;
 }
