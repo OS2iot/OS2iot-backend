@@ -1,4 +1,3 @@
-import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { Organization } from "@entities/organization.entity";
 import { ApplicationStatus } from "@enum/application-status.enum";
@@ -19,6 +18,7 @@ import { Multicast } from "./multicast.entity";
 import { Permission } from "./permissions/permission.entity";
 import { DbBaseEntity } from "@entities/base.entity";
 import { nameof } from "@helpers/type-helper";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 @Entity("application")
 @Unique(["name"])
@@ -39,11 +39,11 @@ export class Application extends DbBaseEntity {
 
   @OneToMany(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    type => DataTarget,
-    datatarget => datatarget.application,
+    type => IoTDevicePayloadDecoderDataTargetConnection,
+    connection => connection.application,
     { onDelete: "CASCADE" }
   )
-  dataTargets: DataTarget[];
+  connections: IoTDevicePayloadDecoderDataTargetConnection[];
 
   @OneToMany(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

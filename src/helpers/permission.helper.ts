@@ -4,11 +4,6 @@ import { PermissionType } from "@enum/permission-type.enum";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 
 export abstract class PermissionCreator {
-  private static create(name: string, org?: Organization, addNewApps = false): Permission {
-    const pm = new Permission(name, org, addNewApps);
-    return pm;
-  }
-
   static createByTypes(name: string, types: PermissionType[], org?: Organization, addNewApps = false): Permission {
     const pm = new Permission(name, org, addNewApps);
     pm.type = types.map(type => {
@@ -39,6 +34,13 @@ export abstract class PermissionCreator {
     return pm;
   }
 
+  static createDataTargetAdmin(name: string, org?: Organization, addNewApps = false): Permission {
+    const permission = this.create(name, org, addNewApps);
+
+    permission.type = [{ type: PermissionType.OrganizationDataTargetAdmin } as PermissionTypeEntity];
+    return permission;
+  }
+
   static createUserAdmin(name: string, org?: Organization, addNewApps = false): Permission {
     const pm = this.create(name, org, addNewApps);
 
@@ -50,6 +52,11 @@ export abstract class PermissionCreator {
     const pm = this.create(name, org, addNewApps);
 
     pm.type = [{ type: PermissionType.OrganizationGatewayAdmin } as PermissionTypeEntity];
+    return pm;
+  }
+
+  private static create(name: string, org?: Organization, addNewApps = false): Permission {
+    const pm = new Permission(name, org, addNewApps);
     return pm;
   }
 }

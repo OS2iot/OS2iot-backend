@@ -6,9 +6,9 @@ import { RolesMetaData } from "./constants";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
   private readonly logger = new Logger(RolesGuard.name);
+
+  constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const roleRequiredMethod = this.reflector.get<string>(RolesMetaData, context.getHandler());
@@ -40,11 +40,14 @@ export class RolesGuard implements CanActivate {
       return this.hasOrganizationUserAdminAccess(user);
     } else if (roleRequired == PermissionType.OrganizationGatewayAdmin) {
       return this.hasOrganizationGatewayAdminAccess(user);
+    } else if (roleRequired === PermissionType.OrganizationDataTargetAdmin) {
+      return this.hasOrganizationDataTargetAdminAccess(user);
     } else if (roleRequired == PermissionType.Read) {
       return (
         this.hasOrganizationApplicationAdminAccess(user) ||
         this.hasOrganizationUserAdminAccess(user) ||
         this.hasOrganizationGatewayAdminAccess(user) ||
+        this.hasOrganizationDataTargetAdminAccess(user) ||
         this.hasReadAccess(user)
       );
     }
@@ -62,6 +65,10 @@ export class RolesGuard implements CanActivate {
 
   hasOrganizationGatewayAdminAccess(user: AuthenticatedUser): boolean {
     return user.permissions.orgToGatewayAdminPermissions.size > 0;
+  }
+
+  hasOrganizationDataTargetAdminAccess(user: AuthenticatedUser): boolean {
+    return user.permissions.orgToDataTargetAdminPermissions.size > 0;
   }
 
   hasReadAccess(user: AuthenticatedUser): boolean {

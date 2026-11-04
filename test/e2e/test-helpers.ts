@@ -47,107 +47,104 @@ import { OrganizationGatewayAdminPermission } from "@entities/permissions/organi
 import { OrganizationUserAdminPermission } from "@entities/permissions/organization-user-admin-permission.entity";
 
 export async function clearDatabase(): Promise<void> {
-    await getManager().query(
-        `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
-            `DELETE FROM "open_data_dk_dataset"; \n` +
-            `DELETE FROM "received_message"; \n` +
-            `DELETE FROM "iot_device"; \n` +
-            `DELETE FROM "device_model"; \n` +
-            `DELETE FROM "application"; \n` +
-            `DELETE FROM "data_target"; \n` +
-            `DELETE FROM "received_message_metadata";  \n` +
-            `DELETE FROM "payload_decoder";  \n` +
-            `DELETE FROM "user_permissions_permission";  \n` +
-            `DELETE FROM "application_permissions_permission";  \n` +
-            `DELETE FROM "permission";  \n` +
-            `DELETE FROM "organization";  \n` +
-            `DELETE FROM "sigfox_group";  \n` +
-            `DELETE FROM "user";  \n`
-    );
+  await getManager().query(
+    `DELETE FROM "iot_device_payload_decoder_data_target_connection"; \n` +
+      `DELETE FROM "open_data_dk_dataset"; \n` +
+      `DELETE FROM "received_message"; \n` +
+      `DELETE FROM "iot_device"; \n` +
+      `DELETE FROM "device_model"; \n` +
+      `DELETE FROM "application"; \n` +
+      `DELETE FROM "data_target"; \n` +
+      `DELETE FROM "received_message_metadata";  \n` +
+      `DELETE FROM "payload_decoder";  \n` +
+      `DELETE FROM "user_permissions_permission";  \n` +
+      `DELETE FROM "application_permissions_permission";  \n` +
+      `DELETE FROM "permission";  \n` +
+      `DELETE FROM "organization";  \n` +
+      `DELETE FROM "sigfox_group";  \n` +
+      `DELETE FROM "user";  \n`
+  );
 }
 
 export function generateSigfoxDeviceFromData(
-    application: Application,
-    backendDevice: SigFoxApiDeviceContent
+  application: Application,
+  backendDevice: SigFoxApiDeviceContent
 ): SigFoxDevice {
-    const sigfoxDevice = new SigFoxDevice();
-    sigfoxDevice.name = "E2E Test SigFox Device";
-    sigfoxDevice.application = application;
-    sigfoxDevice.deviceId = backendDevice.id;
-    sigfoxDevice.deviceTypeId = backendDevice.deviceType.id;
-    sigfoxDevice.groupId = backendDevice.group.id;
-    sigfoxDevice.metadata = JSON.parse('""');
+  const sigfoxDevice = new SigFoxDevice();
+  sigfoxDevice.name = "E2E Test SigFox Device";
+  sigfoxDevice.application = application;
+  sigfoxDevice.deviceId = backendDevice.id;
+  sigfoxDevice.deviceTypeId = backendDevice.deviceType.id;
+  sigfoxDevice.groupId = backendDevice.group.id;
+  sigfoxDevice.metadata = JSON.parse('""');
 
-    return sigfoxDevice;
+  return sigfoxDevice;
 }
 
 export async function generateSavedReceivedMessageAndMetadata(
-    iotDevice: IoTDevice,
-    payloadString = LORAWAN_PAYLOAD
+  iotDevice: IoTDevice,
+  payloadString = LORAWAN_PAYLOAD
 ): Promise<ReceivedMessage> {
-    const now = new Date();
-    const messageTime = now.valueOf() - 10;
+  const now = new Date();
+  const messageTime = now.valueOf() - 10;
 
-    const metadata = new ReceivedMessageMetadata();
-    metadata.sentTime = new Date(messageTime);
-    metadata.device = iotDevice;
-    const metadata2 = new ReceivedMessageMetadata();
-    metadata2.sentTime = new Date(now.valueOf() - 24 * 60 * 60);
-    metadata2.device = iotDevice;
-    await getManager().save([metadata, metadata2]);
+  const metadata = new ReceivedMessageMetadata();
+  metadata.sentTime = new Date(messageTime);
+  metadata.device = iotDevice;
+  const metadata2 = new ReceivedMessageMetadata();
+  metadata2.sentTime = new Date(now.valueOf() - 24 * 60 * 60);
+  metadata2.device = iotDevice;
+  await getManager().save([metadata, metadata2]);
 
-    const receivedMessage = new ReceivedMessage();
-    receivedMessage.device = iotDevice;
-    receivedMessage.rawData = JSON.parse(payloadString);
-    receivedMessage.sentTime = new Date(messageTime);
-    return await getManager().save(receivedMessage);
+  const receivedMessage = new ReceivedMessage();
+  receivedMessage.device = iotDevice;
+  receivedMessage.rawData = JSON.parse(payloadString);
+  receivedMessage.sentTime = new Date(messageTime);
+  return await getManager().save(receivedMessage);
 }
 
 export async function generateSavedSigfoxDeviceFromData(
-    application: Application,
-    backendDevice: SigFoxApiDeviceContent
+  application: Application,
+  backendDevice: SigFoxApiDeviceContent
 ): Promise<SigFoxDevice> {
-    const device = generateSigfoxDeviceFromData(application, backendDevice);
-    return await getManager().save(device);
+  const device = generateSigfoxDeviceFromData(application, backendDevice);
+  return await getManager().save(device);
 }
 
 export async function generateSavedSigFoxGroup(org: Organization): Promise<SigFoxGroup> {
-    return await getManager().save(generateSigFoxGroup(org));
+  return await getManager().save(generateSigFoxGroup(org));
 }
 
 export function generateSigFoxGroup(org: Organization): SigFoxGroup {
-    const sigfoxGroup = new SigFoxGroup();
-    sigfoxGroup.username = "5f2d1069e833d903621ff237";
-    sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
-    sigfoxGroup.sigfoxGroupId = "5e74c24476600f14bab7e0bd";
-    sigfoxGroup.belongsTo = org;
-    return sigfoxGroup;
+  const sigfoxGroup = new SigFoxGroup();
+  sigfoxGroup.username = "5f2d1069e833d903621ff237";
+  sigfoxGroup.password = "73cf3fdbd66bf62f1c4180b68f707135";
+  sigfoxGroup.sigfoxGroupId = "5e74c24476600f14bab7e0bd";
+  sigfoxGroup.belongsTo = org;
+  return sigfoxGroup;
 }
 
 export function generateValidJwtForUser(user: User): string {
-    const jwtService = new JwtService({
-        secret: "secretKey-os2iot-secretKey",
-        signOptions: { expiresIn: "9h" },
-    });
-    const payload: JwtPayloadDto = { username: user.email, sub: user.id };
-    return jwtService.sign(payload);
+  const jwtService = new JwtService({
+    secret: "secretKey-os2iot-secretKey",
+    signOptions: { expiresIn: "9h" },
+  });
+  const payload: JwtPayloadDto = { username: user.email, sub: user.id };
+  return jwtService.sign(payload);
 }
 
 export function generateGlobalAdminPermission(): GlobalAdminPermission {
-    return new GlobalAdminPermission();
+  return new GlobalAdminPermission();
 }
 
 export async function generateSavedGlobalAdminPermission(): Promise<GlobalAdminPermission> {
-    return await getManager().save(generateGlobalAdminPermission());
+  return await getManager().save(generateGlobalAdminPermission());
 }
 
-export function generateDeviceModel(
-    org: Organization,
-    name = "myDevice Sensor for Containers 345"
-): DeviceModel {
-    const model = new DeviceModel();
-    model.belongsTo = org;
-    model.body = JSON.parse(`{
+export function generateDeviceModel(org: Organization, name = "myDevice Sensor for Containers 345"): DeviceModel {
+  const model = new DeviceModel();
+  model.belongsTo = org;
+  model.body = JSON.parse(`{
       "id": "myDevice-wastecontainer-sensor-345",
       "name": "${name}",
       "type": "DeviceModel",
@@ -159,311 +156,259 @@ export function generateDeviceModel(
       "controlledProperty": ["fillingLevel", "temperature"]
     }`);
 
-    return model;
+  return model;
 }
 
 export async function generateSavedDeviceModel(
-    org: Organization,
-    name = "myDevice Sensor for Containers 345"
+  org: Organization,
+  name = "myDevice Sensor for Containers 345"
 ): Promise<DeviceModel> {
-    return await getManager().save(generateDeviceModel(org, name));
+  return await getManager().save(generateDeviceModel(org, name));
 }
 
 export function generateOrganization(name?: string): Organization {
-    const org = new Organization();
-    org.name = name ? name : "E2E Test Organization";
-    org.applications = [];
-    org.payloadDecoders = [];
-    org.sigfoxGroups = [];
-    org.deviceModels = [];
+  const org = new Organization();
+  org.name = name ? name : "E2E Test Organization";
+  org.applications = [];
+  org.payloadDecoders = [];
+  org.sigfoxGroups = [];
+  org.deviceModels = [];
 
-    const READ_SUFFIX = " - Read";
-    const APP_ADMIN_SUFFIX = " - OrganizationAppAdmin";
-    const GATEWAY_ADMIN_SUFFIX = " - OrganizationGatewayAdmin";
-    const USER_ADMIN_SUFFIX = " - OrganizationUserAdmin";
+  const READ_SUFFIX = " - Read";
+  const APP_ADMIN_SUFFIX = " - OrganizationAppAdmin";
+  const GATEWAY_ADMIN_SUFFIX = " - OrganizationGatewayAdmin";
+  const USER_ADMIN_SUFFIX = " - OrganizationUserAdmin";
 
-    const readPermission = new ReadPermission(org.name + READ_SUFFIX, org, true);
-    const appAdminPermission = new OrganizationApplicationAdminPermission(
-        org.name + APP_ADMIN_SUFFIX,
-        org,
-        true
-    );
-    const gatewayAdminPermission = new OrganizationGatewayAdminPermission(
-        org.name + GATEWAY_ADMIN_SUFFIX,
-        org
-    );
-    const userAdminPermission = new OrganizationUserAdminPermission(
-        org.name + USER_ADMIN_SUFFIX,
-        org
-    );
-    org.permissions = [
-        appAdminPermission,
-        gatewayAdminPermission,
-        userAdminPermission,
-        readPermission,
-    ];
+  const readPermission = new ReadPermission(org.name + READ_SUFFIX, org, true);
+  const appAdminPermission = new OrganizationApplicationAdminPermission(org.name + APP_ADMIN_SUFFIX, org, true);
+  const gatewayAdminPermission = new OrganizationGatewayAdminPermission(org.name + GATEWAY_ADMIN_SUFFIX, org);
+  const userAdminPermission = new OrganizationUserAdminPermission(org.name + USER_ADMIN_SUFFIX, org);
+  org.permissions = [appAdminPermission, gatewayAdminPermission, userAdminPermission, readPermission];
 
-    return org;
+  return org;
 }
 
 export async function generateSavedOrganization(name?: string): Promise<Organization> {
-    const org = generateOrganization(name);
-    const savedOrg = await getManager().save(org);
-    await getManager().save(org.permissions);
-    return savedOrg;
+  const org = generateOrganization(name);
+  const savedOrg = await getManager().save(org);
+  await getManager().save(org.permissions);
+  return savedOrg;
 }
 
 export async function generateSavedKombitUser(nameID: string): Promise<User> {
-    return await getManager().save(generateKombitUser(nameID));
+  return await getManager().save(generateKombitUser(nameID));
 }
 
 export function generateKombitUser(nameID: string): User {
-    const user = new User();
-    user.name = nameID.split(",").find(x => x.startsWith("CN"));
-    user.nameId = nameID;
-    user.email = null;
-    user.active = true;
-    user.passwordHash = null;
-    user.permissions = [];
+  const user = new User();
+  user.name = nameID.split(",").find(x => x.startsWith("CN"));
+  user.nameId = nameID;
+  user.email = null;
+  user.active = true;
+  user.passwordHash = null;
+  user.permissions = [];
 
-    return user;
+  return user;
 }
 
 export function generateUser(permissions: Permission[]): User {
-    const user = new User();
-    user.name = `TestUser${randomMacAddress()}`;
-    user.email = `${user.name}@test.test`;
-    user.active = true;
-    // Password is 'hunter2', but saving the hash since it takes ~100 ms (by design) to generate the hash.
-    user.passwordHash = "$2a$10$ypJWMZzMokzdq/gaNYsNieDTCjSCYyzpBzEtyqXDd5VVW1STbmXT2";
-    user.permissions = permissions;
+  const user = new User();
+  user.name = `TestUser${randomMacAddress()}`;
+  user.email = `${user.name}@test.test`;
+  user.active = true;
+  // Password is 'hunter2', but saving the hash since it takes ~100 ms (by design) to generate the hash.
+  user.passwordHash = "$2a$10$ypJWMZzMokzdq/gaNYsNieDTCjSCYyzpBzEtyqXDd5VVW1STbmXT2";
+  user.permissions = permissions;
 
-    return user;
+  return user;
 }
 
 export async function generateSavedGlobalAdminUser(): Promise<User> {
-    const globalAdmin = await generateSavedGlobalAdminPermission();
-    const user = await getManager().save(generateUser([globalAdmin]));
+  const globalAdmin = await generateSavedGlobalAdminPermission();
+  const user = await getManager().save(generateUser([globalAdmin]));
 
-    return user;
+  return user;
 }
 
-export async function generateSavedOrganizationAdminUser(
-    org: Organization
-): Promise<User> {
-    // Tests aren't used anymore. Instead of "fixing" it, we throw an exception to raise awareness
-    throw new NotImplementedException();
+export async function generateSavedOrganizationAdminUser(org: Organization): Promise<User> {
+  // Tests aren't used anymore. Instead of "fixing" it, we throw an exception to raise awareness
+  throw new NotImplementedException();
 }
 
 export async function generateSavedReadWriteUser(org: Organization): Promise<User> {
-    const appAdminPerm = org.permissions.find(x =>
-        x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
-    );
-    const gatewayAdminPerm = org.permissions.find(x =>
-        x.type.some(({ type }) => type === PermissionType.OrganizationGatewayAdmin)
-    );
-    const userAdminPerm = org.permissions.find(x =>
-        x.type.some(({ type }) => type === PermissionType.OrganizationUserAdmin)
-    );
-    const readPerm = org.permissions.find(x =>
-        x.type.some(({ type }) => type === PermissionType.Read)
-    );
-    return await getManager().save(
-        generateUser([appAdminPerm, gatewayAdminPerm, userAdminPerm, readPerm])
-    );
+  const appAdminPerm = org.permissions.find(x =>
+    x.type.some(({ type }) => type === PermissionType.OrganizationApplicationAdmin)
+  );
+  const gatewayAdminPerm = org.permissions.find(x =>
+    x.type.some(({ type }) => type === PermissionType.OrganizationGatewayAdmin)
+  );
+  const userAdminPerm = org.permissions.find(x =>
+    x.type.some(({ type }) => type === PermissionType.OrganizationUserAdmin)
+  );
+  const readPerm = org.permissions.find(x => x.type.some(({ type }) => type === PermissionType.Read));
+  return await getManager().save(generateUser([appAdminPerm, gatewayAdminPerm, userAdminPerm, readPerm]));
 }
 
 export function generateApplication(org?: Organization, name?: string): Application {
-    const app = new Application();
-    app.name = "E2E Test Application" + name;
-    app.description = "E2E Test Application Description";
-    app.iotDevices = [];
-    app.dataTargets = [];
-    app.belongsTo = org;
+  const app = new Application();
+  app.name = "E2E Test Application" + name;
+  app.description = "E2E Test Application Description";
+  app.iotDevices = [];
+  app.belongsTo = org;
 
-    return app;
+  return app;
 }
 
-export async function generateSavedApplication(
-    org?: Organization,
-    name?: string
-): Promise<Application> {
-    let app;
-    if (org) {
-        app = generateApplication(org, name);
-    } else {
-        const org = await generateSavedOrganization();
-        app = generateApplication(org, name);
-    }
-    return await getManager().save(app);
+export async function generateSavedApplication(org?: Organization, name?: string): Promise<Application> {
+  let app;
+  if (org) {
+    app = generateApplication(org, name);
+  } else {
+    const org = await generateSavedOrganization();
+    app = generateApplication(org, name);
+  }
+  return await getManager().save(app);
 }
 
 export const SIGFOX_DEVICE_ID = "B445A9";
 export const SIGFOX_DEVICE_ID_2 = "B443A5";
 export const SIGFOX_DEVICE_TYPE_ID = "5e74c318aa8aec41f9cc6b8d";
-export function generateSigfoxDevice(
-    application: Application,
-    nameSuffix = ""
-): SigFoxDevice {
-    const sigfoxDevice = new SigFoxDevice();
-    sigfoxDevice.name = "E2E Test SigFox Device" + nameSuffix;
-    sigfoxDevice.application = application;
-    sigfoxDevice.deviceId = SIGFOX_DEVICE_ID;
-    sigfoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
-    sigfoxDevice.metadata = JSON.parse('""');
+export function generateSigfoxDevice(application: Application, nameSuffix = ""): SigFoxDevice {
+  const sigfoxDevice = new SigFoxDevice();
+  sigfoxDevice.name = "E2E Test SigFox Device" + nameSuffix;
+  sigfoxDevice.application = application;
+  sigfoxDevice.deviceId = SIGFOX_DEVICE_ID;
+  sigfoxDevice.deviceTypeId = SIGFOX_DEVICE_TYPE_ID;
+  sigfoxDevice.metadata = JSON.parse('""');
 
-    return sigfoxDevice;
+  return sigfoxDevice;
 }
 
-export async function generateSavedSigfoxDevice(
-    app: Application,
-    nameSuffix?: string
-): Promise<SigFoxDevice> {
-    return await getManager().save(generateSigfoxDevice(app, nameSuffix));
+export async function generateSavedSigfoxDevice(app: Application, nameSuffix?: string): Promise<SigFoxDevice> {
+  return await getManager().save(generateSigfoxDevice(app, nameSuffix));
 }
 
 export function generateIoTDevice(applications: Application): IoTDevice {
-    const device = new GenericHTTPDevice();
-    device.name = "E2E Test GENERIC HTTP device";
-    device.application = applications;
-    device.apiKey = "DUMMY-API-KEY";
-    device.metadata = JSON.parse('{"some_key": "a_value"}');
-    device.id = 1;
+  const device = new GenericHTTPDevice();
+  device.name = "E2E Test GENERIC HTTP device";
+  device.application = applications;
+  device.apiKey = "DUMMY-API-KEY";
+  device.metadata = JSON.parse('{"some_key": "a_value"}');
+  device.id = 1;
 
-    return device;
+  return device;
 }
 
-export async function generateSavedIoTDevice(
-    applications: Application
-): Promise<IoTDevice> {
-    return await getManager().save(generateIoTDevice(applications));
+export async function generateSavedIoTDevice(applications: Application): Promise<IoTDevice> {
+  return await getManager().save(generateIoTDevice(applications));
 }
 
-export function generateHttpDevice(
-    applications: Application,
-    nameSuffix = ""
-): GenericHTTPDevice {
-    const device = new GenericHTTPDevice();
-    device.name = "E2E Test GENERIC HTTP device" + nameSuffix;
-    device.application = applications;
-    device.apiKey = "DUMMY-API-KEY";
-    device.metadata = JSON.parse('{"some_key": "a_value"}');
-    device.id = 1;
+export function generateHttpDevice(applications: Application, nameSuffix = ""): GenericHTTPDevice {
+  const device = new GenericHTTPDevice();
+  device.name = "E2E Test GENERIC HTTP device" + nameSuffix;
+  device.application = applications;
+  device.apiKey = "DUMMY-API-KEY";
+  device.metadata = JSON.parse('{"some_key": "a_value"}');
+  device.id = 1;
 
-    return device;
+  return device;
 }
 
 export async function generateSavedHttpDevice(
-    applications: Application,
-    nameSuffix?: string
+  applications: Application,
+  nameSuffix?: string
 ): Promise<GenericHTTPDevice> {
-    return await getManager().save(generateHttpDevice(applications, nameSuffix));
+  return await getManager().save(generateHttpDevice(applications, nameSuffix));
 }
 
-export function generateLoRaWANDevice(
-    applications: Application,
-    nameSuffix = ""
-): LoRaWANDevice {
-    const device = new LoRaWANDevice();
-    device.name = "E2E Test LoRaWAN device" + nameSuffix;
-    device.application = applications;
-    device.metadata = JSON.parse('{"some_key": "a_value"}');
-    device.id = 1;
-    device.deviceEUI = "A81758FFFE042E82";
+export function generateLoRaWANDevice(applications: Application, nameSuffix = ""): LoRaWANDevice {
+  const device = new LoRaWANDevice();
+  device.name = "E2E Test LoRaWAN device" + nameSuffix;
+  device.application = applications;
+  device.metadata = JSON.parse('{"some_key": "a_value"}');
+  device.id = 1;
+  device.deviceEUI = "A81758FFFE042E82";
 
-    return device;
+  return device;
 }
 
 export async function generateSavedLoRaWANDevice(
-    applications: Application,
-    nameSuffix?: string
+  applications: Application,
+  nameSuffix?: string
 ): Promise<LoRaWANDevice> {
-    return await getManager().save(generateLoRaWANDevice(applications, nameSuffix));
+  return await getManager().save(generateLoRaWANDevice(applications, nameSuffix));
 }
 
 export function generateLoRaWanDownlink(): CreateIoTDeviceDownlinkDto {
-    return {
-        data: "3E0A14000000461700000002",
-        port: 6,
-        confirmed: true,
-    };
+  return {
+    data: "3E0A14000000461700000002",
+    port: 6,
+    confirmed: true,
+  };
 }
 
-export async function generateSavedDataTarget(
-    application: Application,
-    url?: string
-): Promise<HttpPushDataTarget> {
-    return await getManager().save(generateDataTarget(application, url));
+export async function generateSavedDataTarget(application: Application, url?: string): Promise<HttpPushDataTarget> {
+  return await getManager().save(generateDataTarget(application, url));
 }
 
 export async function generateSavedDataTargetWithOpenDataDk(
-    application: Application,
-    url?: string,
-    minimal = false
+  application: Application,
+  url?: string,
+  minimal = false
 ): Promise<HttpPushDataTarget> {
-    return await getManager().save(
-        generateDataTargetWithOpenDataDk(application, url, minimal),
-        {
-            reload: true,
-        }
-    );
+  return await getManager().save(generateDataTargetWithOpenDataDk(application, url, minimal), {
+    reload: true,
+  });
 }
 
-export function generateDataTarget(
-    application: Application,
-    url?: string
-): HttpPushDataTarget {
-    const dataTarget = new HttpPushDataTarget();
-    dataTarget.name = "E2E Test Http Push Data Target";
-    dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
-    dataTarget.application = application;
-    dataTarget.timeout = 30000;
+export function generateDataTarget(application: Application, url?: string): HttpPushDataTarget {
+  const dataTarget = new HttpPushDataTarget();
+  dataTarget.name = "E2E Test Http Push Data Target";
+  dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
+  dataTarget.application = application;
+  dataTarget.timeout = 30000;
 
-    return dataTarget;
+  return dataTarget;
 }
 
 export function generateDataTargetWithOpenDataDk(
-    application: Application,
-    url?: string,
-    minimal?: boolean
+  application: Application,
+  url?: string,
+  minimal?: boolean
 ): HttpPushDataTarget {
-    const dataTarget = new HttpPushDataTarget();
-    dataTarget.name = "E2E Test Http Push Data Target";
-    dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
-    dataTarget.application = application;
-    dataTarget.timeout = 30000;
-    dataTarget.openDataDkDataset = new OpenDataDkDataset();
-    dataTarget.openDataDkDataset.name = "E2E";
-    dataTarget.openDataDkDataset.description = minimal ? "" : "e2e";
-    dataTarget.openDataDkDataset.keywords = minimal ? [] : ["etKeyWord"];
-    dataTarget.openDataDkDataset.license =
-        "http://portal.opendata.dk/dataset/open-data-dk-licens";
-    dataTarget.openDataDkDataset.authorName = "E2E";
-    dataTarget.openDataDkDataset.authorEmail = "e2e@test.dk";
-    dataTarget.openDataDkDataset.resourceTitle = minimal ? "" : "Rumsensor2";
-    return dataTarget;
+  const dataTarget = new HttpPushDataTarget();
+  dataTarget.name = "E2E Test Http Push Data Target";
+  dataTarget.url = url ? url : "https://enwehrrtrqajd1m.m.pipedream.net";
+  dataTarget.application = application;
+  dataTarget.timeout = 30000;
+  dataTarget.openDataDkDataset = new OpenDataDkDataset();
+  dataTarget.openDataDkDataset.name = "E2E";
+  dataTarget.openDataDkDataset.description = minimal ? "" : "e2e";
+  dataTarget.openDataDkDataset.keywords = minimal ? [] : ["etKeyWord"];
+  dataTarget.openDataDkDataset.license = "http://portal.opendata.dk/dataset/open-data-dk-licens";
+  dataTarget.openDataDkDataset.authorName = "E2E";
+  dataTarget.openDataDkDataset.authorEmail = "e2e@test.dk";
+  dataTarget.openDataDkDataset.resourceTitle = minimal ? "" : "Rumsensor2";
+  return dataTarget;
 }
 
 export async function generateSavedConnection(
-    iotDevice: IoTDevice,
-    dataTarget: DataTarget,
-    payloadDecoder?: PayloadDecoder
+  iotDevice: IoTDevice,
+  dataTarget: DataTarget,
+  payloadDecoder?: PayloadDecoder
 ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-    const connection = new IoTDevicePayloadDecoderDataTargetConnection();
-    connection.dataTarget = dataTarget;
-    connection.iotDevices = [iotDevice];
-    connection.payloadDecoder = payloadDecoder;
-    return await getManager().save(connection);
+  const connection = new IoTDevicePayloadDecoderDataTargetConnection();
+  connection.dataTarget = dataTarget;
+  connection.iotDevices = [iotDevice];
+  connection.payloadDecoder = payloadDecoder;
+  return await getManager().save(connection);
 }
 
-export function generatePayloadDecoder(
-    org?: Organization,
-    includeDeviceModel = false
-): PayloadDecoder {
-    const decoder = new PayloadDecoder();
-    decoder.organization = org;
-    decoder.name = "E2E Test Payload Decoder";
-    decoder.decodingFunction = `const TYPE_TEMP = 0x01; //temp 2 bytes -3276.8°C -->3276.7°C
+export function generatePayloadDecoder(org?: Organization, includeDeviceModel = false): PayloadDecoder {
+  const decoder = new PayloadDecoder();
+  decoder.organization = org;
+  decoder.name = "E2E Test Payload Decoder";
+  decoder.decodingFunction = `const TYPE_TEMP = 0x01; //temp 2 bytes -3276.8°C -->3276.7°C
     const TYPE_RH = 0x02; //Humidity 1 byte  0-100%
     const TYPE_ACC = 0x03; //acceleration 3 bytes X,Y,Z -128 --> 127 +/-63=1G
     const TYPE_LIGHT = 0x04; //Light 2 bytes 0-->65535 Lux
@@ -705,20 +650,20 @@ export function generatePayloadDecoder(
     }
     `;
 
-    return decoder;
+  return decoder;
 }
 
 export async function generateSavedPayloadDecoder(
-    org?: Organization,
-    includeDeviceModel = false
+  org?: Organization,
+  includeDeviceModel = false
 ): Promise<PayloadDecoder> {
-    const decoder = generatePayloadDecoder(org, includeDeviceModel);
-    return await getManager().save(decoder);
+  const decoder = generatePayloadDecoder(org, includeDeviceModel);
+  return await getManager().save(decoder);
 }
 
 export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDto {
-    return {
-        rawPayload: JSON.parse(`{
+  return {
+    rawPayload: JSON.parse(`{
             "data": "AQEXAjEEAIsFCAcOPQ==",
             "freq": 867100000,
             "chan": 3,
@@ -733,10 +678,10 @@ export function generateLoRaWANRawRequestDto(iotDeviceId?: number): RawRequestDt
             "codr": "4/5",
             "lsnr": 12
         }`),
-        iotDeviceId: iotDeviceId || 1,
-        unixTimestamp: 1596921546,
-        type: IoTDeviceType.LoRaWAN,
-    };
+    iotDeviceId: iotDeviceId || 1,
+    unixTimestamp: 1596921546,
+    type: IoTDeviceType.LoRaWAN,
+  };
 }
 
 export const LORAWAN_PAYLOAD = `{
@@ -778,213 +723,204 @@ export const SIGFOX_PAYLOAD = `{
 }`;
 
 export function generateSigfoxRawRequestDto(iotDeviceId?: number): RawRequestDto {
-    return {
-        rawPayload: JSON.parse(SIGFOX_PAYLOAD),
-        iotDeviceId: iotDeviceId || 1,
-        unixTimestamp: 1596721546,
-        type: IoTDeviceType.SigFox,
-    };
+  return {
+    rawPayload: JSON.parse(SIGFOX_PAYLOAD),
+    iotDeviceId: iotDeviceId || 1,
+    unixTimestamp: 1596721546,
+    type: IoTDeviceType.SigFox,
+  };
 }
 
 export function generateRawRequestSigfoxKafkaPayload(iotDeviceId?: number): KafkaPayload {
-    return {
-        body: generateSigfoxRawRequestDto(iotDeviceId),
-        messageId: "genericHttp1596721546",
-        messageType: "receiveData.genericHttp",
-        topicName: KafkaTopic.RAW_REQUEST,
-    };
+  return {
+    body: generateSigfoxRawRequestDto(iotDeviceId),
+    messageId: "genericHttp1596721546",
+    messageType: "receiveData.genericHttp",
+    topicName: KafkaTopic.RAW_REQUEST,
+  };
 }
 
-export function generateRawRequestLoRaWANKafkaPayload(
-    iotDeviceId?: number
-): KafkaPayload {
-    return {
-        body: generateLoRaWANRawRequestDto(iotDeviceId),
-        messageId: "genericHttp1596721546",
-        messageType: "receiveData.genericHttp",
-        topicName: KafkaTopic.RAW_REQUEST,
-    };
+export function generateRawRequestLoRaWANKafkaPayload(iotDeviceId?: number): KafkaPayload {
+  return {
+    body: generateLoRaWANRawRequestDto(iotDeviceId),
+    messageId: "genericHttp1596721546",
+    messageType: "receiveData.genericHttp",
+    topicName: KafkaTopic.RAW_REQUEST,
+  };
 }
 
 export async function getNetworkServerId(
-    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
+  chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService
 ): Promise<string> {
-    let id: string;
-    await chirpstackSetupNetworkServerService
-        .getNetworkServers(1000, 0)
-        .then(response => {
-            response.result.forEach(element => {
-                if (element.name === "OS2iot") {
-                    id = element.id.toString();
-                }
-            });
-        });
-    return id;
+  let id: string;
+  await chirpstackSetupNetworkServerService.getNetworkServers(1000, 0).then(response => {
+    response.result.forEach(element => {
+      if (element.name === "OS2iot") {
+        id = element.id.toString();
+      }
+    });
+  });
+  return id;
 }
 
 export function randomMacAddress(): string {
-    const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
-    return n.padStart(16, "0");
+  const n = Math.floor(Math.random() * 0xffffff * 100000).toString(16);
+  return n.padStart(16, "0");
 }
 
 export async function makeCreateGatewayDto(
-    chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService,
-    org?: Organization
+  chirpstackSetupNetworkServerService: ChirpstackSetupNetworkServerService,
+  org?: Organization
 ): Promise<CreateGatewayDto> {
-    const mac = randomMacAddress();
-    const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
-    // Logger.log(mac);
-    const request: CreateGatewayDto = {
-        gateway: {
-            id: mac,
-            location: {
-                latitude: 12.34,
-                longitude: 43.21,
-            },
-            discoveryEnabled: false,
-            name: `${gatewayNamePrefix}-${mac}`,
-            description: "E2E test description",
-            networkServerID: networkServerId,
-            organizationID: "1",
-            tagsString: '{ "asdf": "abcd" }',
-        },
-        organizationId: org?.id != null ? org?.id : 1,
-    };
-    return request;
+  const mac = randomMacAddress();
+  const networkServerId = await getNetworkServerId(chirpstackSetupNetworkServerService);
+  // Logger.log(mac);
+  const request: CreateGatewayDto = {
+    gateway: {
+      id: mac,
+      location: {
+        latitude: 12.34,
+        longitude: 43.21,
+      },
+      discoveryEnabled: false,
+      name: `${gatewayNamePrefix}-${mac}`,
+      description: "E2E test description",
+      networkServerID: networkServerId,
+      organizationID: "1",
+      tagsString: '{ "asdf": "abcd" }',
+    },
+    organizationId: org?.id != null ? org?.id : 1,
+  };
+  return request;
 }
 
 export const gatewayNamePrefix = "E2E-test";
 
 export function createServiceProfileData(testname = "e2e"): CreateServiceProfileDto {
-    const serviceProfileDto: ServiceProfileDto = {
-        name: testname,
-        prAllowed: true,
-        raAllowed: true,
-        reportDevStatusBattery: true,
-        reportDevStatusMargin: true,
-        ulRatePolicy: "DROP",
-        addGWMetaData: true,
-        devStatusReqFreq: 0,
-        dlBucketSize: 0,
-        dlRate: 0,
-        drMax: 0,
-        drMin: 0,
-        hrAllowed: true,
-        minGWDiversity: 0,
-        nwkGeoLoc: true,
-        targetPER: 0,
-        ulBucketSize: 0,
-        ulRate: 0,
-    };
+  const serviceProfileDto: ServiceProfileDto = {
+    name: testname,
+    prAllowed: true,
+    raAllowed: true,
+    reportDevStatusBattery: true,
+    reportDevStatusMargin: true,
+    ulRatePolicy: "DROP",
+    addGWMetaData: true,
+    devStatusReqFreq: 0,
+    dlBucketSize: 0,
+    dlRate: 0,
+    drMax: 0,
+    drMin: 0,
+    hrAllowed: true,
+    minGWDiversity: 0,
+    nwkGeoLoc: true,
+    targetPER: 0,
+    ulBucketSize: 0,
+    ulRate: 0,
+  };
 
-    const serviceProfile: CreateServiceProfileDto = {
-        serviceProfile: serviceProfileDto,
-    };
+  const serviceProfile: CreateServiceProfileDto = {
+    serviceProfile: serviceProfileDto,
+  };
 
-    return serviceProfile;
+  return serviceProfile;
 }
 
 export function createDeviceProfileData(): CreateDeviceProfileDto {
-    const deviceProfileDto: DeviceProfileDto = {
-        name: "e2e" + randomMacAddress(),
-        macVersion: "1.0.3",
-        regParamsRevision: "A",
-        maxEIRP: 1,
-        geolocBufferTTL: 1,
-        geolocMinBufferSize: 1,
-        factoryPresetFreqs: [1, 2],
-        supportsJoin: true,
-    };
+  const deviceProfileDto: DeviceProfileDto = {
+    name: "e2e" + randomMacAddress(),
+    macVersion: "1.0.3",
+    regParamsRevision: "A",
+    maxEIRP: 1,
+    geolocBufferTTL: 1,
+    geolocMinBufferSize: 1,
+    factoryPresetFreqs: [1, 2],
+    supportsJoin: true,
+  };
 
-    const deviceProfile: CreateDeviceProfileDto = {
-        deviceProfile: deviceProfileDto,
-        internalOrganizationId: 1,
-    };
+  const deviceProfile: CreateDeviceProfileDto = {
+    deviceProfile: deviceProfileDto,
+    internalOrganizationId: 1,
+  };
 
-    return deviceProfile;
+  return deviceProfile;
 }
 
 export async function cleanChirpstackApplications(
-    csService: GenericChirpstackConfigurationService,
-    testname: string
+  csService: GenericChirpstackConfigurationService,
+  testname: string
 ): Promise<void> {
-    await csService
-        .get<ListAllChirpstackApplicationsResponseDto>(`applications?limit=1000`)
-        .then(response => {
-            response.result.forEach(async application => {
-                if (application.serviceProfileName.startsWith(testname)) {
-                    await csService.delete(`applications/${application.id}`);
-                }
-            });
-        });
+  await csService.get<ListAllChirpstackApplicationsResponseDto>(`applications?limit=1000`).then(response => {
+    response.result.forEach(async application => {
+      if (application.serviceProfileName.startsWith(testname)) {
+        await csService.delete(`applications/${application.id}`);
+      }
+    });
+  });
 }
 
 export async function cleanChirpstackDeviceProfiles(
-    deviceProfileService: DeviceProfileService,
-    testname: string,
-    fakeUser: AuthenticatedRequest
+  deviceProfileService: DeviceProfileService,
+  testname: string,
+  fakeUser: AuthenticatedRequest
 ): Promise<void> {
-    await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
-        response.result.forEach(async deviceProfile => {
-            if (deviceProfile.name.startsWith(testname)) {
-                await deviceProfileService.deleteDeviceProfile(
-                    deviceProfile.id,
-                    fakeUser
-                );
-            }
-        });
+  await deviceProfileService.findAllDeviceProfiles(1000, 0).then(response => {
+    response.result.forEach(async deviceProfile => {
+      if (deviceProfile.name.startsWith(testname)) {
+        await deviceProfileService.deleteDeviceProfile(deviceProfile.id, fakeUser);
+      }
     });
+  });
 }
 
 export async function createLoRaWANDeviceInChirpstack(
-    app: INestApplication,
-    globalAdminJwt: string,
-    application: Application
+  app: INestApplication,
+  globalAdminJwt: string,
+  application: Application
 ): Promise<LoRaWANDevice> {
-    const dpId = await request(app.getHttpServer())
-        .post("/chirpstack/device-profiles/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createDeviceProfileData())
-        .expect(201)
-        .expect("Content-Type", /json/)
-        .then(response => {
-            return response.body.id;
-        });
+  const dpId = await request(app.getHttpServer())
+    .post("/chirpstack/device-profiles/")
+    .auth(globalAdminJwt, { type: "bearer" })
+    .send(createDeviceProfileData())
+    .expect(201)
+    .expect("Content-Type", /json/)
+    .then(response => {
+      return response.body.id;
+    });
 
-    const spId = await request(app.getHttpServer())
-        .post("/chirpstack/service-profiles/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createServiceProfileData())
-        .expect(201)
-        .expect("Content-Type", /json/)
-        .then(response => {
-            return response.body.id;
-        });
+  const spId = await request(app.getHttpServer())
+    .post("/chirpstack/service-profiles/")
+    .auth(globalAdminJwt, { type: "bearer" })
+    .send(createServiceProfileData())
+    .expect(201)
+    .expect("Content-Type", /json/)
+    .then(response => {
+      return response.body.id;
+    });
 
-    const createDto: CreateIoTDeviceDto = {
-        type: IoTDeviceType.LoRaWAN,
-        longitude: 42,
-        latitude: 42,
-        lorawanSettings: {
-            skipFCntCheck: false,
-            fCntUp: 0,
-            nFCntDown: 0,
-            devEUI: randomMacAddress(),
-            serviceProfileID: spId,
-            deviceProfileID: dpId,
-            OTAAapplicationKey: "13371337133713371337133713371337",
-            activationType: ActivationType.OTAA,
-        },
-        applicationId: application.id,
-        name: "e2e",
-    };
+  const createDto: CreateIoTDeviceDto = {
+    type: IoTDeviceType.LoRaWAN,
+    longitude: 42,
+    latitude: 42,
+    lorawanSettings: {
+      skipFCntCheck: false,
+      fCntUp: 0,
+      nFCntDown: 0,
+      devEUI: randomMacAddress(),
+      serviceProfileID: spId,
+      deviceProfileID: dpId,
+      OTAAapplicationKey: "13371337133713371337133713371337",
+      activationType: ActivationType.OTAA,
+    },
+    applicationId: application.id,
+    name: "e2e",
+  };
 
-    const device = await request(app.getHttpServer())
-        .post("/iot-device/")
-        .auth(globalAdminJwt, { type: "bearer" })
-        .send(createDto)
-        .then(response => {
-            return response.body;
-        });
-    return device;
+  const device = await request(app.getHttpServer())
+    .post("/iot-device/")
+    .auth(globalAdminJwt, { type: "bearer" })
+    .send(createDto)
+    .then(response => {
+      return response.body;
+    });
+  return device;
 }

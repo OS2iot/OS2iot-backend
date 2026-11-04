@@ -44,5 +44,7 @@ export class ListAllEntitiesDto {
     | "organizationName"
     | "commentOnLocation"
     | "statusCheck"
-    | "expiresOn";
+    | "expiresOn"
+    | "payload-decoder"
+    | "isDefault";
 }

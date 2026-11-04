@@ -1,7 +1,7 @@
 import { AuthenticatedRequest } from "@entities/dto/internal/authenticated-request";
 import { Permission } from "@entities/permissions/permission.entity";
 import { PermissionType } from "@enum/permission-type.enum";
-import { ForbiddenException, BadRequestException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import * as _ from "lodash";
 import { PermissionTypeEntity } from "@entities/permissions/permission-type.entity";
 import { User } from "@entities/user.entity";
@@ -12,6 +12,7 @@ export enum OrganizationAccessScope {
   GatewayWrite,
   UserAdministrationRead,
   UserAdministrationWrite,
+  DataTargetWrite,
 }
 
 export enum ApplicationAccessScope {
@@ -43,6 +44,9 @@ export function checkIfUserHasAccessToOrganization(
       break;
     case OrganizationAccessScope.UserAdministrationWrite:
       allowedOrganizations = req.user.permissions.getAllOrganizationsWithUserAdmin();
+      break;
+    case OrganizationAccessScope.DataTargetWrite:
+      allowedOrganizations = req.user.permissions.getAllOrganizationsWithDataTargetAdmin();
       break;
     default:
       // Should never happen
@@ -107,6 +111,7 @@ export function isOrganizationPermission(p: Permission): p is Permission {
     PermissionType.OrganizationUserAdmin,
     PermissionType.OrganizationApplicationAdmin,
     PermissionType.OrganizationGatewayAdmin,
+    PermissionType.OrganizationDataTargetAdmin,
     PermissionType.Read,
   ].some(orgPermission => p.type.some(({ type }) => type === orgPermission));
 }

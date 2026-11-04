@@ -22,6 +22,7 @@ import { LorawanDeviceDatabaseEnrichJob } from "@services/device-management/lora
 import { OrganizationModule } from "@modules/user-management/organization.module";
 import { DataTargetModule } from "./data-target.module";
 import { PayloadDecoderModule } from "./payload-decoder.module";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PayloadDecoderModule } from "./payload-decoder.module";
     InternalMqttListenerModule,
     DataTargetModule,
     forwardRef(() => PayloadDecoderModule),
+    forwardRef(() => IoTDevicePayloadDecoderDataTargetConnectionModule),
   ],
   exports: [MqttService, IoTDeviceService, IoTDeviceDownlinkService],
   controllers: [IoTDeviceController, IoTDevicePayloadDecoderController],

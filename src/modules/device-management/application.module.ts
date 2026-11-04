@@ -7,6 +7,7 @@ import { ChirpstackAdministrationModule } from "@modules/device-integrations/chi
 import { PermissionModule } from "@modules/user-management/permission.module";
 import { MulticastModule } from "./multicast.module";
 import { DataTargetModule } from "@modules/device-management/data-target.module";
+import { IoTDevicePayloadDecoderDataTargetConnectionModule } from "@modules/device-management/iot-device-payload-decoder-data-target-connection.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DataTargetModule } from "@modules/device-management/data-target.module"
     forwardRef(() => PermissionModule),
     forwardRef(() => MulticastModule), // because of circular reference
     forwardRef(() => DataTargetModule),
+    forwardRef(() => IoTDevicePayloadDecoderDataTargetConnectionModule),
     ChirpstackAdministrationModule,
   ],
   exports: [ApplicationService],

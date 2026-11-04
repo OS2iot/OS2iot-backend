@@ -5,8 +5,8 @@ import { ListAllEntitiesDto } from "./list-all-entities.dto";
 export class ListAllDataTargetsDto extends ListAllEntitiesDto {
   @ApiProperty({
     type: Number,
-    required: false,
-    description: "Limit the results to the data-targets associated with a single application",
+    required: true,
+    description: "Limit the results to the data-targets associated with a single organization",
   })
-  applicationId?: number;
+  organizationId: number;
 }

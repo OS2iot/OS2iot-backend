@@ -1,9 +1,9 @@
-import { Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne } from "typeorm";
-
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne } from "typeorm";
 import { DbBaseEntity } from "@entities//base.entity";
 import { DataTarget } from "@entities/data-target.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 import { PayloadDecoder } from "@entities/payload-decoder.entity";
+import { Application } from "@entities/application.entity";
 
 /**
  * I hate this name, but not sure what else to call this join-table.-
@@ -11,6 +11,7 @@ import { PayloadDecoder } from "@entities/payload-decoder.entity";
 @Entity("iot_device_payload_decoder_data_target_connection")
 @Index(["payloadDecoder"])
 @Index(["dataTarget"])
+@Index(["application", "defaultConnection"])
 export class IoTDevicePayloadDecoderDataTargetConnection extends DbBaseEntity {
   @ManyToMany(() => IoTDevice, iotdevice => iotdevice.connections)
   @JoinTable()
@@ -23,4 +24,11 @@ export class IoTDevicePayloadDecoderDataTargetConnection extends DbBaseEntity {
   @ManyToOne(() => DataTarget, { onDelete: "CASCADE" })
   @JoinColumn()
   dataTarget: DataTarget;
+
+  @ManyToOne(() => Application, { onDelete: "CASCADE" })
+  @JoinColumn()
+  application: Application;
+
+  @Column({ default: false })
+  defaultConnection: boolean;
 }

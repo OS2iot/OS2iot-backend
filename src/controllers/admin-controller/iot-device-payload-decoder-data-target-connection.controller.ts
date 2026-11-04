@@ -17,8 +17,6 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOperation,
-  ApiProduces,
-  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
@@ -29,9 +27,7 @@ import { RolesGuard } from "@auth/roles.guard";
 import { CreateIoTDevicePayloadDecoderDataTargetConnectionDto } from "@dto/create-iot-device-payload-decoder-data-target-connection.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
 import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
-import { ListAllApplicationsResponseDto } from "@dto/list-all-applications-response.dto";
 import { ListAllConnectionsResponseDto } from "@dto/list-all-connections-response.dto";
-import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 import { UpdateIoTDevicePayloadDecoderDataTargetConnectionDto as UpdateConnectionDto } from "@dto/update-iot-device-payload-decoder-data-target-connection.dto";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
@@ -42,6 +38,7 @@ import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
 import { ApiAuth } from "@auth/swagger-auth-decorator";
 import { AppendCopiedDeviceDto } from "@dto/append-copied-device.dto";
+import { ListAllConnectionsQuery } from "@dto/list-all-connections.query";
 
 @ApiTags("IoT-Device, PayloadDecoder and DataTarget Connection")
 @Controller("iot-device-payload-decoder-data-target-connection")
@@ -55,7 +52,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     private service: IoTDevicePayloadDecoderDataTargetConnectionService,
     private iotDeviceService: IoTDeviceService
   ) {}
-
 
   @Get("byIoTDevice/:id")
   @ApiOperation({
@@ -83,9 +79,35 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     if (req.user.permissions.isGlobalAdmin) {
       return await this.service.findAllByDataTargetId(id);
     } else {
-      const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
+      const allowed = req.user.permissions.getAllOrganizationsWithDataTargetAdmin();
       return await this.service.findAllByDataTargetId(id, allowed);
     }
+  }
+
+  @Get("byApplication")
+  @ApiOperation({ summary: "Find all connections by application Id" })
+  async findByApplicationId(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListAllConnectionsQuery
+  ): Promise<ListAllConnectionsResponseDto> {
+    if (req.user.permissions.isGlobalAdmin) {
+      return await this.service.findAllByApplicationId(query);
+    } else {
+      checkIfUserHasAccessToApplication(req, query.applicationId, ApplicationAccessScope.Read);
+      return await this.service.findAllByApplicationId(query);
+    }
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Find one by id" })
+  async getById(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseIntPipe()) id: number
+  ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
+    if (req.user.permissions.getAllApplicationsWithAtLeastRead().length === 0) {
+      throw new NotFoundException(ErrorCodes.IdDoesNotExists);
+    }
+    return this.service.findOne(id);
   }
 
   @Post()
@@ -113,13 +135,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     }
   }
 
-  private async checkUserHasWriteAccessToAllIotDevices(ids: number[], req: AuthenticatedRequest) {
-    const iotDevices = await this.iotDeviceService.findManyByIds(ids);
-    iotDevices.forEach(x => {
-      checkIfUserHasAccessToApplication(req, x.application.id, ApplicationAccessScope.Write);
-    });
-  }
-
   @Put(":id")
   @ApplicationAdmin()
   @ApiNotFoundResponse({
@@ -142,17 +157,6 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     } catch (err) {
       AuditLog.fail(ActionType.UPDATE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
       throw err;
-    }
-  }
-
-  private async checkIfUpdateIsAllowed(updateDto: UpdateConnectionDto, req: AuthenticatedRequest, id: number) {
-    const newIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(updateDto.iotDeviceIds[0]);
-    checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
-    const oldConnection = await this.service.findOne(id);
-    await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
-    const oldIds = oldConnection.iotDevices.map(x => x.id);
-    if (updateDto.iotDeviceIds != oldIds) {
-      await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
     }
   }
 
@@ -207,6 +211,24 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     } catch (err) {
       AuditLog.fail(ActionType.DELETE, IoTDevicePayloadDecoderDataTargetConnection.name, req.user.userId, id);
       throw err;
+    }
+  }
+
+  private async checkUserHasWriteAccessToAllIotDevices(ids: number[], req: AuthenticatedRequest) {
+    const iotDevices = await this.iotDeviceService.findManyByIds(ids);
+    iotDevices.forEach(x => {
+      checkIfUserHasAccessToApplication(req, x.application.id, ApplicationAccessScope.Write);
+    });
+  }
+
+  private async checkIfUpdateIsAllowed(updateDto: UpdateConnectionDto, req: AuthenticatedRequest, id: number) {
+    const newIotDevice = await this.iotDeviceService.findOneWithApplicationAndMetadata(updateDto.iotDeviceIds[0]);
+    checkIfUserHasAccessToApplication(req, newIotDevice.application.id, ApplicationAccessScope.Write);
+    const oldConnection = await this.service.findOne(id);
+    await this.checkUserHasWriteAccessToAllIotDevices(updateDto.iotDeviceIds, req);
+    const oldIds = oldConnection.iotDevices.map(x => x.id);
+    if (updateDto.iotDeviceIds != oldIds) {
+      await this.checkUserHasWriteAccessToAllIotDevices(oldIds, req);
     }
   }
 }
