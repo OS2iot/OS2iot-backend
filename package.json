@@ -26,7 +26,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./jest-e2e.js --detectOpenHandles --colors",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d \"src/repositories/os2iot.repository.ts\"",
-    "typeorm-e2e": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig-e2e.json"
+    "typeorm-e2e": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config ./ormconfig-e2e.json",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@chirpstack/chirpstack-api": "4.6.0",
@@ -65,7 +66,7 @@
     "lodash": "^4.18.1",
     "mqtt": "^5.15.2",
     "njwt": "^2.0.1",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^10.3.1",
     "passport": "^0.7.0",
     "passport-headerapikey": "^1.2.2",
     "passport-jwt": "^4.0.1",
@@ -78,10 +79,12 @@
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
     "tar": "^7.5.22",
-    "typeorm": "0.3.30",
+    "typeorm": "0.3.31",
     "typescript": "5.9.3",
     "uuid": "^13.0.2",
-    "wait-for-expect": "^3.0.2"
+    "wait-for-expect": "^3.0.2",
+    "minimatch": "^11.0.1",
+    "glob": "^14.0.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.23",
