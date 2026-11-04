@@ -15,8 +15,8 @@ export class Gateway extends DbBaseEntity {
 
   @Column({
     transformer: {
-      to: (value: string) => value.toLowerCase(),
-      from: (value: string) => value.toLowerCase(),
+      to: (value: string) => value?.toLowerCase(),
+      from: (value: string) => value?.toLowerCase(),
     },
   })
   @Length(16, 16, { message: "Must be 16 characters" })

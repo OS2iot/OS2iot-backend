@@ -39,15 +39,14 @@ export class PermissionService {
   ) {}
 
   async createDefaultPermissions(org: Organization, userId: number): Promise<Permission[]> {
-    const { readPermission, orgApplicationAdminPermission, orgAllAdminPermission } = this.instantiateDefaultPermissions(
-      org,
-      userId
-    );
+    const { readPermission, orgApplicationAdminPermission, dataTargetAdminPermission, orgAllAdminPermission } =
+      this.instantiateDefaultPermissions(org, userId);
 
     // Use the manager since otherwise, we'd need a repository for each of them
     const res = await this.permissionRepository.save<Permission>([
       readPermission,
       orgApplicationAdminPermission,
+      dataTargetAdminPermission,
       orgAllAdminPermission,
     ]);
     res.forEach(val => AuditLog.success(ActionType.CREATE, Permission.name, userId, val.id, val.name));
@@ -343,6 +342,7 @@ export class PermissionService {
     const nameSuffixSeparator = " - ";
     const allAdminSuffix = `${nameSuffixSeparator}${Translations.OrganizationAdmin}`;
     const organizationApplicationAdminSuffix = `${nameSuffixSeparator}${Translations.ApplicationAdmin}`;
+    const dataTargetAdminSuffix = `${nameSuffixSeparator}${Translations.DataTargetAdmin}`;
     const readSuffix = `${nameSuffixSeparator}${Translations.ReadLevel}`;
 
     const readPermission = PermissionCreator.createRead(org.name + readSuffix, org, true);
@@ -355,6 +355,15 @@ export class PermissionService {
       type: PermissionType.Read,
     } as PermissionTypeEntity);
 
+    const dataTargetAdminPermission = PermissionCreator.createDataTargetAdmin(
+      org.name + dataTargetAdminSuffix,
+      org,
+      true
+    );
+    dataTargetAdminPermission.type.push({
+      type: PermissionType.Read,
+    } as PermissionTypeEntity);
+
     const orgAllAdminPermission = PermissionCreator.createUserAdmin(org.name + allAdminSuffix, org);
     orgAllAdminPermission.type.push({
       type: PermissionType.OrganizationApplicationAdmin,
@@ -363,20 +372,26 @@ export class PermissionService {
       type: PermissionType.OrganizationGatewayAdmin,
     } as PermissionTypeEntity);
     orgAllAdminPermission.type.push({
+      type: PermissionType.OrganizationDataTargetAdmin,
+    } as PermissionTypeEntity);
+    orgAllAdminPermission.type.push({
       type: PermissionType.Read,
     } as PermissionTypeEntity);
 
     this.setUserIdOnPermissions(readPermission, userId);
     this.setUserIdOnPermissions(orgApplicationAdminPermission, userId);
+    this.setUserIdOnPermissions(dataTargetAdminPermission, userId);
     this.setUserIdOnPermissions(orgAllAdminPermission, userId);
 
     readPermission.createdBy = userId;
     readPermission.updatedBy = userId;
     orgApplicationAdminPermission.createdBy = userId;
     orgApplicationAdminPermission.updatedBy = userId;
+    dataTargetAdminPermission.createdBy = userId;
+    dataTargetAdminPermission.updatedBy = userId;
     orgAllAdminPermission.createdBy = userId;
     orgAllAdminPermission.updatedBy = userId;
-    return { readPermission, orgApplicationAdminPermission, orgAllAdminPermission };
+    return { readPermission, orgApplicationAdminPermission, dataTargetAdminPermission, orgAllAdminPermission };
   }
 
   private setUserIdOnPermissions(permission: Permission, userId: number) {
@@ -428,6 +443,8 @@ export class PermissionService {
         this.addOrUpdateApplicationIds(res.orgToApplicationAdminPermissions, p);
       } else if (p.permission_type_type === PermissionType.OrganizationGatewayAdmin) {
         res.orgToGatewayAdminPermissions.add(p.organization_id);
+      } else if (p.permission_type_type === PermissionType.OrganizationDataTargetAdmin) {
+        res.orgToDataTargetAdminPermissions.add(p.organization_id);
       } else if (p.permission_type_type === PermissionType.OrganizationUserAdmin) {
         // A user admin can map applications to permissions, so they should also
         // have access to them

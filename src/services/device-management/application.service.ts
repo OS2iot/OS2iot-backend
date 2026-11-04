@@ -19,7 +19,6 @@ import { IoTDevice } from "@entities/iot-device.entity";
 import { LoRaWANDevice } from "@entities/lorawan-device.entity";
 import { Permission } from "@entities/permissions/permission.entity";
 import { ControlledPropertyTypes } from "@enum/controlled-property.enum";
-import { DataTargetType } from "@enum/data-target-type.enum";
 import { ApplicationDeviceTypes, ApplicationDeviceTypeUnion, IoTDeviceType } from "@enum/device-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { findValuesInRecord } from "@helpers/record.helper";
@@ -29,10 +28,11 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-application.service";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { MulticastService } from "@services/chirpstack/multicast.service";
-import { DataTargetService } from "@services/data-targets/data-target.service";
 import { OrganizationService } from "@services/user-management/organization.service";
 import { PermissionService } from "@services/user-management/permission.service";
 import { Brackets, DeleteResult, In, Repository } from "typeorm";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
+import { DataTargetType } from "@enum/data-target-type.enum";
 
 @Injectable()
 export class ApplicationService {
@@ -49,8 +49,8 @@ export class ApplicationService {
     private chirpstackDeviceService: ChirpstackDeviceService,
     @Inject(forwardRef(() => PermissionService))
     private permissionService: PermissionService,
-    @Inject(forwardRef(() => DataTargetService))
-    private dataTargetService: DataTargetService,
+    @Inject(forwardRef(() => IoTDevicePayloadDecoderDataTargetConnectionService))
+    private connectionService: IoTDevicePayloadDecoderDataTargetConnectionService,
     private chirpstackApplicationService: ApplicationChirpstackService
   ) {}
 
@@ -63,7 +63,7 @@ export class ApplicationService {
       .leftJoin("app.iotDevices", "device")
       .leftJoin("app.belongsTo", "organization")
       .leftJoin("device.latestReceivedMessage", "latestMessage")
-      .leftJoin("app.dataTargets", "dataTargets")
+      .leftJoin("device.connections", "connections")
       .where("app.belongsToId = :organizationId", { organizationId: organizationId });
 
     if (whitelist !== "admin" && whitelist.length > 0) {
@@ -75,7 +75,7 @@ export class ApplicationService {
 
       queryBuilder.andWhere(
         new Brackets(qb => {
-          qb.where("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+          qb.where("connections.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
         })
       );
 
@@ -94,7 +94,6 @@ export class ApplicationService {
     const queryBuilder = this.applicationRepository
       .createQueryBuilder("app")
       .leftJoinAndSelect("app.iotDevices", "device")
-      .leftJoin("app.dataTargets", "dataTargets")
       .where("app.belongsToId = :organizationId", { organizationId });
 
     if (whitelist !== "admin" && whitelist.length > 0) {
@@ -118,7 +117,7 @@ export class ApplicationService {
     const queryBuilder = this.iotDeviceRepository
       .createQueryBuilder("device")
       .leftJoin("device.application", "app")
-      .leftJoin("app.dataTargets", "dataTargets")
+      .leftJoin("device.connections", "connections")
       .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
       .addSelect(["latestMessage.id", "latestMessage.sentTime"])
       .where("app.belongsToId = :organizationId", { organizationId });
@@ -138,7 +137,7 @@ export class ApplicationService {
     if (query.statusCheck === "alert") {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          qb.andWhere("dataTargets.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
+          qb.andWhere("connections.id IS NULL").orWhere("latestMessage.sentTime < NOW() - INTERVAL '24 HOURS'");
         })
       );
     }
@@ -146,7 +145,7 @@ export class ApplicationService {
     if (query.statusCheck === "stable") {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          qb.where("dataTargets.id IS NOT NULL").andWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
+          qb.where("connections.id IS NOT NULL").andWhere("latestMessage.sentTime > NOW() - INTERVAL '24 HOURS'");
         })
       );
     }
@@ -170,7 +169,8 @@ export class ApplicationService {
       .leftJoinAndSelect("app.iotDevices", "device")
       .leftJoinAndSelect("app.belongsTo", "organization")
       .leftJoinAndSelect("device.latestReceivedMessage", "latestMessage")
-      .leftJoinAndSelect("app.dataTargets", "dataTargets")
+      .leftJoinAndSelect("app.connections", "connections")
+      .leftJoinAndSelect("connections.dataTarget", "dataTarget")
       .leftJoinAndSelect("app.controlledProperties", "controlledProperties");
 
     if (query.organizationId) {
@@ -199,7 +199,8 @@ export class ApplicationService {
           ?.map(device => device.latestReceivedMessage)
           .sort((a, b) => (a?.sentTime > b?.sentTime ? 1 : -1))
           .find(msg => msg != undefined);
-        const hasDataTargets = app.dataTargets && app.dataTargets.length > 0;
+
+        const hasDataTargets = app.connections.length > 0;
         const isLatestMessageOld = latestMessage
           ? new Date(latestMessage.sentTime) < new Date(Date.now() - 24 * 60 * 60 * 1000)
           : false;
@@ -264,7 +265,7 @@ export class ApplicationService {
       where: allowedOrganisations != null ? { belongsTo: In(allowedOrganisations) } : {},
       take: +query.limit,
       skip: +query.offset,
-      relations: ["iotDevices", "dataTargets", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
+      relations: ["iotDevices", "connections", "controlledProperties", "deviceTypes", nameof<Application>("belongsTo")],
       order: sorting,
     });
 
@@ -292,7 +293,6 @@ export class ApplicationService {
       .createQueryBuilder("application")
       .innerJoin("application.permissions", "perm")
       .leftJoinAndSelect("application.iotDevices", "iotdevices")
-      .leftJoinAndSelect("application.dataTargets", "datatargets")
       .leftJoinAndSelect("application.controlledProperties", "controlledproperties")
       .leftJoinAndSelect("application.deviceTypes", "devicetypes")
       .where("perm.id = :permId", { permId: permissionId })
@@ -349,6 +349,7 @@ export class ApplicationService {
         nameof<Application>("controlledProperties"),
         nameof<Application>("deviceTypes"),
         "permissions",
+        "connections",
       ],
       loadRelationIds: {
         relations: ["createdBy", "updatedBy"],
@@ -370,7 +371,6 @@ export class ApplicationService {
 
     const mappedApplication = await this.mapApplicationDtoToApplication(createApplicationDto, application, userId);
     mappedApplication.iotDevices = [];
-    mappedApplication.dataTargets = [];
     mappedApplication.multicasts = [];
     mappedApplication.createdBy = userId;
     mappedApplication.updatedBy = userId;
@@ -392,7 +392,7 @@ export class ApplicationService {
       where: { id },
       relations: [
         nameof<Application>("iotDevices"),
-        nameof<Application>("dataTargets"),
+        nameof<Application>("connections"),
         nameof<Application>("controlledProperties"),
         nameof<Application>("deviceTypes"),
       ],
@@ -448,7 +448,7 @@ export class ApplicationService {
   async delete(id: number): Promise<DeleteResult> {
     const application = await this.applicationRepository.findOne({
       where: { id },
-      relations: ["iotDevices", "multicasts", "dataTargets"],
+      relations: ["iotDevices", "multicasts", "connections"],
     });
 
     // Don't allow delete if this application contains any sigfox devices.
@@ -460,8 +460,8 @@ export class ApplicationService {
       throw new ConflictException(ErrorCodes.DeleteNotAllowedHasSigfoxDevice);
     }
 
-    for (const dataTarget of application.dataTargets) {
-      await this.dataTargetService.delete(dataTarget.id);
+    for (const connection of application.connections) {
+      await this.connectionService.delete(connection.id);
     }
 
     // Delete all LoRaWAN devices in ChirpStack
@@ -604,8 +604,8 @@ export class ApplicationService {
       result.sort(
         (a, b) =>
           (query.sort.toLowerCase() === "asc" ? -1 : 1) *
-          (Number(!!a.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)) -
-            Number(!!b.dataTargets.find(t => t.type === DataTargetType.OpenDataDK)))
+          (Number(!!a.connections.find(t => t.dataTarget.type === DataTargetType.OpenDataDK)) -
+            Number(!!b.connections.find(t => t.dataTarget.type === DataTargetType.OpenDataDK)))
       );
     }
     if (query.orderOn === "devices") {
@@ -615,7 +615,7 @@ export class ApplicationService {
     }
     if (query.orderOn === "dataTargets") {
       result.sort(
-        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.dataTargets.length - b.dataTargets.length)
+        (a, b) => (query.sort.toLowerCase() === "asc" ? 1 : -1) * (a.connections.length - b.connections.length)
       );
     }
   }

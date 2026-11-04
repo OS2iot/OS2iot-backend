@@ -9,6 +9,7 @@ import { SigFoxGroup } from "./sigfox-group.entity";
 import { DeviceModel } from "./device-model.entity";
 import { User } from "./user.entity";
 import { Gateway } from "@entities/gateway.entity";
+import { DataTarget } from "@entities/data-target.entity";
 
 @Entity("organization")
 @Unique(["name"])
@@ -42,6 +43,14 @@ export class Organization extends DbBaseEntity {
     { onDelete: "CASCADE", nullable: true }
   )
   payloadDecoders?: PayloadDecoder[];
+
+  @OneToMany(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    type => DataTarget,
+    datatarget => datatarget.organization,
+    { onDelete: "CASCADE" }
+  )
+  dataTargets: DataTarget[];
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   @OneToMany(type => SigFoxGroup, sigfoxGroup => sigfoxGroup.belongsTo, {

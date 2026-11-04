@@ -15,9 +15,8 @@ import { DataTargetType } from "@enum/data-target-type.enum";
 import { ErrorCodes } from "@enum/error-codes.enum";
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ApplicationService } from "@services/device-management/application.service";
 import { OS2IoTMail } from "@services/os2iot-mail.service";
-import { DeleteResult, Repository, SelectQueryBuilder } from "typeorm";
+import { DeleteResult, Repository } from "typeorm";
 import { CLIENT_SECRET_PROVIDER, ClientSecretProvider } from "@helpers/fiware-token.helper";
 import { DataTargetLogService } from "./data-target-log.service";
 import { DataTargetSenderService } from "@services/data-targets/data-target-sender.service";
@@ -28,6 +27,7 @@ import { PayloadDecoderService } from "@services/data-management/payload-decoder
 import { IoTDeviceService } from "@services/device-management/iot-device.service";
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
+import { OrganizationService } from "@services/user-management/organization.service";
 
 @Injectable()
 export class DataTargetService {
@@ -38,8 +38,8 @@ export class DataTargetService {
     private dataTargetRepository: Repository<DataTarget>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @Inject(forwardRef(() => ApplicationService))
-    private applicationService: ApplicationService,
+    @Inject(forwardRef(() => OrganizationService))
+    private organizationService: OrganizationService,
     @Inject(CLIENT_SECRET_PROVIDER)
     private clientSecretProvider: ClientSecretProvider,
     private oS2IoTMail: OS2IoTMail,
@@ -55,23 +55,23 @@ export class DataTargetService {
 
   async findAndCountAllWithPagination(
     query?: ListAllDataTargetsDto,
-    applicationIds?: number[]
+    hideSecrets: boolean = true
   ): Promise<ListAllDataTargetsResponseDto> {
     let queryBuilder = this.dataTargetRepository
       .createQueryBuilder("datatarget")
-      .innerJoinAndSelect("datatarget.application", "application")
+      .where('datatarget."organizationId" = :organizationId', { organizationId: query.organizationId })
       .limit(query.limit)
       .offset(query.offset)
-      .orderBy(query.orderOn, "ASC");
-
-    // Only apply applicationId filter, if one is given.
-    queryBuilder = this.filterByApplication(query, queryBuilder, applicationIds);
+      .orderBy(query.orderOn, query.sort ?? "ASC");
 
     const [result, total] = await queryBuilder.getManyAndCount();
+    if (hideSecrets) {
+      result.forEach(this.hideDataTargetSecret);
+    }
 
     const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError(result.map(dt => dt.id));
     const resultWithErrorInfo = result.map(
-      dt => ({ ...dt, hasRecentErrors: idsWithRecentError.has(dt.id) } as DataTargetDto)
+      dt => ({ ...dt, hasRecentErrors: idsWithRecentError.has(dt.id) }) as DataTargetDto
     );
 
     return {
@@ -80,14 +80,20 @@ export class DataTargetService {
     };
   }
 
-  async findOne(id: number): Promise<DataTarget> {
-    return await this.dataTargetRepository.findOneOrFail({
+  async findOne(id: number, hideSecret = false): Promise<DataTarget> {
+    const dataTarget = await this.dataTargetRepository.findOneOrFail({
       where: { id },
-      relations: ["application", "openDataDkDataset"],
+      relations: ["organization", "openDataDkDataset"],
       loadRelationIds: {
         relations: ["createdBy", "updatedBy"],
       },
     });
+
+    if (hideSecret) {
+      this.hideDataTargetSecret(dataTarget);
+    }
+
+    return dataTarget;
   }
 
   async findOneWithClientSecret(id: number): Promise<DataTarget> {
@@ -98,23 +104,17 @@ export class DataTargetService {
       .getOne();
   }
 
-  public async findOneWithHasRecentError(id: number): Promise<DataTargetDto> {
-    const datatarget = await this.findOne(id);
+  public async findOneWithHasRecentError(id: number, hideSecrets = true): Promise<DataTargetDto> {
+    const datatarget = await this.findOne(id, hideSecrets);
     const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError([id]);
     return { ...datatarget, hasRecentErrors: idsWithRecentError.has(id) };
-  }
-
-  async findDataTargetsByApplicationId(applicationId: number): Promise<DataTarget[]> {
-    return await this.dataTargetRepository.findBy({
-      application: { id: applicationId },
-    });
   }
 
   async findDataTargetsByConnectionPayloadDecoderAndIoTDevice(
     iotDeviceId: number,
     payloadDecoderId?: number
   ): Promise<DataTarget[]> {
-    const res = await this.dataTargetRepository
+    const res = this.dataTargetRepository
       .createQueryBuilder("dt")
       .addSelect("dt.clientSecret")
       .innerJoin("iot_device_payload_decoder_data_target_connection", "con", 'con."dataTargetId" = dt.id')
@@ -125,9 +125,9 @@ export class DataTargetService {
       )
       .where('jt."iotDeviceId" = :iotDeviceId', { iotDeviceId: iotDeviceId });
     if (payloadDecoderId === null) {
-      return res.andWhere('con."payloadDecoderId" is null').getMany();
+      return await res.andWhere('con."payloadDecoderId" is null').getMany();
     } else {
-      return res
+      return await res
         .andWhere('con."payloadDecoderId" = :decoderId', {
           decoderId: payloadDecoderId,
         })
@@ -189,6 +189,11 @@ export class DataTargetService {
   }
 
   async delete(id: number): Promise<DeleteResult> {
+    const dbDataTarget = await this.dataTargetRepository.findOne({ where: { id }, relations: { connections: true } });
+    if (dbDataTarget.connections.length !== 0) {
+      throw new BadRequestException(ErrorCodes.DeleteNotAllowedItemIsInUse);
+    }
+
     return this.dataTargetRepository.delete(id);
   }
 
@@ -263,31 +268,13 @@ export class DataTargetService {
     };
   }
 
-  private filterByApplication(
-    query: ListAllDataTargetsDto,
-    queryBuilder: SelectQueryBuilder<DataTarget>,
-    applicationIds: number[]
-  ) {
-    if (query.applicationId) {
-      queryBuilder = queryBuilder.where("datatarget.application = :appId", {
-        appId: query.applicationId,
-      });
-    } else if (applicationIds) {
-      queryBuilder = queryBuilder.where('"application"."id" IN (:...allowedApplications)', {
-        allowedApplications: applicationIds,
-      });
-    }
-    return queryBuilder;
-  }
-
   private async mapDtoToDataTarget(dataTargetDto: CreateDataTargetDto, dataTarget: DataTarget): Promise<DataTarget> {
     dataTarget.name = dataTargetDto.name;
-    if (dataTargetDto.applicationId != null) {
+    if (dataTargetDto.organizationId != null) {
       try {
-        dataTarget.application = await this.applicationService.findOneWithoutRelations(dataTargetDto.applicationId);
+        dataTarget.organization = await this.organizationService.findById(dataTargetDto.organizationId);
       } catch (err) {
-        this.logger.error(`Could not find application with id: ${dataTargetDto.applicationId}`);
-
+        this.logger.error(`Could not find organization with id: ${dataTargetDto.organizationId}`);
         throw new BadRequestException(ErrorCodes.IdDoesNotExists);
       }
     } else {
@@ -350,5 +337,22 @@ export class DataTargetService {
 
   private createDataTargetByDto<T extends DataTarget>(childDataTargetType: any): T {
     return new childDataTargetType();
+  }
+
+  private hideDataTargetSecret(dataTarget: DataTarget) {
+    switch (dataTarget.type) {
+      case DataTargetType.HttpPush:
+        (dataTarget as HttpPushDataTarget).authorizationHeader = "***";
+        break;
+      case DataTargetType.MQTT:
+        (dataTarget as MqttDataTarget).mqttPassword = "***";
+        break;
+      case DataTargetType.OpenDataDK:
+        break;
+      case DataTargetType.Fiware:
+        (dataTarget as FiwareDataTarget).authorizationHeader = "***";
+        (dataTarget as FiwareDataTarget).clientSecret = "***";
+        break;
+    }
   }
 }

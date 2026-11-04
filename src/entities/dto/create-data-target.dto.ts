@@ -35,7 +35,7 @@ export class CreateDataTargetDto {
   @ApiProperty({ required: true, example: 1 })
   @IsNumber()
   @Min(1)
-  applicationId: number;
+  organizationId: number;
 
   @ApiProperty({ required: true })
   type: DataTargetType;

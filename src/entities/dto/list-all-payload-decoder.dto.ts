@@ -1,5 +1,4 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-
 import { ListAllEntitiesDto } from "@dto/list-all-entities.dto";
 
 export class ListAllPayloadDecoderDto extends ListAllEntitiesDto {

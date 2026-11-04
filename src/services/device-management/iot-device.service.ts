@@ -76,15 +76,11 @@ import { ApplicationChirpstackService } from "@services/chirpstack/chirpstack-ap
 import { UpdateIoTDeviceApplication } from "@dto/update-iot-device-application.dto";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { PayloadDecoderService } from "@services/data-management/payload-decoder.service";
-import { DataTarget } from "@entities/data-target.entity";
-import { PayloadDecoder } from "@entities/payload-decoder.entity";
 import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
+import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
 
 type IoTDeviceOrSpecialized =
-  | IoTDevice
-  | LoRaWANDeviceWithChirpstackDataDto
-  | SigFoxDeviceWithBackendDataDto
-  | MQTTInternalBrokerDeviceDTO;
+  IoTDevice | LoRaWANDeviceWithChirpstackDataDto | SigFoxDeviceWithBackendDataDto | MQTTInternalBrokerDeviceDTO;
 
 @Injectable()
 export class IoTDeviceService {
@@ -121,10 +117,8 @@ export class IoTDeviceService {
     private encryptionHelperService: EncryptionHelperService,
     private csvGeneratorService: CsvGeneratorService,
     private deviceProfileService: DeviceProfileService,
-    @Inject(forwardRef(() => DataTargetService))
-    private dataTargetService: DataTargetService,
-    @Inject(forwardRef(() => PayloadDecoderService))
-    private payloadDecoderService: PayloadDecoderService
+    @Inject(forwardRef(() => IoTDevicePayloadDecoderDataTargetConnectionService))
+    private dataTargetConnectionService: IoTDevicePayloadDecoderDataTargetConnectionService
   ) {}
 
   async findOne(id: number): Promise<IoTDevice> {
@@ -144,7 +138,7 @@ export class IoTDeviceService {
     }
     return await this.iotDeviceRepository.find({
       where: { id: In(iotDeviceIds) },
-      relations: ["application"],
+      relations: ["application", "application.belongsTo"],
     });
   }
 
@@ -321,6 +315,9 @@ export class IoTDeviceService {
     const validIotDevices = validProcessedDevices.map(iotDeviceMap => iotDeviceMap.iotDevice);
     const dbIotDevices = validIotDevices.length ? await this.iotDeviceRepository.save(validIotDevices) : [];
 
+    // Add devices to default application connections
+    await this.dataTargetConnectionService.connectNewIotDevicesToDefaults(dbIotDevices);
+
     // Set deviceId related values on new mqtt devices
     await this.handleNewMQTTDevices(dbIotDevices);
 
@@ -376,30 +373,55 @@ export class IoTDeviceService {
     try {
       const application = await this.applicationService.findOne(updateDto.applicationId);
       const deviceModel = await this.deviceModelService.getById(updateDto.deviceModelId);
+      const isSameOrganization = application.belongsTo.id === existingIoTDevice.application.belongsTo.id;
 
-      const dataTargets = await this.dataTargetService.findDataTargetsByApplicationId(updateDto.applicationId);
-      const payloadDecoders = await this.payloadDecoderService.findAndCountWithPagination({}, null);
-
-      const dataTargetMatches: DataTarget[] = updateDto.dataTargetToPayloadDecoderIds.map(dtAndpl =>
-        dataTargets.find(dt => dt.id === dtAndpl.dataTargetId)
-      );
-
-      const payloadMatches: (PayloadDecoder | undefined)[] = updateDto.dataTargetToPayloadDecoderIds.map(dtAndpl =>
-        payloadDecoders.data.find(pl => pl.id === dtAndpl.payloadDecoderId)
-      );
-
-      if (!application || dataTargetMatches.some(dt => dt === undefined)) {
+      if (!application) {
         throw new BadRequestException(ErrorCodes.NotValidFormat);
       }
 
-      const connectionArray: IoTDevicePayloadDecoderDataTargetConnection[] = [];
-      for (let i = 0; i < dataTargetMatches.length; ++i) {
-        const connection = new IoTDevicePayloadDecoderDataTargetConnection();
-        connection.dataTarget = dataTargetMatches[i];
-        connection.payloadDecoder = payloadMatches[i];
-        connection.iotDevices = [existingIoTDevice];
-        connectionArray.push(connection);
+      const deviceConnections = (
+        await this.dataTargetConnectionService.findAllByApplicationId({
+          applicationId: existingIoTDevice.application.id,
+        })
+      ).data.filter(c => c.iotDevices.map(d => d.id).includes(existingIoTDevice.id));
+      const newConnections: IoTDevicePayloadDecoderDataTargetConnection[] = [];
+      const existingConnections: IoTDevicePayloadDecoderDataTargetConnection[] = [];
+
+      // Get existing on new app with same settings
+      for (const deviceConnection of deviceConnections) {
+        deviceConnection.iotDevices = deviceConnection.iotDevices.filter(d => d.id !== existingIoTDevice.id);
+        const matchingConnection = await this.dataTargetConnectionService.findBySimilarConnection(
+          application.id,
+          deviceConnection.dataTarget.id,
+          deviceConnection.payloadDecoder.id
+        );
+
+        if (matchingConnection.length === 0) {
+          newConnections.push(deviceConnection);
+          continue;
+        }
+
+        matchingConnection.forEach(c => {
+          c.iotDevices.push(existingIoTDevice);
+        });
+        existingConnections.push(...matchingConnection);
       }
+
+      const connectionArray: IoTDevicePayloadDecoderDataTargetConnection[] = newConnections.map(c => {
+        const connection = new IoTDevicePayloadDecoderDataTargetConnection();
+        connection.dataTarget = c.dataTarget;
+        connection.payloadDecoder = c.payloadDecoder;
+        connection.iotDevices = [existingIoTDevice];
+        connection.application = application;
+        return connection;
+      });
+      const defaultApplicationConnections = await this.dataTargetConnectionService.findAllDefaultsForApplicationIds([
+        application.id,
+      ]);
+
+      defaultApplicationConnections.forEach(c => {
+        c.iotDevices.push(existingIoTDevice);
+      });
 
       existingIoTDevice.application = application;
       existingIoTDevice.deviceModel = deviceModel;
@@ -407,11 +429,13 @@ export class IoTDeviceService {
 
       const res = await this.iotDeviceRepository.save(existingIoTDevice);
 
-      for (const connection of existingIoTDevice.connections) {
-        await this.deviceConnectionsRepository.delete(connection.id);
+      // Only this if same organization
+      if (isSameOrganization) {
+        await this.deviceConnectionsRepository.save(connectionArray);
       }
-
-      const savedConnections = await this.deviceConnectionsRepository.save(connectionArray);
+      await this.deviceConnectionsRepository.save(defaultApplicationConnections);
+      await this.deviceConnectionsRepository.save(existingConnections);
+      await this.deviceConnectionsRepository.save(deviceConnections);
 
       return res;
     } catch (e) {
