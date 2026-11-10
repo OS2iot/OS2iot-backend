@@ -104,7 +104,7 @@ export class IoTDevicePayloadDecoderDataTargetConnectionController {
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<IoTDevicePayloadDecoderDataTargetConnection> {
-    if (req.user.permissions.getAllApplicationsWithAtLeastRead().length === 0) {
+    if (req.user.permissions.getAllApplicationsWithAtLeastRead().length === 0 && !req.user.permissions.isGlobalAdmin) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
     return this.service.findOne(id);

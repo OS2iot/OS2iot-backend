@@ -68,7 +68,10 @@ export class DataTargetController {
     if (req.user.permissions.isGlobalAdmin) {
       return await this.dataTargetService.findAndCountAllWithPagination(query, false);
     } else {
-      checkIfUserHasAccessToOrganization(req, query.organizationId, OrganizationAccessScope.ApplicationRead);
+      checkIfUserHasAccessToOrganization(req, query.organizationId, [
+        OrganizationAccessScope.DataTargetWrite,
+        OrganizationAccessScope.ApplicationRead,
+      ]);
       const dataTargetAdmin = req.user.permissions.getAllOrganizationsWithDataTargetAdmin();
       return await this.dataTargetService.findAndCountAllWithPagination(query, dataTargetAdmin.length === 0);
     }
@@ -89,7 +92,10 @@ export class DataTargetController {
     }
 
     try {
-      checkIfUserHasAccessToOrganization(req, dataTarget.organization.id, OrganizationAccessScope.ApplicationRead);
+      checkIfUserHasAccessToOrganization(req, dataTarget.organization.id, [
+        OrganizationAccessScope.DataTargetWrite,
+        OrganizationAccessScope.ApplicationRead,
+      ]);
       return dataTarget;
     } catch (err) {
       throw err;

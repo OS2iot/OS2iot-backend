@@ -28,6 +28,7 @@ import { IoTDeviceService } from "@services/device-management/iot-device.service
 import { IoTDeviceType } from "@enum/device-type.enum";
 import { ChirpstackDeviceService } from "@services/chirpstack/chirpstack-device.service";
 import { OrganizationService } from "@services/user-management/organization.service";
+import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 
 @Injectable()
 export class DataTargetService {
@@ -60,6 +61,8 @@ export class DataTargetService {
     let queryBuilder = this.dataTargetRepository
       .createQueryBuilder("datatarget")
       .where('datatarget."organizationId" = :organizationId', { organizationId: query.organizationId })
+      .leftJoinAndSelect("datatarget.connections", "connections")
+      .loadRelationCountAndMap("dataTarget.iotDevicesCount", "connections.iotDevices")
       .limit(query.limit)
       .offset(query.offset)
       .orderBy(query.orderOn, query.sort ?? "ASC");
@@ -73,6 +76,13 @@ export class DataTargetService {
     const resultWithErrorInfo = result.map(
       dt => ({ ...dt, hasRecentErrors: idsWithRecentError.has(dt.id) }) as DataTargetDto
     );
+    resultWithErrorInfo.forEach(dt => {
+      dt.iotDevicesCount = dt.connections.reduce(
+        (sum, c: IoTDevicePayloadDecoderDataTargetConnection & { iotDevicesCount: number }) => sum + c.iotDevicesCount,
+        0
+      );
+      dt.connections = undefined;
+    });
 
     return {
       data: resultWithErrorInfo,
@@ -107,7 +117,7 @@ export class DataTargetService {
   public async findOneWithHasRecentError(id: number, hideSecrets = true): Promise<DataTargetDto> {
     const datatarget = await this.findOne(id, hideSecrets);
     const idsWithRecentError = await this.dataTargetLogService.getDatatargetWithRecentError([id]);
-    return { ...datatarget, hasRecentErrors: idsWithRecentError.has(id) };
+    return { ...datatarget, hasRecentErrors: idsWithRecentError.has(id), iotDevicesCount: 0 };
   }
 
   async findDataTargetsByConnectionPayloadDecoderAndIoTDevice(

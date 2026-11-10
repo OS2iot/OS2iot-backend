@@ -2,7 +2,6 @@
 import { DataTarget } from "@entities/data-target.entity";
 import { Organization } from "@entities/organization.entity";
 import { Application } from "@entities/application.entity";
-import { IoTDevicePayloadDecoderDataTargetConnection } from "@entities/iot-device-payload-decoder-data-target-connection.entity";
 import { IoTDevice } from "@entities/iot-device.entity";
 
 type preMigrationDataTarget = DataTarget & { applicationId: number };
@@ -43,6 +42,23 @@ export class InitialDataTargetUpdate1791548348790 implements MigrationInterface 
     await queryRunner.query(
       `ALTER TABLE "permission_type" ALTER COLUMN "type" TYPE "public"."permission_type_type_enum" USING "type"::"text"::"public"."permission_type_type_enum"`
     );
+
+    for (const organization of organizations) {
+      const permissionId = await queryRunner.query(
+        `INSERT INTO "permission"  ("createdAt", "updatedAt", "name", "automaticallyAddNewApplications","organizationId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", $1, true, $2)
+          RETURNING id`,
+        [`${organization.name} - Datatarget administrator`, organization.id]
+      );
+      await queryRunner.query(
+        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", "OrganizationDataTargetAdmin",$1)`,
+        [permissionId]
+      );
+      await queryRunner.query(
+        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", "Read",$1)`,
+        [permissionId]
+      );
+    }
+
     await queryRunner.query(`DROP TYPE "public"."permission_type_type_enum_old"`);
     await queryRunner.query(
       `ALTER TABLE "permission_type" ADD CONSTRAINT "UQ_3acd70f5a3895ee2fb92b2a4290" UNIQUE ("type", "permissionId")`
@@ -58,6 +74,9 @@ export class InitialDataTargetUpdate1791548348790 implements MigrationInterface 
     await queryRunner.query(
       `CREATE TYPE "public"."permission_type_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read')`
     );
+
+    await queryRunner.query(`UPDATE "permission_type" set type = "Read" where type = "OrganizationDataTargetAdmin"`);
+
     await queryRunner.query(
       `ALTER TABLE "permission_type" ALTER COLUMN "type" TYPE "public"."permission_type_type_enum_old" USING "type"::"text"::"public"."permission_type_type_enum_old"`
     );
