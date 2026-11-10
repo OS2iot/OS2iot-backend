@@ -38,6 +38,8 @@ export class DefaultConnectionToApplication1792562457722 implements MigrationInt
         .filter(dc => dc.iotDevicePayloadDecoderDataTargetConnectionId === connection.id)
         .map(c => c.iotDeviceId);
       const iotDevice = iotDevices.find(d => deviceIds.includes(d.id));
+      if (!iotDevice) continue;
+
       const application = applications.find(a => a.id === iotDevice.applicationId);
       await queryRunner.query(
         `UPDATE "iot_device_payload_decoder_data_target_connection" SET "applicationId" = $1 WHERE "id" = $2`,

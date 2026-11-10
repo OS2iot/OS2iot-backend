@@ -44,17 +44,18 @@ export class InitialDataTargetUpdate1791548348790 implements MigrationInterface 
     );
 
     for (const organization of organizations) {
-      const permissionId = await queryRunner.query(
-        `INSERT INTO "permission"  ("createdAt", "updatedAt", "name", "automaticallyAddNewApplications","organizationId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", $1, true, $2)
+      const permission = await queryRunner.query(
+        `INSERT INTO "permission"  ("createdAt", "updatedAt", "name", "automaticallyAddNewApplications","organizationId") VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $1, true, $2)
           RETURNING id`,
         [`${organization.name} - Datatarget administrator`, organization.id]
       );
+      const permissionId = permission[0].id;
       await queryRunner.query(
-        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", "OrganizationDataTargetAdmin",$1)`,
+        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'OrganizationDataTargetAdmin',$1)`,
         [permissionId]
       );
       await queryRunner.query(
-        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES ("CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", "Read",$1)`,
+        `INSERT INTO "permission_type"  ("createdAt", "updatedAt", "type", "permissionId") VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Read',$1)`,
         [permissionId]
       );
     }
@@ -75,7 +76,7 @@ export class InitialDataTargetUpdate1791548348790 implements MigrationInterface 
       `CREATE TYPE "public"."permission_type_type_enum_old" AS ENUM('GlobalAdmin', 'OrganizationUserAdmin', 'OrganizationGatewayAdmin', 'OrganizationApplicationAdmin', 'Read')`
     );
 
-    await queryRunner.query(`UPDATE "permission_type" set type = "Read" where type = "OrganizationDataTargetAdmin"`);
+    await queryRunner.query(`DELETE FROM "permission_type" where "type" = 'OrganizationDataTargetAdmin'`);
 
     await queryRunner.query(
       `ALTER TABLE "permission_type" ALTER COLUMN "type" TYPE "public"."permission_type_type_enum_old" USING "type"::"text"::"public"."permission_type_type_enum_old"`
@@ -100,10 +101,12 @@ export class InitialDataTargetUpdate1791548348790 implements MigrationInterface 
 
     for (const dt of dataTargets) {
       const connection = connections.find(c => c.dataTargetId === dt.id);
+
       const deviceIds = deviceConnections
         .filter(dc => dc.iotDevicePayloadDecoderDataTargetConnectionId === connection.id)
         .map(c => c.iotDeviceId);
       const iotDevice = iotDevices.find(d => deviceIds.includes(d.id));
+
       const application = applications.find(a => a.id === iotDevice.applicationId);
 
       await queryRunner.query(`UPDATE "data_target" SET "organizationId" = $1 WHERE "id" = $2`, [
