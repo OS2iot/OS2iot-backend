@@ -2,5 +2,6 @@
 export enum Translations {
   OrganizationAdmin = "Organisationsadministrator",
   ApplicationAdmin = "Applikationsadministrator",
+  DataTargetAdmin = "Datatarget administrator",
   ReadLevel = "Læserettigheder",
 }

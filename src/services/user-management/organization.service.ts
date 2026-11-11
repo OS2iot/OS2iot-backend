@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, forwardRef, NotFoundException } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 
@@ -17,10 +17,11 @@ import { PermissionService } from "./permission.service";
 import { User } from "@entities/user.entity";
 import { UserService } from "./user.service";
 import { Permission } from "@entities/permissions/permission.entity";
-import { AuthenticatedRequest } from "@dto/internal/authenticated-request";
 
 @Injectable()
 export class OrganizationService {
+  private readonly logger = new Logger(OrganizationService.name, { timestamp: true });
+
   constructor(
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
@@ -29,8 +30,6 @@ export class OrganizationService {
     @Inject(forwardRef(() => UserService))
     private userService: UserService
   ) {}
-
-  private readonly logger = new Logger(OrganizationService.name, { timestamp: true });
 
   async create(dto: CreateOrganizationDto, userId: number): Promise<Organization> {
     const organization = new Organization();
@@ -190,16 +189,6 @@ export class OrganizationService {
     };
   }
 
-  private getSorting(query: ListAllEntitiesDto) {
-    const sorting: { [id: string]: string | number } = {};
-    if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin")) {
-      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
-    } else {
-      sorting["id"] = "ASC";
-    }
-    return sorting;
-  }
-
   async findById(organizationId: number): Promise<Organization> {
     return await this.organizationRepository.findOneByOrFail({ id: organizationId });
   }
@@ -213,6 +202,7 @@ export class OrganizationService {
       },
     });
   }
+
   async findByIdWithUsers(organizationId: number): Promise<Organization> {
     return await this.organizationRepository.findOneOrFail({
       where: { id: organizationId },
@@ -246,5 +236,15 @@ export class OrganizationService {
       throw new NotFoundException();
     }
     return new DeleteResponseDto(res.affected);
+  }
+
+  private getSorting(query: ListAllEntitiesDto) {
+    const sorting: { [id: string]: string | number } = {};
+    if (query?.orderOn != null && (query.orderOn == "id" || query.orderOn == "name" || query.orderOn == "lastLogin")) {
+      sorting[query.orderOn] = query.sort.toLocaleUpperCase();
+    } else {
+      sorting["id"] = "ASC";
+    }
+    return sorting;
   }
 }

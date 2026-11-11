@@ -6,6 +6,7 @@ import { IoTDeviceModule } from "@modules/device-management/iot-device.module";
 import { PayloadDecoderModule } from "@modules/device-management/payload-decoder.module";
 import { SharedModule } from "@modules/shared.module";
 import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/device-management/iot-device-payload-decoder-data-target-connection.service";
+import { ApplicationModule } from "@modules/device-management/application.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { IoTDevicePayloadDecoderDataTargetConnectionService } from "@services/de
     forwardRef(() => IoTDeviceModule),
     forwardRef(() => DataTargetModule),
     forwardRef(() => PayloadDecoderModule),
+    forwardRef(() => ApplicationModule),
   ],
   providers: [IoTDevicePayloadDecoderDataTargetConnectionService],
   exports: [IoTDevicePayloadDecoderDataTargetConnectionService],

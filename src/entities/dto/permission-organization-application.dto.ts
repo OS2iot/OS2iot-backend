@@ -1,18 +1,20 @@
 import * as _ from "lodash";
 
 export class UserPermissions {
-  constructor() {
-    this.orgToReadPermissions = new Map();
-    this.orgToUserAdminPermissions = new Map();
-    this.orgToGatewayAdminPermissions = new Set();
-    this.orgToApplicationAdminPermissions = new Map();
-  }
-
   orgToReadPermissions: Map<number, number[]>;
   orgToUserAdminPermissions: Map<number, number[]>;
   orgToGatewayAdminPermissions: Set<number>;
+  orgToDataTargetAdminPermissions: Set<number>;
   orgToApplicationAdminPermissions: Map<number, number[]>;
   isGlobalAdmin = false;
+
+  constructor() {
+    this.orgToReadPermissions = new Map();
+    this.orgToUserAdminPermissions = new Map();
+    this.orgToDataTargetAdminPermissions = new Set();
+    this.orgToGatewayAdminPermissions = new Set();
+    this.orgToApplicationAdminPermissions = new Map();
+  }
 
   getAllApplicationsWithAtLeastRead(): number[] {
     return _.union(
@@ -44,6 +46,10 @@ export class UserPermissions {
 
   getAllOrganizationsWithGatewayAdmin(): number[] {
     return Array.from(this.orgToGatewayAdminPermissions);
+  }
+
+  getAllOrganizationsWithDataTargetAdmin(): number[] {
+    return Array.from(this.orgToDataTargetAdminPermissions);
   }
 
   getAllOrganizationsWithApplicationAdmin(): number[] {

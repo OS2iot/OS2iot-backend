@@ -23,7 +23,7 @@ import {
 } from "@nestjs/swagger";
 
 import { ComposeAuthGuard } from "@auth/compose-auth.guard";
-import { ApplicationAdmin, Read } from "@auth/roles.decorator";
+import { DataTargetAdmin, Read } from "@auth/roles.decorator";
 import { RolesGuard } from "@auth/roles.guard";
 import { CreateDataTargetDto } from "@dto/create-data-target.dto";
 import { DeleteResponseDto } from "@dto/delete-application-response.dto";
@@ -33,7 +33,7 @@ import { ListAllDataTargetsDto } from "@dto/list-all-data-targets.dto";
 import { UpdateDataTargetDto } from "@dto/update-data-target.dto";
 import { DataTarget } from "@entities/data-target.entity";
 import { ErrorCodes } from "@enum/error-codes.enum";
-import { ApplicationAccessScope, checkIfUserHasAccessToApplication } from "@helpers/security-helper";
+import { checkIfUserHasAccessToOrganization, OrganizationAccessScope } from "@helpers/security-helper";
 import { DataTargetService } from "@services/data-targets/data-target.service";
 import { AuditLog } from "@services/audit-log.service";
 import { ActionType } from "@entities/audit-log-entry";
@@ -50,40 +50,52 @@ import { TestDataTargetDto, TestDataTargetResultDto } from "@dto/test-data-targe
 @ApiForbiddenResponse()
 @ApiUnauthorizedResponse()
 export class DataTargetController {
-  constructor(private dataTargetService: DataTargetService, private organizationService: OrganizationService) {}
-
+  constructor(
+    private dataTargetService: DataTargetService,
+    private organizationService: OrganizationService
+  ) {}
   @Get()
+  @Read()
   @ApiOperation({ summary: "Find all DataTargets" })
   async findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query?: ListAllDataTargetsDto
   ): Promise<ListAllDataTargetsResponseDto> {
+    if (query.organizationId) {
+      query.organizationId = +query.organizationId;
+    }
+
     if (req.user.permissions.isGlobalAdmin) {
-      return await this.dataTargetService.findAndCountAllWithPagination(query);
+      return await this.dataTargetService.findAndCountAllWithPagination(query, false);
     } else {
-      if (query.applicationId) {
-        query.applicationId = +query.applicationId;
-      }
-
-      checkIfUserHasAccessToApplication(req, query.applicationId, ApplicationAccessScope.Read);
-      const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
-
-      return await this.dataTargetService.findAndCountAllWithPagination(query, allowed);
+      checkIfUserHasAccessToOrganization(req, query.organizationId, [
+        OrganizationAccessScope.DataTargetWrite,
+        OrganizationAccessScope.ApplicationRead,
+      ]);
+      const dataTargetAdmin = req.user.permissions.getAllOrganizationsWithDataTargetAdmin();
+      return await this.dataTargetService.findAndCountAllWithPagination(query, dataTargetAdmin.length === 0);
     }
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Find DataTarget by id" })
   async findOne(@Req() req: AuthenticatedRequest, @Param("id", new ParseIntPipe()) id: number): Promise<DataTarget> {
+    const dataTargetAdmin = req.user.permissions.getAllOrganizationsWithDataTargetAdmin();
     let dataTarget;
     try {
-      dataTarget = await this.dataTargetService.findOneWithHasRecentError(id);
+      dataTarget = await this.dataTargetService.findOneWithHasRecentError(
+        id,
+        dataTargetAdmin.length === 0 && !req.user.permissions.isGlobalAdmin
+      );
     } catch (err) {
       throw new NotFoundException(ErrorCodes.IdDoesNotExists);
     }
 
     try {
-      checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
+      checkIfUserHasAccessToOrganization(req, dataTarget.organization.id, [
+        OrganizationAccessScope.DataTargetWrite,
+        OrganizationAccessScope.ApplicationRead,
+      ]);
       return dataTarget;
     } catch (err) {
       throw err;
@@ -98,7 +110,11 @@ export class DataTargetController {
     @Body() createDataTargetDto: CreateDataTargetDto
   ): Promise<DataTarget> {
     try {
-      checkIfUserHasAccessToApplication(req, createDataTargetDto.applicationId, ApplicationAccessScope.Write);
+      checkIfUserHasAccessToOrganization(
+        req,
+        createDataTargetDto.organizationId,
+        OrganizationAccessScope.DataTargetWrite
+      );
       const dataTarget = await this.dataTargetService.create(createDataTargetDto, req.user.userId);
       AuditLog.success(ActionType.CREATE, DataTarget.name, req.user.userId, dataTarget.id, dataTarget.name);
       return dataTarget;
@@ -119,9 +135,9 @@ export class DataTargetController {
   ): Promise<DataTarget> {
     const oldDataTarget = await this.dataTargetService.findOne(id);
     try {
-      checkIfUserHasAccessToApplication(req, oldDataTarget.application.id, ApplicationAccessScope.Write);
-      if (oldDataTarget.application.id !== updateDto.applicationId) {
-        checkIfUserHasAccessToApplication(req, updateDto.applicationId, ApplicationAccessScope.Write);
+      checkIfUserHasAccessToOrganization(req, oldDataTarget.organization.id, OrganizationAccessScope.DataTargetWrite);
+      if (oldDataTarget.organization.id !== updateDto.organizationId) {
+        checkIfUserHasAccessToOrganization(req, updateDto.organizationId, OrganizationAccessScope.DataTargetWrite);
       }
     } catch (err) {
       AuditLog.fail(ActionType.UPDATE, DataTarget.name, req.user.userId, oldDataTarget.id, oldDataTarget.name);
@@ -136,14 +152,14 @@ export class DataTargetController {
   @Delete(":id")
   @ApiOperation({ summary: "Delete an existing DataTarget" })
   @ApiBadRequestResponse()
-  @ApplicationAdmin()
+  @DataTargetAdmin()
   async delete(
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseIntPipe()) id: number
   ): Promise<DeleteResponseDto> {
     try {
       const dt = await this.dataTargetService.findOne(id);
-      checkIfUserHasAccessToApplication(req, dt.application.id, ApplicationAccessScope.Write);
+      checkIfUserHasAccessToOrganization(req, dt.organization.id, OrganizationAccessScope.DataTargetWrite);
       const result = await this.dataTargetService.delete(id);
 
       if (result.affected === 0) {
@@ -153,7 +169,7 @@ export class DataTargetController {
       return new DeleteResponseDto(result.affected);
     } catch (err) {
       AuditLog.fail(ActionType.DELETE, DataTarget.name, req.user.userId, id);
-      if (err?.status === 403) {
+      if (err?.status === 403 || err?.status === 400) {
         throw err;
       }
       throw new NotFoundException(err);
@@ -208,7 +224,7 @@ export class DataTargetController {
     @Body() testDto: TestDataTargetDto
   ): Promise<TestDataTargetResultDto> {
     const dataTarget = await this.dataTargetService.findOne(testDto.dataTargetId);
-    checkIfUserHasAccessToApplication(req, dataTarget.application.id, ApplicationAccessScope.Read);
+    checkIfUserHasAccessToOrganization(req, dataTarget.organization.id, OrganizationAccessScope.ApplicationWrite);
     // Send package
     return await this.dataTargetService.testDataTarget(testDto, dataTarget);
   }

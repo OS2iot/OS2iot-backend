@@ -3,6 +3,7 @@ import { DataTarget } from "@entities/data-target.entity";
 
 export type DataTargetDto = DataTarget & {
   hasRecentErrors?: boolean;
+  iotDevicesCount: number;
 };
 
 export class ListAllDataTargetsResponseDto extends ListAllEntitiesResponseDto<DataTargetDto> {}

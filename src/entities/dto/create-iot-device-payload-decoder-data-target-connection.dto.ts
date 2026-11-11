@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsOptional } from "class-validator";
+import { IsBoolean, IsNumber, IsOptional } from "class-validator";
 
 export class CreateIoTDevicePayloadDecoderDataTargetConnectionDto {
   @ApiProperty({
@@ -11,11 +11,19 @@ export class CreateIoTDevicePayloadDecoderDataTargetConnectionDto {
   })
   iotDeviceIds: number[];
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: true })
   @IsOptional()
   payloadDecoderId?: number;
 
   @ApiProperty({ required: true })
   @IsNumber()
   dataTargetId: number;
+
+  @ApiProperty({ required: true })
+  @IsNumber()
+  applicationId: number;
+
+  @ApiProperty({ required: true })
+  @IsBoolean()
+  defaultConnection: boolean;
 }
