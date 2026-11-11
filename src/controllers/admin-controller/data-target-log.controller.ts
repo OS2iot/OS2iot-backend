@@ -35,11 +35,12 @@ export class DatatargetLogController {
     const allowed = req.user.permissions.getAllApplicationsWithAtLeastRead();
     const isGlobalAdmin = req.user.permissions.isGlobalAdmin;
 
+    const where = isGlobalAdmin
+      ? { datatarget: { id: datatargetId } }
+      : { datatarget: { id: datatargetId }, iotDevice: { application: In(allowed) } };
+
     return await this.datatargetLogRepository.find({
-      where: {
-        datatarget: { id: datatargetId },
-        iotDevice: { application: In(allowed) || isGlobalAdmin },
-      },
+      where: where,
       relations: ["iotDevice"],
     });
   }
