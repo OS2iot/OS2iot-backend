@@ -640,6 +640,7 @@ export class ApplicationService {
     application.personalData = applicationDto.personalData;
     application.hardware = applicationDto.hardware;
     application.permissions = await this.permissionService.findManyByIds(applicationDto.permissionIds);
+    application.metadata = applicationDto.metadata;
 
     // Set metadata dependencies
     application.controlledProperties = applicationDto.controlledProperties
