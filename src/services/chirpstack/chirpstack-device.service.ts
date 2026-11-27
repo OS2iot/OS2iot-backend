@@ -42,7 +42,7 @@ import {
 } from "@chirpstack/chirpstack-api/api/device_pb";
 import { dateToTimestamp } from "@helpers/date.helper";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
-import { Aggregation } from "@chirpstack/chirpstack-api/common/common_pb";
+import { Aggregation, MacVersion, MacVersionMap } from "@chirpstack/chirpstack-api/common/common_pb";
 import { DeviceMetricsDto, MetricProperties } from "@dto/chirpstack/chirpstack-device-metrics.dto";
 
 @Injectable()
@@ -184,16 +184,21 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     return deviceActivation;
   }
 
-  public async activateDeviceWithOTAA(deviceEUI: string, nwkKey: string, isUpdate: boolean): Promise<boolean> {
+  public async activateDeviceWithOTAA(
+    deviceEUI: string,
+    appKey: string,
+    isUpdate: boolean,
+    macVersion: MacVersionMap[keyof MacVersionMap],
+    networkKey?: string
+  ): Promise<boolean> {
     try {
+      const deviceKeys = this.mapDeviceKeysToChirpstack(deviceEUI, appKey, macVersion, networkKey);
       if (isUpdate) {
         const req = new UpdateDeviceKeysRequest();
-        const deviceKeys = this.mapDeviceKeysToChirpstack(deviceEUI, nwkKey);
         req.setDeviceKeys(deviceKeys);
         await this.putKeys(req);
       } else {
         const req = new CreateDeviceKeysRequest();
-        const deviceKeys = this.mapDeviceKeysToChirpstack(deviceEUI, nwkKey);
         req.setDeviceKeys(deviceKeys);
         await this.postKeys(req);
       }
@@ -204,10 +209,22 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     return true;
   }
 
-  private mapDeviceKeysToChirpstack(deviceEUI: string, nwkKey: string) {
+  private mapDeviceKeysToChirpstack(
+    deviceEUI: string,
+    appKey: string,
+    macVersion: MacVersionMap[keyof MacVersionMap],
+    networkKey?: string
+  ) {
     const deviceKeys = new DeviceKeys();
     deviceKeys.setDevEui(deviceEUI);
-    deviceKeys.setNwkKey(nwkKey);
+    // ChirpStack's DeviceKeys.nwk_key holds the AppKey in LoRaWAN 1.0.x (only one root key)
+    // and the NwkKey in LoRaWAN 1.1.x (where AppKey lives in DeviceKeys.app_key).
+    if (macVersion >= MacVersion.LORAWAN_1_1_0) {
+      deviceKeys.setNwkKey(networkKey ?? appKey);
+      deviceKeys.setAppKey(appKey);
+    } else {
+      deviceKeys.setNwkKey(appKey);
+    }
     return deviceKeys;
   }
 
@@ -328,8 +345,9 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
   public async enrichLoRaWANDevice(iotDevice: IoTDevice): Promise<LoRaWANDeviceWithChirpstackDataDto> {
     const loraDevice = iotDevice as LoRaWANDeviceWithChirpstackDataDto;
     loraDevice.lorawanSettings = new CreateLoRaWANSettingsDto();
-    await this.mapActivationAndKeys(loraDevice);
     const csData = await this.getChirpstackDevice(loraDevice.deviceEUI);
+    const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(csData.deviceProfileID);
+    await this.mapActivationAndKeys(loraDevice, deviceProfile.deviceProfile.macVersion);
     loraDevice.lorawanSettings.devEUI = csData.devEUI;
     loraDevice.lorawanSettings.deviceProfileID = csData.deviceProfileID;
     loraDevice.lorawanSettings.skipFCntCheck = csData.skipFCntCheck;
@@ -337,19 +355,29 @@ export class ChirpstackDeviceService extends GenericChirpstackConfigurationServi
     loraDevice.lorawanSettings.deviceStatusBattery = csData.deviceStatusBattery;
     loraDevice.lorawanSettings.deviceStatusMargin = csData.deviceStatusMargin;
 
-    const deviceProfile = await this.deviceProfileService.findOneDeviceProfileById(csData.deviceProfileID);
     loraDevice.deviceProfileName = deviceProfile.deviceProfile.name;
 
     return loraDevice;
   }
 
-  private async mapActivationAndKeys(loraDevice: LoRaWANDeviceWithChirpstackDataDto) {
+  private async mapActivationAndKeys(
+    loraDevice: LoRaWANDeviceWithChirpstackDataDto,
+    macVersion: MacVersionMap[keyof MacVersionMap]
+  ) {
     const keys = await this.getDeviceKeys(loraDevice.deviceEUI);
     if (keys.nwkKey) {
-      // OTAA
+      // OTAA: in 1.0.x, nwkKey carries the AppKey (only root key); in 1.1.x,
+      // nwkKey is NwkKey and appKey is AppKey.
       loraDevice.lorawanSettings.activationType = ActivationType.OTAA;
-      loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
-      loraDevice.OTAAapplicationKey = keys.nwkKey;
+      if (macVersion >= MacVersion.LORAWAN_1_1_0) {
+        loraDevice.lorawanSettings.OTAAnetworkKey = keys.nwkKey;
+        loraDevice.OTAAnetworkKey = keys.nwkKey;
+        loraDevice.lorawanSettings.OTAAapplicationKey = keys.appKey || keys.nwkKey;
+        loraDevice.OTAAapplicationKey = keys.appKey || keys.nwkKey;
+      } else {
+        loraDevice.lorawanSettings.OTAAapplicationKey = keys.nwkKey;
+        loraDevice.OTAAapplicationKey = keys.nwkKey;
+      }
     } else {
       const activation = await this.getDeviceActivation(loraDevice.deviceEUI);
       if (activation.devAddr != null) {
